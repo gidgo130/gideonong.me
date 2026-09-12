@@ -8,12 +8,12 @@ Claude Code: read this file at the start of each session alongside CLAUDE.md.
 - [x] Buy domain: gideonong.me (Porkbun)
 - [x] Create GitHub repository (empty)
 - [x] Create Vercel account
-- [ ] Install Git on local machine (git-scm.com)
-- [ ] Clone GitHub repo to local machine
-- [ ] Install Node.js (nodejs.org LTS) and Claude Code VS Code extension
-- [ ] Create initial project structure: CLAUDE.md, plan.md, index.html placeholder,
+- [x] Install Git on local machine (git-scm.com)
+- [x] Clone GitHub repo to local machine
+- [x] Install Node.js (nodejs.org LTS) and Claude Code VS Code extension
+- [x] Create initial project structure: CLAUDE.md, plan.md, index.html placeholder,
       css/style.css, js/main.js, js/translations.js, assets/ folders
-- [ ] Push initial structure to GitHub
+- [x] Push initial structure to GitHub
 - [ ] Import GitHub repo into Vercel → auto-deploy on push
 - [ ] Connect gideonong.me in Vercel → update DNS A record and CNAME in Porkbun
 - [ ] Confirm site is live at gideonong.me (placeholder page)
