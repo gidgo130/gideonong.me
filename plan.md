@@ -11,7 +11,7 @@ Claude Code: read this file at the start of each session alongside CLAUDE.md.
 - [x] Install Git on local machine (git-scm.com)
 - [x] Clone GitHub repo to local machine
 - [x] Install Node.js (nodejs.org LTS) and Claude Code VS Code extension
-- [x] Create initial project structure: CLAUDE.md, plan.md, index.html placeholder,
+- [x] Create initial project structure: CLAUDE.md, plan.md, landing.html placeholder,
       css/style.css, js/main.js, js/translations.js, assets/ folders
 - [x] Push initial structure to GitHub
 - [ ] Import GitHub repo into Vercel → auto-deploy on push
@@ -34,7 +34,7 @@ Design decisions to finalize first:
 Build:
 - [ ] css/style.css: define all CSS custom property tokens, Google Fonts import
 - [ ] js/translations.js: initial EN + ES strings for home page
-- [ ] index.html: navbar (white, sticky), dev banner, hero, featured work, dark footer
+- [ ] landing.html: navbar (white, sticky), dev banner, hero, featured work, dark footer
 - [ ] about.html: education (IELP program description), skills by category, honors/awards,
       languages (EN/ES/FR), interests
 - [ ] experience.html: Baker Hughes internship, McElroy Prototyping Lab, TURC research,
@@ -103,7 +103,7 @@ comparing Warm Neutral (#FAFAF8 base), Bluebonnet (#F5F7FC + #2E4D7B), Winecup P
 (#FAF6F5 + #7A3050 + sage #5C7A56). Navbar confirmed white (#FFFFFF) in all palettes.
 
 [2026-09] Nav order: Projects · Experience · About (About rightmost per Gideon's preference).
-Home is implicit — clicking the name/logo returns to index.html.
+Home is implicit — clicking the name/logo returns to landing.html.
 
 [2026-09] Name: "Gideon A. Ong" as formal display name (middle initial for career context).
 "Gideon" used in conversational body copy. No subtitle text above the name in hero.

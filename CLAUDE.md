@@ -11,7 +11,7 @@ Plain HTML + CSS + vanilla JavaScript. No frameworks, no build tools, no npm.
 External resources: Google Fonts only (Lora + DM Sans).
 
 ## File structure
-index.html          Home page
+landing.html          Home page
 about.html          About / education / skills / honors / languages
 experience.html     Work experience and research roles
 projects.html       Technical projects with photos, tags, descriptions
@@ -119,7 +119,7 @@ See active palette for --footer-bg and --footer-text values.
 Contents: resume download button (bronze/accent border), contact links, copyright.
 "Download Resume" opens assets/pdfs/resume.pdf in a new tab.
 
-## Home page (index.html) structure
+## Home page (landing.html) structure
 1. Sticky white navbar
 2. Under-development banner (easily removable)
 3. Hero section (var(--bg)):
