@@ -147,6 +147,12 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
 - Both EN + ES versions always present in hero, swapping primary/secondary roles.
 - Default on first visit: navigator.language → Spanish-locale (or lusophone) → ES. Else: EN.
 - Store user choice in localStorage. Spanish can run ~20% (read: a little bit) longer — no fixed widths.
+- Exception: button/pill/chip labels (resume button, nav, tag filters, toggles) should stay
+  close in character length between EN and ES so the element doesn't visibly resize when the
+  language toggles. Prefer a shorter, still-natural ES synonym over a literal translation when
+  the literal one runs much longer (e.g. keep "Descargar CV" over "Descargar currículum" for
+  the resume button — "currículum" adds ~8 characters for the same meaning "CV" already covers
+  in Spanish). This only applies to compact fixed-shape UI elements, not body/paragraph text.
 
 ## Projects (projects.html)
 - Dynamic tag filter: clicking a tag filters visible projects (vanilla JS, no reload)

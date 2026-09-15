@@ -298,17 +298,17 @@ a:hover {
 
 .iel-chip {
   text-decoration: none;
-  background: var(--bg-section);
+  background: rgba(0, 0, 0, 0.06);
   border: none;
   padding: 0 7px;
   display: inline-block;
   border-radius: 4px;
-  color: var(--bronze);
+  color: inherit;
+  font-size: inherit;
 }
 
 .iel-chip:hover {
-  color: var(--ink);
-  background: var(--border);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 /* --------------------------------------------------------------------------
@@ -354,6 +354,16 @@ a:hover {
 .chip-rose:hover {
   color: var(--rose);
   border-color: var(--rose);
+}
+
+.chip-linkedin {
+  color: #0A66C2;
+  border-color: #0A66C2;
+}
+
+.chip-linkedin:hover {
+  color: #004182;
+  border-color: #004182;
 }
 
 .btn-resume {
