@@ -1,0 +1,162 @@
+/* ==========================================================================
+   gideonong.me — style.css
+   Token + typography layer only. No page-specific layout rules here yet.
+
+   Palette library — see CLAUDE.md for full documentation of all four
+   palettes. Palette A (Oenothera) is active below. To switch palettes,
+   swap the values inside :root for the block matching the palette you
+   want (B and C are provided further down, commented out).
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap');
+
+/* --------------------------------------------------------------------------
+   PALETTE A — Oenothera (ACTIVE)
+   -------------------------------------------------------------------------- */
+:root {
+  --bg:           #FAFAF8;
+  --bg-section:   #EDE7E4;
+  --nav-bg:       #FFFFFF;
+  --ink:          #1C1810;
+  --muted:        #6E6560;
+  --bronze:       #714A14;
+  --bronze-mid:   #9B7340;
+  --rose:         #B87A7A;
+  --rose-light:   #E8D0D4;
+  --border:       #DDD5C8;
+  --footer-bg:    #1C1510;
+  --footer-text:  #D4C9BB;
+
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   PALETTE B — Warm Neutral (uncomment :root block, comment out Palette A)
+
+:root {
+  --bg:           #FAFAF8;
+  --bg-section:   #EDE6D5;
+  --nav-bg:       #FFFFFF;
+  --ink:          #1A1A17;
+  --muted:        #6B6963;
+  --bronze:       #6B4F1A;
+  --bronze-mid:   #9B7340;
+  --rose:         #B87A7A;
+  --rose-light:   #E8D0D4;
+  --border:       #DDD5C8;
+  --footer-bg:    #1A1510;
+  --footer-text:  #D4C9BB;
+
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   PALETTE C — Bluebonnet (uncomment :root block, comment out Palette A)
+
+:root {
+  --bg:           #F5F7FC;
+  --bg-section:   #EBF0FA;
+  --nav-bg:       #FFFFFF;
+  --ink:          #1A1F2E;
+  --muted:        #5A6880;
+  --bronze:       #2E4D7B;
+  --bronze-mid:   #5A7AAB;
+  --rose:         #B87A7A;
+  --rose-light:   #E8D0D4;
+  --border:       #D4D8E4;
+  --footer-bg:    #1A1F2E;
+  --footer-text:  #C8D4E4;
+
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   Reset
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+picture,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+/* --------------------------------------------------------------------------
+   Base typography
+   -------------------------------------------------------------------------- */
+body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+p {
+  color: var(--ink);
+}
+
+a {
+  transition: color 150ms ease;
+}
+
+a:hover {
+  color: var(--bronze);
+}
