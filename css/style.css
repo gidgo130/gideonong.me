@@ -422,6 +422,30 @@ a:hover {
 }
 
 /* --------------------------------------------------------------------------
+   Stub pages (about / experience / projects — bare-bones build)
+   -------------------------------------------------------------------------- */
+.stub-section {
+  background: var(--bg);
+  padding: clamp(56px, 12vw, 96px) clamp(16px, 4vw, 36px);
+  width: 100%;
+  text-align: center;
+}
+
+.stub-heading {
+  font-size: clamp(28px, 5vw, 38px);
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+
+.stub-body {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
    Footer
    -------------------------------------------------------------------------- */
 .site-footer {
