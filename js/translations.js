@@ -19,15 +19,15 @@ const translations = {
     heroDesc: "Bilingual mechanical engineering IEL student with experience in automation, fabrication, and research; currently looking for summer internships for 2027. Interested in statistics, manufacturing, data analysis for applied engineering, and automating the boring stuff.",
 
     // Social chips
-    sayHello: "say hello", // content.md gives no separate ES string for this chip
+    sayHello: "say hello",
 
     // Resume button
     resumeBtn: "Download Resume",
 
     // index.html — Featured work section
     featuredWork: "Featured work",
-    featuredCardTitle: "Featured project coming soon", // content.md gives no ES string for placeholder card
-    featuredCardDesc: "Project descriptions are being finalized.", // content.md gives no ES string for placeholder card
+    featuredCardTitle: "Featured project coming soon",
+    featuredCardDesc: "Project descriptions are being finalized.",
 
     // about.html stub
     aboutHeading: "About",
@@ -42,7 +42,7 @@ const translations = {
     projectsBody: "Full projects page coming soon.",
 
     // Footer
-    footerContact: "gidgo130@gmail.com",
+    footerContact: "gao9819@utulsa.edu",
     footerCopyright: "© 2026 Gideon A. Ong",
   },
 
@@ -59,15 +59,15 @@ const translations = {
     heroDesc: "Estudiante bilingüe de ingeniería mecánica IEL con experiencia en automatización, fabricación e investigación; actualmente buscando pasantías para el verano de 2027. Interesado en estadística, manufactura, análisis de datos para aplicaciones de ingeniería, y automatizar lo aburrido.",
 
     // Social chips
-    sayHello: "say hello", // pending ES translation — not specified in content.md
+    sayHello: "escríbeme",
 
     // Resume button
     resumeBtn: "Descargar CV",
 
     // index.html — Featured work section
     featuredWork: "Proyectos destacados",
-    featuredCardTitle: "Featured project coming soon", // pending ES translation — not specified in content.md
-    featuredCardDesc: "Project descriptions are being finalized.", // pending ES translation — not specified in content.md
+    featuredCardTitle: "Proyecto destacado próximamente",
+    featuredCardDesc: "Las descripciones de proyectos están siendo finalizadas.",
 
     // about.html stub
     aboutHeading: "Sobre mí",
@@ -82,7 +82,7 @@ const translations = {
     projectsBody: "Página completa en construcción.",
 
     // Footer
-    footerContact: "gidgo130@gmail.com",
+    footerContact: "gao9819@utulsa.edu",
     footerCopyright: "© 2026 Gideon A. Ong",
   },
 };
