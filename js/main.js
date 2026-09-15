@@ -143,6 +143,51 @@
     });
   }
 
+  // Mobile hamburger — open/close nav dropdown
+  (function () {
+    var hamburger = document.getElementById("hamburger");
+    var dropdown = document.getElementById("nav-dropdown");
+    if (!hamburger || !dropdown) return;
+
+    function openMenu() {
+      dropdown.classList.add("is-open");
+      hamburger.setAttribute("aria-expanded", "true");
+      dropdown.setAttribute("aria-hidden", "false");
+    }
+
+    function closeMenu() {
+      dropdown.classList.remove("is-open");
+      hamburger.setAttribute("aria-expanded", "false");
+      dropdown.setAttribute("aria-hidden", "true");
+    }
+
+    hamburger.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (dropdown.classList.contains("is-open")) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    // Close when a nav link is tapped
+    dropdown.querySelectorAll("a").forEach(function (link) {
+      link.addEventListener("click", closeMenu);
+    });
+
+    // Close when clicking outside the dropdown or hamburger
+    document.addEventListener("click", function (e) {
+      if (!hamburger.contains(e.target) && !dropdown.contains(e.target)) {
+        closeMenu();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeMenu();
+    });
+  }());
+
   renderHeroParagraphs();
   applyTranslations(detectDefaultLang());
 })();

@@ -300,15 +300,15 @@ a:hover {
   text-decoration: none;
   background: rgba(0, 0, 0, 0.06);
   border: none;
-  padding: 0 7px;
-  display: inline-block;
-  border-radius: 4px;
+  padding: 1px 5px;
+  display: inline;
+  border-radius: 3px;
   color: inherit;
   font-size: inherit;
 }
 
 .iel-chip:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.10);
 }
 
 /* --------------------------------------------------------------------------
@@ -519,4 +519,172 @@ a:hover {
   opacity: 0.75;
   width: 100%;
   order: 10;
+}
+
+/* ==========================================================================
+   Mobile nav — hamburger + dropdown (≤767px)
+   ========================================================================== */
+
+/* Hamburger button — hidden on desktop */
+.hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--ink);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.hamburger svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* Nav dropdown — hidden by default, shown via .is-open */
+.nav-dropdown {
+  display: none;
+  position: fixed;
+  top: 56px; /* matches .navbar height */
+  left: 0;
+  right: 0;
+  z-index: 99;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.nav-dropdown.is-open {
+  display: block;
+}
+
+.nav-dropdown a {
+  display: block;
+  padding: 13px clamp(16px, 4vw, 36px);
+  font-size: 15px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-dropdown a:last-child {
+  border-bottom: none;
+}
+
+.nav-dropdown a:hover {
+  color: var(--bronze);
+}
+
+@media (max-width: 767px) {
+  .nav-links {
+    display: none; /* replaced by the dropdown */
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}
+
+/* ==========================================================================
+   Wide-screen text scaling (1440px+)
+   Keeps layout and proportions identical — just larger text throughout.
+   ========================================================================== */
+@media (min-width: 1440px) {
+  body {
+    font-size: 17px;
+  }
+
+  .navbar .logo {
+    font-size: 18px;
+  }
+
+  .nav-links a {
+    font-size: 14px;
+  }
+
+  .dev-banner {
+    font-size: 13px;
+  }
+
+  .hero-name {
+    font-size: clamp(46px, 3.5vw, 72px);
+  }
+
+  .hero-desc {
+    font-size: 17px;
+  }
+
+  .hero-desc.is-inactive {
+    font-size: 14px;
+  }
+
+  .chip {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+
+  .btn-resume {
+    font-size: 14px;
+  }
+
+  .section-heading {
+    font-size: 16px;
+  }
+
+  .featured-title {
+    font-size: 22px;
+  }
+
+  .featured-desc {
+    font-size: 15px;
+  }
+}
+
+/* ==========================================================================
+   Dark mode — Palette B (Warm Neutral) translated to a dark warm scheme.
+   Light mode is the primary design target; dark mode preserves readability
+   with the same warm feel. Palette tones stay consistent, just inverted.
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:           #1C1914;
+    --bg-section:   #231F1A;
+    --nav-bg:       #1C1914;
+    --ink:          #EDE8DF;
+    --muted:        #9A948D;
+    --bronze:       #C08840;
+    --bronze-mid:   #D4A060;
+    --rose:         #C89090;
+    --rose-light:   #4A3535;
+    --border:       #3C3530;
+    --footer-bg:    #0F0D0B;
+    --footer-text:  #C8BDB0;
+  }
+
+  /* IEL chip: light overlay on dark background */
+  .iel-chip {
+    background: rgba(255, 255, 255, 0.10);
+  }
+
+  .iel-chip:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  /* Override hardcoded non-variable colors that won't adapt automatically */
+  .nav-links a {
+    color: var(--muted);
+  }
+
+  .nav-links a:hover {
+    color: var(--ink);
+  }
+
+  .chip {
+    color: var(--ink);
+  }
+
+  .featured-desc {
+    color: var(--muted);
+  }
 }

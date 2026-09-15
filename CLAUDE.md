@@ -168,12 +168,33 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
 
 ## Mobile / responsive (Phase 2)
 - Primary breakpoint: 768px
-- Below 768px: nav → logo + hamburger (☰) + EN/ES toggle. Hamburger opens link dropdown.
+- Below 768px: .nav-links hidden; hamburger (☰) appears between logo area and the EN/ES toggle.
+  EN/ES toggle is always the rightmost element on the navbar at every breakpoint.
+- Hamburger opens a dropdown panel that appears fixed below the navbar (top: 56px).
+  Dropdown closes on link tap, outside click, or Escape.
+  Full-screen overlay is an option to consider if the dropdown feels too small on certain devices.
 - NEVER use fixed pixel widths on layout containers — always max-width + width: 100%
 - Test at 375px (iPhone SE), 768px (iPad), 1280px (desktop)
 
+## Wide-screen scaling (1440px+)
+- @media (min-width: 1440px) block in style.css bumps up body, nav link, chip, and
+  hero text sizes. Hero layout and proportions stay identical — only text grows.
+- Hero name uses clamp(46px, 3.5vw, 72px) at 1440px+.
+
+## Dark mode
+- Dark mode IS supported via @media (prefers-color-scheme: dark) in style.css.
+- Light mode is the primary design target; dark mode matches the warm palette feel
+  but is not expected to look equally polished.
+- Palette B (Warm Neutral) has a corresponding dark token block already in style.css.
+  When switching active palettes, add a dark-mode :root block for the new palette too.
+- Do NOT add a manual dark/light toggle button to the UI.
+- Hardcoded hex colors (e.g. #4A4945) must be overridden in the dark-mode block;
+  prefer using CSS vars to avoid this need in future additions.
+- IEL chip: uses rgba(0,0,0,0.06) in light mode; rgba(255,255,255,0.10) in dark.
+
 ## What NOT to do
-- Do not make navbar anything other than white (#FFFFFF)
+- Do not make navbar anything other than white (#FFFFFF) in light mode
+  (dark mode overrides --nav-bg to a dark warm background, which is expected)
 - Do not hardcode display text in HTML — use data-i18n attributes
 - Do not animate on page load or cause layout shift
 - Do not use dark mode toggle
