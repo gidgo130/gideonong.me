@@ -122,8 +122,8 @@
 
     updateResumeLinks(lang);
 
-    document.querySelectorAll("[data-lang-btn]").forEach(function (btn) {
-      btn.classList.toggle("is-active", btn.getAttribute("data-lang-btn") === lang);
+    document.querySelectorAll(".lang-toggle .lang-btn").forEach(function (span) {
+      span.classList.toggle("is-active", span.getAttribute("data-lang") === lang);
     });
 
     document.documentElement.setAttribute("lang", lang);
@@ -135,11 +135,13 @@
     applyTranslations(lang);
   }
 
-  document.querySelectorAll("[data-lang-btn]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      setLang(btn.getAttribute("data-lang-btn"));
+  const langToggleBtn = document.querySelector("[data-lang-toggle]");
+  if (langToggleBtn) {
+    langToggleBtn.addEventListener("click", function () {
+      const current = document.documentElement.getAttribute("lang") === "es" ? "es" : "en";
+      setLang(current === "en" ? "es" : "en");
     });
-  });
+  }
 
   renderHeroParagraphs();
   applyTranslations(detectDefaultLang());

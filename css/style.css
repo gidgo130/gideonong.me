@@ -218,14 +218,16 @@ a:hover {
   overflow: hidden;
   font-size: 12px;
   font-weight: 500;
+  padding: 0;
 }
 
-.lang-btn {
+.lang-toggle .lang-btn {
   padding: 3px 10px;
   color: var(--muted);
+  pointer-events: none;
 }
 
-.lang-btn.is-active {
+.lang-toggle .lang-btn.is-active {
   background: var(--ink);
   color: var(--bg);
 }
@@ -267,6 +269,11 @@ a:hover {
   margin: 0 0 16px;
 }
 
+.hero-desc-group {
+  display: flex;
+  flex-direction: column;
+}
+
 .hero-desc {
   font-size: 16px;
   color: var(--ink);
@@ -274,7 +281,13 @@ a:hover {
   margin: 0 0 7px;
 }
 
+.hero-desc.is-active {
+  order: 1;
+  margin: 0 0 7px;
+}
+
 .hero-desc.is-inactive {
+  order: 2;
   font-family: var(--font-serif);
   font-style: italic;
   font-size: 13px;
@@ -283,26 +296,19 @@ a:hover {
   margin: 0 0 24px;
 }
 
-.hero-desc.is-active {
-  margin: 0 0 7px;
-}
-
 .iel-chip {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.75em;
+  text-decoration: none;
+  background: var(--bg-section);
+  border: none;
+  padding: 0 7px;
+  display: inline-block;
+  border-radius: 4px;
   color: var(--bronze);
-  border: 1px solid var(--bronze-mid);
-  border-radius: 3px;
-  padding: 0 6px;
-  margin: 0 2px;
-  line-height: 1.6;
-  vertical-align: baseline;
 }
 
 .iel-chip:hover {
   color: var(--ink);
-  border-color: var(--bronze);
+  background: var(--border);
 }
 
 /* --------------------------------------------------------------------------
