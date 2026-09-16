@@ -250,12 +250,12 @@ a:hover {
 .hero {
   background: var(--bg);
   padding: clamp(36px, 6vw, 56px) clamp(16px, 4vw, 36px) 44px;
-  max-width: 680px;
+  max-width: 800px;
   width: 100%;
 }
 
 .hero-name {
-  font-size: clamp(32px, 6vw, 46px);
+  font-size: clamp(42px, 6vw, 56px);
   font-weight: 600;
   line-height: 1.08;
   letter-spacing: -0.01em;
