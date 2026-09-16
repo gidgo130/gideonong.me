@@ -203,7 +203,7 @@ a:hover {
 }
 
 .nav-links a {
-  font-size: 13px;
+  font-size: clamp(13px, 0.5vw + 11px, 15.5px);
   color: #4A4945;
 }
 
@@ -275,7 +275,7 @@ a:hover {
 }
 
 .hero-desc {
-  font-size: 16px;
+  font-size: clamp(15px, 0.5vw + 13px, 17px);
   color: var(--ink);
   line-height: 1.65;
   margin: 0 0 7px;
@@ -290,7 +290,7 @@ a:hover {
   order: 2;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 13px;
+  font-size: clamp(12px, 0.3vw + 10.8px, 14px);
   color: var(--muted);
   line-height: 1.55;
   margin: 0 0 24px;
@@ -326,7 +326,7 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: clamp(12px, 0.3vw + 10.8px, 14px);
   color: #4A4945;
   border: 1px solid var(--border);
   border-radius: 3px;
@@ -371,7 +371,7 @@ a:hover {
   padding: 10px 22px;
   border: 1.5px solid var(--bronze);
   color: var(--bronze);
-  font-size: 13px;
+  font-size: clamp(13px, 0.4vw + 11.4px, 15px);
   font-weight: 500;
   border-radius: 2px;
   letter-spacing: 0.02em;
@@ -543,9 +543,28 @@ a:hover {
   display: block;
 }
 
-/* Nav dropdown — hidden by default, shown via .is-open */
+/* Hamburger → X animation: SVG lines rotate into a cross when .is-open */
+.hamburger svg line {
+  transition: transform 220ms ease, opacity 180ms ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.hamburger.is-open .ham-top {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.hamburger.is-open .ham-mid {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.hamburger.is-open .ham-bot {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Nav dropdown — animates open with max-height unroll */
 .nav-dropdown {
-  display: none;
   position: fixed;
   top: 56px; /* matches .navbar height */
   left: 0;
@@ -554,10 +573,20 @@ a:hover {
   background: var(--nav-bg);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  /* When closing: delay visibility until after animation */
+  transition: max-height 220ms ease, opacity 160ms ease, visibility 0ms linear 220ms;
 }
 
 .nav-dropdown.is-open {
-  display: block;
+  max-height: 240px; /* enough for 3 links */
+  visibility: visible;
+  opacity: 1;
+  /* When opening: visibility becomes visible immediately */
+  transition: max-height 220ms ease, opacity 160ms ease, visibility 0ms linear 0ms;
 }
 
 .nav-dropdown a {
@@ -584,6 +613,20 @@ a:hover {
   .hamburger {
     display: flex;
   }
+
+  /* Ensure hero text and interactive elements are comfortably sized on phone */
+  .hero-desc {
+    font-size: 16px;
+  }
+
+  .chip {
+    font-size: 13px;
+  }
+
+  .btn-resume {
+    font-size: 14px;
+    padding: 11px 24px;
+  }
 }
 
 /* ==========================================================================
@@ -599,33 +642,13 @@ a:hover {
     font-size: 18px;
   }
 
-  .nav-links a {
-    font-size: 14px;
-  }
-
   .dev-banner {
     font-size: 13px;
   }
 
+  /* Second scaling phase for the hero name on very large screens */
   .hero-name {
     font-size: clamp(46px, 3.5vw, 72px);
-  }
-
-  .hero-desc {
-    font-size: 17px;
-  }
-
-  .hero-desc.is-inactive {
-    font-size: 14px;
-  }
-
-  .chip {
-    font-size: 13px;
-    padding: 6px 12px;
-  }
-
-  .btn-resume {
-    font-size: 14px;
   }
 
   .section-heading {

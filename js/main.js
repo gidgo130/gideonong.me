@@ -151,12 +151,14 @@
 
     function openMenu() {
       dropdown.classList.add("is-open");
+      hamburger.classList.add("is-open");
       hamburger.setAttribute("aria-expanded", "true");
       dropdown.setAttribute("aria-hidden", "false");
     }
 
     function closeMenu() {
       dropdown.classList.remove("is-open");
+      hamburger.classList.remove("is-open");
       hamburger.setAttribute("aria-expanded", "false");
       dropdown.setAttribute("aria-hidden", "true");
     }
