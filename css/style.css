@@ -238,7 +238,7 @@ a:hover {
 .dev-banner {
   background: #8B3A2A;
   color: #FAFAF8;
-  font-size: 12px;
+  font-size: clamp(14px, 1.5vw + 5px, 16px);
   text-align: center;
   padding: 7px clamp(16px, 4vw, 36px);
   letter-spacing: 0.02em;
