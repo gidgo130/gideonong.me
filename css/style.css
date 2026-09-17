@@ -892,11 +892,11 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"] {
 
 .reading-sticky {
   position: sticky;
-  top: 56px;
-  min-height: calc(100vh - 56px);
+  top: 88px; /* navbar (~56px) + dev banner (~32px) */
+  min-height: calc(100vh - 88px);
   display: grid;
-  grid-template-columns: minmax(160px, 280px) 1fr;
-  gap: clamp(24px, 4vw, 48px);
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
   align-items: center;
   max-width: 1100px;
   margin: 0 auto;
@@ -916,7 +916,11 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"] {
 
 .book-covers-wrap {
   position: relative;
-  height: 320px;
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto;
+  /* One cover (2:3) plus ~15% peek of the neighbor above and below. */
+  aspect-ratio: 2 / 3.9;
   overflow: hidden;
 }
 
@@ -928,14 +932,13 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"] {
 }
 
 .book-cover {
+  display: block;
   width: 100%;
-  max-width: 220px;
-  height: 220px;
+  aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: 3px;
-  background: var(--border);
-  opacity: 0.4;
-  margin: 10px 0;
+  background-color: var(--bg-section);
+  opacity: 0.35;
   flex-shrink: 0;
   transition: opacity 250ms ease;
 }

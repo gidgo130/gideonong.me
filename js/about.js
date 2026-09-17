@@ -130,6 +130,7 @@
     renderText(false);
     updateCovers();
     window.addEventListener("resize", updateCovers);
+    window.addEventListener("load", updateCovers);
 
     var lastScrollY = window.scrollY;
     var lastTime = performance.now();
@@ -138,6 +139,11 @@
     var DISTANCE_THRESHOLD = 90; // px accumulated at sufficient velocity to commit to a step
 
     window.addEventListener("scroll", function () {
+      // Covers may not have had a measurable offsetHeight yet (e.g. placeholder
+      // images still loading) when this handler first ran — recompute once one is available.
+      var firstCover = coversEl.children[0];
+      if (firstCover && firstCover.offsetHeight === 0) updateCovers();
+
       var rect = section.getBoundingClientRect();
       var inZone = rect.top < window.innerHeight && rect.bottom > 0;
       var now = performance.now();
