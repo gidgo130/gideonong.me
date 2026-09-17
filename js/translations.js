@@ -122,7 +122,7 @@ const translations = {
     sayHello: "escríbeme",
 
     // Resume button
-    resumeBtn: "Descargar CV",
+    resumeBtn: "Descargar Currículum",
 
     // index.html — Featured work section
     featuredWork: "Proyectos destacados",
@@ -139,8 +139,8 @@ const translations = {
     whoamiBio1: "[Párrafo de biografía 1 — ES]",
     whoamiBio2: "[Párrafo de biografía 2 — ES]",
     whoamiBio3: "[Párrafo de biografía 3 — ES]",
-    cvBtn: "Descargar CV completo",
-    transcriptBtn: "Descargar transcripción",
+    cvBtn: "Descargar CV Completo",
+    transcriptBtn: "Descargar Historial Académico",
 
     // about.html — §3 "¿Qué he estado leyendo?"
     readingHeading: "¿Qué he estado leyendo?",

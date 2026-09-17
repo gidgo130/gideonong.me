@@ -25,7 +25,7 @@ ES: "Este sitio está en desarrollo."
 ### Footer
 
 EN resume button: "Download Resume"
-ES resume button: "Descargar CV"
+ES resume button: "Descargar Currículum"
 [key: resumeBtn]
 Resume EN path: assets/pdfs/resume-en.pdf
 Resume ES path: assets/pdfs/resume-es.pdf
@@ -76,7 +76,7 @@ Both are always in the DOM; JS swaps their roles.
 ### Resume button (below social chips)
 
 EN: "Download Resume"
-ES: "Descargar CV"
+ES: "Descargar Currículum"
 Opens: active-language resume PDF in new tab
 
 ---
