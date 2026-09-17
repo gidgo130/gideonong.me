@@ -17,10 +17,10 @@
     cv: { dir: "assets/pdfs/cv/", label: "CV" },
     transcript: { dir: "assets/pdfs/transcript/", label: "Transcript" }
   };
-  const DOC_SEARCH_DAYS = 730; // how far back to probe before giving up (~2 years)
+  const DOC_SEARCH_DAYS = 60; // how far back to probe before giving up (~2 months)
   const DOC_PROBE_BATCH = 30; // dates checked in parallel per round
   const DOC_CACHE_PREFIX = "docUrl_";
-  const DOC_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // re-probe at most once a day
+  const DOC_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // re-probe at most once a day, hit or miss
 
   function formatYYYYMMDD(d) {
     const y = d.getFullYear();
@@ -34,10 +34,14 @@
     return type.dir + encodeURIComponent(lang + " Gideon Ong " + type.label + " " + yyyymmdd + ".pdf");
   }
 
+  // Cache entry shape: { url: string|null, checkedAt: number }. url === null means
+  // "probed recently, nothing found" — still a cache hit, so a missing doc (e.g. no
+  // Spanish resume yet, or CV/transcript not uploaded yet) doesn't get re-probed on
+  // every single page load.
   function readDocCache(docType, lang) {
     try {
       const cached = JSON.parse(localStorage.getItem(DOC_CACHE_PREFIX + docType + "_" + lang) || "null");
-      if (cached && Date.now() - cached.checkedAt < DOC_CACHE_TTL_MS) return cached.url;
+      if (cached && Date.now() - cached.checkedAt < DOC_CACHE_TTL_MS) return cached;
     } catch (e) { /* ignore malformed/unavailable storage */ }
     return null;
   }
@@ -52,7 +56,7 @@
     if (!DOC_TYPES[docType]) return null;
 
     const cached = readDocCache(docType, lang);
-    if (cached) return cached;
+    if (cached) return cached.url;
 
     const today = new Date();
     for (let start = 0; start <= DOC_SEARCH_DAYS; start += DOC_PROBE_BATCH) {
@@ -73,6 +77,7 @@
         return hit;
       }
     }
+    writeDocCache(docType, lang, null); // cache the miss too — see comment above
     return null;
   }
 
