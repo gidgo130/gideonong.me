@@ -53,6 +53,140 @@ Build:
 
 ---
 
+### Page Spec — about.html
+
+> Drafted: 2026-09-17. Resolve all TBD items before handing to Claude Code for full build.
+> Scaffold build (structure + JS behaviors, placeholder content) may proceed without TBD content.
+
+**Purpose:** A personal-feeling page that progressively reveals who Gideon is — credentials,
+biography, intellectual interests, interview preparation, AI philosophy, and visitor preferences.
+
+#### §1 — Hero (name + identifiers + photo)
+
+**Layout:** Two-column. Left: name (large, Lora serif) + dot-separated identifiers in
+var(--bronze) below. Right: headshot photo, position: sticky so it stays fixed on right
+as user scrolls into §2. Below photo: one "Download Resume" button (same style as index.html).
+
+**Identifiers:**
+- EN: `Engineer · Geographer · Federalist · Philomath`
+- ES: `Ingeniero · Geógrafo · Federalista · Aprendiz eterno`
+- Color: var(--bronze). Font: Lora, smaller than name. EN and ES versions are independent.
+
+**Background:** var(--bg)
+
+#### §2 — "Who am I?"
+
+**Layout:** Two-column continues. Left: biographical text (2–3 paragraphs). Right: same
+sticky photo, still fixed — appears to stay in place as section background changes around it.
+
+**Background:** Distinct from §1 (var(--bg-section) or a new about-specific token — TBD).
+Transition between §1 and §2 backgrounds is a smooth scroll-driven cross-fade, not abrupt.
+
+**Button morph:** As scroll crosses from §1 into §2, the single "Download Resume" button
+below the photo fades out and two stacked buttons fade in: **Download Full CV** and
+**Download Transcript**. Same visual style as index.html resume button. Scroll-threshold
+triggered — old button opacity → 0, two new buttons opacity → 1, stacked vertically.
+
+**Content:** TBD — biographical paragraph(s), EN + ES via data-i18n.
+
+#### §3 — "What have I been reading?"
+
+**Layout:** Left column: vertically stacked book covers in an inset container. One cover
+fully visible; adjacent covers peek slightly above/below (try both slight-peek and no-peek
+variants — build slight-peek first). Right side (general page background, no card/block):
+book title + description text.
+
+**Scroll behavior:** Page scroll drives book stepping. Each book has a scroll distance
+threshold — crossing it at sufficient velocity commits to the next book. Slow or
+intermittent scrolling within the threshold does NOT trigger stepover (prevents accidental
+advances on slow feed). Fast scroll can step multiple books.
+
+**Text animation (CLAUDE.md carve-out — see below):** Exiting text: fades up-and-out
+(~8–12px upward translation + opacity → 0). Entering text: starts slightly below rest
+position, moves up + opacity → 1. Minimal displacement — subtle, not dramatic.
+
+**Cover treatment:** Active cover at full opacity. Adjacent/inactive covers slightly dimmed.
+No rotation or 3D effect. Covers stacked vertically.
+
+**Maintainability:** Books defined in a JS data array. Each entry: cover image path, title
+(EN + ES), description (EN + ES), visible: true/false. Reorder by changing array order;
+hide by setting visible: false.
+
+**Content:** TBD — list of books with cover images.
+
+#### §4 — Interview FAQ
+
+**Layout:** Full-width accordion stack. Items touch (no gap between them). Outer stack has
+rounded corners as a unified block; internal borders divide items. No outer gap or margin
+between items.
+
+**Per item:** Left-side chevron (▶ collapsed / ▼ expanded) + question text. Clicking
+expands inline, pushing content below down. Multiple items may be open simultaneously.
+
+**Reference style:** TU Transfer Credit Policies accordion — rounded, touching, clean.
+Chevrons left-aligned.
+
+**Background:** Own section. Possible maroon/floral accent — TBD in color pass.
+
+**Maintainability:** Questions defined in JS data array. Each entry: question (EN + ES),
+answer (EN + ES), visible: true/false. Reorder by changing array order.
+
+**Content:** TBD — brainstorm session in progress.
+Confirmed candidates: Why mechanical engineering? What is the IELP program? Why Spanish?
+Study abroad plans? Geography championships background? Career goals?
+
+#### §5 — Statement on AI
+
+**Layout:** Text-forward, long-form personal essay. Optional photo (TBD).
+Tone: direct, personal, no corporate hedging.
+Reference: sive.rs/ai, bydamo.la/p/ai-manifesto.
+
+**Background:** Own section, subtle differentiation from §4.
+
+**Content:** TBD — draft separately before full build. Use placeholder text for scaffold.
+
+#### §6 — Viewing settings + Interesting sites
+
+**Viewing settings (visitor-facing):**
+- "Show pre-college" toggle — reveals Geography Championships, IGO medals, pre-college
+  honors. Eagle Scout is always visible regardless of toggle state.
+- Readability mode — larger text, increased line-height
+- Colorblind mode — palette adjustment
+- Dark mode toggle — CSS class swap (data-theme="dark" on <html>). Explicit exception to
+  CLAUDE.md's no-toggle rule: that rule targets nav/footer; this is a dedicated settings
+  panel. Overrides prefers-color-scheme. Existing dark-mode CSS token block handles styling.
+
+**Interesting sites:** Manually curated external links. Eclectic, personally meaningful.
+Tone reference: Atomic Rockets (projectrho.com). Per-link descriptions: TBD.
+
+**Content:** TBD — site list, descriptions, toggle UI style (switches/checkboxes/pills).
+
+#### Animation carve-outs (about.html only)
+
+The following override CLAUDE.md's "opacity-only, no movement" animation rule.
+They apply ONLY to about.html. State these explicitly in every Claude Code prompt for this page.
+
+| Section | Effect | Implementation note |
+|---------|--------|---------------------|
+| §1→§2 boundary | Background cross-fade | Scroll-driven, not IntersectionObserver |
+| §2 photo | Sticky parallax | position: sticky; top: [nav height] |
+| §2 button swap | Resume → CV+Transcript morph | Scroll-threshold opacity transition |
+| §3 text | Fade up-and-in / up-and-out | ~8–12px translateY allowed |
+| §3 book covers | Active/inactive opacity states | Opacity variation across covers |
+
+#### Open decisions for about.html
+
+1. §2 background color token — same as var(--bg-section) or a new about-specific token?
+2. §3 book covers — slight-peek vs. no-peek (build slight-peek first, compare)
+3. §4 FAQ content — brainstorm session in progress
+4. §5 AI statement — content draft TBD (placeholder for scaffold)
+5. §6 interesting sites — list and descriptions TBD
+6. §6 viewing settings — exact toggle UI style (switches? checkboxes? pills?)
+7. Headshot photo — which photo? Placeholder OK for scaffold.
+8. §4 section accent color — maroon/floral tones TBD in color pass
+
+---
+
 ## Phase 2 — Responsive + Polish
 
 Goal: site works cleanly on phone and tablet; typography and visual polish complete.
@@ -135,3 +269,14 @@ vanilla JS. Optional: Transformers.js (in-browser sentence embeddings, no API ca
 
 [2026-09] Unlinked pages: confirmed. Files exist at URL, not linked from nav.
 Used for politically-sensitive or selectively-shared projects.
+
+[2026-09-17] about.html page spec drafted. See Phase 1 → Page Spec — about.html.
+
+[2026-09-17] about.html §1 identifiers confirmed:
+EN: "Engineer · Geographer · Federalist · Philomath"
+ES: "Ingeniero · Geógrafo · Federalista · Aprendiz eterno"
+(EN and ES are independent — not translations of each other.)
+
+[2026-09-17] about.html §6 dark mode toggle: CSS class swap (data-theme="dark" on <html>),
+surfaced in the Viewing Settings panel. Explicit exception to CLAUDE.md's no-toggle rule —
+the rule targets nav/footer placement; a dedicated settings panel is exempt.
