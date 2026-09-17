@@ -757,7 +757,7 @@ a:hover {
    -------------------------------------------------------------------------- */
 .about-intro-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 340px);
+  grid-template-columns: 3fr 2fr;
   gap: clamp(24px, 4vw, 56px);
   max-width: 1100px;
   width: 100%;
@@ -824,7 +824,7 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"] {
 
 .about-photo-col {
   position: sticky;
-  top: 56px;
+  top: 88px; /* navbar (~56px) + dev banner (~32px) */
   align-self: start;
   display: flex;
   flex-direction: column;
@@ -836,7 +836,7 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"] {
   aspect-ratio: 3 / 4;
   object-fit: cover;
   border-radius: 4px;
-  background: var(--border);
+  background-color: var(--bg-section);
 }
 
 .about-resume-buttons {
