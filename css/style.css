@@ -773,6 +773,8 @@ a:hover {
 .section-about-hero {
   background: var(--bg);
   padding: clamp(36px, 6vw, 56px) 0 40px;
+  min-height: 90vh;
+  box-sizing: border-box;
 }
 
 .about-identifiers p {
