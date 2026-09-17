@@ -1199,14 +1199,30 @@ body.hide-pre-college .pre-college:not(.always-visible) {
    -------------------------------------------------------------------------- */
 @media (max-width: 767px) {
   .about-intro-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Lets #about-s1 / #about-s2 become direct flex children of .about-intro-grid
+     so they can be reordered around .about-photo-col via the order values below. */
+  .about-intro-left {
+    display: contents;
+  }
+
+  #about-s1 {
+    order: 1;
   }
 
   .about-photo-col {
+    order: 2;
     position: static;
-    order: -1;
-    max-width: 260px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto 24px;
+  }
+
+  #about-s2 {
+    order: 3;
   }
 
   .reading-sticky {
