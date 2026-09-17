@@ -66,9 +66,36 @@ const translations = {
     aboutHeading: "About",
     aboutBody: "Full about page coming soon.",
 
-    // experience.html stub
-    expHeading: "Experience",
-    expBody: "Experience page coming soon.",
+    // experience.html — §1 hero
+    expHeroStatus: "Currently a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.",
+    expHeroPara: "[Hero paragraph — more on current professional direction — EN]",
+
+    // experience.html — §2 entries
+    expCaseStudyLink: "View full case study →",
+
+    expBakerHughesRole: "Engineering Intern, ALS R&D",
+    expBakerHughesOrg: "Baker Hughes",
+    expBakerHughesBullet1: "[Bullet 1 — EN]",
+    expBakerHughesBullet2: "[Bullet 2 — EN]",
+    expBakerHughesBullet3: "[Bullet 3 — EN]",
+
+    expMachineShopRole: "Machine Shop Technician",
+    expMachineShopOrg: "McElroy Prototyping Lab",
+    expMachineShopBullet1: "[Bullet 1 — EN]",
+    expMachineShopBullet2: "[Bullet 2 — EN]",
+    expMachineShopBullet3: "[Bullet 3 — EN]",
+
+    expSchultzRole: "Grader & Data Analyst",
+    expSchultzOrg: "Dr. Joshua Schultz",
+    expSchultzBullet1: "[Bullet 1 — EN]",
+    expSchultzBullet2: "[Bullet 2 — EN]",
+    expSchultzBullet3: "[Bullet 3 — EN]",
+
+    expTurcRole: "TURC Research — [role TBD]",
+    expTurcOrg: "TURC / TMTC (Edmonds)",
+    expTurcBullet1: "[Bullet 1 — EN]",
+    expTurcBullet2: "[Bullet 2 — EN]",
+    expTurcBullet3: "[Bullet 3 — EN]",
 
     // projects.html stub
     projectsHeading: "Projects",
@@ -139,9 +166,36 @@ const translations = {
     aboutHeading: "Sobre mí",
     aboutBody: "Página completa en construcción.",
 
-    // experience.html stub
-    expHeading: "Experiencia",
-    expBody: "Página en construcción.",
+    // experience.html — §1 hero
+    expHeroStatus: "[ES TBD] Currently a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.",
+    expHeroPara: "[ES TBD] [Hero paragraph — more on current professional direction]",
+
+    // experience.html — §2 entries
+    expCaseStudyLink: "Ver caso completo →",
+
+    expBakerHughesRole: "[ES TBD] Engineering Intern, ALS R&D",
+    expBakerHughesOrg: "Baker Hughes",
+    expBakerHughesBullet1: "[ES TBD] [Bullet 1]",
+    expBakerHughesBullet2: "[ES TBD] [Bullet 2]",
+    expBakerHughesBullet3: "[ES TBD] [Bullet 3]",
+
+    expMachineShopRole: "[ES TBD] Machine Shop Technician",
+    expMachineShopOrg: "McElroy Prototyping Lab",
+    expMachineShopBullet1: "[ES TBD] [Bullet 1]",
+    expMachineShopBullet2: "[ES TBD] [Bullet 2]",
+    expMachineShopBullet3: "[ES TBD] [Bullet 3]",
+
+    expSchultzRole: "[ES TBD] Grader & Data Analyst",
+    expSchultzOrg: "Dr. Joshua Schultz",
+    expSchultzBullet1: "[ES TBD] [Bullet 1]",
+    expSchultzBullet2: "[ES TBD] [Bullet 2]",
+    expSchultzBullet3: "[ES TBD] [Bullet 3]",
+
+    expTurcRole: "[ES TBD] TURC Research — [role TBD]",
+    expTurcOrg: "TURC / TMTC (Edmonds)",
+    expTurcBullet1: "[ES TBD] [Bullet 1]",
+    expTurcBullet2: "[ES TBD] [Bullet 2]",
+    expTurcBullet3: "[ES TBD] [Bullet 3]",
 
     // projects.html stub
     projectsHeading: "Proyectos",

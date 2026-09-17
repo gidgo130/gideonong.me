@@ -6,16 +6,21 @@
   const IEL_URL = "https://utulsa.edu/academics/interdisciplinary-programs/international-engineering-science-language/";
   const STORAGE_KEY = "lang";
 
-  // Resume file naming convention: "assets/pdfs/<lang> Gideon Ong Resume <YYYYMMDD>.pdf"
-  // e.g. "assets/pdfs/en Gideon Ong Resume 20260915.pdf".
-  // Static hosting has no directory listing, so the "latest" file is found by
-  // probing dates backward from today (HEAD request) until one exists — drop a
-  // new PDF in with today's date and no code change is needed.
-  const RESUME_DIR = "assets/pdfs/";
-  const RESUME_SEARCH_DAYS = 730; // how far back to probe before giving up (~2 years)
-  const RESUME_PROBE_BATCH = 30; // dates checked in parallel per round
-  const RESUME_CACHE_PREFIX = "resumeUrl_";
-  const RESUME_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // re-probe at most once a day
+  // Document naming convention: "assets/pdfs/<type>/<lang> Gideon Ong <Label> <YYYYMMDD>.pdf"
+  // e.g. "assets/pdfs/resume/en Gideon Ong Resume 20260915.pdf".
+  // Static hosting has no directory listing, so the "latest" file per type+lang is found
+  // by probing dates backward from today (HEAD request) until one exists — drop a new PDF
+  // in with today's date and no code change is needed. Elements opt in with
+  // data-doc-link="resume" | "cv" | "transcript".
+  const DOC_TYPES = {
+    resume: { dir: "assets/pdfs/resume/", label: "Resume" },
+    cv: { dir: "assets/pdfs/cv/", label: "CV" },
+    transcript: { dir: "assets/pdfs/transcript/", label: "Transcript" }
+  };
+  const DOC_SEARCH_DAYS = 730; // how far back to probe before giving up (~2 years)
+  const DOC_PROBE_BATCH = 30; // dates checked in parallel per round
+  const DOC_CACHE_PREFIX = "docUrl_";
+  const DOC_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // re-probe at most once a day
 
   function formatYYYYMMDD(d) {
     const y = d.getFullYear();
@@ -24,35 +29,38 @@
     return "" + y + m + day;
   }
 
-  function resumeUrlForDate(lang, yyyymmdd) {
-    return RESUME_DIR + encodeURIComponent(lang + " Gideon Ong Resume " + yyyymmdd + ".pdf");
+  function docUrlForDate(docType, lang, yyyymmdd) {
+    const type = DOC_TYPES[docType];
+    return type.dir + encodeURIComponent(lang + " Gideon Ong " + type.label + " " + yyyymmdd + ".pdf");
   }
 
-  function readResumeCache(lang) {
+  function readDocCache(docType, lang) {
     try {
-      const cached = JSON.parse(localStorage.getItem(RESUME_CACHE_PREFIX + lang) || "null");
-      if (cached && Date.now() - cached.checkedAt < RESUME_CACHE_TTL_MS) return cached.url;
+      const cached = JSON.parse(localStorage.getItem(DOC_CACHE_PREFIX + docType + "_" + lang) || "null");
+      if (cached && Date.now() - cached.checkedAt < DOC_CACHE_TTL_MS) return cached.url;
     } catch (e) { /* ignore malformed/unavailable storage */ }
     return null;
   }
 
-  function writeResumeCache(lang, url) {
+  function writeDocCache(docType, lang, url) {
     try {
-      localStorage.setItem(RESUME_CACHE_PREFIX + lang, JSON.stringify({ url: url, checkedAt: Date.now() }));
+      localStorage.setItem(DOC_CACHE_PREFIX + docType + "_" + lang, JSON.stringify({ url: url, checkedAt: Date.now() }));
     } catch (e) { /* ignore unavailable storage */ }
   }
 
-  async function findLatestResumeUrl(lang) {
-    const cached = readResumeCache(lang);
+  async function findLatestDocUrl(docType, lang) {
+    if (!DOC_TYPES[docType]) return null;
+
+    const cached = readDocCache(docType, lang);
     if (cached) return cached;
 
     const today = new Date();
-    for (let start = 0; start <= RESUME_SEARCH_DAYS; start += RESUME_PROBE_BATCH) {
+    for (let start = 0; start <= DOC_SEARCH_DAYS; start += DOC_PROBE_BATCH) {
       const batch = [];
-      for (let i = start; i < start + RESUME_PROBE_BATCH && i <= RESUME_SEARCH_DAYS; i++) {
+      for (let i = start; i < start + DOC_PROBE_BATCH && i <= DOC_SEARCH_DAYS; i++) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        batch.push(resumeUrlForDate(lang, formatYYYYMMDD(d)));
+        batch.push(docUrlForDate(docType, lang, formatYYYYMMDD(d)));
       }
       const results = await Promise.all(batch.map(function (url) {
         return fetch(url, { method: "HEAD" })
@@ -61,7 +69,7 @@
       }));
       const hit = results.find(Boolean);
       if (hit) {
-        writeResumeCache(lang, hit);
+        writeDocCache(docType, lang, hit);
         return hit;
       }
     }
@@ -69,10 +77,17 @@
   }
 
   function updateResumeLinks(lang) {
-    findLatestResumeUrl(lang).then(function (url) {
-      if (!url) return; // keep whatever href is already on the element
-      document.querySelectorAll("[data-resume-link]").forEach(function (el) {
-        el.setAttribute("href", url);
+    const docTypes = new Set();
+    document.querySelectorAll("[data-doc-link]").forEach(function (el) {
+      docTypes.add(el.getAttribute("data-doc-link"));
+    });
+
+    docTypes.forEach(function (docType) {
+      findLatestDocUrl(docType, lang).then(function (url) {
+        if (!url) return; // keep whatever href is already on the element
+        document.querySelectorAll('[data-doc-link="' + docType + '"]').forEach(function (el) {
+          el.setAttribute("href", url);
+        });
       });
     });
   }

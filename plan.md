@@ -187,6 +187,111 @@ They apply ONLY to about.html. State these explicitly in every Claude Code promp
 
 ---
 
+### Page Spec — experience.html
+
+> Drafted: 2026-09-17. Resolve all TBD items before handing to Claude Code for full build.
+> Scaffold build (structure + JS behaviors, placeholder content) may proceed without TBD content.
+
+**Purpose:** A visual table of contents for Gideon's professional experience — each entry is
+an expanded resume card linking to a dedicated full case-study sub-page. Larger and more
+image-forward than projects.html; layout can vary per entry.
+
+#### §1 — Hero
+
+**Layout:** Photo collage fills the full hero background. Text overlays the left portion
+via a gradient scrim. Collage photos sit on the right, visible and unobscured.
+
+**Gradient scrim:** Left-to-right linear gradient using `var(--footer-bg)` (`#1C1510`) —
+opaque on the far left where text sits, fading to fully transparent by the center-right.
+Ensures readable text contrast while preserving the photos on the right side.
+
+**Text content (foreground, left side):**
+- Status sentence (EN): "Currently a Mechanical Engineering and Spanish IEL student at the
+  University of Tulsa — seeking summer 2027 internships in engineering and Spanish."
+  (ES: TBD — via `data-i18n`)
+- Short paragraph below: more on current professional direction. (EN + ES: TBD content)
+- Text color: `var(--footer-text)` (`#D4C9BB`) — readable against the dark scrim.
+
+**Collage (background):** 3–5 photos in a CSS grid mosaic — some tall cells, some wide.
+Representative of current professional life (machine shop, Baker Hughes, lab work).
+Photos defined as `<img>` tags in HTML; updating = swapping image files and src attributes.
+
+**Backup plan (if overlay reads poorly with actual photos):** Toggle to a 2-column layout
+via a single CSS class — text left on `var(--bg)`, collage right, no overlay. Implemented
+by adding/removing a `.hero--overlay` class on the section element. Build overlay first;
+backup requires no new JS.
+
+**Background:** The photo collage itself — no flat section background color.
+
+**Size:** Taller and more visually prominent than hero sections on other pages.
+
+#### §2 — Experience entries
+
+**Order:** Mostly reverse chronological (most recent at top). Exceptions at content author's
+discretion.
+
+**Card layout (default):** Image left (~40%), text right (~60%). Entries separated by a
+dotted `border-bottom` using `var(--border)`. No outer card border or drop shadow — the
+image and dotted divider define each entry.
+
+**Per entry:**
+- Role title — large, Lora serif
+- Organization + dates — DM Sans, `var(--muted)`
+- 2–3 bullet highlights — DM Sans body
+- Skill tag pills — small, same style as projects.html; placed below bullets
+- "View full case study →" link — `var(--bronze)` accent
+
+**Layout variation:** Individual entries may deviate from the default card layout as content
+and photography develop (different image proportion, full-width image, or no image). Variation
+is decided per entry at content time — not a global alternating rule.
+
+**Maintainability:** All entries defined in a JS data array in `js/main.js` or a dedicated
+`js/experience-data.js`. Each object:
+```js
+{
+  role: "",         // EN + ES via i18n key
+  org: "",
+  dates: "",
+  bullets: [],      // EN + ES via i18n keys
+  tags: [],
+  imageSrc: "",
+  subpageUrl: "",
+  visible: true
+}
+```
+Reorder by changing array order; hide with `visible: false`.
+
+**Current entries (reverse chronological):**
+1. Baker Hughes — Engineering Intern, ALS R&D (Summer 2026, Claremore OK)
+2. McElroy Prototyping Lab — Machine Shop Technician (Spring 2026 – present)
+3. Dr. Joshua Schultz — Grader & Data Analyst (Spring 2026)
+4. TURC research — TBD (confirm whether to include before build)
+
+**Sub-pages:** Each entry links to `/experience/[slug].html` (e.g.,
+`/experience/baker-hughes.html`). Sub-pages are full case studies with flexible sections
+per role. Structure TBD per role — spec separately before building sub-pages.
+
+**Background:** `var(--bg)` throughout the entries section.
+
+#### Animation
+
+No CLAUDE.md carve-outs required for experience.html. Standard rules apply:
+- Scroll-triggered fade-in on cards: IntersectionObserver, opacity 0→1, ~300ms, no movement.
+- Hover on links and tags: color transition only, ~150ms ease.
+
+#### Open decisions for experience.html
+
+1. Hero text — status sentence + paragraph (EN + ES) — TBD content before full build
+2. Hero collage photos — TBD; placeholder images OK for scaffold build
+3. Overlay vs. backup — build overlay first; evaluate once real photos are in place
+4. TURC research — include as an entry? Confirm before build
+5. Skill tags per entry — TBD per role
+6. Sub-page structure — spec separately per role before building sub-pages
+7. Card layout variation — which entries deviate from default? Decided at content time
+8. Hero text color in dark mode — verify `var(--footer-text)` contrast in dark token block
+
+---
+
 ## Phase 2 — Responsive + Polish
 
 Goal: site works cleanly on phone and tablet; typography and visual polish complete.
@@ -270,7 +375,7 @@ vanilla JS. Optional: Transformers.js (in-browser sentence embeddings, no API ca
 [2026-09] Unlinked pages: confirmed. Files exist at URL, not linked from nav.
 Used for politically-sensitive or selectively-shared projects.
 
-[2026-09-17] about.html page spec drafted. See Phase 1 → Page Spec — about.html.
+[2026-09-17] about.html page spec drafted and finalized. See Phase 1 → Page Spec — about.html.
 
 [2026-09-17] about.html §1 identifiers confirmed:
 EN: "Engineer · Geographer · Federalist · Philomath"
@@ -280,3 +385,12 @@ ES: "Ingeniero · Geógrafo · Federalista · Aprendiz eterno"
 [2026-09-17] about.html §6 dark mode toggle: CSS class swap (data-theme="dark" on <html>),
 surfaced in the Viewing Settings panel. Explicit exception to CLAUDE.md's no-toggle rule —
 the rule targets nav/footer placement; a dedicated settings panel is exempt.
+
+[2026-09-17] experience.html page spec drafted and finalized. See Phase 1 → Page Spec — experience.html.
+
+[2026-09-17] experience.html hero: gradient scrim overlay (--footer-bg left → transparent
+right) over photo collage. Backup: 2-column text/collage via .hero--overlay CSS class toggle.
+
+[2026-09-17] experience.html cards: image left (~40%), text right (~60%) as default layout.
+Each entry links to a dedicated /experience/[slug].html case-study sub-page. Entries defined
+in a JS data array with visible flag for easy maintenance.

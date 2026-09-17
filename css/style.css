@@ -1223,3 +1223,263 @@ body.hide-pre-college .pre-college:not(.always-visible) {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   experience.html — page layout
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   §1 — Hero: photo collage + gradient scrim (default). Remove .hero--overlay
+   from the section to switch to the 2-column backup (text left on var(--bg),
+   collage right, no scrim) — see .exp-hero:not(.hero--overlay) below.
+   -------------------------------------------------------------------------- */
+.exp-hero {
+  position: relative;
+  min-height: clamp(440px, 62vw, 620px);
+  width: 100%;
+  overflow: hidden;
+}
+
+.exp-hero-collage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 3px;
+}
+
+.exp-hero-collage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--bg-section);
+}
+
+.exp-hero-collage img:nth-child(1) { grid-column: 1 / 3; grid-row: 1 / 3; }
+.exp-hero-collage img:nth-child(2) { grid-column: 3 / 4; grid-row: 1 / 2; }
+.exp-hero-collage img:nth-child(3) { grid-column: 4 / 5; grid-row: 1 / 2; }
+.exp-hero-collage img:nth-child(4) { grid-column: 3 / 5; grid-row: 2 / 3; }
+.exp-hero-collage img:nth-child(5) { display: none; }
+
+@media (min-width: 1024px) {
+  .exp-hero-collage { grid-template-columns: repeat(5, 1fr); }
+  .exp-hero-collage img:nth-child(4) { grid-column: 3 / 5; grid-row: 2 / 3; }
+  .exp-hero-collage img:nth-child(5) { display: block; grid-column: 5 / 6; grid-row: 1 / 3; }
+}
+
+.exp-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to right, var(--footer-bg) 0%, var(--footer-bg) 18%, transparent 62%);
+  pointer-events: none;
+}
+
+.exp-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 520px;
+  min-height: 100%;
+  padding: clamp(56px, 9vw, 96px) clamp(16px, 4vw, 36px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--footer-text);
+}
+
+.exp-hero-status {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 2.4vw + 10px, 30px);
+  line-height: 1.3;
+  margin: 0 0 16px;
+}
+
+.exp-hero-para {
+  font-size: clamp(14px, 0.4vw + 12px, 16px);
+  line-height: 1.65;
+  color: var(--footer-text);
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Backup layout: 2-column, no scrim. Toggle by removing .hero--overlay. */
+.exp-hero:not(.hero--overlay) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg);
+}
+
+.exp-hero:not(.hero--overlay) .exp-hero-collage {
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.exp-hero:not(.hero--overlay) .exp-hero-scrim {
+  display: none;
+}
+
+.exp-hero:not(.hero--overlay) .exp-hero-content {
+  grid-column: 1;
+  grid-row: 1;
+  max-width: none;
+  color: var(--ink);
+}
+
+.exp-hero:not(.hero--overlay) .exp-hero-para {
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   §2 — Experience entries
+   -------------------------------------------------------------------------- */
+.exp-entries {
+  background: var(--bg);
+  width: 100%;
+  padding: 8px clamp(16px, 4vw, 36px) 40px;
+}
+
+.exp-list {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.exp-card {
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(28px, 4vw, 40px) 0;
+  border-bottom: 1px dotted var(--border);
+  align-items: start;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.exp-card.is-visible {
+  opacity: 1;
+}
+
+.exp-card:last-child {
+  border-bottom: none;
+}
+
+.exp-card-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 3px;
+  background: var(--bg-section);
+}
+
+.exp-card-body {
+  min-width: 0;
+}
+
+.exp-card-role {
+  font-size: clamp(20px, 1.6vw + 12px, 26px);
+  margin: 0 0 6px;
+}
+
+.exp-card-meta {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+
+.exp-card-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+
+.exp-card-bullets li {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink);
+  padding-left: 14px;
+  position: relative;
+}
+
+.exp-card-bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bronze-mid);
+}
+
+/* Tag pills — shared with projects.html's tag filter system */
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+
+.tag-pill {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.exp-card-link {
+  display: inline-block;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--bronze);
+}
+
+.exp-card-link:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 767px) {
+  .exp-hero {
+    min-height: 480px;
+  }
+
+  .exp-hero-content {
+    max-width: 100%;
+    padding: 40px clamp(16px, 4vw, 36px);
+  }
+
+  .exp-hero:not(.hero--overlay) {
+    grid-template-columns: 1fr;
+  }
+
+  .exp-hero:not(.hero--overlay) .exp-hero-collage {
+    grid-column: 1;
+    grid-row: 2;
+    height: 240px;
+  }
+
+  .exp-hero:not(.hero--overlay) .exp-hero-content {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .exp-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1440px) {
+  .exp-hero-status {
+    font-size: clamp(22px, 1.8vw + 12px, 32px);
+  }
+
+  .exp-card-role {
+    font-size: clamp(22px, 1.2vw + 14px, 28px);
+  }
+}

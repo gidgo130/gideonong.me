@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Experience — Gideon A. Ong</title>
-  <meta name="description" content="Gideon A. Ong — mechanical engineering student, IEL program, University of Tulsa.">
+  <meta name="description" content="Gideon A. Ong — engineering internships, machine shop, research, and grading experience.">
   <link rel="icon" href="/assets/glogo.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -40,9 +40,26 @@
 
   <div class="dev-banner" data-i18n="banner">This site is under development.</div>
 
-  <section class="stub-section">
-    <h1 class="stub-heading" data-i18n="expHeading">Experience</h1>
-    <p class="stub-body" data-i18n="expBody">Experience page coming soon.</p>
+  <!-- §1 — Hero: photo collage + gradient scrim. Remove .hero--overlay to switch
+       to the 2-column backup layout (text left on var(--bg), collage right, no scrim). -->
+  <section class="exp-hero hero--overlay" id="exp-hero">
+    <div class="exp-hero-collage" aria-hidden="true">
+      <img src="assets/images/placeholder.jpg" alt="">
+      <img src="assets/images/placeholder.jpg" alt="">
+      <img src="assets/images/placeholder.jpg" alt="">
+      <img src="assets/images/placeholder.jpg" alt="">
+      <img src="assets/images/placeholder.jpg" alt="">
+    </div>
+    <div class="exp-hero-scrim" aria-hidden="true"></div>
+    <div class="exp-hero-content">
+      <p class="exp-hero-status" data-i18n="expHeroStatus">Currently a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.</p>
+      <p class="exp-hero-para" data-i18n="expHeroPara">More on current professional direction goes here — placeholder paragraph for the scaffold build.</p>
+    </div>
+  </section>
+
+  <!-- §2 — Experience entries, rendered from js/experience-data.js -->
+  <section class="exp-entries" id="exp-entries">
+    <div class="exp-list" id="experience-list"></div>
   </section>
 
   <footer class="site-footer">
@@ -51,11 +68,13 @@
       <a href="https://www.linkedin.com/in/gideon-a-ong" target="_blank" rel="noopener">LinkedIn</a>
       <a href="https://github.com/gidgo130" target="_blank" rel="noopener">GitHub</a>
     </div>
-    <a class="btn-resume-footer" data-i18n="resumeBtn" data-resume-link href="assets/pdfs/en%20Gideon%20Ong%20Resume%2020260915.pdf" target="_blank" rel="noopener">Download Resume</a>
+    <a class="btn-resume-footer" data-i18n="resumeBtn" data-doc-link="resume" href="assets/pdfs/resume/en%20Gideon%20Ong%20Resume%2020260915.pdf" target="_blank" rel="noopener">Download Resume</a>
     <p class="footer-copy" data-i18n="footerCopyright">© 2026 Gideon A. Ong</p>
   </footer>
 
   <script src="js/translations.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/experience-data.js"></script>
+  <script src="js/experience.js"></script>
 </body>
 </html>
