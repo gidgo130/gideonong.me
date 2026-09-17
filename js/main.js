@@ -120,6 +120,12 @@
       el.textContent = dict[key];
     });
 
+    document.querySelectorAll("[data-i18n-alt]").forEach(function (el) {
+      const key = el.getAttribute("data-i18n-alt");
+      if (dict[key] === undefined) return;
+      el.setAttribute("alt", dict[key]);
+    });
+
     updateResumeLinks(lang);
 
     document.querySelectorAll(".lang-toggle .lang-btn").forEach(function (span) {
@@ -128,6 +134,10 @@
 
     document.documentElement.setAttribute("lang", lang);
     updateHeroActiveState(lang);
+
+    // Lets page-specific scripts (e.g. js/about.js) refresh content that is
+    // rendered from JS data arrays rather than driven directly by data-i18n.
+    document.dispatchEvent(new CustomEvent("langchange", { detail: { lang: lang } }));
   }
 
   function setLang(lang) {

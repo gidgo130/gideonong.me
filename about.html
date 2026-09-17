@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About — Gideon A. Ong</title>
-  <meta name="description" content="Gideon A. Ong — mechanical engineering student, IEL program, University of Tulsa.">
+  <meta name="description" content="About Gideon A. Ong — mechanical engineering student, IEL program, University of Tulsa.">
   <link rel="icon" href="/assets/glogo.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -40,9 +40,115 @@
 
   <div class="dev-banner" data-i18n="banner">This site is under development.</div>
 
-  <section class="stub-section">
-    <h1 class="stub-heading" data-i18n="aboutHeading">About</h1>
-    <p class="stub-body" data-i18n="aboutBody">Full about page coming soon.</p>
+  <div class="about-intro-grid">
+    <div class="about-intro-left">
+
+      <!-- §1 — Hero: name + identifiers -->
+      <section class="section-about-hero" id="about-s1">
+        <h1 class="hero-name">Gideon A. Ong</h1>
+        <div class="about-identifiers">
+          <p data-lang-variant="en" data-i18n="aboutIdentifiersEN">Engineer · Geographer · Federalist · Philomath</p>
+          <p data-lang-variant="es" data-i18n="aboutIdentifiersES">Ingeniero · Geógrafo · Federalista · Aprendiz eterno</p>
+        </div>
+      </section>
+
+      <!-- §2 — "Who am I?" -->
+      <section class="section-about-whoami" id="about-s2">
+        <div class="whoami-bg-overlay" aria-hidden="true"></div>
+        <div class="whoami-content">
+          <p class="section-heading" data-i18n="whoamiHeading">Who am I?</p>
+          <p data-i18n="whoamiBio1">[Bio paragraph 1 — EN]</p>
+          <p data-i18n="whoamiBio2">[Bio paragraph 2 — EN]</p>
+          <p data-i18n="whoamiBio3">[Bio paragraph 3 — EN]</p>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="about-photo-col">
+      <img class="about-headshot" src="assets/images/headshot.jpg" data-i18n-alt="headshotAlt" alt="Portrait of Gideon A. Ong">
+      <div class="about-resume-buttons">
+        <a class="btn-resume" data-btn="resume" data-i18n="resumeBtn" href="assets/pdfs/resume.pdf" target="_blank" rel="noopener">Download Resume</a>
+        <div class="btn-resume-group" data-btn-group>
+          <a class="btn-resume" data-btn="cv" data-i18n="cvBtn" href="assets/pdfs/cv.pdf" target="_blank" rel="noopener">Download Full CV</a>
+          <a class="btn-resume" data-btn="transcript" data-i18n="transcriptBtn" href="assets/pdfs/transcript.pdf" target="_blank" rel="noopener">Download Transcript</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- §3 — "What have I been reading?" -->
+  <section class="section-reading" id="about-reading">
+    <p class="section-heading" data-i18n="readingHeading">What have I been reading?</p>
+    <div class="reading-sticky">
+      <div class="book-covers-wrap" id="book-covers-wrap">
+        <div class="book-covers-stack" id="book-covers"></div>
+      </div>
+      <div class="book-text" id="book-text">
+        <h3 class="book-title" id="book-title"></h3>
+        <p class="book-desc" id="book-desc"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- §4 — Interview FAQ -->
+  <section class="section-faq" id="about-faq">
+    <p class="section-heading" data-i18n="faqHeading">Interview FAQ</p>
+    <div class="faq-accordion" id="faq-accordion"></div>
+  </section>
+
+  <!-- §5 — Statement on AI -->
+  <section class="section-ai" id="about-ai">
+    <div class="ai-content">
+      <h2 class="ai-heading" data-i18n="aiHeading">Statement on AI</h2>
+      <p data-i18n="aiPara1">[AI statement paragraph 1 — EN]</p>
+      <p data-i18n="aiPara2">[AI statement paragraph 2 — EN]</p>
+      <p data-i18n="aiPara3">[AI statement paragraph 3 — EN]</p>
+    </div>
+  </section>
+
+  <!-- §6 — Viewing settings + Interesting sites -->
+  <section class="section-settings" id="about-settings">
+    <div class="settings-panel">
+      <p class="section-heading" data-i18n="settingsHeading">Viewing settings</p>
+
+      <label class="toggle-row">
+        <span data-i18n="togglePreCollege">Show pre-college achievements</span>
+        <span class="toggle-visual">
+          <input type="checkbox" id="toggle-pre-college" checked>
+          <span class="toggle-switch" aria-hidden="true"></span>
+        </span>
+      </label>
+
+      <label class="toggle-row">
+        <span data-i18n="toggleReadability">Readability mode</span>
+        <span class="toggle-visual">
+          <input type="checkbox" id="toggle-readability">
+          <span class="toggle-switch" aria-hidden="true"></span>
+        </span>
+      </label>
+
+      <label class="toggle-row">
+        <span data-i18n="toggleColorblind">Colorblind mode</span>
+        <span class="toggle-visual">
+          <input type="checkbox" id="toggle-colorblind">
+          <span class="toggle-switch" aria-hidden="true"></span>
+        </span>
+      </label>
+
+      <label class="toggle-row">
+        <span data-i18n="toggleDarkMode">Dark mode</span>
+        <span class="toggle-visual">
+          <input type="checkbox" id="toggle-dark-mode">
+          <span class="toggle-switch" aria-hidden="true"></span>
+        </span>
+      </label>
+    </div>
+
+    <div class="interesting-sites">
+      <p class="section-heading" data-i18n="interestingSitesHeading">Interesting sites</p>
+      <ul id="interesting-sites-list"></ul>
+    </div>
   </section>
 
   <footer class="site-footer">
@@ -57,5 +163,6 @@
 
   <script src="js/translations.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/about.js"></script>
 </body>
 </html>
