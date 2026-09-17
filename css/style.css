@@ -1293,6 +1293,7 @@ body.hide-pre-college .pre-college:not(.always-visible) {
   font-family: var(--font-serif);
   font-size: clamp(20px, 2.4vw + 10px, 30px);
   line-height: 1.3;
+  color: var(--footer-text);
   margin: 0 0 16px;
 }
 
@@ -1325,6 +1326,10 @@ body.hide-pre-college .pre-college:not(.always-visible) {
   grid-column: 1;
   grid-row: 1;
   max-width: none;
+  color: var(--ink);
+}
+
+.exp-hero:not(.hero--overlay) .exp-hero-status {
   color: var(--ink);
 }
 
