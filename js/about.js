@@ -13,183 +13,165 @@
   }
 
   /* ------------------------------------------------------------------------
-     §1 → §2 background crossfade + resume/CV/transcript starburst morph
-     (plan.md's §2 button-morph carve-out — CLAUDE.md's opacity-only,
-     no-movement animation rule does not apply here)
-
-     Everything below is a pure function of scroll progress `p` (0–1) through
-     the §1→§2 transition zone, recomputed on every scroll frame — no
-     IntersectionObserver, no CSS keyframes/transitions driving the shape.
-     Because state depends only on `p`, scrolling back up reverses the whole
-     sequence automatically.
-
-     Sequence mapped across p:
-       0.00–0.15  dead zone      — resting state, no animation
-       0.15–0.25  crumple        — edges pinch inward slightly
-       0.25–0.45  starburst-in + collapse — button scales to an ~8px circle
-                                    while radiating lines converge on it
-       0.45–0.60  wobble         — circle border-radius/rotation cycle,
-                                    driven directly by scroll distance
-       0.60–0.80  starburst-out + expand  — circle grows back out, fading,
-                                    while lines radiate outward
-       0.80–1.00  reform         — CV + Transcript buttons scale in from
-                                    the same center point
+     §1 → §2 — portrait travel + resume→CV/Transcript starburst morph
+     Scroll-driven, radial-fan version. The constants below came from the
+     live tuner (starburst_tuner.html); tweak them here to re-tune.
+     Desktop only; on mobile the buttons show statically (see style.css).
      ------------------------------------------------------------------------ */
   (function () {
-    var whoami = document.getElementById("about-s2");
-    var overlay = whoami && whoami.querySelector(".whoami-bg-overlay");
-    var resumeBtn = document.querySelector('[data-btn="resume"]');
-    var btnGroup = document.querySelector("[data-btn-group]");
-    var container = resumeBtn && resumeBtn.closest(".about-resume-buttons");
-    if (!whoami || !overlay || !resumeBtn || !btnGroup || !container) return;
+    var intro = document.getElementById('about-intro');
+    var s1 = document.getElementById('about-s1');
+    var s2 = document.getElementById('about-s2');
+    var photoCol = document.getElementById('about-photo-col');
+    var buttons = document.getElementById('about-buttons');
+    var resumeBtn = buttons && buttons.querySelector('[data-btn="resume"]');
+    var group = buttons && buttons.querySelector('[data-btn-group]');
+    if (!intro || !s1 || !s2 || !photoCol || !buttons || !resumeBtn || !group) return;
 
-    var DEAD_END = 0.15;
-    var CRUMPLE_END = 0.25;
-    var COLLAPSE_END = 0.45;
-    var WOBBLE_END = 0.60;
-    var EXPAND_END = 0.80;
+    // ---- TUNABLES (from the tuner) ----------------------------------------
+    var NTEETH      = 16;     // spike count (more = finer rays)
+    var DEPTH_FRAC  = 0.85;   // notch depth as a fraction of the shape's height
+    var D0          = 12;     // collapsed solid-dot diameter (px)
+    var CORNER      = 8;      // resting corner radius (px)
+    var DEAD        = 0.16;   // dead zone at each end (fraction) — undeformed, clickable
+    var TEXT_FADE   = 0.10;   // (reserved) label-fade fraction
+    var FILL_W      = 42;     // width (px) below which the shape fills to solid
+    var TRAVEL_SPAN = 0.85;   // <1 = portrait reaches "Who am I?" faster than the page
 
-    var TARGET_DIAMETER = 8; // px — collapsed-circle size
-    var STARBURST_LINES = 10;
-    var STARBURST_MAX_R = 46; // svg viewBox units
+    var mql = window.matchMedia('(max-width: 767px)');
 
-    function clamp01(n) { return Math.max(0, Math.min(1, n)); }
-    function lerp(a, b, t) { return a + (b - a) * t; }
-    function easeInOutQuad(t) {
-      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-    }
+    // ---- inject the morph SVG once ----------------------------------------
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'morph-svg'); svg.setAttribute('aria-hidden', 'true');
+    var path = document.createElementNS(NS, 'path'); svg.appendChild(path);
+    buttons.appendChild(svg);
 
-    // Build the starburst overlay once; about.js owns this element entirely
-    // (about.html is not touched) and it stays hidden outside the
-    // collapse/expand windows.
-    var svgNS = "http://www.w3.org/2000/svg";
-    var svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("class", "resume-starburst");
-    svg.setAttribute("viewBox", "-50 -50 100 100");
-    svg.setAttribute("preserveAspectRatio", "none");
-    svg.setAttribute("aria-hidden", "true");
-    var burstLines = [];
-    for (var i = 0; i < STARBURST_LINES; i++) {
-      var angle = (i / STARBURST_LINES) * Math.PI * 2;
-      var line = document.createElementNS(svgNS, "line");
-      line.setAttribute("x1", "0");
-      line.setAttribute("y1", "0");
-      line.setAttribute("x2", "0");
-      line.setAttribute("y2", "0");
-      svg.appendChild(line);
-      burstLines.push({ el: line, cos: Math.cos(angle), sin: Math.sin(angle) });
-    }
-    container.appendChild(svg);
-
-    function setBurstRadius(r) {
-      burstLines.forEach(function (line) {
-        line.el.setAttribute("x2", String(line.cos * r));
-        line.el.setAttribute("y2", String(line.sin * r));
-      });
-    }
-
-    // offsetWidth/offsetHeight ignore CSS transforms, so these stay accurate
-    // as the natural (unscaled) button size even mid-animation.
-    var origW = resumeBtn.offsetWidth || 1;
-    var origH = resumeBtn.offsetHeight || 1;
+    var btnW = 200, btnH = 46, gap = 16, boxH = 112;
     function measure() {
-      origW = resumeBtn.offsetWidth || origW;
-      origH = resumeBtn.offsetHeight || origH;
+      btnW = resumeBtn.offsetWidth || btnW;
+      btnH = resumeBtn.offsetHeight || btnH;
+      gap = parseFloat(getComputedStyle(buttons).getPropertyValue('--btn-gap')) || gap;
+      boxH = 2 * btnH + gap;
+      buttons.style.height = boxH + 'px';
+      svg.setAttribute('viewBox', '0 0 ' + btnW + ' ' + boxH);
+      svg.setAttribute('width', btnW); svg.setAttribute('height', boxH);
     }
 
-    function getProgress() {
-      var rect = whoami.getBoundingClientRect();
-      var vh = window.innerHeight || document.documentElement.clientHeight;
-      // p=0 when #about-s2's top is at the viewport bottom, p=1 once it
-      // reaches the viewport top — a scroll-distance measure, not time.
-      return clamp01((vh - rect.top) / vh);
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+    function smooth(x) { x = clamp01(x); return x * x * (3 - 2 * x); }
+    function vstep(a) { a = clamp01(a); return a * a * (3 - 2 * a); }
+    function ball(t) {
+      if (t <= 0.5) { var u = t / 0.5; return 0.5 * u * u; }
+      var v = (t - 0.5) / 0.5; return 0.5 + 0.5 * (1 - (1 - v) * (1 - v));
     }
 
-    function update() {
-      var p = getProgress();
-      overlay.style.opacity = String(1 - p);
-
-      var targetSX = TARGET_DIAMETER / origW;
-      var targetSY = TARGET_DIAMETER / origH;
-
-      var resumeOpacity = 1;
-      var sx = 1, sy = 1, rotate = 0;
-      var radius = "2px";
-      var burstOpacity = 0;
-      var burstR = 0;
-      var groupScale = 0;
-      var groupOpacity = 0;
-
-      if (p <= DEAD_END) {
-        // resting state — nothing to compute
-      } else if (p <= CRUMPLE_END) {
-        var tCrumple = easeInOutQuad((p - DEAD_END) / (CRUMPLE_END - DEAD_END));
-        sx = lerp(1, 0.96, tCrumple);
-        sy = lerp(1, 0.94, tCrumple);
-        radius = lerp(2, 34, tCrumple) + "%";
-      } else if (p <= COLLAPSE_END) {
-        var tCollapse = easeInOutQuad((p - CRUMPLE_END) / (COLLAPSE_END - CRUMPLE_END));
-        sx = lerp(0.96, targetSX, tCollapse);
-        sy = lerp(0.94, targetSY, tCollapse);
-        radius = lerp(34, 50, tCollapse) + "%";
-        burstOpacity = Math.sin(tCollapse * Math.PI); // rises then fades as lines converge
-        burstR = lerp(STARBURST_MAX_R, 0, tCollapse);
-      } else if (p <= WOBBLE_END) {
-        var tWobble = (p - COLLAPSE_END) / (WOBBLE_END - COLLAPSE_END);
-        sx = targetSX;
-        sy = targetSY;
-        // Continuous, scroll-position-driven cycling — inline styles only,
-        // no CSS keyframe animation.
-        var cycle = Math.sin(tWobble * Math.PI * 3);
-        var r1 = lerp(45, 55, (cycle + 1) / 2);
-        var r2 = 100 - r1;
-        radius = r1 + "% " + r2 + "% / " + r2 + "% " + r1 + "%";
-        rotate = cycle * 20;
-      } else if (p <= EXPAND_END) {
-        var tExpand = easeInOutQuad((p - WOBBLE_END) / (EXPAND_END - WOBBLE_END));
-        sx = lerp(targetSX, 0.5, tExpand);
-        sy = lerp(targetSY, 0.5, tExpand);
-        radius = lerp(50, 20, tExpand) + "%";
-        resumeOpacity = lerp(1, 0, tExpand);
-        burstOpacity = Math.sin(tExpand * Math.PI * 0.9);
-        burstR = lerp(0, STARBURST_MAX_R, tExpand);
-      } else {
-        var tReform = easeInOutQuad((p - EXPAND_END) / (1 - EXPAND_END));
-        resumeOpacity = 0;
-        sx = 0.5;
-        sy = 0.5;
-        groupScale = lerp(0, 1, tReform);
-        groupOpacity = tReform;
+    // rounded-rect boundary points + outward normals, centred at origin (y-up)
+    function rrectPN(w, h, r) {
+      r = Math.max(0.001, Math.min(r, w / 2, h / 2));
+      var pts = [], nrm = [], dens = 0.7;
+      function edge(p0, p1, n) {
+        var L = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), m = Math.max(2, Math.round(dens * L));
+        for (var i = 0; i < m; i++) { var t = i / m; pts.push([lerp(p0[0], p1[0], t), lerp(p0[1], p1[1], t)]); nrm.push(n); }
       }
+      function arc(cx, cy, a0, a1) {
+        var m = Math.max(3, Math.round(dens * r * Math.abs(a1 - a0)));
+        for (var i = 0; i < m; i++) { var a = lerp(a0, a1, i / m); pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); nrm.push([Math.cos(a), Math.sin(a)]); }
+      }
+      edge([-w/2+r, 0], [w/2-r, 0], [0,-1]); arc(w/2-r, r, -Math.PI/2, 0);
+      edge([w/2, r], [w/2, h-r], [1,0]);     arc(w/2-r, h-r, 0, Math.PI/2);
+      edge([w/2-r, h], [-w/2+r, h], [0,1]);  arc(-w/2+r, h-r, Math.PI/2, Math.PI);
+      edge([-w/2, h-r], [-w/2, r], [-1,0]);  arc(-w/2+r, r, Math.PI, 3*Math.PI/2);
+      for (var i = 0; i < pts.length; i++) pts[i][1] -= h / 2;
+      return { pts: pts, nrm: nrm };
+    }
 
-      resumeBtn.style.opacity = String(resumeOpacity);
-      resumeBtn.style.transform = "translateY(-50%) scale(" + sx + ", " + sy + ") rotate(" + rotate + "deg)";
-      resumeBtn.style.borderRadius = radius;
-      resumeBtn.style.pointerEvents = resumeOpacity > 0.05 ? "auto" : "none";
+    // carve one lobe (radial notches toward the bottom-centre convergence point)
+    function carve(c, mirror) {
+      var w = lerp(btnW, D0, smooth(c)), h = lerp(btnH, D0, smooth(c)), r = lerp(CORNER, D0/2, c);
+      var o = rrectPN(w, h, r), pts = o.pts, nrm = o.nrm, N = pts.length, i, j;
+      var bcx = 0, bcy = -h / 2;
+      var seg = new Array(N), L = 0;
+      for (i = 0; i < N; i++) { j = (i+1) % N; seg[i] = Math.hypot(pts[j][0]-pts[i][0], pts[j][1]-pts[i][1]); L += seg[i]; }
+      var s = new Array(N); s[0] = 0; for (i = 1; i < N; i++) s[i] = s[i-1] + seg[i-1];
+      var ti = 0, best = -1e9;
+      for (i = 0; i < N; i++) { var sc = pts[i][1] - 1e3 * Math.abs(pts[i][0]); if (sc > best) { best = sc; ti = i; } }
+      var sn = Math.sin(Math.PI * c), out = new Array(N);
+      for (i = 0; i < N; i++) {
+        var dd = Math.abs(s[i] - s[ti]); dd = Math.min(dd, L - dd);
+        var val = 0.5 - 0.5 * Math.cos(2 * Math.PI * NTEETH * (dd / L));
+        var mask = vstep((nrm[i][1] + 0.60) / 0.55);
+        var inw = DEPTH_FRAC * h * sn * mask * val;
+        var dx = bcx - pts[i][0], dy = bcy - pts[i][1], dn = Math.hypot(dx, dy) || 1e-6;
+        var x = pts[i][0] + (dx / dn) * inw, y = pts[i][1] + (dy / dn) * inw;
+        if (mirror) y = -y;
+        out[i] = [x, y];
+      }
+      return { out: out, w: w, h: h };
+    }
 
-      svg.style.opacity = String(burstOpacity);
-      setBurstRadius(burstR);
+    // one lobe -> SVG path string, placed with its flat edge anchored at Py (y-up from box centre)
+    function lobeD(c, Py, mirror) {
+      var o = carve(c, mirror), pts = o.out, h = o.h, oy = mirror ? -h/2 : h/2, d = '';
+      for (var i = 0; i < pts.length; i++) {
+        var fy = Py + pts[i][1] + oy;                 // y-up from box centre
+        var X = btnW/2 + pts[i][0], Y = boxH/2 - fy;  // -> svg coords (y-down)
+        d += (i ? 'L' : 'M') + X.toFixed(2) + ' ' + Y.toFixed(2) + ' ';
+      }
+      return d + 'Z';
+    }
 
-      btnGroup.style.opacity = String(groupOpacity);
-      btnGroup.style.transform = "scale(" + groupScale + ")";
-      btnGroup.style.pointerEvents = groupOpacity > 0.5 ? "auto" : "none";
+    function show(el, on) { el.style.opacity = on ? '1' : '0'; el.style.pointerEvents = on ? 'auto' : 'none'; }
+
+    function updateMorph(q) {
+      if (q <= 0.0001) { show(resumeBtn, true); show(group, false); svg.style.opacity = '0'; return; }
+      if (q >= 0.9999) { show(group, true); show(resumeBtn, false); svg.style.opacity = '0'; return; }
+      show(resumeBtn, false); show(group, false);
+      var d, wNow;
+      if (q <= 0.5) {
+        var c = q / 0.5, P = lerp(gap/2, 0, smooth(c));
+        d = lobeD(c, P, false);
+        wNow = lerp(btnW, D0, smooth(c));
+      } else {
+        var e = (q - 0.5) / 0.5, c2 = 1 - e, off = lerp(0, gap/2, smooth(e));
+        d = lobeD(c2, off, false) + ' ' + lobeD(c2, -off, true);
+        wNow = lerp(btnW, D0, smooth(c2));
+      }
+      path.setAttribute('d', d);
+      path.style.fillOpacity = vstep((FILL_W - wNow) / 12);
+      svg.style.opacity = '1';
+    }
+
+    function frame() {
+      if (mql.matches) {                 // mobile: static, morph off
+        photoCol.style.transform = ''; svg.style.opacity = '0';
+        resumeBtn.style.opacity = ''; resumeBtn.style.pointerEvents = '';
+        group.style.opacity = ''; group.style.pointerEvents = '';
+        return;
+      }
+      var scy = window.scrollY || window.pageYOffset;
+      var introTop = intro.getBoundingClientRect().top + scy;
+      var s1H = s1.offsetHeight, s2H = s2.offsetHeight, colH = photoCol.offsetHeight;
+      var start = introTop, end = introTop + s1H * TRAVEL_SPAN;
+      var p = clamp01((scy - start) / Math.max(1, end - start));
+      var restC = introTop + s1H / 2, finalC = introTop + s1H + s2H / 2, baseC = introTop + colH / 2;
+      photoCol.style.transform = 'translateY(' + (lerp(restC, finalC, p) - baseC) + 'px)';
+      updateMorph(ball(clamp01((p - DEAD) / (1 - 2 * DEAD))));
     }
 
     var ticking = false;
     function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(function () {
-        update();
-        ticking = false;
-      });
+      if (ticking) return; ticking = true;
+      window.requestAnimationFrame(function () { frame(); ticking = false; });
     }
 
-    measure();
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", function () { measure(); update(); });
-    document.addEventListener("langchange", function () { measure(); update(); });
+    // images can change measured button size once fonts/layout settle
+    measure(); frame();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () { measure(); frame(); });
+    window.addEventListener('load', function () { measure(); frame(); });
+    document.addEventListener('langchange', function () { measure(); frame(); });
   }());
 
   /* ------------------------------------------------------------------------

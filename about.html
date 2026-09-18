@@ -40,38 +40,42 @@
 
   <div class="dev-banner" data-i18n="banner">This site is under development.</div>
 
-  <div class="about-intro-grid">
-    <div class="about-intro-left">
+  <div class="about-intro" id="about-intro">
+    <div class="about-intro-grid">
+      <div class="about-intro-left">
 
-      <!-- §1 — Hero: name + identifiers -->
-      <section class="section-about-hero" id="about-s1">
-        <h1 class="hero-name">Gideon A. Ong</h1>
-        <div class="about-identifiers">
-          <p data-lang-variant="en" data-i18n="aboutIdentifiersEN">Engineer · Geographer · Federalist · Philomath</p>
-          <p data-lang-variant="es" data-i18n="aboutIdentifiersES">Ingeniero · Geógrafo · Federalista · Aprendiz eterno</p>
-        </div>
-      </section>
+        <!-- §1 — Header: name + identifiers (vertically centered in the band) -->
+        <section class="section-about-hero" id="about-s1">
+          <h1 class="hero-name">Gideon A. Ong</h1>
+          <div class="about-identifiers">
+            <p data-lang-variant="en" data-i18n="aboutIdentifiersEN">Engineer · Geographer · Federalist · Philomath</p>
+            <p data-lang-variant="es" data-i18n="aboutIdentifiersES">Ingeniero · Geógrafo · Federalista · Aprendiz eterno</p>
+          </div>
+        </section>
 
-      <!-- §2 — "Who am I?" -->
-      <section class="section-about-whoami" id="about-s2">
-        <div class="whoami-bg-overlay" aria-hidden="true"></div>
-        <div class="whoami-content">
-          <p class="section-heading" data-i18n="whoamiHeading">Who am I?</p>
-          <p data-i18n="whoamiBio1">[Bio paragraph 1 — EN]</p>
-          <p data-i18n="whoamiBio2">[Bio paragraph 2 — EN]</p>
-          <p data-i18n="whoamiBio3">[Bio paragraph 3 — EN]</p>
-        </div>
-      </section>
+        <!-- §2 — "Who am I?" -->
+        <section class="section-about-whoami" id="about-s2">
+          <div class="whoami-content">
+            <p class="section-heading" data-i18n="whoamiHeading">Who am I?</p>
+            <p data-i18n="whoamiBio1">[Bio paragraph 1 — EN]</p>
+            <p data-i18n="whoamiBio2">[Bio paragraph 2 — EN]</p>
+            <p data-i18n="whoamiBio3">[Bio paragraph 3 — EN]</p>
+          </div>
+        </section>
 
-    </div>
+      </div>
 
-    <div class="about-photo-col">
-      <img class="about-headshot" src="assets/images/headshot.jpg" data-i18n-alt="headshotAlt" alt="Portrait of Gideon A. Ong">
-      <div class="about-resume-buttons">
-        <a class="btn-resume" data-btn="resume" data-doc-link="resume" data-i18n="resumeBtn" href="assets/pdfs/resume/resume.pdf" target="_blank" rel="noopener">Download Resume</a>
-        <div class="btn-resume-group" data-btn-group>
-          <a class="btn-resume" data-btn="cv" data-doc-link="cv" data-i18n="cvBtn" href="assets/pdfs/cv/cv.pdf" target="_blank" rel="noopener">Download Full CV</a>
-          <a class="btn-resume" data-btn="transcript" data-doc-link="transcript" data-i18n="transcriptBtn" href="assets/pdfs/transcript/transcript.pdf" target="_blank" rel="noopener">Download Transcript</a>
+      <!-- Single portrait + buttons column. about.js translates it (the travel)
+           and morphs the resume button into CV + Transcript as it moves. -->
+      <div class="about-photo-col" id="about-photo-col">
+        <img class="about-headshot" src="assets/images/headshot.jpg" data-i18n-alt="headshotAlt" alt="Portrait of Gideon A. Ong">
+        <div class="about-buttons" id="about-buttons">
+          <a class="btn-resume" data-btn="resume" data-doc-link="resume" data-i18n="resumeBtn" href="assets/pdfs/resume/resume.pdf" target="_blank" rel="noopener">Download Resume</a>
+          <div class="btn-resume-group" data-btn-group>
+            <a class="btn-resume" data-btn="cv" data-doc-link="cv" data-i18n="cvBtn" href="assets/pdfs/cv/cv.pdf" target="_blank" rel="noopener">Download Full CV</a>
+            <a class="btn-resume" data-btn="transcript" data-doc-link="transcript" data-i18n="transcriptBtn" href="assets/pdfs/transcript/transcript.pdf" target="_blank" rel="noopener">Download Transcript</a>
+          </div>
+          <!-- .morph-svg is injected here by about.js -->
         </div>
       </div>
     </div>
