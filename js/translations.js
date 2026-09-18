@@ -50,9 +50,7 @@ const translations = {
 
     // about.html — §5 Statement on AI
     aiHeading: "Statement on AI",
-    aiPara1: "[AI statement paragraph 1 — EN]",
-    aiPara2: "[AI statement paragraph 2 — EN]",
-    aiPara3: "[AI statement paragraph 3 — EN]",
+    aiPara1: 'This website was inspired by <a class="iel-chip" href="https://zohaibsheikh.dev" target="_blank" rel="noopener">Zohaib Sheikh</a>, who I had the great pleasure of working together with at Baker Hughes in Claremore the summer of 2026. I have used Claude heavily to help develop and flesh out this website. Nearly all of the code, HTML and otherwise, has been written by AI. Claude has also assisted in grammar-checking and reorganizing content as I have populated this site with my projects and experiences.',
 
     // about.html — §6 Viewing settings + Interesting sites
     settingsHeading: "Viewing settings",
@@ -150,9 +148,7 @@ const translations = {
 
     // about.html — §5 Declaración sobre la IA
     aiHeading: "Declaración sobre la IA",
-    aiPara1: "[Párrafo de declaración sobre IA 1 — ES]",
-    aiPara2: "[Párrafo de declaración sobre IA 2 — ES]",
-    aiPara3: "[Párrafo de declaración sobre IA 3 — ES]",
+    aiPara1: 'Este sitio web fue inspirado por <a class="iel-chip" href="https://zohaibsheikh.dev" target="_blank" rel="noopener">Zohaib Sheikh</a>, con quien tuve el gran placer de trabajar juntos en Baker Hughes en Claremore el verano de 2026. He usado Claude ampliamente para desarrollar y dar cuerpo a este sitio web; casi todo el código fue escrito por IA. Claude también me asistió en corregir mi gramática y traducciones, y en reorganizar mis experiencias y proyectos mientras los iba añadiendo a este sitio.',
 
     // about.html — §6 Preferencias de visualización + Sitios interesantes
     settingsHeading: "Preferencias de visualización",

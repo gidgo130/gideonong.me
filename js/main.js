@@ -154,6 +154,10 @@
     });
   }
 
+  // data-i18n keys whose translation string contains markup (e.g. an <a> link)
+  // and must be injected as HTML rather than escaped as plain text.
+  const HTML_I18N_KEYS = ["aiPara1"];
+
   function applyTranslations(lang) {
     const dict = translations[lang];
     if (!dict) return;
@@ -161,7 +165,11 @@
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
       const key = el.getAttribute("data-i18n");
       if (dict[key] === undefined) return;
-      el.textContent = dict[key];
+      if (HTML_I18N_KEYS.indexOf(key) !== -1) {
+        el.innerHTML = dict[key];
+      } else {
+        el.textContent = dict[key];
+      }
     });
 
     document.querySelectorAll("[data-i18n-alt]").forEach(function (el) {
