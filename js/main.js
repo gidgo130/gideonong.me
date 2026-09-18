@@ -117,10 +117,23 @@
     return "en";
   }
 
-  function withIelChip(text, lang) {
-    const url = lang === "es" ? IEL_URL_ES : IEL_URL_EN;
-    const chip = '<a class="iel-chip" href="' + url + '" target="_blank" rel="noopener">IEL</a>';
-    return text.replace(/\bIEL\b/, chip);
+  const BOTS_URL_EN = "https://automatetheboringstuff.com/";
+  const BOTS_URL_ES = "https://automatetheboringstuff-com.translate.goog/?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=en";
+
+  // Ordered list of (phrase, url-per-lang) pairs to auto-link inside hero text.
+  const HERO_CHIPS = [
+    { phrase: /\bIEL\b/, urls: { en: IEL_URL_EN, es: IEL_URL_ES } },
+    { phrase: /automating the boring stuff/, urls: { en: BOTS_URL_EN, es: BOTS_URL_ES } },
+    { phrase: /automatizar lo aburrido/, urls: { en: BOTS_URL_EN, es: BOTS_URL_ES } }
+  ];
+
+  function withHeroChips(text, lang) {
+    return HERO_CHIPS.reduce(function (acc, chip) {
+      const url = chip.urls[lang];
+      return acc.replace(chip.phrase, function (match) {
+        return '<a class="iel-chip" href="' + url + '" target="_blank" rel="noopener">' + match + '</a>';
+      });
+    }, text);
   }
 
   function renderHeroParagraphs() {
@@ -128,7 +141,7 @@
       const lang = el.getAttribute("data-hero-lang");
       const dict = translations[lang];
       if (dict && dict.heroDesc) {
-        el.innerHTML = withIelChip(dict.heroDesc, lang);
+        el.innerHTML = withHeroChips(dict.heroDesc, lang);
       }
     });
   }
