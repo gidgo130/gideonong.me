@@ -3,7 +3,8 @@
 // navigator.language default. No page reload, no scroll jump.
 
 (function () {
-  const IEL_URL = "https://utulsa.edu/academics/interdisciplinary-programs/international-engineering-science-language/";
+  const IEL_URL_EN = "https://utulsa.edu/academics/interdisciplinary-programs/international-engineering-science-language/";
+  const IEL_URL_ES = "https://utulsa-edu.translate.goog/academics/interdisciplinary-programs/international-engineering-science-language/?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=en";
   const STORAGE_KEY = "lang";
 
   // Document naming convention: "assets/pdfs/<type>/<lang> Gideon Ong <Label> <YYYYMMDD>.pdf"
@@ -107,8 +108,9 @@
     return "en";
   }
 
-  function withIelChip(text) {
-    const chip = '<a class="iel-chip" href="' + IEL_URL + '" target="_blank" rel="noopener">IEL</a>';
+  function withIelChip(text, lang) {
+    const url = lang === "es" ? IEL_URL_ES : IEL_URL_EN;
+    const chip = '<a class="iel-chip" href="' + url + '" target="_blank" rel="noopener">IEL</a>';
     return text.replace(/\bIEL\b/, chip);
   }
 
@@ -117,7 +119,7 @@
       const lang = el.getAttribute("data-hero-lang");
       const dict = translations[lang];
       if (dict && dict.heroDesc) {
-        el.innerHTML = withIelChip(dict.heroDesc);
+        el.innerHTML = withIelChip(dict.heroDesc, lang);
       }
     });
   }
