@@ -8,15 +8,17 @@
   const STORAGE_KEY = "lang";
 
   // Document naming convention: "assets/pdfs/<type>/<lang> Gideon Ong <Label> <YYYYMMDD>.pdf"
-  // e.g. "assets/pdfs/resume/en Gideon Ong Resume 20260915.pdf".
-  // Static hosting has no directory listing, so the "latest" file per type+lang is found
-  // by probing dates backward from today (HEAD request) until one exists — drop a new PDF
-  // in with today's date and no code change is needed. Elements opt in with
+  // e.g. "assets/pdfs/resume/en Gideon Ong Resume 20260915.pdf". Doc types with
+  // bilingual: false (the transcript — one file regardless of language) drop the
+  // "<lang> " prefix and are probed/cached once, not once per language.
+  // Static hosting has no directory listing, so the "latest" file is found by probing
+  // dates backward from today (HEAD request) until one exists — drop a new PDF in with
+  // today's date and no code change is needed. Elements opt in with
   // data-doc-link="resume" | "cv" | "transcript".
   const DOC_TYPES = {
-    resume: { dir: "assets/pdfs/resume/", label: "Resume" },
-    cv: { dir: "assets/pdfs/cv/", label: "CV" },
-    transcript: { dir: "assets/pdfs/transcript/", label: "Transcript" }
+    resume: { dir: "assets/pdfs/resume/", label: "Resume", bilingual: true },
+    cv: { dir: "assets/pdfs/cv/", label: "CV", bilingual: true },
+    transcript: { dir: "assets/pdfs/transcript/", label: "Transcript", bilingual: false }
   };
   const DOC_SEARCH_DAYS = 60; // how far back to probe before giving up (~2 months)
   const DOC_PROBE_BATCH = 30; // dates checked in parallel per round
@@ -32,7 +34,14 @@
 
   function docUrlForDate(docType, lang, yyyymmdd) {
     const type = DOC_TYPES[docType];
-    return type.dir + encodeURIComponent(lang + " Gideon Ong " + type.label + " " + yyyymmdd + ".pdf");
+    const prefix = type.bilingual ? lang + " " : "";
+    return type.dir + encodeURIComponent(prefix + "Gideon Ong " + type.label + " " + yyyymmdd + ".pdf");
+  }
+
+  // Non-bilingual doc types (the transcript) share one cache entry across languages
+  // instead of one per language — same file, so no reason to probe/cache it twice.
+  function docCacheKey(docType, lang) {
+    return DOC_TYPES[docType].bilingual ? docType + "_" + lang : docType;
   }
 
   // Cache entry shape: { url: string|null, checkedAt: number }. url === null means
@@ -41,7 +50,7 @@
   // every single page load.
   function readDocCache(docType, lang) {
     try {
-      const cached = JSON.parse(localStorage.getItem(DOC_CACHE_PREFIX + docType + "_" + lang) || "null");
+      const cached = JSON.parse(localStorage.getItem(DOC_CACHE_PREFIX + docCacheKey(docType, lang)) || "null");
       if (cached && Date.now() - cached.checkedAt < DOC_CACHE_TTL_MS) return cached;
     } catch (e) { /* ignore malformed/unavailable storage */ }
     return null;
@@ -49,7 +58,7 @@
 
   function writeDocCache(docType, lang, url) {
     try {
-      localStorage.setItem(DOC_CACHE_PREFIX + docType + "_" + lang, JSON.stringify({ url: url, checkedAt: Date.now() }));
+      localStorage.setItem(DOC_CACHE_PREFIX + docCacheKey(docType, lang), JSON.stringify({ url: url, checkedAt: Date.now() }));
     } catch (e) { /* ignore unavailable storage */ }
   }
 
