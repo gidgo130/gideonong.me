@@ -36,7 +36,7 @@
     var DEAD        = 0.16;   // dead zone at each end (fraction) — undeformed, clickable
     var TEXT_FADE   = 0.10;   // (reserved) label-fade fraction
     var FILL_W      = 42;     // width (px) below which the shape fills to solid
-    var TRAVEL_SPAN = 0.65;   // <1 = portrait travels DOWN faster than the page; lower = faster
+    var TRAVEL_SPAN = 0.7;   // <1 = portrait travels DOWN faster than the page; lower = faster
 
     var mql = window.matchMedia('(max-width: 767px)');
 
@@ -206,9 +206,12 @@
     if (!section || !strip || !textWrap || !titleEl || !descEl) return;
 
     // ---- TUNABLES ----------------------------------------------------------
-    var COMMIT_VH    = 42;   // scroll (vh) you must accumulate to commit to the next book
+    var COMMIT_VH    = 48;   // scroll (vh) within ONE gesture that commits one book (a flick past this steps;
+                             //   short of it, it falls back). Also sizes the pinned runway = (N-1)*this, so it's
+                             //   long enough that a normal flick can't overshoot the whole section.
     var DEAD_TAIL_VH = 40;   // dead scroll (vh) held on the last book before the section unpins
-    var FLICK_VEL    = 1.3;  // scroll speed (px/ms) that flicks straight to the next/prev book
+    var GESTURE_GAP  = 140;  // ms of scroll-pause that ends a gesture. ONE gesture (one flick/swipe) = at most ONE
+                             //   book, no matter how many scroll events the touchpad fires. Flick again to go further.
     var PREVIEW      = 0.34; // how far (fraction of a cover) the covers slide while you drag
     var EASE         = 0.22; // settle easing per frame (higher = snappier)
 
@@ -257,27 +260,24 @@
     // ---- snap / flick state ----
     var acc = 0;                 // scroll (px) accumulated toward the next/prev book since last commit
     var display = 0;             // displayed position in book units (eased -> snaps to `index`)
-    var lastY = window.scrollY || 0, lastT = nowMs(), lastScrollT = 0, raf = 0;
+    var lastY = window.scrollY || 0, lastT = nowMs(), lastScrollT = 0, armed = true, raf = 0;
 
     function onScroll(){
       if (mql.matches) return;
       var y = window.scrollY || 0, t = nowMs();
-      var dy = y - lastY, dt = Math.max(1, t - lastT), vel = dy / dt;   // px/ms, signed
+      var dy = y - lastY;
+      if (t - lastScrollT >= GESTURE_GAP){ armed = true; acc = 0; }   // a pause = a new gesture -> re-arm
       lastY = y; lastT = t; lastScrollT = t;
 
       var runway = Math.max(1, section.offsetHeight - window.innerHeight);
       var pPos = clamp01((-section.getBoundingClientRect().top) / runway);
-      if (pPos <= 0){ index = 0; acc = 0; }
-      else if (pPos >= 1){ index = N - 1; acc = 0; }
-      else {
+      if (pPos <= 0){ index = 0; acc = 0; armed = true; }
+      else if (pPos >= 1){ index = N - 1; acc = 0; armed = true; }
+      else if (armed){
         var CP = commitPx();
-        acc += dy;
-        if (Math.abs(vel) >= FLICK_VEL){                 // flick: one step in the gesture's direction
-          if (vel > 0 && index < N-1){ index++; acc = 0; }
-          else if (vel < 0 && index > 0){ index--; acc = 0; }
-        }
-        while (acc >=  CP && index < N-1){ index++; acc -= CP; }   // accumulation commits (carry remainder)
-        while (acc <= -CP && index > 0 ){ index--; acc += CP; }
+        acc = clamp(acc + dy, -1.3 * CP, 1.3 * CP);      // accumulate (only while this gesture can still commit)
+        if (acc >=  CP && index < N-1){ index++; acc = 0; armed = false; }   // commit once, then this gesture is spent
+        else if (acc <= -CP && index > 0){ index--; acc = 0; armed = false; }
         if (index === N-1 && acc > 0) acc = 0;           // can't over-drag past the last / first cover
         if (index === 0   && acc < 0) acc = 0;
       }
