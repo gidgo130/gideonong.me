@@ -850,49 +850,46 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 .morph-svg path{ fill: var(--bronze); fill-opacity:0; stroke: var(--bronze); stroke-width:1.6; stroke-linejoin:round; }
 
 /* --------------------------------------------------------------------------
-   §3 — "What have I been reading?" book stepper
-   -------------------------------------------------------------------------- */
-/* --------------------------------------------------------------------------
    §3 — "What have I been reading?"
    Pins full-screen ("locks in"). Book covers live on a layer BEHIND the page and
-   are revealed only through a rectangular hole — a page-coloured mask whose big
-   box-shadow paints the page everywhere except the window. Covers slide
-   vertically behind the hole as you scroll; title top-left; the active book's
-   title + description sit beside the hole.
+   are revealed only through a rectangular hole (a page-coloured mask). Covers
+   slide vertically behind the hole as you scroll; title top-left; the active
+   book's title + description sit to the RIGHT of the hole.
 
    TUNABLES on .reading-sticky:
      --hole-h / --hole-w   window size (cover aspect ~2:3)
-     --hole-right          window's distance from the right edge
-   Scroll runway per book = READ_STEP_VH in about.js.
+     --hole-left           window's distance from the LEFT edge
+   Scroll pace / velocity feel = READ_STEP_VH / VEL_BOOST in about.js.
    -------------------------------------------------------------------------- */
 .section-reading{ position:relative; background:var(--bg); width:100%; }
 
 .reading-sticky{
-  --hole-h: 66vh;
+  --hole-h: 60vh;
   --hole-w: calc(var(--hole-h) * 2 / 3);
-  --hole-right: 9vw;
+  --hole-left: 9vw;
+  --hole-cy: 57%;                          /* window centre (pushed below the title) */
   position: sticky; top:0; height:100vh; overflow:hidden;
 }
 
 /* covers strip, on the layer behind everything (JS slides it vertically) */
 .reading-strip{
   position:absolute; z-index:0;
-  right: var(--hole-right);
-  top: calc(50% - var(--hole-h) / 2);     /* cover 0 centred in the hole at rest */
+  left: var(--hole-left);
+  top: calc(var(--hole-cy) - var(--hole-h) / 2);   /* cover 0 centred in the hole at rest */
   width: var(--hole-w);
   will-change: transform;
 }
+.reading-cover-item{ display:block; }
 .reading-cover{
   width:100%; height:var(--hole-h);
-  background-size:cover; background-position:center;
-  display:block;
+  background-size:cover; background-position:center; display:block;
 }
+.reading-cover-cap{ display:none; }        /* per-cover caption used on mobile cards only */
 
-/* page-coloured mask: the box-shadow fills the page AROUND this rectangle, so the
-   rectangle itself is a hole we see the covers through; insets give it depth */
+/* page-coloured mask: box-shadow fills the page AROUND this rectangle -> a hole */
 .reading-hole{
   position:absolute; z-index:1; pointer-events:none;
-  right: var(--hole-right); top:50%;
+  left: var(--hole-left); top: var(--hole-cy);
   width: var(--hole-w); height: var(--hole-h);
   transform: translateY(-50%);
   box-shadow: 0 0 0 100vmax var(--bg),
@@ -910,9 +907,11 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   font-family:var(--font-serif); color:var(--ink);
   font-size: clamp(34px,5vw,68px); font-weight:600; line-height:1.04; letter-spacing:-0.015em;
 }
-.book-text{
-  position:absolute; left: clamp(16px,4vw,56px); top:50%; transform: translateY(-50%);
-  max-width: min(38vw, 420px);
+.book-text{                                /* to the RIGHT of the hole */
+  position:absolute; top: var(--hole-cy); transform: translateY(-50%);
+  left: calc(var(--hole-left) + var(--hole-w) + clamp(28px,4vw,64px));
+  right: clamp(16px,4vw,56px);
+  max-width: 440px;
 }
 .book-title{ font-family:var(--font-serif); font-size: clamp(20px,1.4vw+12px,28px); color:var(--ink); margin:0 0 10px; }
 .book-desc{ font-size: clamp(14px,0.5vw+11px,16px); line-height:1.7; color:var(--muted); margin:0; }
@@ -1156,13 +1155,16 @@ body.hide-pre-college .pre-college:not(.always-visible) {
   .morph-svg{ display:none !important; }
 
   .section-reading{ height:auto !important; }
-  .reading-sticky{ position:static; height:auto; overflow:visible; padding:32px clamp(16px,4vw,36px); }
-  .reading-strip{ position:static; transform:none !important; width:100%; right:auto; top:auto; }
-  .reading-cover{ height:auto; aspect-ratio:2/3; margin:0 0 16px; border:1px solid var(--border); border-radius:2px; }
-  .reading-hole{ display:none; }
+  .reading-sticky{ position:static; height:auto; overflow:visible; padding:32px clamp(16px,4vw,36px) 40px; }
   .reading-fg{ position:static; }
-  .reading-title{ position:static; max-width:none; font-size:clamp(28px,8vw,42px); margin:0 0 18px; }
-  .book-text{ position:static; transform:none; max-width:none; margin:8px 0 0; }
+  .reading-title{ position:static; max-width:none; font-size:clamp(28px,8vw,40px); margin:0 0 22px; }
+  .reading-hole{ display:none; }
+  .book-text{ display:none; }                       /* mobile uses per-card captions instead */
+  .reading-strip{ position:static; transform:none !important; width:100%; left:auto; top:auto;
+                  display:flex; flex-direction:column; gap:30px; }
+  .reading-cover{ height:auto; aspect-ratio:2/3; border:1px solid var(--border); border-radius:3px; }
+  .reading-cover-cap{ display:block; margin:12px 2px 0; }
+  .reading-cover-cap .book-title{ margin:0 0 6px; }
   .section-settings{ grid-template-columns:1fr; }
 }
 
