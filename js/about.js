@@ -181,19 +181,12 @@
 
   /* ------------------------------------------------------------------------
      §3 — "What have I been reading?"
-     Pinned full-screen. Covers sit on a layer behind the page and show through a
-     rectangular hole; they slide VERTICALLY as you scroll. SCROLL-DRIVEN: the
-     position through the covers tracks how far you've scrolled into the section
-     (analog, 1:1 with scroll). To switch to flick-to-step, see the message note.
-     Desktop only; mobile falls back to a simple stack (see style.css).
-     ------------------------------------------------------------------------ */
-  /* ------------------------------------------------------------------------
-     §3 — "What have I been reading?"
-     Pinned full-screen. Covers sit on a layer behind the page and show through a
-     rectangular hole; they slide VERTICALLY as you scroll. Position is a
-     velocity-boosted accumulator: slow scrolling is ~1:1 with distance, but the
-     faster you scroll the more books fly by per pixel (VEL_BOOST). Desktop only;
-     mobile falls back to a stack of cover cards (see style.css).
+     Pinned full-screen. Covers show through a rectangular hole and SNAP to whole
+     covers: scrolling drags the covers a little (a preview), then a flick OR
+     enough accumulated scroll commits to the next/prev book. If you stop between
+     books without committing, it settles back onto the nearest cover — you never
+     rest showing two covers at once. A little dead scroll after the last book
+     before the section unpins. Desktop only; mobile = a stack of cover cards.
      ------------------------------------------------------------------------ */
   var books = [
     { coverSrc:"assets/images/book-placeholder-1.jpg", titleEN:"[Book title 1 — EN]", titleES:"[Título del libro 1 — ES]", descEN:"[Book description 1 — EN]", descES:"[Descripción del libro 1 — ES]", visible:true },
@@ -213,12 +206,11 @@
     if (!section || !strip || !textWrap || !titleEl || !descEl) return;
 
     // ---- TUNABLES ----------------------------------------------------------
-    var READ_STEP_VH = 70;   // scroll runway (vh) per book at slow (unboosted) pace
-    var VEL_BOOST    = 0.4;  // fast-scroll boost: extra advance per (book/sec) of speed.
-                             //   0 = pure 1:1 with scroll distance; higher = books fly by
-                             //   faster the quicker you scroll.
-    var MAX_STEP     = 0.75; // cap on how many books one animation frame can advance, so a
-                             //   single huge scroll jump can't rocket to the end.
+    var COMMIT_VH    = 42;   // scroll (vh) you must accumulate to commit to the next book
+    var DEAD_TAIL_VH = 40;   // dead scroll (vh) held on the last book before the section unpins
+    var FLICK_VEL    = 1.3;  // scroll speed (px/ms) that flicks straight to the next/prev book
+    var PREVIEW      = 0.34; // how far (fraction of a cover) the covers slide while you drag
+    var EASE         = 0.22; // settle easing per frame (higher = snappier)
 
     var mql = window.matchMedia('(max-width: 767px)');
     function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
@@ -229,75 +221,92 @@
     if (!vis.length) return;
     var N = vis.length;
 
-    // build cover items (cover + caption; caption shows on mobile cards, hidden on desktop)
+    // build cover items (+ per-cover captions; captions show only on mobile cards)
     var caps = [];
     vis.forEach(function(b){
       var item = document.createElement('div'); item.className = 'reading-cover-item';
-      var cov = document.createElement('div'); cov.className = 'reading-cover';
-      cov.style.backgroundImage = 'url("' + b.coverSrc + '")';
+      var cov = document.createElement('div'); cov.className = 'reading-cover'; cov.style.backgroundImage = 'url("' + b.coverSrc + '")';
       var cap = document.createElement('div'); cap.className = 'reading-cover-cap';
       var h = document.createElement('h3'); h.className = 'book-title';
       var p = document.createElement('p'); p.className = 'book-desc';
-      cap.appendChild(h); cap.appendChild(p);
-      item.appendChild(cov); item.appendChild(cap); strip.appendChild(item);
+      cap.appendChild(h); cap.appendChild(p); item.appendChild(cov); item.appendChild(cap); strip.appendChild(item);
       caps.push({ h:h, p:p, b:b });
     });
     function lang(){ return (typeof currentLang === 'function' ? currentLang() : 'en'); }
-    function fillCaps(){
-      var l = lang();
-      caps.forEach(function(c){ c.h.textContent = l==='es'?c.b.titleES:c.b.titleEN; c.p.textContent = l==='es'?c.b.descES:c.b.descEN; });
-    }
+    function fillCaps(){ var l = lang(); caps.forEach(function(c){ c.h.textContent = l==='es'?c.b.titleES:c.b.titleEN; c.p.textContent = l==='es'?c.b.descES:c.b.descEN; }); }
     fillCaps();
 
-    var idxShown = -1;
+    var index = 0, idxShown = -1;
     function renderText(i, animate){
-      var b = vis[i], l = lang();
-      var t = l==='es'?b.titleES:b.titleEN, d = l==='es'?b.descES:b.descEN;
+      var b = vis[i], l = lang(); var t = l==='es'?b.titleES:b.titleEN, d = l==='es'?b.descES:b.descEN;
       if (!animate){ titleEl.textContent = t; descEl.textContent = d; return; }
       textWrap.classList.add('is-exiting');
       window.setTimeout(function(){
         titleEl.textContent = t; descEl.textContent = d;
         textWrap.classList.remove('is-exiting'); textWrap.classList.add('is-entering');
         void textWrap.offsetWidth; textWrap.classList.remove('is-entering');
-      }, 200);
+      }, 180);
     }
 
     function layout(){
-      if (mql.matches){ section.style.height=''; strip.style.transform=''; return; }
-      section.style.height = (100 + (N-1)*READ_STEP_VH) + 'vh';
+      if (mql.matches){ section.style.height = ''; strip.style.transform = ''; return; }
+      section.style.height = (100 + (N-1)*COMMIT_VH + DEAD_TAIL_VH) + 'vh';
     }
+    function commitPx(){ return COMMIT_VH / 100 * window.innerHeight; }
 
-    // velocity-boosted progress accumulator (0 .. N-1)
-    var prog = 0, lastY = window.scrollY || 0, lastT = nowMs();
-    function frame(){
-      if (mql.matches){ strip.style.transform=''; return; }
-      var vh = window.innerHeight;
-      var runway = Math.max(1, section.offsetHeight - vh);
-      var pPos = clamp01((-section.getBoundingClientRect().top) / runway);
+    // ---- snap / flick state ----
+    var acc = 0;                 // scroll (px) accumulated toward the next/prev book since last commit
+    var display = 0;             // displayed position in book units (eased -> snaps to `index`)
+    var lastY = window.scrollY || 0, lastT = nowMs(), lastScrollT = 0, raf = 0;
+
+    function onScroll(){
+      if (mql.matches) return;
       var y = window.scrollY || 0, t = nowMs();
-      var dy = y - lastY, dt = Math.max(1, t - lastT);
-      var perBookPx = runway / (N - 1);
-      var vBooks = (Math.abs(dy) / perBookPx) / (dt / 1000);   // scroll speed in books/sec
-      var gain = 1 + VEL_BOOST * vBooks;
-      prog += clamp((dy / perBookPx) * gain, -MAX_STEP, MAX_STEP);
-      if (pPos <= 0) prog = 0; else if (pPos >= 1) prog = N - 1;   // stay consistent at the edges
-      prog = clamp(prog, 0, N - 1);
-      var holeH = holeEl ? holeEl.offsetHeight : vh * 0.66;
-      strip.style.transform = 'translateY(' + (-prog * holeH).toFixed(2) + 'px)';
-      var i = Math.round(prog);
-      if (i !== idxShown){ renderText(i, idxShown !== -1); idxShown = i; }
-      lastY = y; lastT = t;
+      var dy = y - lastY, dt = Math.max(1, t - lastT), vel = dy / dt;   // px/ms, signed
+      lastY = y; lastT = t; lastScrollT = t;
+
+      var runway = Math.max(1, section.offsetHeight - window.innerHeight);
+      var pPos = clamp01((-section.getBoundingClientRect().top) / runway);
+      if (pPos <= 0){ index = 0; acc = 0; }
+      else if (pPos >= 1){ index = N - 1; acc = 0; }
+      else {
+        var CP = commitPx();
+        acc += dy;
+        if (Math.abs(vel) >= FLICK_VEL){                 // flick: one step in the gesture's direction
+          if (vel > 0 && index < N-1){ index++; acc = 0; }
+          else if (vel < 0 && index > 0){ index--; acc = 0; }
+        }
+        while (acc >=  CP && index < N-1){ index++; acc -= CP; }   // accumulation commits (carry remainder)
+        while (acc <= -CP && index > 0 ){ index--; acc += CP; }
+        if (index === N-1 && acc > 0) acc = 0;           // can't over-drag past the last / first cover
+        if (index === 0   && acc < 0) acc = 0;
+      }
+      startRaf();
     }
 
-    var ticking = false;
-    function onScroll(){ if (ticking) return; ticking = true; window.requestAnimationFrame(function(){ frame(); ticking = false; }); }
+    function animate(){
+      var t = nowMs(), active = (t - lastScrollT) < 90, CP = commitPx();
+      if (!active){ acc += (0 - acc) * 0.20; if (Math.abs(acc) < 0.5) acc = 0; }  // settle: snap the preview back
+      var dragFrac = clamp(acc / CP, -1, 1) * PREVIEW;    // covers slide a little while dragging
+      var target = index + dragFrac;
+      display += (target - display) * EASE;
+      if (Math.abs(display - target) < 0.0006) display = target;
+      var holeH = holeEl ? holeEl.offsetHeight : window.innerHeight * 0.66;
+      strip.style.transform = 'translateY(' + (-display * holeH).toFixed(2) + 'px)';
+      if (index !== idxShown){ renderText(index, idxShown !== -1); idxShown = index; }
+      if (active || Math.abs(acc) > 0.5 || Math.abs(display - target) > 0.0006){ raf = requestAnimationFrame(animate); }
+      else { raf = 0; }
+    }
+    function startRaf(){ if (!raf) raf = requestAnimationFrame(animate); }
 
-    layout(); renderText(0, false); idxShown = 0; frame();
+    function settle(){ display = index; strip.style.transform = mql.matches ? '' : ('translateY(' + (-display*(holeEl?holeEl.offsetHeight:0)).toFixed(2) + 'px)'); }
+
+    layout(); renderText(0, false); idxShown = 0; settle();
     window.addEventListener('scroll', onScroll, { passive:true });
-    window.addEventListener('resize', function(){ layout(); frame(); });
-    window.addEventListener('load', function(){ layout(); frame(); });
-    if (mql.addEventListener) mql.addEventListener('change', function(){ layout(); frame(); });
-    document.addEventListener('langchange', function(){ fillCaps(); renderText(idxShown, false); });
+    window.addEventListener('resize', function(){ layout(); settle(); });
+    window.addEventListener('load', function(){ layout(); settle(); });
+    if (mql.addEventListener) mql.addEventListener('change', function(){ layout(); settle(); });
+    document.addEventListener('langchange', function(){ fillCaps(); renderText(index, false); });
   }());
 
   /* ------------------------------------------------------------------------
