@@ -36,7 +36,7 @@
     var DEAD        = 0.16;   // dead zone at each end (fraction) — undeformed, clickable
     var TEXT_FADE   = 0.10;   // (reserved) label-fade fraction
     var FILL_W      = 42;     // width (px) below which the shape fills to solid
-    var TRAVEL_SPAN = 0.55;   // <1 = portrait travels DOWN faster than the page; lower = faster
+    var TRAVEL_SPAN = 0.40;   // <1 = portrait travels DOWN faster than the page; lower = faster
 
     var mql = window.matchMedia('(max-width: 767px)');
 
@@ -111,11 +111,15 @@
       return { out: out, w: w, h: h };
     }
 
-    // one lobe -> SVG path string, placed with its flat edge anchored at Py (y-up from box centre)
-    function lobeD(c, Py, mirror) {
-      var o = carve(c, mirror), pts = o.out, h = o.h, oy = mirror ? -h/2 : h/2, d = '';
+    // one lobe -> SVG path string, drawn CENTRED at Yc (y-up from box centre).
+    // clampSide keeps the lobe on its own side of the mirror line (+1 = y>=0,
+    // -1 = y<=0, 0 = no clamp) so the two buttons never cross each other.
+    function lobeD(c, Yc, mirror, clampSide) {
+      var o = carve(c, mirror), pts = o.out, d = '';
       for (var i = 0; i < pts.length; i++) {
-        var fy = Py + pts[i][1] + oy;                 // y-up from box centre
+        var fy = Yc + pts[i][1];                      // centred on Yc
+        if (clampSide > 0 && fy < 0) fy = 0;
+        if (clampSide < 0 && fy > 0) fy = 0;
         var X = btnW/2 + pts[i][0], Y = boxH/2 - fy;  // -> svg coords (y-down)
         d += (i ? 'L' : 'M') + X.toFixed(2) + ' ' + Y.toFixed(2) + ' ';
       }
@@ -128,14 +132,15 @@
       if (q <= 0.0001) { show(resumeBtn, true); show(group, false); svg.style.opacity = '0'; return; }
       if (q >= 0.9999) { show(group, true); show(resumeBtn, false); svg.style.opacity = '0'; return; }
       show(resumeBtn, false); show(group, false);
+      var Cc = gap/2 + btnH/2;              // each button's CENTRE distance from the mirror line
       var d, wNow;
       if (q <= 0.5) {
-        var c = q / 0.5, P = lerp(gap/2, 0, smooth(c));
-        d = lobeD(c, P, false);
+        var c = q / 0.5, Yc = lerp(Cc, 0, smooth(c));   // resume: top-slot centre -> mirror line
+        d = lobeD(c, Yc, false, 0);
         wNow = lerp(btnW, D0, smooth(c));
       } else {
-        var e = (q - 0.5) / 0.5, c2 = 1 - e, off = lerp(0, gap/2, smooth(e));
-        d = lobeD(c2, off, false) + ' ' + lobeD(c2, -off, true);
+        var e = (q - 0.5) / 0.5, c2 = 1 - e, off = lerp(0, Cc, smooth(e));
+        d = lobeD(c2, off, false, +1) + ' ' + lobeD(c2, -off, true, -1);  // grow from the centred dot
         wNow = lerp(btnW, D0, smooth(c2));
       }
       path.setAttribute('d', d);
@@ -182,6 +187,14 @@
      (analog, 1:1 with scroll). To switch to flick-to-step, see the message note.
      Desktop only; mobile falls back to a simple stack (see style.css).
      ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+     §3 — "What have I been reading?"
+     Pinned full-screen. Covers sit on a layer behind the page and show through a
+     rectangular hole; they slide VERTICALLY as you scroll. Position is a
+     velocity-boosted accumulator: slow scrolling is ~1:1 with distance, but the
+     faster you scroll the more books fly by per pixel (VEL_BOOST). Desktop only;
+     mobile falls back to a stack of cover cards (see style.css).
+     ------------------------------------------------------------------------ */
   var books = [
     { coverSrc:"assets/images/book-placeholder-1.jpg", titleEN:"[Book title 1 — EN]", titleES:"[Título del libro 1 — ES]", descEN:"[Book description 1 — EN]", descES:"[Descripción del libro 1 — ES]", visible:true },
     { coverSrc:"assets/images/book-placeholder-2.jpg", titleEN:"[Book title 2 — EN]", titleES:"[Título del libro 2 — ES]", descEN:"[Book description 2 — EN]", descES:"[Descripción del libro 2 — ES]", visible:true },
@@ -199,25 +212,47 @@
     var descEl = document.getElementById('book-desc');
     if (!section || !strip || !textWrap || !titleEl || !descEl) return;
 
-    var READ_STEP_VH = 70;                    // scroll runway (vh) per book
+    // ---- TUNABLES ----------------------------------------------------------
+    var READ_STEP_VH = 70;   // scroll runway (vh) per book at slow (unboosted) pace
+    var VEL_BOOST    = 0.4;  // fast-scroll boost: extra advance per (book/sec) of speed.
+                             //   0 = pure 1:1 with scroll distance; higher = books fly by
+                             //   faster the quicker you scroll.
+    var MAX_STEP     = 0.75; // cap on how many books one animation frame can advance, so a
+                             //   single huge scroll jump can't rocket to the end.
+
     var mql = window.matchMedia('(max-width: 767px)');
-    function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+    function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+    function clamp01(x){ return clamp(x,0,1); }
+    function nowMs(){ return (window.performance && performance.now) ? performance.now() : Date.now(); }
 
     var vis = books.filter(function(b){ return b.visible; });
     if (!vis.length) return;
+    var N = vis.length;
 
+    // build cover items (cover + caption; caption shows on mobile cards, hidden on desktop)
+    var caps = [];
     vis.forEach(function(b){
-      var c = document.createElement('div');
-      c.className = 'reading-cover';
-      c.style.backgroundImage = 'url("' + b.coverSrc + '")';
-      strip.appendChild(c);
+      var item = document.createElement('div'); item.className = 'reading-cover-item';
+      var cov = document.createElement('div'); cov.className = 'reading-cover';
+      cov.style.backgroundImage = 'url("' + b.coverSrc + '")';
+      var cap = document.createElement('div'); cap.className = 'reading-cover-cap';
+      var h = document.createElement('h3'); h.className = 'book-title';
+      var p = document.createElement('p'); p.className = 'book-desc';
+      cap.appendChild(h); cap.appendChild(p);
+      item.appendChild(cov); item.appendChild(cap); strip.appendChild(item);
+      caps.push({ h:h, p:p, b:b });
     });
+    function lang(){ return (typeof currentLang === 'function' ? currentLang() : 'en'); }
+    function fillCaps(){
+      var l = lang();
+      caps.forEach(function(c){ c.h.textContent = l==='es'?c.b.titleES:c.b.titleEN; c.p.textContent = l==='es'?c.b.descES:c.b.descEN; });
+    }
+    fillCaps();
 
     var idxShown = -1;
     function renderText(i, animate){
-      var b = vis[i], lang = (typeof currentLang === 'function' ? currentLang() : 'en');
-      var t = lang === 'es' ? b.titleES : b.titleEN;
-      var d = lang === 'es' ? b.descES : b.descEN;
+      var b = vis[i], l = lang();
+      var t = l==='es'?b.titleES:b.titleEN, d = l==='es'?b.descES:b.descEN;
       if (!animate){ titleEl.textContent = t; descEl.textContent = d; return; }
       textWrap.classList.add('is-exiting');
       window.setTimeout(function(){
@@ -228,20 +263,30 @@
     }
 
     function layout(){
-      if (mql.matches){ section.style.height = ''; strip.style.transform = ''; return; }
-      section.style.height = (100 + (vis.length - 1) * READ_STEP_VH) + 'vh';
+      if (mql.matches){ section.style.height=''; strip.style.transform=''; return; }
+      section.style.height = (100 + (N-1)*READ_STEP_VH) + 'vh';
     }
 
+    // velocity-boosted progress accumulator (0 .. N-1)
+    var prog = 0, lastY = window.scrollY || 0, lastT = nowMs();
     function frame(){
-      if (mql.matches){ strip.style.transform = ''; return; }
+      if (mql.matches){ strip.style.transform=''; return; }
       var vh = window.innerHeight;
-      var runway = section.offsetHeight - vh;
-      var p = runway > 0 ? clamp01((-section.getBoundingClientRect().top) / runway) : 0;
-      var idxF = p * (vis.length - 1);
+      var runway = Math.max(1, section.offsetHeight - vh);
+      var pPos = clamp01((-section.getBoundingClientRect().top) / runway);
+      var y = window.scrollY || 0, t = nowMs();
+      var dy = y - lastY, dt = Math.max(1, t - lastT);
+      var perBookPx = runway / (N - 1);
+      var vBooks = (Math.abs(dy) / perBookPx) / (dt / 1000);   // scroll speed in books/sec
+      var gain = 1 + VEL_BOOST * vBooks;
+      prog += clamp((dy / perBookPx) * gain, -MAX_STEP, MAX_STEP);
+      if (pPos <= 0) prog = 0; else if (pPos >= 1) prog = N - 1;   // stay consistent at the edges
+      prog = clamp(prog, 0, N - 1);
       var holeH = holeEl ? holeEl.offsetHeight : vh * 0.66;
-      strip.style.transform = 'translateY(' + (-idxF * holeH).toFixed(2) + 'px)';
-      var i = Math.round(idxF);
+      strip.style.transform = 'translateY(' + (-prog * holeH).toFixed(2) + 'px)';
+      var i = Math.round(prog);
       if (i !== idxShown){ renderText(i, idxShown !== -1); idxShown = i; }
+      lastY = y; lastT = t;
     }
 
     var ticking = false;
@@ -252,7 +297,7 @@
     window.addEventListener('resize', function(){ layout(); frame(); });
     window.addEventListener('load', function(){ layout(); frame(); });
     if (mql.addEventListener) mql.addEventListener('change', function(){ layout(); frame(); });
-    document.addEventListener('langchange', function(){ renderText(idxShown, false); });
+    document.addEventListener('langchange', function(){ fillCaps(); renderText(idxShown, false); });
   }());
 
   /* ------------------------------------------------------------------------
