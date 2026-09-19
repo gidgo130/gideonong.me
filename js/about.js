@@ -36,7 +36,7 @@
     var DEAD        = 0.16;   // dead zone at each end (fraction) — undeformed, clickable
     var TEXT_FADE   = 0.10;   // (reserved) label-fade fraction
     var FILL_W      = 42;     // width (px) below which the shape fills to solid
-    var TRAVEL_SPAN = 0.40;   // <1 = portrait travels DOWN faster than the page; lower = faster
+    var TRAVEL_SPAN = 0.55;   // <1 = portrait travels DOWN faster than the page; lower = faster
 
     var mql = window.matchMedia('(max-width: 767px)');
 
