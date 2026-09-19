@@ -36,7 +36,7 @@
     var DEAD        = 0.16;   // dead zone at each end (fraction) — undeformed, clickable
     var TEXT_FADE   = 0.10;   // (reserved) label-fade fraction
     var FILL_W      = 42;     // width (px) below which the shape fills to solid
-    var TRAVEL_SPAN = 0.4;   // <1 = portrait reaches "Who am I?" faster than the page
+    var TRAVEL_SPAN = 0.40;   // <1 = portrait travels DOWN faster than the page; lower = faster
 
     var mql = window.matchMedia('(max-width: 767px)');
 
@@ -175,143 +175,84 @@
   }());
 
   /* ------------------------------------------------------------------------
-     §3 — "What have I been reading?" book stepper
+     §3 — "What have I been reading?"
+     Pinned full-screen. Covers sit on a layer behind the page and show through a
+     rectangular hole; they slide VERTICALLY as you scroll. SCROLL-DRIVEN: the
+     position through the covers tracks how far you've scrolled into the section
+     (analog, 1:1 with scroll). To switch to flick-to-step, see the message note.
+     Desktop only; mobile falls back to a simple stack (see style.css).
      ------------------------------------------------------------------------ */
   var books = [
-    {
-      coverSrc: "assets/images/book-placeholder-1.jpg",
-      titleEN: "[Book title 1 — EN]",
-      titleES: "[Título del libro 1 — ES]",
-      descEN: "[Book description 1 — EN]",
-      descES: "[Descripción del libro 1 — ES]",
-      visible: true
-    },
-    {
-      coverSrc: "assets/images/book-placeholder-2.jpg",
-      titleEN: "[Book title 2 — EN]",
-      titleES: "[Título del libro 2 — ES]",
-      descEN: "[Book description 2 — EN]",
-      descES: "[Descripción del libro 2 — ES]",
-      visible: true
-    },
-    {
-      coverSrc: "assets/images/book-placeholder-3.jpg",
-      titleEN: "[Book title 3 — EN]",
-      titleES: "[Título del libro 3 — ES]",
-      descEN: "[Book description 3 — EN]",
-      descES: "[Descripción del libro 3 — ES]",
-      visible: true
-    }
+    { coverSrc:"assets/images/book-placeholder-1.jpg", titleEN:"[Book title 1 — EN]", titleES:"[Título del libro 1 — ES]", descEN:"[Book description 1 — EN]", descES:"[Descripción del libro 1 — ES]", visible:true },
+    { coverSrc:"assets/images/book-placeholder-2.jpg", titleEN:"[Book title 2 — EN]", titleES:"[Título del libro 2 — ES]", descEN:"[Book description 2 — EN]", descES:"[Descripción del libro 2 — ES]", visible:true },
+    { coverSrc:"assets/images/book-placeholder-3.jpg", titleEN:"[Book title 3 — EN]", titleES:"[Título del libro 3 — ES]", descEN:"[Book description 3 — EN]", descES:"[Descripción del libro 3 — ES]", visible:true },
+    { coverSrc:"assets/images/book-placeholder-4.jpg", titleEN:"[Book title 4 — EN]", titleES:"[Título del libro 4 — ES]", descEN:"[Book description 4 — EN]", descES:"[Descripción del libro 4 — ES]", visible:true },
+    { coverSrc:"assets/images/book-placeholder-5.jpg", titleEN:"[Book title 5 — EN]", titleES:"[Título del libro 5 — ES]", descEN:"[Book description 5 — EN]", descES:"[Descripción del libro 5 — ES]", visible:true }
   ];
 
   (function () {
-    var section = document.getElementById("about-reading");
-    var wrap = document.getElementById("book-covers-wrap");
-    var coversEl = document.getElementById("book-covers");
-    var textWrap = document.getElementById("book-text");
-    var titleEl = document.getElementById("book-title");
-    var descEl = document.getElementById("book-desc");
-    if (!section || !wrap || !coversEl || !textWrap || !titleEl || !descEl) return;
+    var section = document.getElementById('about-reading');
+    var strip = document.getElementById('book-covers');
+    var holeEl = document.getElementById('reading-hole');
+    var textWrap = document.getElementById('book-text');
+    var titleEl = document.getElementById('book-title');
+    var descEl = document.getElementById('book-desc');
+    if (!section || !strip || !textWrap || !titleEl || !descEl) return;
 
-    var visibleBooks = books.filter(function (b) { return b.visible; });
-    if (!visibleBooks.length) return;
+    var READ_STEP_VH = 70;                    // scroll runway (vh) per book
+    var mql = window.matchMedia('(max-width: 767px)');
+    function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
-    var currentIndex = 0;
-    var VH_PER_BOOK = 90; // vh of scroll runway per book, gives room for the velocity gesture
-    section.style.height = (visibleBooks.length * VH_PER_BOOK) + "vh";
+    var vis = books.filter(function(b){ return b.visible; });
+    if (!vis.length) return;
 
-    visibleBooks.forEach(function (book, i) {
-      var img = document.createElement("img");
-      img.className = "book-cover";
-      img.src = book.coverSrc;
-      img.alt = "";
-      img.dataset.index = String(i);
-      coversEl.appendChild(img);
+    vis.forEach(function(b){
+      var c = document.createElement('div');
+      c.className = 'reading-cover';
+      c.style.backgroundImage = 'url("' + b.coverSrc + '")';
+      strip.appendChild(c);
     });
 
-    function updateCovers() {
-      Array.prototype.forEach.call(coversEl.children, function (img, i) {
-        img.classList.toggle("is-active", i === currentIndex);
-      });
-      var coverEl = coversEl.children[0];
-      var coverHeight = coverEl ? coverEl.offsetHeight : 0;
-      var containerHeight = wrap.offsetHeight;
-      var centerOffset = (containerHeight - coverHeight) / 2;
-      coversEl.style.transform = "translateY(" + (centerOffset - currentIndex * coverHeight) + "px)";
+    var idxShown = -1;
+    function renderText(i, animate){
+      var b = vis[i], lang = (typeof currentLang === 'function' ? currentLang() : 'en');
+      var t = lang === 'es' ? b.titleES : b.titleEN;
+      var d = lang === 'es' ? b.descES : b.descEN;
+      if (!animate){ titleEl.textContent = t; descEl.textContent = d; return; }
+      textWrap.classList.add('is-exiting');
+      window.setTimeout(function(){
+        titleEl.textContent = t; descEl.textContent = d;
+        textWrap.classList.remove('is-exiting'); textWrap.classList.add('is-entering');
+        void textWrap.offsetWidth; textWrap.classList.remove('is-entering');
+      }, 200);
     }
 
-    function renderText(animate) {
-      var book = visibleBooks[currentIndex];
-      var lang = currentLang();
-      var title = lang === "es" ? book.titleES : book.titleEN;
-      var desc = lang === "es" ? book.descES : book.descEN;
-
-      if (!animate) {
-        titleEl.textContent = title;
-        descEl.textContent = desc;
-        return;
-      }
-
-      textWrap.classList.add("is-exiting");
-      window.setTimeout(function () {
-        titleEl.textContent = title;
-        descEl.textContent = desc;
-        textWrap.classList.remove("is-exiting");
-        textWrap.classList.add("is-entering");
-        void textWrap.offsetWidth; // force reflow so the entering transition runs
-        textWrap.classList.remove("is-entering");
-      }, 250);
+    function layout(){
+      if (mql.matches){ section.style.height = ''; strip.style.transform = ''; return; }
+      section.style.height = (100 + (vis.length - 1) * READ_STEP_VH) + 'vh';
     }
 
-    renderText(false);
-    updateCovers();
-    window.addEventListener("resize", updateCovers);
-    window.addEventListener("load", updateCovers);
+    function frame(){
+      if (mql.matches){ strip.style.transform = ''; return; }
+      var vh = window.innerHeight;
+      var runway = section.offsetHeight - vh;
+      var p = runway > 0 ? clamp01((-section.getBoundingClientRect().top) / runway) : 0;
+      var idxF = p * (vis.length - 1);
+      var holeH = holeEl ? holeEl.offsetHeight : vh * 0.66;
+      strip.style.transform = 'translateY(' + (-idxF * holeH).toFixed(2) + 'px)';
+      var i = Math.round(idxF);
+      if (i !== idxShown){ renderText(i, idxShown !== -1); idxShown = i; }
+    }
 
-    var lastScrollY = window.scrollY;
-    var lastTime = performance.now();
-    var zoneAccum = 0;
-    var VELOCITY_THRESHOLD = 0.4; // px/ms — below this, scrolling is treated as slow/browsing
-    var DISTANCE_THRESHOLD = 90; // px accumulated at sufficient velocity to commit to a step
+    var ticking = false;
+    function onScroll(){ if (ticking) return; ticking = true; window.requestAnimationFrame(function(){ frame(); ticking = false; }); }
 
-    window.addEventListener("scroll", function () {
-      // Covers may not have had a measurable offsetHeight yet (e.g. placeholder
-      // images still loading) when this handler first ran — recompute once one is available.
-      var firstCover = coversEl.children[0];
-      if (firstCover && firstCover.offsetHeight === 0) updateCovers();
-
-      var rect = section.getBoundingClientRect();
-      var inZone = rect.top < window.innerHeight && rect.bottom > 0;
-      var now = performance.now();
-      var deltaY = window.scrollY - lastScrollY;
-      var deltaT = Math.max(now - lastTime, 1);
-      var velocity = Math.abs(deltaY) / deltaT;
-
-      if (inZone) {
-        zoneAccum += deltaY;
-        if (velocity > VELOCITY_THRESHOLD && Math.abs(zoneAccum) > DISTANCE_THRESHOLD) {
-          var direction = zoneAccum > 0 ? 1 : -1;
-          var steps = Math.min(
-            visibleBooks.length - 1,
-            Math.floor(Math.abs(zoneAccum) / DISTANCE_THRESHOLD)
-          );
-          var newIndex = Math.max(0, Math.min(visibleBooks.length - 1, currentIndex + direction * steps));
-          if (newIndex !== currentIndex) {
-            currentIndex = newIndex;
-            renderText(true);
-            updateCovers();
-          }
-          zoneAccum = 0;
-        }
-      } else {
-        zoneAccum = 0;
-      }
-
-      lastScrollY = window.scrollY;
-      lastTime = now;
-    }, { passive: true });
-
-    document.addEventListener("langchange", function () { renderText(false); });
+    layout(); renderText(0, false); idxShown = 0; frame();
+    window.addEventListener('scroll', onScroll, { passive:true });
+    window.addEventListener('resize', function(){ layout(); frame(); });
+    window.addEventListener('load', function(){ layout(); frame(); });
+    if (mql.addEventListener) mql.addEventListener('change', function(){ layout(); frame(); });
+    document.addEventListener('langchange', function(){ renderText(idxShown, false); });
   }());
 
   /* ------------------------------------------------------------------------

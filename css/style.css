@@ -806,9 +806,20 @@ html[lang="en"] .about-identifiers [data-lang-variant="en"]{ display:block; }
 html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 
 /* §2 "Who am I?" (background comes from the .about-intro cream base) */
-.section-about-whoami{ padding: clamp(40px, 7vh, 80px) 0 56px; }
-.whoami-content{ max-width:560px; }
-.whoami-content p{ font-size:15px; line-height:1.7; margin:0 0 16px; }
+.section-about-whoami{
+  min-height: 84vh;                       /* ~header height, like §1 */
+  display:flex; flex-direction:column; justify-content:center;
+  padding: clamp(40px, 7vh, 80px) 0;
+  box-sizing:border-box;
+}
+.whoami-title{
+  font-family: var(--font-serif); color: var(--ink);
+  font-size: clamp(40px, 6.5vw, 82px);    /* much larger title */
+  font-weight:600; line-height:1.04; letter-spacing:-0.015em;
+  margin:0 0 clamp(18px, 3.5vh, 32px);
+}
+.whoami-content{ max-width:760px; }       /* wider text block */
+.whoami-content p{ font-size: clamp(15px, 0.6vw + 12px, 18px); line-height:1.75; margin:0 0 18px; }
 
 /* Portrait + buttons column. about.js sets its transform per frame (the travel);
    the value below is only a no-JS fallback. */
@@ -841,101 +852,73 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 /* --------------------------------------------------------------------------
    §3 — "What have I been reading?" book stepper
    -------------------------------------------------------------------------- */
-.section-reading {
-  background: var(--bg);
-  width: 100%;
-  position: relative;
+/* --------------------------------------------------------------------------
+   §3 — "What have I been reading?"
+   Pins full-screen ("locks in"). Book covers live on a layer BEHIND the page and
+   are revealed only through a rectangular hole — a page-coloured mask whose big
+   box-shadow paints the page everywhere except the window. Covers slide
+   vertically behind the hole as you scroll; title top-left; the active book's
+   title + description sit beside the hole.
+
+   TUNABLES on .reading-sticky:
+     --hole-h / --hole-w   window size (cover aspect ~2:3)
+     --hole-right          window's distance from the right edge
+   Scroll runway per book = READ_STEP_VH in about.js.
+   -------------------------------------------------------------------------- */
+.section-reading{ position:relative; background:var(--bg); width:100%; }
+
+.reading-sticky{
+  --hole-h: 66vh;
+  --hole-w: calc(var(--hole-h) * 2 / 3);
+  --hole-right: 9vw;
+  position: sticky; top:0; height:100vh; overflow:hidden;
 }
 
-.reading-sticky {
-  position: sticky;
-  top: 88px; /* navbar (~56px) + dev banner (~32px) */
-  min-height: calc(100vh - 88px);
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 2rem;
-  align-items: center;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 clamp(16px, 4vw, 36px);
-}
-
-.section-reading .section-heading {
-  position: absolute;
-  top: 24px;
-  left: 0;
-  right: 0;
-  text-align: left;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 clamp(16px, 4vw, 36px);
-}
-
-.book-covers-wrap {
-  position: relative;
-  width: 100%;
-  max-width: 220px;
-  margin: 0 auto;
-  /* One cover (2:3) plus ~15% peek of the neighbor above and below. */
-  aspect-ratio: 2 / 3.9;
-  overflow: hidden;
-}
-
-.book-covers-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* covers strip, on the layer behind everything (JS slides it vertically) */
+.reading-strip{
+  position:absolute; z-index:0;
+  right: var(--hole-right);
+  top: calc(50% - var(--hole-h) / 2);     /* cover 0 centred in the hole at rest */
+  width: var(--hole-w);
   will-change: transform;
 }
-
-.book-cover {
-  display: block;
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: 3px;
-  background-color: var(--bg-section);
-  opacity: 0.35;
-  flex-shrink: 0;
-  transition: opacity 250ms ease;
+.reading-cover{
+  width:100%; height:var(--hole-h);
+  background-size:cover; background-position:center;
+  display:block;
 }
 
-.book-cover.is-active {
-  opacity: 1;
+/* page-coloured mask: the box-shadow fills the page AROUND this rectangle, so the
+   rectangle itself is a hole we see the covers through; insets give it depth */
+.reading-hole{
+  position:absolute; z-index:1; pointer-events:none;
+  right: var(--hole-right); top:50%;
+  width: var(--hole-w); height: var(--hole-h);
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 100vmax var(--bg),
+              inset 0 0 0 1px var(--border),
+              inset 0 20px 44px rgba(0,0,0,0.30);
+  border-radius:2px;
 }
 
-.book-text {
-  max-width: 520px;
+/* foreground text */
+.reading-fg{ position:absolute; z-index:2; inset:0; pointer-events:none; }
+.reading-fg > *{ pointer-events:auto; }
+.reading-title{
+  position:absolute; top: clamp(24px,7vh,72px); left: clamp(16px,4vw,56px);
+  margin:0; max-width:46vw;
+  font-family:var(--font-serif); color:var(--ink);
+  font-size: clamp(34px,5vw,68px); font-weight:600; line-height:1.04; letter-spacing:-0.015em;
 }
-
-.book-title,
-.book-desc {
-  transition: opacity 250ms ease, transform 250ms ease;
+.book-text{
+  position:absolute; left: clamp(16px,4vw,56px); top:50%; transform: translateY(-50%);
+  max-width: min(38vw, 420px);
 }
-
-.book-title {
-  font-size: clamp(22px, 2.5vw, 28px);
-  margin: 0 0 10px;
-}
-
-.book-desc {
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--muted);
-  margin: 0;
-}
-
-.book-text.is-exiting .book-title,
-.book-text.is-exiting .book-desc {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.book-text.is-entering .book-title,
-.book-text.is-entering .book-desc {
-  opacity: 0;
-  transform: translateY(10px);
-}
+.book-title{ font-family:var(--font-serif); font-size: clamp(20px,1.4vw+12px,28px); color:var(--ink); margin:0 0 10px; }
+.book-desc{ font-size: clamp(14px,0.5vw+11px,16px); line-height:1.7; color:var(--muted); margin:0; }
+.book-title, .book-desc{ transition: opacity .25s ease, transform .25s ease; }
+.book-text.is-exiting .book-title, .book-text.is-exiting .book-desc{ opacity:0; transform:translateY(8px); }
+.book-text.is-entering .book-title, .book-text.is-entering .book-desc{ opacity:0; transform:translateY(-10px); }
 
 /* --------------------------------------------------------------------------
    §4 — Interview FAQ accordion
@@ -1172,8 +1155,14 @@ body.hide-pre-college .pre-college:not(.always-visible) {
   .btn-resume-group{ position:static; opacity:1 !important; pointer-events:auto !important; }
   .morph-svg{ display:none !important; }
 
-  .reading-sticky{ position:static; grid-template-columns:1fr; min-height:0; padding-top:56px; }
-  .section-reading .section-heading{ position:static; padding:24px clamp(16px,4vw,36px) 0; }
+  .section-reading{ height:auto !important; }
+  .reading-sticky{ position:static; height:auto; overflow:visible; padding:32px clamp(16px,4vw,36px); }
+  .reading-strip{ position:static; transform:none !important; width:100%; right:auto; top:auto; }
+  .reading-cover{ height:auto; aspect-ratio:2/3; margin:0 0 16px; border:1px solid var(--border); border-radius:2px; }
+  .reading-hole{ display:none; }
+  .reading-fg{ position:static; }
+  .reading-title{ position:static; max-width:none; font-size:clamp(28px,8vw,42px); margin:0 0 18px; }
+  .book-text{ position:static; transform:none; max-width:none; margin:8px 0 0; }
   .section-settings{ grid-template-columns:1fr; }
 }
 
