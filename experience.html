@@ -6,6 +6,23 @@
   <title>Experience — Gideon A. Ong</title>
   <meta name="description" content="Gideon A. Ong — engineering internships, machine shop, research, and grading experience.">
   <link rel="icon" href="/assets/glogo.ico" type="image/x-icon">
+  <!-- No-flash viewing settings: apply saved prefs to <html> before first paint.
+       Mirrors the writes in js/about.js §6 — keep the keys in sync. -->
+  <script>
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage;
+        var t = ls.getItem("viewTheme");
+        if (t !== "dark" && t !== "light") {
+          t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+        }
+        el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        if (ls.getItem("viewShowPrecollege") !== "1") el.setAttribute("data-hide-precollege", "1");
+      } catch (e) { /* storage blocked — site renders in its default light theme */ }
+    })();
+  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>

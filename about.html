@@ -6,6 +6,23 @@
   <title>About — Gideon A. Ong</title>
   <meta name="description" content="About Gideon A. Ong — mechanical engineering student, IEL program, University of Tulsa.">
   <link rel="icon" href="/assets/glogo.ico" type="image/x-icon">
+  <!-- No-flash viewing settings: apply saved prefs to <html> before first paint.
+       Mirrors the writes in js/about.js §6 — keep the keys in sync. -->
+  <script>
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage;
+        var t = ls.getItem("viewTheme");
+        if (t !== "dark" && t !== "light") {
+          t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+        }
+        el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        if (ls.getItem("viewShowPrecollege") !== "1") el.setAttribute("data-hide-precollege", "1");
+      } catch (e) { /* storage blocked — site renders in its default light theme */ }
+    })();
+  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -108,9 +125,7 @@
   <section class="section-ai" id="about-ai">
     <div class="ai-content">
       <h2 class="ai-heading" data-i18n="aiHeading">Statement on AI</h2>
-      <p data-i18n="aiPara1">[AI statement paragraph 1 — EN]</p>
-      <p data-i18n="aiPara2">[AI statement paragraph 2 — EN]</p>
-      <p data-i18n="aiPara3">[AI statement paragraph 3 — EN]</p>
+      <p data-i18n="aiPara1">[AI statement — EN]</p>
     </div>
   </section>
 
@@ -122,7 +137,7 @@
       <label class="toggle-row">
         <span data-i18n="togglePreCollege">Show pre-college achievements</span>
         <span class="toggle-visual">
-          <input type="checkbox" id="toggle-pre-college" checked>
+          <input type="checkbox" id="toggle-pre-college">
           <span class="toggle-switch" aria-hidden="true"></span>
         </span>
       </label>

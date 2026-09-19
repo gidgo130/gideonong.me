@@ -1110,24 +1110,70 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   margin: 2px 0 0;
 }
 
-/* --------------------------------------------------------------------------
-   §6 — Readability + colorblind mode stubs
-   -------------------------------------------------------------------------- */
-body.readability-mode {
+/* ==========================================================================
+   §6 — VIEWING SETTINGS (site-wide, attribute-driven)
+
+   State lives on <html> as data-* attributes and is persisted in localStorage.
+   A no-flash inline script in every page's <head> applies the saved state
+   BEFORE first paint; js/about.js §6 wires the toggle switches. Keys:
+     data-theme="dark"|"light"   viewTheme            (falls back to OS setting)
+     data-readability="1"        viewReadability
+     data-colorblind="1"         viewColorblind
+     data-hide-precollege="1"    viewShowPrecollege != "1"
+   ========================================================================== */
+
+/* ---- Dark mode: override the palette tokens; everything token-driven follows.
+   Bronze/rose are lightened so they stay legible on the dark background. ---- */
+:root[data-theme="dark"] {
+  --bg:           #16130E;
+  --bg-section:   #211C14;
+  --nav-bg:       #1B1710;
+  --ink:          #ECE6DA;
+  --muted:        #A69D8E;
+  --bronze:       #CE9E4F;   /* lightened — the #6B4F1A brand bronze is unreadable on dark */
+  --bronze-mid:   #B9894A;
+  --rose:         #D89A9A;
+  --rose-light:   #4A3234;
+  --border:       #38301F;
+  --footer-bg:    #0E0B07;
+  --footer-text:  #D4C9BB;
+  color-scheme: dark;        /* native form controls, scrollbars follow */
+}
+/* Soften images a touch so they don't glare against the dark page */
+:root[data-theme="dark"] img { filter: brightness(0.92); }
+
+/* ---- Readability mode: larger type, looser leading, wider muted contrast,
+   comfortable measure, and underlined inline links (color isn't the only cue). */
+:root[data-readability] body {
   font-size: 19px;
   line-height: 1.85;
+  letter-spacing: 0.01em;
 }
+:root[data-readability] { --muted: #4F4D48; }
+:root[data-theme="dark"][data-readability] { --muted: #C4BBAC; }
+:root[data-readability] .whoami-content p,
+:root[data-readability] .ai-content p,
+:root[data-readability] .exp-hero-para,
+:root[data-readability] .site-desc { max-width: 66ch; }
+:root[data-readability] a.iel-chip,
+:root[data-readability] .interesting-sites a,
+:root[data-readability] .ai-content a { text-decoration: underline; text-underline-offset: 2px; }
 
-/* Colorblind mode: class hook only — actual palette adjustment is TBD. */
-html.colorblind-mode {
-  /* stub */
+/* ---- Colorblind mode: don't rely on the rose/bronze hue difference. Swap the
+   rose accent for a blue (orange↔blue reads under every CVD type) and underline
+   text links so meaning never depends on color alone. Most impactful once
+   projects/experience gain colored tags — see the toggle note in the panel. */
+:root[data-colorblind] {
+  --rose:       #3F79A8;
+  --rose-light: #D6E3EF;
 }
+:root[data-colorblind] a.iel-chip,
+:root[data-colorblind] .interesting-sites a,
+:root[data-colorblind] .ai-content a { text-decoration: underline; text-underline-offset: 2px; }
 
-/* --------------------------------------------------------------------------
-   §6 — Pre-college toggle: hides .pre-college elements site-wide when off.
-   .always-visible (e.g. Eagle Scout) ignores this toggle.
-   -------------------------------------------------------------------------- */
-body.hide-pre-college .pre-college:not(.always-visible) {
+/* ---- Pre-college toggle: hides .pre-college elements site-wide when off.
+   .always-visible (e.g. Eagle Scout) ignores this toggle. -------------------- */
+:root[data-hide-precollege] .pre-college:not(.always-visible) {
   display: none;
 }
 
@@ -1137,34 +1183,63 @@ body.hide-pre-college .pre-college:not(.always-visible) {
    and all three buttons (resume, CV, transcript) show stacked and tappable.
    -------------------------------------------------------------------------- */
 @media (max-width: 767px) {
-  .about-intro{ background: var(--bg); }          /* no split band on mobile */
+  /* ===== About intro (mobile): single column; the portrait travels down a TALL
+     header and the buttons morph — same engine as desktop (see about.js). ===== */
+  .about-intro{ position:relative; background: var(--bg); }
   .about-intro::before, .about-intro::after{ display:none; }
+  .about-intro-grid{ display:block; max-width:none; padding:0; }
+  .about-intro-left{ display:block; }
 
-  .about-intro-grid{ display:flex; flex-direction:column; }
-  .about-intro-left{ display:contents; }
-  #about-s1{ order:1; width:100%; min-height:auto; padding: 24px 0 8px; }
-  .about-photo-col{ order:2; transform:none !important; width:100%; margin:0 auto 8px; }
-  #about-s2{ order:3; width:100vw; margin-left:calc(50% - 50vw);   /* full-bleed band */
-             box-sizing:border-box; background: var(--bg-section); border-top:1px solid var(--border);
-             padding:32px clamp(16px,4vw,36px); }
+  #about-s1{
+    position:relative; width:100%;
+    min-height: 118vh;                                  /* header runway: room to travel + morph */
+    padding: 56px clamp(16px,5vw,28px) 0;               /* 56px = breathing room below the red banner */
+  }
+  .section-about-hero{ min-height:0; display:block; }   /* name at the TOP of the header */
+  .hero-name{ font-size: clamp(40px,12vw,60px); }
 
-  /* static, all buttons visible + tappable; morph disabled */
-  .about-buttons{ position:static; min-height:0; display:flex; flex-direction:column; gap: var(--btn-gap); }
-  .about-buttons > .btn-resume{ position:static; }
-  .btn-resume-group{ position:static; opacity:1 !important; pointer-events:auto !important; }
-  .morph-svg{ display:none !important; }
+  /* portrait + buttons overlay the header; about.js sets translateY (the travel).
+     Centred with left+margin so the JS transform (Y only) doesn't fight it. */
+  .about-photo-col{
+    position:absolute; top:0; z-index:2; margin:0;
+    left:50%; margin-left: calc(-1 * min(31vw,150px));
+    width: min(62vw,300px);
+  }
+  .morph-svg{ display:block !important; }
 
-  .section-reading{ height:auto !important; }
-  .reading-sticky{ position:static; height:auto; overflow:visible; padding:32px clamp(16px,4vw,36px) 40px; }
-  .reading-fg{ position:static; }
-  .reading-title{ position:static; max-width:none; font-size:clamp(28px,8vw,40px); margin:0 0 22px; }
-  .reading-hole{ display:none; }
-  .book-text{ display:none; }                       /* mobile uses per-card captions instead */
-  .reading-strip{ position:static; transform:none !important; width:100%; left:auto; top:auto;
-                  display:flex; flex-direction:column; gap:30px; }
-  .reading-cover{ height:auto; aspect-ratio:2/3; border:1px solid var(--border); border-radius:3px; }
-  .reading-cover-cap{ display:block; margin:12px 2px 0; }
-  .reading-cover-cap .book-title{ margin:0 0 6px; }
+  /* The portrait finishes its travel INSIDE this section; about.js sets an
+     inline padding-top (measured from the portrait height) so the "Who am I?"
+     text always sits just below where the portrait lands. min-height keeps the
+     section tall even before that runs / if JS is off. */
+  #about-s2{
+    position:relative; width:100vw; margin-left:calc(50% - 50vw);
+    box-sizing:border-box; background: var(--bg-section); border-top:1px solid var(--border);
+    min-height:92vh; display:block; padding: clamp(32px,8vw,48px) clamp(16px,5vw,28px) 56px;
+  }
+  .whoami-title{ font-size: clamp(34px,10vw,50px); }
+  .whoami-content{ max-width:none; }
+
+  /* ===== Reading carousel (mobile): works like desktop but stacked — title on
+     top, a smaller centred window, the book's title + description below. ===== */
+  .reading-sticky{
+    --hole-h: 40vh; --hole-w: calc(var(--hole-h) * 2 / 3);
+    --hole-left: calc(50% - var(--hole-w)/2);           /* centre the window */
+    --hole-cy: 47%;
+    position:sticky; top:0; height:100vh; overflow:hidden; padding:0;
+  }
+  .reading-title{
+    position:absolute; top: clamp(66px,9vh,88px); left:0; right:0;   /* clear the sticky navbar */
+    text-align:center; padding:0 clamp(16px,5vw,28px); max-width:none;
+    font-size: clamp(24px,7vw,34px);
+  }
+  .reading-hole{ transform: translateY(-50%); }
+  .book-text{
+    display:block; position:absolute; left:clamp(16px,6vw,32px); right:clamp(16px,6vw,32px);
+    top: calc(var(--hole-cy) + var(--hole-h)/2 + clamp(16px,3.5vh,30px));
+    transform:none; max-width:none; text-align:center;
+  }
+  .reading-cover-cap{ display:none; }                   /* single book-text below the window */
+
   .section-settings{ grid-template-columns:1fr; }
 }
 

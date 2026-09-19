@@ -36,7 +36,10 @@
     var DEAD        = 0.16;   // dead zone at each end (fraction) — undeformed, clickable
     var TEXT_FADE   = 0.10;   // (reserved) label-fade fraction
     var FILL_W      = 42;     // width (px) below which the shape fills to solid
-    var TRAVEL_SPAN = 0.7;   // <1 = portrait travels DOWN faster than the page; lower = faster
+    // Portrait travel speed. <1 = portrait travels DOWN faster than the page; lower = faster.
+    // Two values: desktop/iPad (>=768px) and phone (<768px) can be tuned independently.
+    var TRAVEL_SPAN_DESKTOP = 0.7;   // computer + iPad
+    var TRAVEL_SPAN_MOBILE  = 4.5;   // phone (<768px) — change this alone to retune the phone
 
     var mql = window.matchMedia('(max-width: 767px)');
 
@@ -149,18 +152,33 @@
     }
 
     function frame() {
-      if (mql.matches) {                 // mobile: static, morph off
-        photoCol.style.transform = ''; svg.style.opacity = '0';
-        resumeBtn.style.opacity = ''; resumeBtn.style.pointerEvents = '';
-        group.style.opacity = ''; group.style.pointerEvents = '';
-        return;
-      }
       var scy = window.scrollY || window.pageYOffset;
       var introTop = intro.getBoundingClientRect().top + scy;
-      var s1H = s1.offsetHeight, s2H = s2.offsetHeight, colH = photoCol.offsetHeight;
-      var start = introTop, end = introTop + s1H * TRAVEL_SPAN;
-      var p = clamp01((scy - start) / Math.max(1, end - start));
-      var restC = introTop + s1H / 2, finalC = introTop + s1H + s2H / 2, baseC = introTop + colH / 2;
+      var vh = window.innerHeight;
+      var colH = photoCol.offsetHeight;
+      var restC, finalC, p;
+      if (mql.matches) {
+        // MOBILE: single column. The portrait travels down the (tall) header and
+        // comes to rest CLEARLY INSIDE "Who am I?" (§2), morphing the buttons on the way.
+        var s1Hm = s1.offsetHeight;
+        var ids = s1.querySelector('.about-identifiers');
+        var nameBottom = ids ? (ids.getBoundingClientRect().bottom + scy - introTop) : (0.18 * vh);
+        var landInset = 0.05 * vh;                               // gap below §2's top edge
+        restC  = introTop + nameBottom + 0.05 * vh + colH / 2;   // just below the name
+        finalC = introTop + s1Hm + landInset + colH / 2;         // inside "Who am I?"
+        p = clamp01((scy - introTop) / Math.max(1, (s1Hm - vh) * TRAVEL_SPAN_MOBILE));
+        // Push the "Who am I?" text down so it clears where the portrait lands.
+        var pad = Math.round(landInset + colH + 28);
+        if (s2._padFor !== colH) { s2.style.paddingTop = pad + 'px'; s2._padFor = colH; }
+      } else {
+        // DESKTOP: portrait rides the right column from header-centre to who-am-i-centre.
+        var s1H = s1.offsetHeight, s2H = s2.offsetHeight;
+        restC  = introTop + s1H / 2;
+        finalC = introTop + s1H + s2H / 2;
+        p = clamp01((scy - introTop) / Math.max(1, (s1H * TRAVEL_SPAN_DESKTOP)));
+        if (s2.style.paddingTop) { s2.style.paddingTop = ''; s2._padFor = null; }  // clear mobile override
+      }
+      var baseC = introTop + colH / 2;
       photoCol.style.transform = 'translateY(' + (lerp(restC, finalC, p) - baseC) + 'px)';
       updateMorph(ball(clamp01((p - DEAD) / (1 - 2 * DEAD))));
     }
@@ -252,7 +270,6 @@
     }
 
     function layout(){
-      if (mql.matches){ section.style.height = ''; strip.style.transform = ''; return; }
       section.style.height = (100 + (N-1)*COMMIT_VH + DEAD_TAIL_VH) + 'vh';
     }
     function commitPx(){ return COMMIT_VH / 100 * window.innerHeight; }
@@ -263,7 +280,6 @@
     var lastY = window.scrollY || 0, lastT = nowMs(), lastScrollT = 0, armed = true, raf = 0;
 
     function onScroll(){
-      if (mql.matches) return;
       var y = window.scrollY || 0, t = nowMs();
       var dy = y - lastY;
       if (t - lastScrollT >= GESTURE_GAP){ armed = true; acc = 0; }   // a pause = a new gesture -> re-arm
@@ -299,7 +315,7 @@
     }
     function startRaf(){ if (!raf) raf = requestAnimationFrame(animate); }
 
-    function settle(){ display = index; strip.style.transform = mql.matches ? '' : ('translateY(' + (-display*(holeEl?holeEl.offsetHeight:0)).toFixed(2) + 'px)'); }
+    function settle(){ display = index; strip.style.transform = 'translateY(' + (-display*(holeEl?holeEl.offsetHeight:0)).toFixed(2) + 'px)'; }
 
     layout(); renderText(0, false); idxShown = 0; settle();
     window.addEventListener('scroll', onScroll, { passive:true });
@@ -381,49 +397,50 @@
      §6 — Viewing settings toggles
      ------------------------------------------------------------------------ */
   (function () {
-    var THEME_KEY = "aboutTheme";
+    // State lives on <html> as data-* attributes and is persisted in localStorage,
+    // so a setting chosen here carries to every page. The no-flash <head> script in
+    // each HTML file applies the SAME attributes before first paint — keep the keys
+    // below in sync with that script. The switches here only need wiring on this page
+    // (it's the only one with the settings panel).
+    var el = document.documentElement;
+    function store(key, val) {
+      try {
+        if (val === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, val);
+      } catch (e) { /* storage unavailable — the toggle still works for this visit */ }
+    }
 
-    var preCollege = document.getElementById("toggle-pre-college");
+    var preCollege  = document.getElementById("toggle-pre-college");
     var readability = document.getElementById("toggle-readability");
-    var colorblind = document.getElementById("toggle-colorblind");
-    var darkMode = document.getElementById("toggle-dark-mode");
+    var colorblind  = document.getElementById("toggle-colorblind");
+    var darkMode    = document.getElementById("toggle-dark-mode");
 
-    if (preCollege) {
-      preCollege.addEventListener("change", function () {
-        document.body.classList.toggle("hide-pre-college", !preCollege.checked);
-      });
-    }
+    // Reflect the already-applied state (from the <head> script) in each switch.
+    if (preCollege)  preCollege.checked  = !el.hasAttribute("data-hide-precollege");
+    if (readability) readability.checked = el.hasAttribute("data-readability");
+    if (colorblind)  colorblind.checked  = el.hasAttribute("data-colorblind");
+    if (darkMode)    darkMode.checked    = el.getAttribute("data-theme") === "dark";
 
-    if (readability) {
-      readability.addEventListener("change", function () {
-        document.body.classList.toggle("readability-mode", readability.checked);
-      });
-    }
+    if (preCollege) preCollege.addEventListener("change", function () {
+      if (preCollege.checked) { el.removeAttribute("data-hide-precollege"); store("viewShowPrecollege", "1"); }
+      else                    { el.setAttribute("data-hide-precollege", "1"); store("viewShowPrecollege", "0"); }
+    });
 
-    if (colorblind) {
-      colorblind.addEventListener("change", function () {
-        document.documentElement.classList.toggle("colorblind-mode", colorblind.checked);
-      });
-    }
+    if (readability) readability.addEventListener("change", function () {
+      if (readability.checked) { el.setAttribute("data-readability", "1"); store("viewReadability", "1"); }
+      else                     { el.removeAttribute("data-readability"); store("viewReadability", null); }
+    });
 
-    if (darkMode) {
-      var stored = null;
-      try { stored = localStorage.getItem(THEME_KEY); } catch (e) { /* storage unavailable */ }
-      if (stored === "dark") {
-        darkMode.checked = true;
-        document.documentElement.setAttribute("data-theme", "dark");
-      }
+    if (colorblind) colorblind.addEventListener("change", function () {
+      if (colorblind.checked) { el.setAttribute("data-colorblind", "1"); store("viewColorblind", "1"); }
+      else                    { el.removeAttribute("data-colorblind"); store("viewColorblind", null); }
+    });
 
-      darkMode.addEventListener("change", function () {
-        if (darkMode.checked) {
-          document.documentElement.setAttribute("data-theme", "dark");
-          try { localStorage.setItem(THEME_KEY, "dark"); } catch (e) { /* storage unavailable */ }
-        } else {
-          document.documentElement.removeAttribute("data-theme");
-          try { localStorage.removeItem(THEME_KEY); } catch (e) { /* storage unavailable */ }
-        }
-      });
-    }
+    if (darkMode) darkMode.addEventListener("change", function () {
+      var theme = darkMode.checked ? "dark" : "light";
+      el.setAttribute("data-theme", theme);
+      store("viewTheme", theme);   // explicit choice overrides the OS default from here on
+    });
   }());
 
   /* ------------------------------------------------------------------------
