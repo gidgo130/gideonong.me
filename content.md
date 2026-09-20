@@ -160,14 +160,55 @@ revision). Structure, CSS, and JS are done. Nothing below requires a code change
 
 Find every unfilled slot with: `grep "TODO " js/translations.js` (33 hits at time of writing).
 
+### Framework briefing — paste this at the start of the interview
+
+**How the page works.** experience.html is a stack of full-width colored bands, one per role,
+newest first. Each band carries a restrained tint of its employer's color — the color change
+between bands *is* the divider. Inside a band: an image and a text column (role title,
+org · dates, bullets, tag pills, a "View full case study →" link). One role may be flagged
+`current`, which writes the hero's status sentence and marks that band. Every visible string is
+an EN/ES pair in `js/translations.js`; everything else — dates, tags, images, colors, layout —
+is a field in `js/experience-data.js`. Adding, reordering, hiding or recoloring a role is a
+data edit, not a code change.
+
+**Fixed — assume these; don't redesign them mid-interview:**
+- Full-width bands, stacked with no gaps; the tint change is the divider
+- Per-entry color is a 12–20% tint of the employer color over the section background, mixed
+  separately for light and dark mode. Body text must clear 4.5:1 on it, role titles 3:1.
+  If a brand color can't manage that, the tint gets weaker — the text never gets lighter.
+- Every display string is EN + ES. No hardcoded text in the HTML.
+- At most one role flagged `current`, set by the author — it is not a visitor-facing toggle.
+- Content fades in on scroll; band backgrounds never animate.
+
+**Free to change — just say so, it's a data edit:**
+- Which roles appear, what order they sit in, and whether one is hidden
+- All wording, EN and ES
+- Bullet count per role — 2–3 is the guideline, but the renderer takes any number. Same for tags.
+- Layout per role: `imageLeft` (current default), `imageRight`, `fullBleed`, `textOnly`.
+  All four are built and switching is one word.
+- Images — one per role, or none. A role with no image renders clean, not broken.
+- The case-study link — point it at a sub-page, or leave it blank and the link disappears.
+- Employer colors. All four entries are neutral grey placeholders today.
+
+**Possible, but costs a small code change — flag it rather than assuming:**
+- A fifth layout preset (one CSS class plus one line in the renderer)
+- A new per-role field, e.g. location, a second link, or an employer logo
+- Switching the hero from the photo-collage overlay to the 2-column backup — already built,
+  it's one class on the section
+
+**Out of scope here:** the case-study sub-pages at `/experience/<slug>.html` (specced
+separately, none built yet), and anything belonging to projects.html.
+
 ### Resolve these four first — they change what the interview asks
 
 1. **ES role titles** — translate job titles into Spanish, or keep the English title inside
    Spanish surrounding text? Employer names (Baker Hughes, McElroy Prototyping Lab) presumably
    stay untranslated either way. Currently the ES titles are English behind a `TODO ` marker.
-2. **Tag vocabulary** — plan.md mandates a controlled tag list for projects.html, defined once
-   in `js/projects-data.js`. Should experience.html draw from that same vocabulary, or keep its
-   own? Today its tags are free strings (`"Engineering"`, `"R&D"`, `"ALS"`, …).
+2. **Tag vocabulary** — projects.html now has a controlled list, `PROJECT_TAGS` at the top of
+   `js/projects-data.js` (placeholder values, awaiting its own interview). Should experience.html
+   draw from that same vocabulary, or keep its own? Today its tags are free strings
+   (`"Engineering"`, `"R&D"`, `"ALS"`, …). Both files note the question and neither has decided
+   it — whichever interview runs second should not settle it unilaterally.
 3. **Bullet length target** — the spec says 2–3 bullets per role but sets no length. Bullets sit
    in the ~60% text column of a band, and ES runs ~20% longer. Agree a rough ceiling (e.g. one
    to two lines each at 1280px) so bands stay visually even.
