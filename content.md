@@ -364,71 +364,124 @@ Do not invent project content.**
 Find every unfilled slot with: `grep "TODO " js/translations.js js/projects-data.js`
 (29 project string keys × 2 languages, plus 6 placeholder tags and 6 `dates`, at time of writing).
 
-### Framework briefing — paste this at the start of the interview
+### Framework briefing — copy the whole block below into the projects interview
 
-**How the page works.** projects.html has three zones. A **search band** at the top, built but
-hidden until semantic search ships. A **featured** set of 2–3 projects, image-forward, the
-arrangement alternating image-left / image-right. Then the **index**: every project as a compact
-row — thumbnail, title, one-line description, tag pills — with a multi-select tag filter and a
-live count above it. §2 and §3 read the **same array**, `js/projects-data.js`: `featured: true`
-promotes an entry into the featured block and it still appears in the index. A project's copy
-exists in exactly one place. Every visible string is an EN/ES pair in `js/translations.js`;
-everything else — slug, dates, tags, image path, sub-page URL, flags — is a field in the data
-array. Adding, reordering, hiding or featuring a project is a data edit, not a code change.
+Written to stand on its own: an interview chat has no access to this repo, so the block below
+references no file, no other section, and no line of code. Copy it between the two markers.
+
+<!-- ============================ COPY FROM HERE ============================ -->
+
+**Your job in this conversation.** Interview Gideon about his engineering projects and produce
+the filled-in content described under "What to hand back" at the end. You are not writing code
+and not designing the page — both already exist. A separate session with the codebase will
+implement whatever this interview produces. Never invent, embellish, or infer a project
+detail: if something is missing, mark it `TODO` and move on.
+
+**The page your answers fill.** It has three zones:
+
+- a **search band** at the top — built, but hidden until a search feature ships later. Ignore it.
+- a **featured** set of 2–3 projects — large image, title, a paragraph, tags, a link
+- an **index** of every project — one compact row each: small thumbnail, title, one-line
+  description, tag pills. A tag filter and a live project count sit above it.
+
+Both zones read one list. Marking a project "featured" promotes it into the featured block and
+it still appears in the index — its text is never duplicated. Everything displayed exists in
+both English and Spanish.
+
+**Collect per project:**
+
+| What | Notes | Rough length |
+|---|---|---|
+| Name | | a few words |
+| Dates | free text — "Spring 2026", "2025–2026" | short |
+| One-line description | shown in the index row | one line |
+| Fuller description | featured block; strictly needed only for the 2–3 featured projects | a short paragraph |
+| Tags | from the agreed vocabulary; any number | |
+| Photo | one, or none. "No photo" is a perfectly good answer — the row then renders clean, with the text at full width | |
+| Alt text | what the photo shows, for screen readers; only if there is a photo | one line |
+| Search keywords | never displayed; feeds the later search feature | any |
+| Sub-page | a deeper page per project, not built yet. "Later" is fine — the link simply doesn't appear | |
+| Listing | normal / hide for now / exists but unlisted (sensitive or selectively shared work) | |
+
+**Collect for the list as a whole:** the running order (newest first by default), which 2–3 are
+featured, whether any one project should be pinned to the top of the index, and the **tag
+vocabulary** — one controlled list of roughly 5–10 tags that every project draws from. Draft the
+vocabulary *after* hearing the whole list, never before: the list is what reveals the right axis.
+A controlled list is what stops "CAD", "cad" and "SolidWorks" becoming three separate filter
+pills that each match a third of the work.
 
 **Fixed — assume these; don't redesign them mid-interview:**
-- Tag pills sit below the description, never above the title
-- One array feeds both sections. Featured promotes an entry; it never copies its text.
-- The index is rows, not a card grid — rows absorb the ~20% EN→ES length swing without
-  breaking alignment, and degrade cleanly when a project has no photo
-- Thumbnails are 4:3, cropped to fill; featured images are 16:9
-- The search band stays hidden until the search actually works
-- Every display string is EN + ES. No hardcoded text in the HTML.
-- Tag filtering is AND — an entry must carry every active tag
-- Featured entries fade in on scroll, opacity only; filtered rows vanish instantly
 
-**Free to change — just say so, it's a data edit:**
-- Which projects appear, their order, which 2–3 are featured, and whether one is `pinned` to
-  the top of the index
-- All wording, EN and ES, including the page headings and the filter labels
-- Tag count per project — the renderer takes any number
-- Images — one per project, or none. A project with no photo renders with no thumbnail and
-  full-width text: not a broken image, not a grey box.
-- The "View project →" link — point it at a sub-page, or leave `subpageUrl: ""` and the link
-  disappears
-- `unlisted: true` for work that should keep a URL but appear in no listing and no search;
-  `visible: false` for anything not ready. Neither requires deleting the entry.
-- `dates` is a free-form literal, never translated — "Spring 2026", "2025–2026", anything
+- One list feeds both zones. Featured promotes an entry; it never copies its text.
+- Tag pills sit below the description, never above the title.
+- The index is rows, not a card grid.
+- Every thumbnail is the same shape (4:3, cropped to fill); featured images are wider (16:9).
+- Everything displayed is English **and** Spanish.
+- Filtering on several tags is AND — a project must carry all of them to stay visible.
+- Animation is opacity only: never movement, never on page load.
 
-**Possible, but costs a small code change — flag it rather than assuming:**
-- Translating tags. They are literal strings today, shown identically in both languages;
-  making them i18n keys touches both data files and both renderers.
-- Switching the index to the grid view — the class is written and verified, so it is one class
-  in the HTML, but grid cards are not height-matched and that should be settled first
-- A new per-project field — a report PDF, a video, a second link, a collaborator credit
-- Revealing the search band (waits on the Phase 3 search itself)
-- Two-line index descriptions, if one line turns out to be too tight
+**Flexible — offer these freely; each is a one-line data edit:**
 
-**Out of scope here:** the project sub-pages at `/projects/<slug>.html` (not specced, none
-built), the index.html featured-work section (it should eventually source from this same array —
-tracked separately), and anything belonging to experience.html.
+- Which projects appear, in what order, which are featured, which one is pinned
+- All wording in both languages, including the section headings and the filter labels
+- How many tags a project carries
+- A project with no photo, no sub-page, or no Spanish text yet
+- Hiding a project, or keeping it reachable by direct link but out of every listing
 
-### Resolve these four first — they change what the interview asks
+**Costs a small code change — flag it, don't promise it:**
 
-1. **Tag vocabulary shape** — how many tags, and along what axis? Skill ("CAD", "Python"),
-   domain ("Thermal", "Robotics"), artifact type ("Research", "Coursework"), or a mix. Draft it
-   *after* seeing the full project list, not before — the list is what reveals the right axis.
-2. **Shared vocabulary with experience.html?** That page uses free strings today
-   (`"Engineering"`, `"R&D"`, `"ALS"`). Both files note the question and neither has decided it —
-   whichever interview runs second should not settle it unilaterally. Mirror of decision #2 on
-   the experience.html sheet above.
-3. **Tags are untranslated** — the same literal shows in EN and ES. Fine for "CAD" or "Python",
-   awkward for a phrase like "Heat Transfer". Either pick tag names that read acceptably in both
-   languages, or decide to translate them (see the code-change note above).
-4. **One description or two?** Each project has a one-line `desc` for the index row and a fuller
-   `longDesc` for the featured block. If the featured paragraph should genuinely say more rather
-   than say the same thing at greater length, the interview needs to ask for both separately —
-   and only the 2–3 featured projects strictly need a `longDesc` at all.
+- Translating the tags themselves (today a tag shows as the same string in both languages)
+- Showing the index as a card grid instead of rows
+- A new field per project — a report PDF, a video, a second link, a collaborator credit
+- Two-line descriptions in the index rows
+
+**Out of scope for this interview:** the deeper per-project sub-pages (not designed yet), the
+home page, and anything about jobs, internships or research roles — that is a separate interview.
+
+**Settle these five early — they change what you ask for:**
+
+1. **Spanish** — does Gideon write it himself, or do you draft it for him to correct? Either is
+   fine, but it decides whether you collect Spanish during the interview or after it.
+2. **Tag vocabulary axis** — skill ("CAD", "Python"), domain ("Thermal", "Robotics"), type of
+   work ("Research", "Coursework"), or a deliberate mix.
+3. **Do the tags need translating?** "CAD" and "Python" read fine in Spanish; a phrase like
+   "Heat Transfer" does not. Either choose tag names that work in both languages, or flag it as
+   the code change it is.
+4. **One description or two?** If the featured paragraph genuinely says more than the index
+   line, collect both. If it would only be the same thing at greater length, say so.
+5. **How many projects are there?** A long list changes what the index rows have to do; a very
+   short one may not need a tag filter at all.
+
+**What to hand back.** For each project, in this shape — the implementing session types it
+straight into the site's data files:
+
+```
+Project: <name>
+Slug: <url-safe-name>
+Dates: <free text>
+Tags: <from the vocabulary>
+Featured: yes / no     Pinned: yes / no     Listing: normal / hidden / unlisted
+Photo: <filename, or "none">
+Alt (EN):              Alt (ES):
+One-line (EN):
+One-line (ES):
+Paragraph (EN):        [featured projects only]
+Paragraph (ES):
+Search keywords (EN / ES):
+Sub-page: <planned / later>
+```
+
+Then the tag vocabulary as a final list, and the order the projects should appear in. Mark
+anything still unknown as `TODO` rather than filling it with a guess.
+
+<!-- ============================= COPY TO HERE ============================= -->
+
+**Repo-side notes for whoever implements the result** (not part of the copy block): entries go
+in `js/projects-data.js`, strings in `js/translations.js` as EN/ES pairs, and the tag vocabulary
+is the `PROJECT_TAGS` constant at the top of the data file. The five per-project string keys are
+`projNTitle`, `projNDesc`, `projNLongDesc`, `projNAlt`, `projNSearch`. Question 2 above overlaps
+the experience.html tag-vocabulary decision recorded on that sheet — whichever interview runs
+second should not settle it unilaterally.
 
 **Page chrome strings** (live):
 - [projFeaturedHeading] — EN "Featured projects" / ES "Proyectos destacados"
