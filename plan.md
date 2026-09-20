@@ -230,32 +230,79 @@ backup requires no new JS.
 **Order:** Mostly reverse chronological (most recent at top). Exceptions at content author's
 discretion.
 
-**Card layout (default):** Image left (~40%), text right (~60%). Entries separated by a
-dotted `border-bottom` using `var(--border)`. No outer card border or drop shadow — the
-image and dotted divider define each entry.
+> **REVISED 2026-09-20.** The original spec described neutral-background cards with dotted
+> dividers. Per the 2026-09-20 hand-drawn outline, entries are now **full-width bands**, each
+> carrying a restrained tint of its employer's color. The per-entry content list below is
+> unchanged; the container and color treatment are what changed.
+
+**Band layout (default):** Each entry is a full-bleed section spanning the viewport width,
+stacked vertically with no gap between bands — the background color change *is* the divider.
+Inside the band, content sits in the standard centered content container (max-width, never a
+fixed pixel width). Default inner arrangement: image left (~40%), text right (~60%).
+
+**Per-entry color contract:** Each entry declares four tokens, scoped to its own section via
+inline `style` on the band element (set from the data array, not hardcoded in CSS):
+
+| Token | Purpose | Rule |
+|-------|---------|------|
+| `--entry-bg` | Band background | Employer primary mixed **12–20% over `var(--bg-section)`** — a tint, never the raw brand color |
+| `--entry-border` | Top/bottom hairline and rule under the role title | Employer secondary at full or near-full strength |
+| `--entry-accent` | "View full case study →" link, tag pill borders | Employer secondary, darkened if needed for contrast |
+| `--entry-ink` | Body text within the band | Defaults to `var(--ink)`; overridden only if a tint forces it |
+
+Rules that override any employer color:
+- Body text must clear **4.5:1** against `--entry-bg`; large role titles must clear **3:1**.
+  If an employer's color can't satisfy this at 20% tint, reduce the tint — do not lighten the text.
+- Never use raw brand color as a full-strength background. The page must still read as one site.
+- Employer **logos** are out of scope for this spec — color only. Revisit separately if wanted.
+- Dark mode: `--entry-bg` re-mixes over the dark `--bg-section` token rather than reusing the
+  light-mode value. Each entry needs both a light and a dark mix defined in the data array.
 
 **Per entry:**
 - Role title — large, Lora serif
 - Organization + dates — DM Sans, `var(--muted)`
 - 2–3 bullet highlights — DM Sans body
 - Skill tag pills — small, same style as projects.html; placed below bullets
-- "View full case study →" link — `var(--bronze)` accent
+- "View full case study →" link — `var(--entry-accent)`
 
-**Layout variation:** Individual entries may deviate from the default card layout as content
-and photography develop (different image proportion, full-width image, or no image). Variation
-is decided per entry at content time — not a global alternating rule.
+**Layout presets:** Layout variation is a named preset on the data object, not bespoke HTML.
+Each preset maps to a single CSS class on the band. Initial set:
 
-**Maintainability:** All entries defined in a JS data array in `js/main.js` or a dedicated
-`js/experience-data.js`. Each object:
+| `layout` value | Class | Description |
+|---------------|-------|-------------|
+| `"imageLeft"` | `.exp-band--image-left` | Default. Image ~40% left, text ~60% right. |
+| `"imageRight"` | `.exp-band--image-right` | Mirrored. Used to break rhythm, not to alternate globally. |
+| `"fullBleed"` | `.exp-band--full-bleed` | Wide image above, text below. For entries with strong photography. |
+| `"textOnly"` | `.exp-band--text-only` | No image. Text sits in a narrower measure, centered. |
+
+Adding a preset later means one new class — never a one-off markup fork for a single entry.
+
+**Current-role flag:** Exactly one entry may carry `status: "current"`. The page reads this
+flag and does two things automatically:
+1. Sets the hero status sentence from that entry (role + org), via a `data-i18n` key pair.
+2. Applies `.exp-band--current` to that band — a `--entry-accent` left edge rule and a small
+   "Current" eyebrow label above the role title (EN/ES via `data-i18n`).
+
+This is an **author-side flag**, not a visitor-facing toggle. Changing jobs = editing one
+field. If no entry has `status: "current"`, the hero falls back to the student status sentence
+and no band gets the current treatment — this fallback must work, not error.
+
+**Maintainability:** All entries defined in `js/experience-data.js`. Each object:
 ```js
 {
-  role: "",         // EN + ES via i18n key
-  org: "",
-  dates: "",
-  bullets: [],      // EN + ES via i18n keys
+  roleKey: "",            // i18n key → EN + ES
+  orgKey: "",             // i18n key
+  dates: "",              // literal, not translated
+  bulletKeys: [],         // i18n keys → EN + ES
   tags: [],
   imageSrc: "",
   subpageUrl: "",
+  layout: "imageLeft",    // preset name — see table above
+  status: null,           // "current" on at most one entry, else null
+  color: {
+    light: { bg: "", border: "", accent: "" },
+    dark:  { bg: "", border: "", accent: "" }
+  },
   visible: true
 }
 ```
@@ -271,12 +318,16 @@ Reorder by changing array order; hide with `visible: false`.
 `/experience/baker-hughes.html`). Sub-pages are full case studies with flexible sections
 per role. Structure TBD per role — spec separately before building sub-pages.
 
-**Background:** `var(--bg)` throughout the entries section.
+**Background:** Per-band `--entry-bg` (see color contract above). The entries section as a
+whole has no single background — each band supplies its own. `var(--bg)` remains the fallback
+for any entry with no color defined.
 
 #### Animation
 
 No CLAUDE.md carve-outs required for experience.html. Standard rules apply:
-- Scroll-triggered fade-in on cards: IntersectionObserver, opacity 0→1, ~300ms, no movement.
+- Scroll-triggered fade-in on band content: IntersectionObserver, opacity 0→1, ~300ms, no movement.
+  The band background itself does NOT fade in — it is painted at first render, so there is no
+  color flash on scroll.
 - Hover on links and tags: color transition only, ~150ms ease.
 
 #### Open decisions for experience.html
@@ -287,8 +338,146 @@ No CLAUDE.md carve-outs required for experience.html. Standard rules apply:
 4. TURC research — include as an entry? Confirm before build
 5. Skill tags per entry — TBD per role
 6. Sub-page structure — spec separately per role before building sub-pages
-7. Card layout variation — which entries deviate from default? Decided at content time
+7. Layout preset per entry — which entry uses which preset? Decided at content time
 8. Hero text color in dark mode — verify `var(--footer-text)` contrast in dark token block
+9. Employer color values (light + dark mix) per entry — TBD; scaffold uses neutral tints
+10. Hero-to-first-band transition — does the collage hero butt directly against Band 1, or is
+    there a neutral breather strip between them? Evaluate once real photos are in.
+
+---
+
+### Page Spec — projects.html
+
+> Drafted: 2026-09-20 from Gideon's hand-drawn outline. Resolve all TBD items before handing
+> to Claude Code for full build. Scaffold build (structure + JS behaviors, placeholder content)
+> may proceed without TBD content.
+
+**Purpose:** The complete record of Gideon's technical work. Three zones in descending order of
+visual weight: a search band, a small curated **featured** set, and a complete **index** of
+everything. Featured shows depth; the index shows range. The page must not read as one repeating
+layout loop top to bottom — the index is deliberately more compact than the featured block above it.
+
+#### §1 — Search band
+
+**Status:** Structure and styles are built in Phase 1 but the element is **hidden**
+(`display: none` via a single class on the band). It is revealed in Phase 3 when semantic
+search ships. Do not ship a visible search box that does not work.
+
+**Layout:** Full-bleed band directly below the nav/dev-banner. Search input + submit button,
+horizontally centered. Closed off at the bottom by a 2px accent rule in `var(--bronze)` —
+the rule is the transition into the featured section.
+
+**Background:** Visually distinct from both `var(--bg)` and `var(--bg-section)` — this is the
+"innovative background" in the outline. Candidate treatments to compare in the color pass:
+a) `var(--footer-bg)` dark band with light text (bookends the dark footer)
+b) `var(--bg-section)` with a subtle texture or gradient
+c) A bronze-tinted wash
+**TBD** — build (b) first as the safe default; (a) is the more striking option.
+
+**Placeholder text:** EN "Search my projects" / ES "Buscar proyectos" — via `data-i18n`.
+Keep EN and ES close in character length per the CLAUDE.md compact-element rule.
+
+**Phase 3 behavior:** TF-IDF + cosine similarity over each project's `searchText`, run in
+vanilla JS. Results reorder/filter the §3 index in place — no separate results page, no reload.
+The markup written in Phase 1 must not need to change when the search function is swapped in.
+
+#### §2 — Featured projects
+
+**Count:** 2–3 entries. Sourced from the same data array as §3 via `featured: true` — never a
+second copy of a project's content.
+
+**Layout:** Full-width image as the visual anchor, per entry. Arrangement alternates:
+entry 1 image-left / text-right, entry 2 text-left / image-right, matching the outline.
+Alternation here is fine because the set is small and fixed; this is the one place a global
+alternating rule applies.
+
+**Per entry:** Image → title (Lora) → description (DM Sans) → tag pills → "View project →" link.
+**Tags go below the description, never above the title** (CLAUDE.md).
+
+**Background:** `var(--bg-section)`, per the index.html featured-work convention.
+
+#### §3 — Project index
+
+**Format:** **List rows** (single column), with a grid-view hook reserved for later.
+
+Per row: thumbnail left (~140–180px, fixed aspect ratio, `object-fit: cover`) — title,
+one-line description, and tag pills right. Rows separated by a dotted `border-bottom` in
+`var(--border)`. No card borders, no drop shadows.
+
+Rationale (recorded so it isn't relitigated): the featured block above is already image-forward,
+so the index's job is coverage, not impression. Rows also absorb the ~20% EN→ES length swing
+without breaking alignment, and degrade cleanly when an entry has no photograph — both of which
+a fixed-height card grid does not.
+
+**Grid toggle hook:** The index container carries a modifier class — `.project-index--rows`
+(default) or `.project-index--grid`. Both classes are written in `style.css` in Phase 1; only
+rows is used. Switching views later is a class swap, with **no change to the data array or the
+generated markup**. A visitor-facing view switcher is Phase 3 at the earliest, and optional.
+
+**Missing images:** An entry with no `imageSrc` renders with no thumbnail and the text occupying
+the full row width. It must not render a broken image, a grey box, or a generic placeholder icon.
+
+**Tag filter:** Row of tag pills above the index. Clicking toggles a tag; multiple tags may be
+active simultaneously (AND logic — an entry must carry all active tags). A "Clear"/"Todos" pill
+resets. Filtering is instant vanilla JS, no reload. Filtered-out rows are removed from flow
+(`display: none`) so the list closes up rather than leaving gaps.
+
+- Active tag pill: filled `var(--bronze)`, light text. Inactive: bordered, `var(--muted)` text.
+- A live count ("8 projects" / "8 proyectos") sits beside the filter row and updates on filter.
+- If a filter combination yields zero results, show a short empty-state line — never a blank page.
+
+**Order:** Reverse chronological by default. A `pinned: true` field may lift an entry to the top
+of the index independently of the featured flag.
+
+**Background:** `var(--bg)`.
+
+#### Maintainability — `js/projects-data.js`
+
+New file, mirroring `js/experience-data.js`. One array, single source of truth for §2 and §3.
+
+```js
+{
+  slug: "",               // URL slug → /projects/[slug].html
+  titleKey: "",           // i18n key → EN + ES
+  descKey: "",            // i18n key — one line, used in the index row
+  longDescKey: "",        // i18n key — fuller paragraph, used in featured + sub-page
+  dates: "",              // literal, not translated
+  tags: [],               // must match the tag vocabulary below
+  imageSrc: "",           // "" is valid — renders without a thumbnail
+  imageAlt: "",           // i18n key — required whenever imageSrc is set
+  subpageUrl: "",         // "" = no sub-page yet; the "View project →" link is then omitted
+  featured: false,        // true → also rendered in §2
+  pinned: false,          // true → lifted to top of §3
+  searchTextKey: "",      // i18n key — EN + ES blob indexed by Phase 3 search
+  visible: true,          // false → hidden from both §2 and §3 without deleting the entry
+  unlisted: false         // true → reachable by direct URL only; excluded from §2, §3 and search
+}
+```
+
+`unlisted: true` is how the "unlinked pages" decision (politically-sensitive or selectively-shared
+work) is implemented — the entry lives in the array so its sub-page can be generated, but it never
+appears in any listing.
+
+**Tag vocabulary:** A controlled list, defined once at the top of `projects-data.js`. Entries may
+only use tags from it. This prevents "CAD"/"cad"/"SolidWorks" fragmenting the filter.
+**TBD** — draft the vocabulary during the content interview, not before.
+
+#### Animation
+
+No CLAUDE.md carve-outs required. Standard rules apply:
+- Scroll-triggered fade-in on featured entries: IntersectionObserver, opacity 0→1, ~300ms, no movement.
+- Tag filter transitions: opacity only. Rows must not slide or animate position — reflow is instant.
+- Hover on rows, links, and tags: color transition only, ~150ms ease.
+
+#### Open decisions for projects.html
+
+1. Search band background treatment — (a) dark, (b) section-tint, (c) bronze wash. Build (b) first.
+2. Tag vocabulary — drafted during the content interview
+3. Project list — which projects, and which 2–3 are featured? Content interview
+4. Thumbnail aspect ratio — 4:3, 16:9, or 1:1? Pick one and enforce it across all rows
+5. Index row density — one-line description vs. two. Evaluate once real descriptions exist
+6. Sub-page structure — spec separately, after §2/§3 are built and reviewed
+7. Whether a visitor-facing rows/grid view switcher is worth building at all (Phase 3, optional)
 
 ---
 
