@@ -57,9 +57,49 @@
 
   <div class="dev-banner" data-i18n="banner">This site is under development.</div>
 
-  <section class="stub-section">
-    <h1 class="stub-heading" data-i18n="projectsHeading">Projects</h1>
-    <p class="stub-body" data-i18n="projectsBody">Full projects page coming soon.</p>
+  <!-- §1 — Search band. BUILT BUT HIDDEN.
+       .is-hidden is display:none and is the ONLY thing keeping this band off the
+       page: deleting that one class in this file reveals it. It stays hidden
+       until the Phase 3 semantic search actually works — a search box that does
+       nothing is worse than no search box.
+       The input is inert on purpose: nothing is wired to it, and this is a plain
+       <div>, not a <form>, so pressing Enter cannot navigate. Phase 3 search
+       (TF-IDF + cosine over each entry's searchText) reorders/filters the §3
+       rows in place — this markup does not need to change when it lands. -->
+  <div class="search-band is-hidden" id="search-band" aria-hidden="true">
+    <div class="search-band-inner">
+      <input type="search" class="search-input" id="project-search"
+             data-i18n-placeholder="projSearchPlaceholder" placeholder="" autocomplete="off">
+      <button type="button" class="search-btn" data-i18n="projSearchBtn"></button>
+    </div>
+  </div>
+
+  <!-- §2 — Featured projects. Rendered from js/projects-data.js by js/projects.js:
+       every entry with featured: true. The SAME array drives §3 below — a featured
+       project is promoted here, not copied here, and it still appears in the index. -->
+  <section class="featured-projects" id="featured-projects">
+    <h2 class="section-heading" data-i18n="projFeaturedHeading"></h2>
+    <div class="featured-list" id="featured-list"></div>
+  </section>
+
+  <!-- §3 — Project index. Complete listing, deliberately more compact than §2:
+       the featured block above is already image-forward, so the index's job is
+       coverage. Rows by default; .project-index--grid is written in style.css and
+       switching to it is a class swap on #project-index — no data or markup change. -->
+  <section class="project-index-section" id="project-index-section">
+    <h2 class="section-heading" data-i18n="projIndexHeading"></h2>
+
+    <div class="index-controls">
+      <!-- Pills are built from the controlled vocabulary at the top of
+           js/projects-data.js. Multi-select, AND logic. -->
+      <div class="tag-filter" id="tag-filter" role="group"></div>
+      <p class="index-count" id="index-count" aria-live="polite"></p>
+    </div>
+
+    <div class="project-index project-index--rows" id="project-index"></div>
+
+    <!-- Shown only when a filter combination matches nothing — never a blank page. -->
+    <p class="index-empty" id="index-empty" data-i18n="projEmpty" hidden></p>
   </section>
 
   <footer class="site-footer">
@@ -74,5 +114,7 @@
 
   <script src="js/translations.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/projects-data.js"></script>
+  <script src="js/projects.js"></script>
 </body>
 </html>

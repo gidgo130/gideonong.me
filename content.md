@@ -306,29 +306,57 @@ but no longer referenced by any HTML — leftovers from the stub page.
 
 ---
 
-## projects.html — NEEDS REVIEW
+## projects.html — INTAKE
 
-**Status: NEEDS REVIEW — reconcile this section in a chat focused on projects.html.**
+**Status: INTAKE — the scaffold is built; every project string below is a placeholder.
+Do not invent project content.**
 
-> **What this section is and isn't.** projects.html is **still a stub page** — navbar, banner,
-> a centered heading, placeholder body, footer. A full page spec exists at
-> plan.md → Page Spec — projects.html (drafted 2026-09-20: search band, featured set, index
-> rows, tag filter, `js/projects-data.js`), but **none of it is built**. The lines below cover
-> only the stub that is actually live. A session focused on projects.html should build the page
-> per the spec, then rewrite this section as a full intake sheet.
+> **What this section is and isn't.** As of 2026-09-20 projects.html is **built as a scaffold**
+> per plan.md → Page Spec — projects.html: hidden search band (§1), featured entries (§2), and
+> the index with its tag filter (§3), rendered by `js/projects.js` from `js/projects-data.js`.
+> Structure and behavior are real; **all content is placeholder**. Six `TODO` entries are in the
+> array — two featured, one deliberately with `imageSrc: ""` to exercise the no-thumbnail path,
+> one with `subpageUrl: ""` to exercise the omitted link, one `pinned`. The content interview
+> replaces the entries and the tag vocabulary; the markup does not need to change.
 
-**Live stub strings** (currently rendering):
-- [projectsHeading] — EN "Projects" / ES "Proyectos"
-- [projectsBody] — EN "Full projects page coming soon." / ES "Página completa en construcción."
+**Page chrome strings** (live):
+- [projFeaturedHeading] — EN "Featured projects" / ES "Proyectos destacados"
+- [projIndexHeading] — EN "All projects" / ES "Todos los proyectos"
+- [projViewLink] — EN "View project →" / ES "Ver proyecto →"
+- [projFilterLabel] — EN "Filter by tag" / ES "Filtrar por etiqueta" (aria-label only)
+- [projFilterClear] — EN "Clear" / ES "Todos" (compact control — lengths deliberately matched)
+- [projCount] / [projCountOne] — EN "{n} projects" / "{n} project", ES "{n} proyectos" /
+  "{n} proyecto". `{n}` is substituted by `js/projects.js`; the count updates on every filter.
+- [projEmpty] — EN "No projects match those tags." /
+  ES "Ningún proyecto coincide con esas etiquetas."
 
-**Known to be needed by the spec but not yet drafted:**
-- Tag vocabulary — a controlled list defined once at the top of `js/projects-data.js`.
-  plan.md says draft it during the content interview, not before. **This is also open decision
-  #2 on the experience.html sheet above** — the two pages should agree.
-- Search band placeholder — EN "Search my projects" / ES "Buscar proyectos" (band ships hidden
-  until Phase 3 semantic search works; do not reveal a search box that does nothing)
+**§1 search band** — built but **hidden** (`.search-band.is-hidden`, `display: none`). Revealed
+by deleting that one class in `projects.html` when Phase 3 semantic search ships. The input is
+inert and the band is a `<div>`, not a `<form>`, so Enter cannot navigate.
+- [projSearchPlaceholder] — EN "Search my projects" / ES "Buscar proyectos"
+  (set via `data-i18n-placeholder`, handled in `js/projects.js` — `main.js` does not do
+  placeholders)
+- [projSearchBtn] — EN "Search" / ES "Buscar"
+
+**Per-entry strings** — five keys per project, all currently `TODO` in both languages:
+`projNTitle`, `projNDesc` (one-line, index row), `projNLongDesc` (featured + sub-page),
+`projNAlt` (image alt — omitted when the entry has no image), `projNSearch` (Phase 3 blob).
+
+**Non-string fields** live in `js/projects-data.js`: `slug`, `dates`, `tags`, `imageSrc`,
+`subpageUrl`, `featured`, `pinned`, `visible`, `unlisted`.
+
+**Still to fill:**
+- Tag vocabulary — the controlled list `PROJECT_TAGS` at the top of `js/projects-data.js`,
+  currently `TODO Tag A` … `TODO Tag F`. **This is also open decision #2 on the experience.html
+  sheet above** — the two pages should agree on whether they share one vocabulary.
 - The project list itself, and which 2–3 are featured
 - Per-project: title, one-line description, longer description, dates, tags, image, search text
+- Thumbnail aspect ratio is settled: **4:3**, enforced on every row via `object-fit: cover`
+  (plan.md open decision #4).
+
+**Dead keys to clean up:** `projectsHeading` and `projectsBody` are still defined in
+`translations.js` but no longer referenced — leftovers from the stub page, same as
+`aboutHeading` / `aboutBody`.
 
 ---
 

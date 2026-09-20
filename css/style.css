@@ -1628,3 +1628,469 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
     font-size: 15.5px;
   }
 }
+
+/* ==========================================================================
+   projects.html — page layout
+
+   Three zones in descending visual weight: a (hidden) search band, a small
+   image-forward featured set, and a compact complete index. The index is
+   deliberately quieter than the featured block above it — the page must not
+   read as one repeating layout loop top to bottom.
+
+   §2 and §3 are rendered by js/projects.js from the single array in
+   js/projects-data.js. Nothing below assumes a second data source.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   §1 — Search band: BUILT BUT HIDDEN.
+
+   .is-hidden below is the only thing keeping the band off the page. Deleting
+   that class from the band element in projects.html reveals it — one edit, no
+   CSS change — once the Phase 3 semantic search actually works.
+
+   Background treatment (b) from plan.md open decision #1: a --bg-section wash
+   settling into --bg, distinct from both flat section colors without competing
+   with project imagery. Treatment (a), a --footer-bg dark band, is the more
+   striking alternative to compare in the color pass. The 2px bronze rule at the
+   bottom is the transition into the featured section.
+   -------------------------------------------------------------------------- */
+.search-band {
+  width: 100%;
+  max-width: 100%;
+  background: linear-gradient(180deg, var(--bg-section) 0%, var(--bg) 100%);
+  border-bottom: 2px solid var(--bronze);
+  padding: clamp(20px, 3vw, 32px) clamp(16px, 4vw, 36px);
+}
+
+.search-band.is-hidden {
+  display: none;
+}
+
+.search-band-inner {
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--nav-bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-input:focus-visible {
+  outline: 2px solid var(--bronze-mid);
+  outline-offset: 1px;
+}
+
+.search-btn {
+  flex: 0 0 auto;
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--bronze);
+  border: 1px solid var(--bronze);
+  border-radius: 2px;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.search-btn:hover {
+  background: var(--bronze);
+  color: var(--bg);
+}
+
+/* --------------------------------------------------------------------------
+   §2 — Featured projects
+
+   Image is the anchor. Arrangement alternates image-left / image-right, set by
+   js/projects.js from the entry index. Alternation is safe here and nowhere
+   else: the set is 2-3 entries and fixed.
+
+   Order inside the body is title, dates, description, tags, link. Tags go
+   BELOW the description, never above the title (CLAUDE.md).
+   -------------------------------------------------------------------------- */
+.featured-projects {
+  background: var(--bg-section);
+  border-top: 1px solid var(--border);
+  padding: clamp(32px, 5vw, 56px) clamp(16px, 4vw, 36px);
+  width: 100%;
+}
+
+.featured-projects .section-heading,
+.project-index-section .section-heading {
+  max-width: 1000px;
+  margin: 0 auto 20px;
+}
+
+.featured-list {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(32px, 5vw, 56px);
+}
+
+/* Scroll-triggered fade, opacity only, no movement — standard CLAUDE.md rule,
+   no carve-out on this page. js/projects.js adds .is-visible. */
+.featured-entry {
+  display: grid;
+  gap: clamp(18px, 3vw, 32px);
+  align-items: start;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.featured-entry.is-visible {
+  opacity: 1;
+}
+
+.featured-entry--image-left {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+.featured-entry--image-left .featured-entry-media { grid-column: 1; grid-row: 1; }
+.featured-entry--image-left .featured-entry-body  { grid-column: 2; grid-row: 1; }
+
+.featured-entry--image-right {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+
+.featured-entry--image-right .featured-entry-media { grid-column: 2; grid-row: 1; }
+.featured-entry--image-right .featured-entry-body  { grid-column: 1; grid-row: 1; }
+
+.featured-entry-media,
+.featured-entry-body {
+  min-width: 0;
+}
+
+.featured-entry-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+.featured-entry-title {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 1.4vw + 12px, 28px);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.featured-entry-meta {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.featured-entry-desc {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+
+/* Shared by featured entries and index rows. */
+.project-link {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--bronze);
+  transition: color 150ms ease;
+}
+
+.project-link:hover {
+  color: var(--ink);
+}
+
+/* --------------------------------------------------------------------------
+   §3 — Project index
+
+   Coverage, not impression: rows are compact because the featured block above
+   is already image-forward. Rows also absorb the EN to ES length swing without
+   breaking alignment and degrade cleanly when an entry has no photograph.
+   -------------------------------------------------------------------------- */
+.project-index-section {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: clamp(32px, 5vw, 56px) clamp(16px, 4vw, 36px) clamp(48px, 6vw, 72px);
+  width: 100%;
+}
+
+/* Filter pills on the left, live count beside them. */
+.index-controls {
+  max-width: 1000px;
+  margin: 0 auto 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Inactive: bordered, muted text. Active: filled bronze, light text.
+   The active text color is var(--bg), not a hardcoded white — in dark mode the
+   bronze token lightens and --bg darkens, so the pair stays legible both ways. */
+.tag-filter-pill {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  padding: 4px 11px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.tag-filter-pill:hover {
+  color: var(--ink);
+  border-color: var(--bronze-mid);
+}
+
+.tag-filter-pill.is-active {
+  background: var(--bronze);
+  border-color: var(--bronze);
+  color: var(--bg);
+}
+
+.tag-filter-pill:focus-visible {
+  outline: 2px solid var(--bronze-mid);
+  outline-offset: 2px;
+}
+
+.index-count {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.index-empty {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-top: 20px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.project-index {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ---- Rows view (default) ------------------------------------------------ */
+.project-index--rows .project-row {
+  display: grid;
+  grid-template-columns: clamp(140px, 18vw, 180px) minmax(0, 1fr);
+  gap: clamp(14px, 2.5vw, 24px);
+  align-items: start;
+  padding: 18px 0;
+  border-bottom: 1px dotted var(--border);
+}
+
+/* No imageSrc: no thumbnail column and no img node at all — the text runs the
+   full row width. Never a broken image, a grey box, or a placeholder icon. */
+.project-index--rows .project-row--no-image {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ---- Grid view (written, not applied) -----------------------------------
+   Reserved hook. Switching the index to cards is a class swap on the container
+   in projects.html — .project-index--rows becomes .project-index--grid — with
+   NO change to js/projects-data.js and no change to the markup js/projects.js
+   generates. Every rule here targets the same nodes the rows view does.
+   A visitor-facing view switcher is Phase 3 at the earliest, and optional. --- */
+.project-index--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: clamp(18px, 3vw, 28px);
+}
+
+.project-index--grid .project-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  border-bottom: 0;
+}
+
+/* A card with no thumbnail is simply a text card — its text starts at the top
+   of the cell. Cards are not forced to a common height. */
+.project-index--grid .project-thumb {
+  width: 100%;
+}
+
+.project-index--grid .project-row-title {
+  font-size: 16px;
+}
+
+.project-index--grid .project-row-desc {
+  margin-bottom: 0;
+}
+
+/* ---- Row internals (shared by both views) ------------------------------- */
+.project-row {
+  transition: opacity 150ms ease;
+}
+
+.project-thumb,
+.project-row-body {
+  min-width: 0;
+}
+
+/* One aspect ratio, enforced on every thumbnail in both views. 4:3 matches the
+   band images on experience.html, stays tall enough beside three lines of text
+   at a 140-180px width, and crops landscape shop and CAD photography far less
+   brutally than 1:1 would. */
+.project-thumb-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--bg-section);
+}
+
+.project-row-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  margin: 0 0 5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.project-row-dates {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.project-row-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 10px;
+  max-width: 68ch;
+}
+
+.project-row .tag-row {
+  margin: 0 0 8px;
+}
+
+.project-row .project-link {
+  font-size: 13px;
+}
+
+/* Filtered out: removed from flow so the list closes up instead of leaving a
+   gap. Only opacity is transitioned — rows never slide or animate position.
+   Specificity here deliberately beats both view blocks above. */
+.project-index .project-row.is-filtered-out {
+  display: none;
+  opacity: 0;
+}
+
+/* --------------------------------------------------------------------------
+   projects.html — mobile
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Featured collapses to one column; the image always leads. */
+  .featured-entry,
+  .featured-entry--image-left,
+  .featured-entry--image-right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .featured-entry--image-left .featured-entry-media,
+  .featured-entry--image-right .featured-entry-media {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .featured-entry--image-left .featured-entry-body,
+  .featured-entry--image-right .featured-entry-body {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* Narrower thumbnail so the row keeps a usable text measure at 375px.
+     The 4:3 ratio is unchanged. */
+  .project-index--rows .project-row {
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  /* Restated after the rule above — same specificity, so the desktop no-image
+     rule would otherwise lose here and squeeze a text-only entry into the
+     104px thumbnail column. */
+  .project-index--rows .project-row--no-image {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .index-controls {
+    justify-content: flex-start;
+  }
+
+  .project-row-desc {
+    font-size: 13.5px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   projects.html — wide screens. Text and measure grow; layout is unchanged.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1440px) {
+  .featured-projects .section-heading,
+  .project-index-section .section-heading,
+  .featured-list,
+  .index-controls,
+  .index-empty,
+  .project-index {
+    max-width: 1120px;
+  }
+
+  .featured-entry-desc {
+    font-size: 15.5px;
+  }
+
+  .project-row-title {
+    font-size: 18.5px;
+  }
+
+  .project-row-desc {
+    font-size: 15px;
+  }
+
+  .index-count,
+  .tag-filter-pill {
+    font-size: 13px;
+  }
+}

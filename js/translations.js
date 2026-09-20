@@ -101,7 +101,61 @@ const translations = {
     expTurcBullet2: "TODO bullet 2 (EN)",
     expTurcBullet3: "TODO bullet 3 (EN)",
 
-    // projects.html stub
+    // projects.html — §1 search band (built but hidden until Phase 3 search works)
+    projSearchPlaceholder: "Search my projects",
+    projSearchBtn: "Search",
+
+    // projects.html — §2 featured + §3 index chrome
+    projFeaturedHeading: "Featured projects",
+    projIndexHeading: "All projects",
+    projViewLink: "View project →",
+    projFilterLabel: "Filter by tag",      // aria-label on the filter row
+    projFilterClear: "Clear",              // resets every active tag
+    projCount: "{n} projects",             // {n} filled by js/projects.js
+    projCountOne: "{n} project",
+    projEmpty: "No projects match those tags.",
+
+    // projects.html — placeholder entries (js/projects-data.js).
+    // Every string here is a stand-in. Real project copy comes from the
+    // projects content interview — do not invent any of it.
+    proj1Title: "TODO Project 1 title",
+    proj1Desc: "TODO one-line index description for project 1.",
+    proj1LongDesc: "TODO fuller featured description for project 1 — one short paragraph, used in the featured block and on the sub-page.",
+    proj1Alt: "TODO image description for project 1",
+    proj1Search: "TODO search text blob for project 1",
+
+    proj2Title: "TODO Project 2 title",
+    proj2Desc: "TODO one-line index description for project 2.",
+    proj2LongDesc: "TODO fuller featured description for project 2 — one short paragraph, used in the featured block and on the sub-page.",
+    proj2Alt: "TODO image description for project 2",
+    proj2Search: "TODO search text blob for project 2",
+
+    proj3Title: "TODO Project 3 title",
+    proj3Desc: "TODO one-line index description for project 3.",
+    proj3LongDesc: "TODO fuller description for project 3.",
+    proj3Alt: "TODO image description for project 3",
+    proj3Search: "TODO search text blob for project 3",
+
+    // Entry 4 has no image — its imageSrc is "" and it carries no alt key.
+    proj4Title: "TODO Project 4 title (no image)",
+    proj4Desc: "TODO one-line index description for project 4 — this entry has no thumbnail, so its text runs the full row width.",
+    proj4LongDesc: "TODO fuller description for project 4.",
+    proj4Search: "TODO search text blob for project 4",
+
+    proj5Title: "TODO Project 5 title (no sub-page)",
+    proj5Desc: "TODO one-line index description for project 5 — this entry has no sub-page yet, so no link is shown.",
+    proj5LongDesc: "TODO fuller description for project 5.",
+    proj5Alt: "TODO image description for project 5",
+    proj5Search: "TODO search text blob for project 5",
+
+    proj6Title: "TODO Project 6 title",
+    proj6Desc: "TODO one-line index description for project 6.",
+    proj6LongDesc: "TODO fuller description for project 6.",
+    proj6Alt: "TODO image description for project 6",
+    proj6Search: "TODO search text blob for project 6",
+
+    // projects.html stub — dead keys, kept until the stub strings are retired
+    // from content.md. Nothing on the page references them any more.
     projectsHeading: "Projects",
     projectsBody: "Full projects page coming soon.",
 
@@ -202,7 +256,62 @@ const translations = {
     expTurcBullet2: "TODO bullet 2 (ES)",
     expTurcBullet3: "TODO bullet 3 (ES)",
 
-    // projects.html stub
+    // projects.html — §1 search band (built but hidden until Phase 3 search works)
+    projSearchPlaceholder: "Buscar proyectos",
+    projSearchBtn: "Buscar",
+
+    // projects.html — §2 featured + §3 index chrome.
+    // projSearchBtn and projFilterClear sit inside fixed-shape controls, so the
+    // ES strings are kept the same length as the EN ones (CLAUDE.md compact
+    // element rule) — the pill must not resize when the language toggles.
+    projFeaturedHeading: "Proyectos destacados",
+    projIndexHeading: "Todos los proyectos",
+    projViewLink: "Ver proyecto →",
+    projFilterLabel: "Filtrar por etiqueta",
+    projFilterClear: "Todos",
+    projCount: "{n} proyectos",
+    projCountOne: "{n} proyecto",
+    projEmpty: "Ningún proyecto coincide con esas etiquetas.",
+
+    // projects.html — placeholder entries (js/projects-data.js).
+    // Same TODO convention as EN — real copy comes from the content interview.
+    proj1Title: "TODO título del proyecto 1",
+    proj1Desc: "TODO descripción de una línea para el proyecto 1.",
+    proj1LongDesc: "TODO descripción ampliada del proyecto 1 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
+    proj1Alt: "TODO descripción de la imagen del proyecto 1",
+    proj1Search: "TODO texto de búsqueda para el proyecto 1",
+
+    proj2Title: "TODO título del proyecto 2",
+    proj2Desc: "TODO descripción de una línea para el proyecto 2.",
+    proj2LongDesc: "TODO descripción ampliada del proyecto 2 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
+    proj2Alt: "TODO descripción de la imagen del proyecto 2",
+    proj2Search: "TODO texto de búsqueda para el proyecto 2",
+
+    proj3Title: "TODO título del proyecto 3",
+    proj3Desc: "TODO descripción de una línea para el proyecto 3.",
+    proj3LongDesc: "TODO descripción ampliada del proyecto 3.",
+    proj3Alt: "TODO descripción de la imagen del proyecto 3",
+    proj3Search: "TODO texto de búsqueda para el proyecto 3",
+
+    // La entrada 4 no tiene imagen — imageSrc es "" y no lleva clave alt.
+    proj4Title: "TODO título del proyecto 4 (sin imagen)",
+    proj4Desc: "TODO descripción de una línea para el proyecto 4 — esta entrada no tiene miniatura, así que su texto ocupa todo el ancho de la fila.",
+    proj4LongDesc: "TODO descripción ampliada del proyecto 4.",
+    proj4Search: "TODO texto de búsqueda para el proyecto 4",
+
+    proj5Title: "TODO título del proyecto 5 (sin subpágina)",
+    proj5Desc: "TODO descripción de una línea para el proyecto 5 — esta entrada todavía no tiene subpágina, así que no se muestra enlace.",
+    proj5LongDesc: "TODO descripción ampliada del proyecto 5.",
+    proj5Alt: "TODO descripción de la imagen del proyecto 5",
+    proj5Search: "TODO texto de búsqueda para el proyecto 5",
+
+    proj6Title: "TODO título del proyecto 6",
+    proj6Desc: "TODO descripción de una línea para el proyecto 6.",
+    proj6LongDesc: "TODO descripción ampliada del proyecto 6.",
+    proj6Alt: "TODO descripción de la imagen del proyecto 6",
+    proj6Search: "TODO texto de búsqueda para el proyecto 6",
+
+    // projects.html stub — dead keys, see the note in the en block above.
     projectsHeading: "Proyectos",
     projectsBody: "Página completa en construcción.",
 
