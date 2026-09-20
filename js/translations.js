@@ -65,35 +65,41 @@ const translations = {
     aboutBody: "Full about page coming soon.",
 
     // experience.html — §1 hero
+    // Key pair for the status sentence. expHeroStatus is the FALLBACK, shown
+    // when no entry in js/experience-data.js carries status: "current".
+    // expHeroStatusCurrent is the template used when one does — {role} and
+    // {org} are substituted from that entry by js/experience.js.
     expHeroStatus: "Currently a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.",
-    expHeroPara: "[Hero paragraph — more on current professional direction — EN]",
+    expHeroStatusCurrent: "Currently {role} at {org}, and a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.",
+    expHeroPara: "TODO hero paragraph — more on current professional direction (EN).",
 
     // experience.html — §2 entries
     expCaseStudyLink: "View full case study →",
+    expCurrentLabel: "Current",
 
     expBakerHughesRole: "Engineering Intern, ALS R&D",
     expBakerHughesOrg: "Baker Hughes",
-    expBakerHughesBullet1: "[Bullet 1 — EN]",
-    expBakerHughesBullet2: "[Bullet 2 — EN]",
-    expBakerHughesBullet3: "[Bullet 3 — EN]",
+    expBakerHughesBullet1: "TODO bullet 1 (EN)",
+    expBakerHughesBullet2: "TODO bullet 2 (EN)",
+    expBakerHughesBullet3: "TODO bullet 3 (EN)",
 
     expMachineShopRole: "Machine Shop Technician",
     expMachineShopOrg: "McElroy Prototyping Lab",
-    expMachineShopBullet1: "[Bullet 1 — EN]",
-    expMachineShopBullet2: "[Bullet 2 — EN]",
-    expMachineShopBullet3: "[Bullet 3 — EN]",
+    expMachineShopBullet1: "TODO bullet 1 (EN)",
+    expMachineShopBullet2: "TODO bullet 2 (EN)",
+    expMachineShopBullet3: "TODO bullet 3 (EN)",
 
     expSchultzRole: "Grader & Data Analyst",
     expSchultzOrg: "Dr. Joshua Schultz",
-    expSchultzBullet1: "[Bullet 1 — EN]",
-    expSchultzBullet2: "[Bullet 2 — EN]",
-    expSchultzBullet3: "[Bullet 3 — EN]",
+    expSchultzBullet1: "TODO bullet 1 (EN)",
+    expSchultzBullet2: "TODO bullet 2 (EN)",
+    expSchultzBullet3: "TODO bullet 3 (EN)",
 
-    expTurcRole: "TURC Research — [role TBD]",
+    expTurcRole: "TURC Research — TODO role (EN)",
     expTurcOrg: "TURC / TMTC (Edmonds)",
-    expTurcBullet1: "[Bullet 1 — EN]",
-    expTurcBullet2: "[Bullet 2 — EN]",
-    expTurcBullet3: "[Bullet 3 — EN]",
+    expTurcBullet1: "TODO bullet 1 (EN)",
+    expTurcBullet2: "TODO bullet 2 (EN)",
+    expTurcBullet3: "TODO bullet 3 (EN)",
 
     // projects.html stub
     projectsHeading: "Projects",
@@ -163,35 +169,38 @@ const translations = {
     aboutBody: "Página completa en construcción.",
 
     // experience.html — §1 hero
-    expHeroStatus: "[ES TBD] Currently a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.",
-    expHeroPara: "[ES TBD] [Hero paragraph — more on current professional direction]",
+    // Same key pair as EN — see the comment in the en block above.
+    expHeroStatus: "TODO Actualmente estudiante de Ingeniería Mecánica y Español IEL en la Universidad de Tulsa — buscando pasantías de verano de 2027 en ingeniería y español.",
+    expHeroStatusCurrent: "TODO Actualmente {role} en {org}, y estudiante de Ingeniería Mecánica y Español IEL en la Universidad de Tulsa — buscando pasantías de verano de 2027 en ingeniería y español.",
+    expHeroPara: "TODO párrafo de introducción — más sobre la dirección profesional actual (ES).",
 
     // experience.html — §2 entries
     expCaseStudyLink: "Ver caso completo →",
+    expCurrentLabel: "Actual",
 
-    expBakerHughesRole: "[ES TBD] Engineering Intern, ALS R&D",
+    expBakerHughesRole: "TODO Engineering Intern, ALS R&D",
     expBakerHughesOrg: "Baker Hughes",
-    expBakerHughesBullet1: "[ES TBD] [Bullet 1]",
-    expBakerHughesBullet2: "[ES TBD] [Bullet 2]",
-    expBakerHughesBullet3: "[ES TBD] [Bullet 3]",
+    expBakerHughesBullet1: "TODO bullet 1 (ES)",
+    expBakerHughesBullet2: "TODO bullet 2 (ES)",
+    expBakerHughesBullet3: "TODO bullet 3 (ES)",
 
-    expMachineShopRole: "[ES TBD] Machine Shop Technician",
+    expMachineShopRole: "TODO Machine Shop Technician",
     expMachineShopOrg: "McElroy Prototyping Lab",
-    expMachineShopBullet1: "[ES TBD] [Bullet 1]",
-    expMachineShopBullet2: "[ES TBD] [Bullet 2]",
-    expMachineShopBullet3: "[ES TBD] [Bullet 3]",
+    expMachineShopBullet1: "TODO bullet 1 (ES)",
+    expMachineShopBullet2: "TODO bullet 2 (ES)",
+    expMachineShopBullet3: "TODO bullet 3 (ES)",
 
-    expSchultzRole: "[ES TBD] Grader & Data Analyst",
+    expSchultzRole: "TODO Grader & Data Analyst",
     expSchultzOrg: "Dr. Joshua Schultz",
-    expSchultzBullet1: "[ES TBD] [Bullet 1]",
-    expSchultzBullet2: "[ES TBD] [Bullet 2]",
-    expSchultzBullet3: "[ES TBD] [Bullet 3]",
+    expSchultzBullet1: "TODO bullet 1 (ES)",
+    expSchultzBullet2: "TODO bullet 2 (ES)",
+    expSchultzBullet3: "TODO bullet 3 (ES)",
 
-    expTurcRole: "[ES TBD] TURC Research — [role TBD]",
+    expTurcRole: "TODO TURC Research — role (ES)",
     expTurcOrg: "TURC / TMTC (Edmonds)",
-    expTurcBullet1: "[ES TBD] [Bullet 1]",
-    expTurcBullet2: "[ES TBD] [Bullet 2]",
-    expTurcBullet3: "[ES TBD] [Bullet 3]",
+    expTurcBullet1: "TODO bullet 1 (ES)",
+    expTurcBullet2: "TODO bullet 2 (ES)",
+    expTurcBullet3: "TODO bullet 3 (ES)",
 
     // projects.html stub
     projectsHeading: "Proyectos",

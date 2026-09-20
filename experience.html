@@ -68,13 +68,20 @@
       <img src="assets/images/placeholder.jpg" alt="">
     </div>
     <div class="exp-hero-scrim" aria-hidden="true"></div>
+    <!-- Both paragraphs are filled from js/translations.js — no display text here.
+         The status line shows expHeroStatus (the no-current-role fallback) until
+         js/experience.js finds an entry with status: "current", which replaces it
+         with the expHeroStatusCurrent template filled from that entry. -->
     <div class="exp-hero-content">
-      <p class="exp-hero-status" data-i18n="expHeroStatus">Currently a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.</p>
-      <p class="exp-hero-para" data-i18n="expHeroPara">More on current professional direction goes here — placeholder paragraph for the scaffold build.</p>
+      <p class="exp-hero-status" id="exp-hero-status" data-i18n="expHeroStatus"></p>
+      <p class="exp-hero-para" data-i18n="expHeroPara"></p>
     </div>
   </section>
 
-  <!-- §2 — Experience entries, rendered from js/experience-data.js -->
+  <!-- §2 — Experience entries. Full-width bands rendered from
+       js/experience-data.js by js/experience.js; each band's --entry-* colors
+       are written inline from that entry's color object (per-entry values
+       cannot live in :root — see the note in css/style.css §2). -->
   <section class="exp-entries" id="exp-entries">
     <div class="exp-list" id="experience-list"></div>
   </section>

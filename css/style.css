@@ -1358,39 +1358,109 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 }
 
 /* --------------------------------------------------------------------------
-   §2 — Experience entries
+   §2 — Experience entries: full-width bands
+
+   Each entry is a full-bleed band carrying a restrained tint of its employer's
+   color; the color change between bands IS the divider, so there is no gap
+   between them. Content sits in a centered max-width container — never a fixed
+   pixel width.
+
+   The four --entry-* custom properties are set as an INLINE STYLE on each band
+   by js/experience.js, from js/experience-data.js. Per-entry values cannot live
+   in :root, so that inline style is the sanctioned exception to CLAUDE.md's
+   token convention — do not move these into this stylesheet. Every rule below
+   reads them through a var() fallback so a band with no color still renders.
+
+   Animation: the band background is painted at first render and never fades.
+   Only .exp-band-inner (the content) fades in on scroll — a background that
+   faded in would flash the page color through it.
    -------------------------------------------------------------------------- */
 .exp-entries {
-  background: var(--bg);
   width: 100%;
-  padding: 8px clamp(16px, 4vw, 36px) 40px;
+  max-width: 100%;
+  background: var(--bg);   /* fallback beneath the bands, and below the last one */
 }
 
 .exp-list {
-  max-width: 900px;
-  margin: 0 auto;
+  width: 100%;
 }
 
-.exp-card {
+.exp-band {
+  width: 100%;
+  max-width: 100%;
+  background: var(--entry-bg, var(--bg));
+  color: var(--entry-ink, var(--ink));
+  border-top: 1px solid var(--entry-border, var(--border));
+  padding: clamp(36px, 5vw, 64px) clamp(16px, 4vw, 36px);
+}
+
+.exp-band:last-child {
+  border-bottom: 1px solid var(--entry-border, var(--border));
+}
+
+.exp-band-inner {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: 40% 1fr;
-  gap: clamp(20px, 3vw, 32px);
-  padding: clamp(28px, 4vw, 40px) 0;
-  border-bottom: 1px dotted var(--border);
+  gap: clamp(20px, 3vw, 36px);
   align-items: start;
   opacity: 0;
   transition: opacity 300ms ease;
 }
 
-.exp-card.is-visible {
+.exp-band-inner.is-visible {
   opacity: 1;
 }
 
-.exp-card:last-child {
-  border-bottom: none;
+/* ---- Layout presets. One class per `layout` value in experience-data.js; a
+   new preset is one new class here, never a markup fork for a single entry. --- */
+.exp-band--image-left .exp-band-inner {
+  grid-template-columns: minmax(0, 40%) minmax(0, 60%);
+}
+.exp-band--image-left .exp-band-media { grid-column: 1; grid-row: 1; }
+.exp-band--image-left .exp-band-body  { grid-column: 2; grid-row: 1; }
+
+.exp-band--image-right .exp-band-inner {
+  grid-template-columns: minmax(0, 60%) minmax(0, 40%);
+}
+.exp-band--image-right .exp-band-media { grid-column: 2; grid-row: 1; }
+.exp-band--image-right .exp-band-body  { grid-column: 1; grid-row: 1; }
+
+/* Wide image above, text below — for entries with strong photography. */
+.exp-band--full-bleed .exp-band-inner {
+  grid-template-columns: minmax(0, 1fr);
+}
+.exp-band--full-bleed .exp-band-image {
+  aspect-ratio: 16 / 7;
 }
 
-.exp-card-image {
+/* No image; text sits in a narrower measure, centered. */
+.exp-band--text-only .exp-band-inner {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 680px;
+}
+
+/* ---- Current role. Author-side flag (status: "current"), not a visitor
+   toggle: accent left edge + the "Current" eyebrow above the role title. ----- */
+.exp-band--current {
+  border-left: 3px solid var(--entry-accent, var(--bronze));
+}
+
+.exp-band-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--entry-accent, var(--bronze));
+  margin: 0 0 6px;
+}
+
+.exp-band-media {
+  min-width: 0;
+}
+
+.exp-band-image {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
@@ -1398,38 +1468,44 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   background: var(--bg-section);
 }
 
-.exp-card-body {
+.exp-band-body {
   min-width: 0;
 }
 
-.exp-card-role {
-  font-size: clamp(20px, 1.6vw + 12px, 26px);
-  margin: 0 0 6px;
+.exp-band-role {
+  font-family: var(--font-serif);
+  font-size: clamp(22px, 1.8vw + 12px, 30px);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--entry-ink, var(--ink));
+  margin: 0 0 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--entry-border, var(--border));
 }
 
-.exp-card-meta {
+.exp-band-meta {
   font-family: var(--font-sans);
   font-size: 13px;
   color: var(--muted);
   margin: 0 0 14px;
 }
 
-.exp-card-bullets {
+.exp-band-bullets {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin: 0 0 14px;
 }
 
-.exp-card-bullets li {
+.exp-band-bullets li {
   font-size: 14.5px;
   line-height: 1.6;
-  color: var(--ink);
+  color: var(--entry-ink, var(--ink));
   padding-left: 14px;
   position: relative;
 }
 
-.exp-card-bullets li::before {
+.exp-band-bullets li::before {
   content: "";
   position: absolute;
   left: 0;
@@ -1437,10 +1513,11 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--bronze-mid);
+  background: var(--entry-accent, var(--bronze-mid));
 }
 
-/* Tag pills — shared with projects.html's tag filter system */
+/* Tag pills — shared with projects.html's tag filter system. Inside a band they
+   pick up the entry accent instead of the site-wide border/muted pair. */
 .tag-row {
   display: flex;
   flex-wrap: wrap;
@@ -1457,15 +1534,22 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   color: var(--muted);
 }
 
-.exp-card-link {
-  display: inline-block;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--bronze);
+.exp-band .tag-pill {
+  border-color: var(--entry-accent, var(--border));
+  color: var(--entry-accent, var(--muted));
 }
 
-.exp-card-link:hover {
-  color: var(--ink);
+.exp-band-link {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--entry-accent, var(--bronze));
+  transition: color 150ms ease;
+}
+
+.exp-band-link:hover {
+  color: var(--entry-ink, var(--ink));
 }
 
 @media (max-width: 767px) {
@@ -1476,6 +1560,14 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   .exp-hero-content {
     max-width: 100%;
     padding: 40px clamp(16px, 4vw, 36px);
+  }
+
+  /* Below 768px the hero text spans the full width, so the desktop
+     left-to-right scrim leaves the end of every line sitting on bare photo.
+     Cover the whole hero instead — the desktop gradient is untouched. */
+  .exp-hero.hero--overlay .exp-hero-scrim {
+    background: var(--footer-bg);
+    opacity: 0.82;
   }
 
   .exp-hero:not(.hero--overlay) {
@@ -1493,8 +1585,29 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
     grid-row: 1;
   }
 
-  .exp-card {
-    grid-template-columns: 1fr;
+  /* Every layout preset collapses to one column; the image always leads. */
+  .exp-band-inner,
+  .exp-band--image-left .exp-band-inner,
+  .exp-band--image-right .exp-band-inner,
+  .exp-band--full-bleed .exp-band-inner,
+  .exp-band--text-only .exp-band-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .exp-band--image-left .exp-band-media,
+  .exp-band--image-right .exp-band-media {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .exp-band--image-left .exp-band-body,
+  .exp-band--image-right .exp-band-body {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .exp-band--full-bleed .exp-band-image {
+    aspect-ratio: 16 / 9;
   }
 }
 
@@ -1503,7 +1616,15 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
     font-size: clamp(22px, 1.8vw + 12px, 32px);
   }
 
-  .exp-card-role {
-    font-size: clamp(22px, 1.2vw + 14px, 28px);
+  .exp-band-inner {
+    max-width: 1120px;
+  }
+
+  .exp-band-role {
+    font-size: clamp(26px, 1.4vw + 14px, 34px);
+  }
+
+  .exp-band-bullets li {
+    font-size: 15.5px;
   }
 }
