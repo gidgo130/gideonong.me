@@ -37,19 +37,35 @@ Design decisions to finalize first:
 
 Build:
 
-- [ ] css/style.css: define all CSS custom property tokens, Google Fonts import
-- [ ] js/translations.js: initial EN + ES strings for home page
-- [ ] index.html: navbar (white, sticky), dev banner, hero, featured work, dark footer
-- [ ] about.html: education (IELP program description), skills by category, honors/awards,
-  languages (EN/ES/FR), interests
-- [ ] experience.html: Baker Hughes internship, McElroy Prototyping Lab, TURC research,
-  Dr. Schultz grader role
-- [ ] projects.html: 3-5 initial projects with placeholder images and real descriptions
-- [ ] js/main.js: language toggle (instant DOM swap, localStorage, navigator.language default)
-- [ ] Social link chips in hero: GitHub (gidgo130), LinkedIn (gideon-a-ong), email
-- [ ] "Download resume" button → assets/pdfs/resume.pdf in new tab
-- [ ] Featured work section: image-forward layout, 1-2 projects
-- [ ] Deploy to gideonong.me → review on desktop (Chrome, Firefox, Safari)
+> Checkbox convention: a Build box is ticked when the **structure and behavior** exist.
+> Placeholder copy does not block the tick — final content is tracked in content.md and in
+> Phase 3. Where a line below describes something different from what was actually built, the
+> annotation says so rather than the line being quietly rewritten.
+
+- [X] css/style.css: define all CSS custom property tokens, Google Fonts import
+- [X] js/translations.js: initial EN + ES strings for home page
+- [X] index.html: navbar (white, sticky), dev banner, hero, featured work, dark footer
+- [X] about.html: built per Page Spec — about.html (§1–§6) below, which superseded the section
+  list originally written on this line. The education / skills by category / honors / languages
+  (EN/ES/FR) / interests content has **not** been placed on the page yet — §2–§6 are placeholders.
+- [X] experience.html: Baker Hughes internship, McElroy Prototyping Lab, TURC research,
+  Dr. Schultz grader role — scaffold built (2026-09-20). Roles, orgs, and dates are real;
+  bullets, tags, photos, and employer band colors are still TODO. TURC is in the array with
+  `visible: false` pending open decision #4 on that page.
+- [X] projects.html: scaffold built (2026-09-20) per Page Spec — projects.html below: hidden
+  search band (§1), featured entries (§2), index + tag filter (§3), all rendered from
+  `js/projects-data.js`. Six **placeholder** entries — the "real descriptions" this line
+  originally called for come from the projects content interview, not from the scaffold.
+- [X] js/main.js: language toggle (instant DOM swap, localStorage, navigator.language default)
+- [X] Social link chips in hero: GitHub (gidgo130), LinkedIn (gideon-a-ong), email
+- [X] "Download resume" button → new tab. Note: the flat `assets/pdfs/resume.pdf` path on this
+  line is not what shipped — main.js probes `assets/pdfs/<type>/<lang> Gideon Ong <Label>
+  <YYYYMMDD>.pdf` backward from today and links the newest file it finds.
+- [ ] Featured work section: image-forward layout, 1-2 projects — placeholder card is in place
+  on index.html, but it is still hardcoded there rather than sourced from `js/projects-data.js`.
+  A project's copy must exist in exactly one place; wiring this up is what closes the box.
+- [ ] Deploy to gideonong.me → review on desktop (Chrome, Firefox, Safari) — auto-deploys from
+  GitHub on push; the three-browser desktop review has not been done.
 
 ---
 
@@ -359,20 +375,28 @@ layout loop top to bottom — the index is deliberately more compact than the fe
 
 #### §1 — Search band
 
-**Status:** Structure and styles are built in Phase 1 but the element is **hidden**
-(`display: none` via a single class on the band). It is revealed in Phase 3 when semantic
-search ships. Do not ship a visible search box that does not work.
+**Status:** BUILT AND HIDDEN (2026-09-20). Structure and styles exist; the band is hidden by
+`.search-band.is-hidden` (`display: none`) in `projects.html`. Deleting that one class reveals
+it — that is the entire Phase 3 reveal. Do not ship a visible search box that does not work.
 
 **Layout:** Full-bleed band directly below the nav/dev-banner. Search input + submit button,
 horizontally centered. Closed off at the bottom by a 2px accent rule in `var(--bronze)` —
 the rule is the transition into the featured section.
+
+The band is a `<div>`, **not a `<form>`**, and the button is `type="button"`: an inert input
+inside a form would navigate on Enter. Phase 3 can promote it to a form or keep the div and
+bind a listener — either way, nothing today can submit. The placeholder is set from
+`data-i18n-placeholder` by `js/projects.js`, because `main.js` handles `data-i18n` and
+`data-i18n-alt` but not placeholders.
 
 **Background:** Visually distinct from both `var(--bg)` and `var(--bg-section)` — this is the
 "innovative background" in the outline. Candidate treatments to compare in the color pass:
 a) `var(--footer-bg)` dark band with light text (bookends the dark footer)
 b) `var(--bg-section)` with a subtle texture or gradient
 c) A bronze-tinted wash
-**TBD** — build (b) first as the safe default; (a) is the more striking option.
+**(b) IS BUILT** (2026-09-20): a `--bg-section` → `--bg` vertical gradient under the 2px bronze
+rule. (a) remains the more striking option — compare it in the color pass, with the band
+temporarily unhidden.
 
 **Placeholder text:** EN "Search my projects" / ES "Buscar proyectos" — via `data-i18n`.
 Keep EN and ES close in character length per the CLAUDE.md compact-element rule.
@@ -414,6 +438,13 @@ a fixed-height card grid does not.
 rows is used. Switching views later is a class swap, with **no change to the data array or the
 generated markup**. A visitor-facing view switcher is Phase 3 at the earliest, and optional.
 
+Both classes are written as of 2026-09-20, and the swap was exercised in-browser: with
+`--grid` applied, the six entries render as cards (3-up at 1280px, 1-up at 375px), thumbnails
+hold the same 4:3 ratio, and the no-image entry becomes a text card. No data or markup changed.
+Grid cards are not forced to a common height — a text-only card is shorter than its neighbors,
+which is exactly the fixed-height-grid problem the rows view was chosen to avoid. Decide that
+before ever making grid the default.
+
 **Missing images:** An entry with no `imageSrc` renders with no thumbnail and the text occupying
 the full row width. It must not render a broken image, a grey box, or a generic placeholder icon.
 
@@ -423,8 +454,19 @@ resets. Filtering is instant vanilla JS, no reload. Filtered-out rows are remove
 (`display: none`) so the list closes up rather than leaving gaps.
 
 - Active tag pill: filled `var(--bronze)`, light text. Inactive: bordered, `var(--muted)` text.
+  The active text color is `var(--bg)`, not a literal white — in dark mode `--bronze` lightens
+  and `--bg` darkens, so the pair stays legible in both themes without a dark-mode override.
 - A live count ("8 projects" / "8 proyectos") sits beside the filter row and updates on filter.
 - If a filter combination yields zero results, show a short empty-state line — never a blank page.
+
+Decided at build time (2026-09-20), recorded so they are not re-decided:
+- The filter row renders only the vocabulary tags that at least one listed entry actually
+  carries, in vocabulary order. A pill that can only ever return zero results is noise.
+- The count has separate singular and plural keys (`projCountOne` / `projCount`), so one match
+  reads "1 project" / "1 proyecto" rather than "1 projects".
+- Filter state lives in `js/projects.js`, not on the pill elements, so an EN/ES toggle —
+  which re-renders both sections — restores the active filter and pill states rather than
+  silently resetting them.
 
 **Order:** Reverse chronological by default. A `pinned: true` field may lift an entry to the top
 of the index independently of the featured flag.
@@ -461,6 +503,9 @@ appears in any listing.
 **Tag vocabulary:** A controlled list, defined once at the top of `projects-data.js`. Entries may
 only use tags from it. This prevents "CAD"/"cad"/"SolidWorks" fragmenting the filter.
 **TBD** — draft the vocabulary during the content interview, not before.
+The constant (`PROJECT_TAGS`) exists as of 2026-09-20 holding six placeholders, `TODO Tag A`
+through `TODO Tag F`. Tags are literal strings, not i18n keys, matching `experience-data.js`;
+if the real vocabulary needs translating, that is a deliberate change to both files.
 
 #### Animation
 
@@ -471,13 +516,21 @@ No CLAUDE.md carve-outs required. Standard rules apply:
 
 #### Open decisions for projects.html
 
-1. Search band background treatment — (a) dark, (b) section-tint, (c) bronze wash. Build (b) first.
-2. Tag vocabulary — drafted during the content interview
+1. Search band background treatment — (b) section-tint is **built**; comparing it against
+   (a) dark and (c) bronze wash is still open, deferred to the color pass.
+2. Tag vocabulary — drafted during the content interview. Placeholders are in place; this is
+   still open, and still tied to open decision #2 on the experience.html sheet (shared list
+   or separate?).
 3. Project list — which projects, and which 2–3 are featured? Content interview
-4. Thumbnail aspect ratio — 4:3, 16:9, or 1:1? Pick one and enforce it across all rows
+4. ~~Thumbnail aspect ratio~~ — **RESOLVED 2026-09-20: 4:3**, enforced on every row and every
+   grid card via `object-fit: cover`. See the decisions log.
 5. Index row density — one-line description vs. two. Evaluate once real descriptions exist
-6. Sub-page structure — spec separately, after §2/§3 are built and reviewed
-7. Whether a visitor-facing rows/grid view switcher is worth building at all (Phase 3, optional)
+6. Sub-page structure — spec separately. **Unblocked**: §2/§3 are built, so this is next up
+   once the scaffold has been reviewed. `subpageUrl: ""` already omits the link, so entries
+   can ship before their sub-pages exist.
+7. Whether a visitor-facing rows/grid view switcher is worth building at all (Phase 3, optional).
+   Both view classes now exist and the swap is verified, so this is purely a product question —
+   no build risk either way.
 
 ---
 
@@ -485,11 +538,18 @@ No CLAUDE.md carve-outs required. Standard rules apply:
 
 Goal: site works cleanly on phone and tablet; typography and visual polish complete.
 
-- [ ] Mobile nav: hamburger menu (☰) at 768px breakpoint → vertical link dropdown
-- [ ] Review all pages at 375px (iPhone SE), 768px (iPad), 1280px (desktop)
+- [X] Mobile nav: hamburger menu (☰) at 768px breakpoint → vertical link dropdown — built on
+  all four pages; closes on link tap, outside click, and Escape
+- [ ] Review all pages at 375px (iPhone SE), 768px (iPad), 1280px (desktop) — projects.html
+  verified at all three, light and dark, on 2026-09-20. index / about / experience not
+  re-reviewed since their own builds.
 - [ ] Typography pass: review practicaltypography.com Line Length, Font Size, Bold/Italic
   sections before adjusting any font sizes or line heights
-- [ ] Scroll-triggered fade-ins: IntersectionObserver on project cards and sections
+- [ ] Scroll-triggered fade-ins: IntersectionObserver on project cards and sections — partly
+  done: experience.html band content and projects.html featured entries fade in (opacity only,
+  ~300ms). index.html has no observer, and about.html uses its own scroll-driven effects under
+  the carve-outs. Index rows deliberately do **not** fade on scroll — they only transition
+  opacity under the tag filter, so a filter change is never mistaken for a scroll animation.
 - [ ] Optimize all images (compress, correct dimensions, add alt text to every image)
 - [ ] Add real project photos, diagrams, and embedded PDFs where available
 - [ ] Cross-browser test (Chrome, Firefox, Safari desktop + mobile)
@@ -510,10 +570,16 @@ Content:
 
 Features:
 
-- [ ] Tag filter system on projects.html (JS, no page reload)
+- [X] Tag filter system on projects.html (JS, no page reload) — **shipped early: built in the
+  Phase 1 scaffold, 2026-09-20.** Multi-select AND logic over `PROJECT_TAGS`, live count,
+  zero-result empty state, `display: none` on filtered rows. It runs against placeholder tags
+  today; the real vocabulary drops in without touching the filter code.
 - [ ] Semantic search box ("Search my experience") in hero section:
   Phase 3a: TF-IDF + cosine similarity in vanilla JS (fast, no download)
   Phase 3b (optional upgrade): Transformers.js in-browser embeddings (more semantic)
+  The projects.html band, its markup, and its i18n strings are already built and hidden (see
+  §1 of the page spec). Remaining work is the index function over each entry's `searchTextKey`
+  blob, wiring it to reorder/filter the §3 rows in place, and deleting `.is-hidden`.
 - [ ] Language detection refinement: add IP geolocation (free API) for regional default
 - [ ] Flag-based EN/ES toggle (cosmetic — replace pill buttons with small flag icons)
 
@@ -583,3 +649,31 @@ right) over photo collage. Backup: 2-column text/collage via .hero--overlay CSS 
 [2026-09-17] experience.html cards: image left (~40%), text right (~60%) as default layout.
 Each entry links to a dedicated /experience/[slug].html case-study sub-page. Entries defined
 in a JS data array with visible flag for easy maintenance.
+
+[2026-09-20] projects.html scaffold built: §1 hidden search band, §2 featured, §3 index with
+tag filter. Structure and behavior are real; all six entries are placeholders. New files:
+js/projects-data.js (data + PROJECT_TAGS vocabulary) and js/projects.js (renders §2 and §3,
+runs the filter). Content intake sheet is in content.md.
+
+[2026-09-20] projects.html thumbnail aspect ratio: **4:3**, enforced on every index row and
+every grid card via object-fit: cover. Closes open decision #4. Chosen because it matches the
+4:3 band images on experience.html (one image vocabulary, not two), stays tall enough beside
+three lines of text at a 140–180px column where 16:9 reads as a sliver, and crops landscape
+shop and CAD photography far less than 1:1.
+
+[2026-09-20] projects.html §2 and §3 read one array. `featured: true` promotes an entry into
+the featured block and it still appears in the index. There is no second data source and no
+duplicated copy — the same rule content.md asks for on index.html featured work, which is
+still outstanding there.
+
+[2026-09-20] projects.html search band ships hidden behind a single class
+(.search-band.is-hidden). Background treatment (b) built; (a) still worth comparing. The band
+is a div, not a form, so the inert input cannot navigate on Enter.
+
+[2026-09-20] projects.html index view: rows are the default; .project-index--grid is written
+in style.css but unapplied. Verified in-browser that switching is a class swap with no data or
+markup change. Grid cards are not height-matched, which is the fixed-height-grid weakness the
+rows view was chosen to avoid — settle that before ever making grid the default.
+
+[2026-09-20] Tag filter shipped in Phase 1 rather than Phase 3. It is annotated in place in the
+Phase 3 list rather than moved, so the original phase plan stays readable.
