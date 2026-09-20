@@ -17,9 +17,10 @@ Every page section carries a status line. Respect it.
 | **INTAKE** | The page is built and waiting for content. Every slot is listed below — fill them in, don't restructure. |
 | **NEEDS REVIEW** | This section has NOT been checked against the built page and may be stale. Do not trust it as-is. |
 
-**Reconciled 2026-09-20.** The experience.html section was rewritten as an intake sheet and
-verified against the code. The about.html and projects.html sections were only partially
-reconciled and are marked NEEDS REVIEW — see the note in each.
+**Reconciled 2026-09-20.** The experience.html and projects.html sections were rewritten as
+intake sheets and verified against the code — both carry a framework briefing to paste at the
+start of their interview. The about.html section was only partially reconciled and is still
+marked NEEDS REVIEW — see the note in it.
 
 ### Where content actually goes
 
@@ -30,7 +31,7 @@ This file is the source of truth for **display strings**. It is not the only des
 | EN/ES display strings | `js/translations.js` | `key: "string"` under `en` and `es` |
 | Experience entries (non-string fields) | `js/experience-data.js` | dates, tags, imageSrc, subpageUrl, layout, status, color |
 | about.html books / FAQ / sites | `js/about.js` | **inline** `titleEN`/`titleES` pairs — NOT i18n keys (see about.html note) |
-| Project entries | `js/projects-data.js` | not created yet — see plan.md → Page Spec — projects.html |
+| Project entries (non-string fields) | `js/projects-data.js` | slug, dates, tags, imageSrc, subpageUrl, featured, pinned, visible, unlisted — plus the `PROJECT_TAGS` vocabulary at the top |
 
 Non-string fields (dates, tags, image paths, colors, layout presets) are listed in this file
 as intake prompts so the interview collects them, but they are typed into the data array, not
@@ -359,6 +360,75 @@ Do not invent project content.**
 > array — two featured, one deliberately with `imageSrc: ""` to exercise the no-thumbnail path,
 > one with `subpageUrl: ""` to exercise the omitted link, one `pinned`. The content interview
 > replaces the entries and the tag vocabulary; the markup does not need to change.
+
+Find every unfilled slot with: `grep "TODO " js/translations.js js/projects-data.js`
+(29 project string keys × 2 languages, plus 6 placeholder tags and 6 `dates`, at time of writing).
+
+### Framework briefing — paste this at the start of the interview
+
+**How the page works.** projects.html has three zones. A **search band** at the top, built but
+hidden until semantic search ships. A **featured** set of 2–3 projects, image-forward, the
+arrangement alternating image-left / image-right. Then the **index**: every project as a compact
+row — thumbnail, title, one-line description, tag pills — with a multi-select tag filter and a
+live count above it. §2 and §3 read the **same array**, `js/projects-data.js`: `featured: true`
+promotes an entry into the featured block and it still appears in the index. A project's copy
+exists in exactly one place. Every visible string is an EN/ES pair in `js/translations.js`;
+everything else — slug, dates, tags, image path, sub-page URL, flags — is a field in the data
+array. Adding, reordering, hiding or featuring a project is a data edit, not a code change.
+
+**Fixed — assume these; don't redesign them mid-interview:**
+- Tag pills sit below the description, never above the title
+- One array feeds both sections. Featured promotes an entry; it never copies its text.
+- The index is rows, not a card grid — rows absorb the ~20% EN→ES length swing without
+  breaking alignment, and degrade cleanly when a project has no photo
+- Thumbnails are 4:3, cropped to fill; featured images are 16:9
+- The search band stays hidden until the search actually works
+- Every display string is EN + ES. No hardcoded text in the HTML.
+- Tag filtering is AND — an entry must carry every active tag
+- Featured entries fade in on scroll, opacity only; filtered rows vanish instantly
+
+**Free to change — just say so, it's a data edit:**
+- Which projects appear, their order, which 2–3 are featured, and whether one is `pinned` to
+  the top of the index
+- All wording, EN and ES, including the page headings and the filter labels
+- Tag count per project — the renderer takes any number
+- Images — one per project, or none. A project with no photo renders with no thumbnail and
+  full-width text: not a broken image, not a grey box.
+- The "View project →" link — point it at a sub-page, or leave `subpageUrl: ""` and the link
+  disappears
+- `unlisted: true` for work that should keep a URL but appear in no listing and no search;
+  `visible: false` for anything not ready. Neither requires deleting the entry.
+- `dates` is a free-form literal, never translated — "Spring 2026", "2025–2026", anything
+
+**Possible, but costs a small code change — flag it rather than assuming:**
+- Translating tags. They are literal strings today, shown identically in both languages;
+  making them i18n keys touches both data files and both renderers.
+- Switching the index to the grid view — the class is written and verified, so it is one class
+  in the HTML, but grid cards are not height-matched and that should be settled first
+- A new per-project field — a report PDF, a video, a second link, a collaborator credit
+- Revealing the search band (waits on the Phase 3 search itself)
+- Two-line index descriptions, if one line turns out to be too tight
+
+**Out of scope here:** the project sub-pages at `/projects/<slug>.html` (not specced, none
+built), the index.html featured-work section (it should eventually source from this same array —
+tracked separately), and anything belonging to experience.html.
+
+### Resolve these four first — they change what the interview asks
+
+1. **Tag vocabulary shape** — how many tags, and along what axis? Skill ("CAD", "Python"),
+   domain ("Thermal", "Robotics"), artifact type ("Research", "Coursework"), or a mix. Draft it
+   *after* seeing the full project list, not before — the list is what reveals the right axis.
+2. **Shared vocabulary with experience.html?** That page uses free strings today
+   (`"Engineering"`, `"R&D"`, `"ALS"`). Both files note the question and neither has decided it —
+   whichever interview runs second should not settle it unilaterally. Mirror of decision #2 on
+   the experience.html sheet above.
+3. **Tags are untranslated** — the same literal shows in EN and ES. Fine for "CAD" or "Python",
+   awkward for a phrase like "Heat Transfer". Either pick tag names that read acceptably in both
+   languages, or decide to translate them (see the code-change note above).
+4. **One description or two?** Each project has a one-line `desc` for the index row and a fuller
+   `longDesc` for the featured block. If the featured paragraph should genuinely say more rather
+   than say the same thing at greater length, the interview needs to ask for both separately —
+   and only the 2–3 featured projects strictly need a `longDesc` at all.
 
 **Page chrome strings** (live):
 - [projFeaturedHeading] — EN "Featured projects" / ES "Proyectos destacados"
