@@ -1,0 +1,18 @@
+#!/bin/sh
+# pre-commit — regenerate js/docs-data.js from assets/pdfs/ and stage it.
+# Dev-side tooling only (the site deploys as plain static files). Never blocks
+# a commit: if node is missing, warn and continue.
+#
+# One-time setup per clone:  git config core.hooksPath .githooks
+
+if command -v node >/dev/null 2>&1; then
+  if node scripts/build-docs-manifest.js; then
+    git add js/docs-data.js
+  else
+    echo "pre-commit: scripts/build-docs-manifest.js failed — js/docs-data.js not regenerated" >&2
+  fi
+else
+  echo "pre-commit: node not found on PATH — js/docs-data.js not regenerated (run scripts/build-docs-manifest.js later)" >&2
+fi
+
+exit 0
