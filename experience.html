@@ -81,7 +81,9 @@
   <!-- §2 — Experience entries. Full-width bands rendered from
        js/experience-data.js by js/experience.js; each band's --entry-* colors
        are written inline from that entry's color object (per-entry values
-       cannot live in :root — see the note in css/style.css §2). -->
+       cannot live in :root — see the note in css/style.css §2).
+       Each band carries id="<slug>" (experience.html#<slug> lands on it) and
+       lists the projects from js/projects-data.js that point at it. -->
   <section class="exp-entries" id="exp-entries">
     <div class="exp-list" id="experience-list"></div>
   </section>
@@ -98,7 +100,10 @@
 
   <script src="js/translations.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/tags-data.js"></script>
   <script src="js/experience-data.js"></script>
+  <script src="js/projects-data.js"></script>
+  <script src="js/data-helpers.js"></script>
   <script src="js/experience.js"></script>
 </body>
 </html>

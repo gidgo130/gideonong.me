@@ -1,8 +1,12 @@
 // experience.js
 // Renders §2 of experience.html as full-width colored bands from
-// js/experience-data.js, re-rendering on language change, and fades each band's
-// CONTENT in on scroll (IntersectionObserver, opacity 0→1, no movement —
-// standard CLAUDE.md rule, no carve-out on this page).
+// js/experience-data.js (sortDate descending), re-rendering on language
+// change, and fades each band's CONTENT in on scroll (IntersectionObserver,
+// opacity 0→1, no movement — standard CLAUDE.md rule, no carve-out here).
+//
+// Each band carries id="<slug>" so experience.html#<slug> lands on it, and
+// lists the listing: "index" projects that point at it via `experience`
+// ("Projects from this role"). Lookups go through js/data-helpers.js.
 //
 // The band BACKGROUND is painted at first render and never animates. Fading a
 // band background in would flash the page color through it — that is a bug, so
@@ -14,7 +18,9 @@
 
 (function () {
   var list = document.getElementById("experience-list");
-  if (!list || typeof experienceData === "undefined") return;
+  if (!list || typeof siteData === "undefined") return;
+
+  var text = siteData.text;
 
   // layout preset → CSS class. Adding a preset = one entry here + one class in
   // style.css. Unknown or absent values fall back to the default preset.
@@ -26,10 +32,6 @@
   };
   var DEFAULT_LAYOUT = "imageLeft";
 
-  function currentLang() {
-    return document.documentElement.getAttribute("lang") === "es" ? "es" : "en";
-  }
-
   // Light vs dark colors come from the same data object. The no-flash script in
   // <head> sets data-theme before first paint, so the first render already picks
   // the right mix.
@@ -37,19 +39,10 @@
     return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
   }
 
-  function text(key) {
-    var dict = (typeof translations !== "undefined") ? translations[currentLang()] : null;
-    return (dict && dict[key] !== undefined) ? dict[key] : key;
-  }
-
-  function visibleEntries() {
-    return experienceData.filter(function (entry) { return entry.visible; });
-  }
-
   // At most one entry may carry status: "current". If none does (or the flagged
   // one is hidden), this returns null and every current-role behavior no-ops.
   function currentEntry() {
-    var found = visibleEntries().filter(function (entry) { return entry.status === "current"; });
+    var found = siteData.visibleExperience().filter(function (entry) { return entry.status === "current"; });
     return found.length ? found[0] : null;
   }
 
@@ -80,6 +73,43 @@
     img.loading = "lazy";
     media.appendChild(img);
     return media;
+  }
+
+  /* "Projects from this role": every listing: "index" project whose
+     `experience` is this slug, in project sort order, as title (→
+     projects.html#<slug>) + one-line description. Nothing at all if none. */
+  function buildRelated(entry) {
+    var related = siteData.projectsForExperience(entry.slug);
+    if (!related.length) return null;
+
+    var block = document.createElement("div");
+    block.className = "exp-related";
+
+    var heading = document.createElement("h3");
+    heading.className = "exp-related-heading";
+    heading.setAttribute("data-i18n", "expRelatedHeading");
+    heading.textContent = text("expRelatedHeading");
+    block.appendChild(heading);
+
+    var ul = document.createElement("ul");
+    ul.className = "exp-related-list";
+    related.forEach(function (project) {
+      var li = document.createElement("li");
+      var link = document.createElement("a");
+      link.className = "exp-related-title";
+      link.href = "projects.html#" + project.slug;
+      link.setAttribute("data-i18n", project.titleKey);
+      link.textContent = text(project.titleKey);
+      li.appendChild(link);
+      var desc = document.createElement("span");
+      desc.className = "exp-related-desc";
+      desc.setAttribute("data-i18n", project.descKey);
+      desc.textContent = text(project.descKey);
+      li.appendChild(desc);
+      ul.appendChild(li);
+    });
+    block.appendChild(ul);
+    return block;
   }
 
   function buildBody(entry, isCurrent) {
@@ -119,17 +149,13 @@
     });
     body.appendChild(bullets);
 
+    // Tag ids → translated labels (js/tags-data.js via data-helpers).
     if (entry.tags && entry.tags.length) {
-      var tagRow = document.createElement("div");
-      tagRow.className = "tag-row";
-      entry.tags.forEach(function (tag) {
-        var pill = document.createElement("span");
-        pill.className = "tag-pill";
-        pill.textContent = tag;
-        tagRow.appendChild(pill);
-      });
-      body.appendChild(tagRow);
+      body.appendChild(siteData.buildTagRow(entry));
     }
+
+    var related = buildRelated(entry);
+    if (related) body.appendChild(related);
 
     if (entry.subpageUrl) {
       var link = document.createElement("a");
@@ -147,6 +173,7 @@
     var band = document.createElement("section");
     var layout = LAYOUT_CLASSES[entry.layout] || LAYOUT_CLASSES[DEFAULT_LAYOUT];
     band.className = "exp-band " + layout + (isCurrent ? " exp-band--current" : "");
+    if (entry.slug) band.id = entry.slug;
     paintBand(band, entry);
 
     var inner = document.createElement("div");
@@ -196,7 +223,7 @@
     list.innerHTML = "";
 
     var current = currentEntry();
-    visibleEntries().forEach(function (entry) {
+    siteData.visibleExperience().forEach(function (entry) {
       var band = buildBand(entry, entry === current);
       list.appendChild(band);
       painted.push({ band: band, entry: entry });
@@ -204,6 +231,8 @@
     });
 
     renderHeroStatus();
+    // Re-mark the deep-link target after a re-render, without scrolling.
+    siteData.targetFromHash(".exp-band", false);
   }
 
   function repaint() {
@@ -217,8 +246,12 @@
     attributeFilter: ["data-theme"]
   });
 
+  siteData.checkData();
+
   // main.js fires langchange at the end of applyTranslations, so this listener
   // runs after the data-i18n elements are swapped and always wins on the hero.
   document.addEventListener("langchange", render);
+  window.addEventListener("hashchange", function () { siteData.targetFromHash(".exp-band", true); });
   render();
+  siteData.targetFromHash(".exp-band", true);
 }());

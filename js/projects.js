@@ -1,218 +1,165 @@
 // projects.js
 // Renders §2 (featured) and §3 (index) of projects.html from the ONE array in
-// js/projects-data.js, and runs the §3 tag filter. Both sections read the same
-// entries — `featured: true` promotes an entry into §2 and it still appears in
-// §3. There is no second data source anywhere on this page.
+// js/projects-data.js, runs the §3 tag filter and the §1 keyword search, and
+// handles projects.html#<slug> deep links. Markup builders and selectors are
+// shared with index.html via js/data-helpers.js (window.siteData).
 //
-// §1 (the search band) is intentionally untouched here beyond filling its
-// placeholder text: the band ships hidden (.search-band.is-hidden) and its input
-// is inert until the Phase 3 semantic search is written. When that lands, it
-// reorders/filters the same rows this file renders — the markup does not change.
+// Only listing: "index" entries exist as far as this file is concerned —
+// siteData.indexProjects() has already dropped unlisted / hidden / reserved
+// entries, so nothing below can leak one into the index, the filter, search
+// or the featured block.
 //
 // Animation, per CLAUDE.md (no carve-outs on this page):
 //   - featured entries fade in on scroll (IntersectionObserver, opacity only)
 //   - the filter transitions opacity only; filtered-out rows are display:none so
 //     the list closes up. Rows never slide or animate position.
+//   - the deep-link target gets a static left rule — no animation, no scroll
+//     effect beyond the initial jump.
 
 (function () {
   var featuredList = document.getElementById("featured-list");
   var indexList = document.getElementById("project-index");
-  if (!featuredList || !indexList || typeof projectsData === "undefined") return;
+  if (!featuredList || !indexList || typeof siteData === "undefined") return;
+
+  var text = siteData.text;
 
   var filterRow = document.getElementById("tag-filter");
   var countEl = document.getElementById("index-count");
   var emptyEl = document.getElementById("index-empty");
+  var searchInput = document.getElementById("project-search");
+  var searchBtn = document.getElementById("project-search-btn");
+  var searchClear = document.getElementById("project-search-clear");
+  var searchField = document.getElementById("project-search-field");
 
-  // Active tag filters. AND logic: an entry must carry EVERY active tag.
-  // Lives outside render() so a language switch (which re-renders everything)
-  // does not silently reset the filter the visitor set.
-  var activeTags = [];
+  // Visitor state. Both live OUTSIDE render() so a language switch (which
+  // re-renders everything) keeps the active filter and the query exactly.
+  var activeTags = [];   // tag IDS (never labels) — AND logic
+  var activeQuery = "";  // raw text as typed
 
   // Rows are kept paired with their entry so filtering reads the data rather
-  // than scraping the DOM for tag names.
+  // than scraping the DOM.
   var rows = [];
 
-  function currentLang() {
-    return document.documentElement.getAttribute("lang") === "es" ? "es" : "en";
+  /* ---- Search: corpus ---------------------------------------------------
+     One normalized string per index entry, built ONCE from BOTH languages so a
+     Spanish word matches while the page is in English and vice versa, and so
+     a language switch never changes the result set. Rebuild only if the data
+     arrays change (they don't at runtime — call buildCorpus() again if that
+     ever becomes true).
+
+     Fields: title, desc, longDesc, searchText, tag labels, context label, and
+     the linked experience's role + org. */
+  var corpus = {};
+
+  // Lowercase + strip diacritics (NFD, then drop combining marks): "diseño"
+  // and "diseno" match each other, in the query and in the corpus alike.
+  function normalize(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   }
 
-  function text(key) {
-    var dict = (typeof translations !== "undefined") ? translations[currentLang()] : null;
-    return (dict && dict[key] !== undefined) ? dict[key] : key;
-  }
-
-  /* ---- Entry selection ------------------------------------------------------
-     `unlisted` entries are excluded from every listing (and, later, from search)
-     while still living in the array so their sub-page can be generated. */
-  function listedEntries() {
-    return projectsData.filter(function (entry) {
-      return entry.visible && !entry.unlisted;
+  function buildCorpus() {
+    corpus = {};
+    siteData.indexProjects().forEach(function (entry) {
+      var parts = [];
+      ["en", "es"].forEach(function (lang) {
+        parts.push(
+          text(entry.titleKey, lang),
+          text(entry.descKey, lang),
+          text(entry.longDescKey, lang),
+          text(entry.searchTextKey, lang),
+          siteData.contextLabel(entry.context, lang)
+        );
+        (entry.tags || []).forEach(function (id) { parts.push(siteData.tagLabel(id, lang)); });
+        var role = siteData.experienceBySlug(entry.experience);
+        if (role) parts.push(text(role.roleKey, lang), text(role.orgKey, lang));
+      });
+      corpus[entry.slug] = normalize(parts.join(" "));
     });
   }
 
-  function featuredEntries() {
-    return listedEntries().filter(function (entry) { return entry.featured; });
-  }
+  /* ---- Search: matching ---------------------------------------------------
+     searchEntries(query, entries) → entries
+     THE ONE PLACE matching happens. Today: split the query on whitespace and
+     keep an entry only if EVERY token is a substring of its corpus (AND).
+     Result order is the input order.
 
-  // Array order is the reverse-chronological order the author maintains by hand;
-  // `pinned: true` lifts an entry above the rest without disturbing that order.
-  function indexEntries() {
-    var all = listedEntries();
-    return all.filter(function (e) { return e.pinned; })
-      .concat(all.filter(function (e) { return !e.pinned; }));
-  }
-
-  /* ---- Shared builders ----------------------------------------------------- */
-
-  function buildTagRow(entry) {
-    var row = document.createElement("div");
-    row.className = "tag-row";
-    (entry.tags || []).forEach(function (tag) {
-      var pill = document.createElement("span");
-      pill.className = "tag-pill";
-      pill.textContent = tag;
-      row.appendChild(pill);
+     Phase 3 (TF-IDF + cosine over the same corpus) replaces the BODY of this
+     function only — same signature, same return shape. It may return the
+     entries reordered by score; applyFilter() already lays rows out in the
+     order this returns. No markup and no caller changes. */
+  function searchEntries(query, entries) {
+    var tokens = normalize(query).split(/\s+/).filter(Boolean);
+    if (!tokens.length) return entries.slice();
+    return entries.filter(function (entry) {
+      var doc = corpus[entry.slug] || "";
+      return tokens.every(function (token) { return doc.indexOf(token) !== -1; });
     });
-    return row;
   }
 
-  // Returns null when subpageUrl is "" — no sub-page yet means no link at all,
-  // never a link that goes nowhere.
-  function buildViewLink(entry) {
-    if (!entry.subpageUrl) return null;
-    var link = document.createElement("a");
-    link.className = "project-link";
-    link.href = entry.subpageUrl;
-    link.setAttribute("data-i18n", "projViewLink");
-    link.textContent = text("projViewLink");
-    return link;
+  /* ---- Search: band wiring ----------------------------------------------
+     Runs as the visitor types (debounced ~150ms); Enter and the button run it
+     at once. The × clears and refocuses. Filter state and query state combine
+     with AND in applyFilter(). */
+  var debounceTimer = null;
+
+  function setQuery(q) {
+    activeQuery = q;
+    if (searchInput && searchInput.value !== q) searchInput.value = q;
+    if (searchField) searchField.classList.toggle("has-text", q.length > 0);
   }
 
-  function buildImage(entry, className) {
-    var img = document.createElement("img");
-    img.className = className;
-    img.src = entry.imageSrc;
-    img.alt = entry.imageAlt ? text(entry.imageAlt) : "";
-    img.loading = "lazy";
-    return img;
+  function runSearch() {
+    clearTimeout(debounceTimer);
+    setQuery(searchInput ? searchInput.value : "");
+    applyFilter();
   }
 
-  /* ---- §2 Featured ---------------------------------------------------------
-     Image → title → description → tags → link. Tags sit BELOW the description,
-     never above the title (CLAUDE.md). Arrangement alternates image-left /
-     image-right; the set is 2-3 entries and fixed, which is the one place a
-     global alternating rule is appropriate. */
-  function buildFeatured(entry, i) {
-    var article = document.createElement("article");
-    article.className = "featured-entry " +
-      (i % 2 === 0 ? "featured-entry--image-left" : "featured-entry--image-right");
-
-    if (entry.imageSrc) {
-      var media = document.createElement("div");
-      media.className = "featured-entry-media";
-      media.appendChild(buildImage(entry, "featured-entry-image"));
-      article.appendChild(media);
+  function wireSearch() {
+    if (!searchInput) return;
+    searchInput.addEventListener("input", function () {
+      if (searchField) searchField.classList.toggle("has-text", searchInput.value.length > 0);
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 150);
+    });
+    searchInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); runSearch(); }
+    });
+    if (searchBtn) searchBtn.addEventListener("click", runSearch);
+    if (searchClear) {
+      searchClear.addEventListener("click", function () {
+        clearTimeout(debounceTimer);
+        setQuery("");
+        applyFilter();
+        searchInput.focus();
+      });
     }
-
-    var body = document.createElement("div");
-    body.className = "featured-entry-body";
-
-    var title = document.createElement("h3");
-    title.className = "featured-entry-title";
-    title.setAttribute("data-i18n", entry.titleKey);
-    title.textContent = text(entry.titleKey);
-    body.appendChild(title);
-
-    var meta = document.createElement("p");
-    meta.className = "featured-entry-meta";
-    meta.textContent = entry.dates; // literal, never translated
-    body.appendChild(meta);
-
-    var desc = document.createElement("p");
-    desc.className = "featured-entry-desc";
-    desc.setAttribute("data-i18n", entry.longDescKey);
-    desc.textContent = text(entry.longDescKey);
-    body.appendChild(desc);
-
-    body.appendChild(buildTagRow(entry));
-
-    var link = buildViewLink(entry);
-    if (link) body.appendChild(link);
-
-    article.appendChild(body);
-    return article;
   }
 
-  /* ---- §3 Index rows -------------------------------------------------------
-     Identical markup under both .project-index--rows and .project-index--grid —
-     switching views later is a class swap on the container, with no change to
-     this function or to the data array.
-
-     An entry with no imageSrc gets .project-row--no-image and no <img> node at
-     all: the text takes the full row width. Not a broken image, not a grey box,
-     not a placeholder icon. */
-  function buildRow(entry) {
-    var row = document.createElement("article");
-    row.className = "project-row" + (entry.imageSrc ? "" : " project-row--no-image");
-
-    if (entry.imageSrc) {
-      var thumb = document.createElement("div");
-      thumb.className = "project-thumb";
-      thumb.appendChild(buildImage(entry, "project-thumb-image"));
-      row.appendChild(thumb);
-    }
-
-    var body = document.createElement("div");
-    body.className = "project-row-body";
-
-    var heading = document.createElement("h3");
-    heading.className = "project-row-title";
-    var titleText = document.createElement("span");
-    titleText.setAttribute("data-i18n", entry.titleKey);
-    titleText.textContent = text(entry.titleKey);
-    heading.appendChild(titleText);
-    var dates = document.createElement("span");
-    dates.className = "project-row-dates";
-    dates.textContent = entry.dates; // literal, never translated
-    heading.appendChild(dates);
-    body.appendChild(heading);
-
-    var desc = document.createElement("p");
-    desc.className = "project-row-desc";
-    desc.setAttribute("data-i18n", entry.descKey);
-    desc.textContent = text(entry.descKey);
-    body.appendChild(desc);
-
-    body.appendChild(buildTagRow(entry));
-
-    var link = buildViewLink(entry);
-    if (link) body.appendChild(link);
-
-    row.appendChild(body);
-    return row;
+  // main.js handles data-i18n and data-i18n-alt but not placeholders or
+  // aria-labels on the search chrome, so they are refreshed here each render.
+  function renderSearchChrome() {
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+      el.setAttribute("placeholder", text(el.getAttribute("data-i18n-placeholder")));
+    });
+    if (searchClear) searchClear.setAttribute("aria-label", text("projSearchClear"));
   }
 
   /* ---- Tag filter ----------------------------------------------------------
-     Pills come from PROJECT_TAGS (the controlled vocabulary) in vocabulary
-     order, narrowed to tags at least one listed entry actually carries — a pill
+     Pills come from the shared vocabulary (js/tags-data.js) in vocabulary
+     order, narrowed to tags at least one index entry actually carries — a pill
      that can only ever return zero results is noise, not a filter.
-     Multi-select, AND logic. The "Clear" pill resets. */
+     Multi-select, AND logic, state stored as ids. The "Clear" pill resets. */
   function tagsInUse() {
     var used = {};
-    listedEntries().forEach(function (entry) {
-      (entry.tags || []).forEach(function (tag) { used[tag] = true; });
+    siteData.indexProjects().forEach(function (entry) {
+      (entry.tags || []).forEach(function (id) { used[id] = true; });
     });
-    var vocabulary = (typeof PROJECT_TAGS !== "undefined") ? PROJECT_TAGS : [];
-    return vocabulary.filter(function (tag) { return used[tag]; });
+    return siteData.tagVocabulary().filter(function (tag) { return used[tag.id]; });
   }
 
-  function toggleTag(tag) {
-    var at = activeTags.indexOf(tag);
-    if (at === -1) {
-      activeTags.push(tag);
-    } else {
-      activeTags.splice(at, 1);
-    }
+  function toggleTag(id) {
+    var at = activeTags.indexOf(id);
+    if (at === -1) activeTags.push(id); else activeTags.splice(at, 1);
     syncFilterPills();
     applyFilter();
   }
@@ -238,9 +185,9 @@
       var pill = document.createElement("button");
       pill.type = "button";
       pill.className = "tag-filter-pill";
-      pill.textContent = tag;
-      pill.setAttribute("data-tag", tag);
-      pill.addEventListener("click", function () { toggleTag(tag); });
+      pill.textContent = siteData.tagLabel(tag.id);
+      pill.setAttribute("data-tag", tag.id);
+      pill.addEventListener("click", function () { toggleTag(tag.id); });
       filterRow.appendChild(pill);
     });
 
@@ -261,23 +208,38 @@
   }
 
   // AND logic: the entry must carry EVERY active tag, not any of them.
-  function matchesFilter(entry) {
-    return activeTags.every(function (tag) {
-      return (entry.tags || []).indexOf(tag) !== -1;
+  function matchesTags(entry) {
+    return activeTags.every(function (id) {
+      return (entry.tags || []).indexOf(id) !== -1;
     });
   }
 
+  /* ---- Combine tags + search ----------------------------------------------
+     A row stays visible only if it passes BOTH the tag filter and the search.
+     The count and the empty state reflect the combination. Visible rows are
+     re-appended in the order searchEntries() returned them (identical to index
+     order today; a ranking search later reorders for free). Featured §2 is
+     never filtered. */
   function applyFilter() {
-    var shown = 0;
+    var matched = searchEntries(activeQuery, rows.map(function (pair) { return pair.entry; }))
+      .filter(matchesTags);
+    var order = {};
+    matched.forEach(function (entry, i) { order[entry.slug] = i; });
+
+    var shownPairs = [];
     rows.forEach(function (pair) {
-      var visible = matchesFilter(pair.entry);
+      var visible = order[pair.entry.slug] !== undefined;
       // display:none removes the row from flow so the list closes up rather
       // than leaving a gap. Only opacity is transitioned — never position.
       pair.row.classList.toggle("is-filtered-out", !visible);
-      if (visible) shown++;
+      if (visible) shownPairs.push(pair);
     });
-    updateCount(shown);
-    if (emptyEl) emptyEl.hidden = shown !== 0;
+    shownPairs
+      .sort(function (a, b) { return order[a.entry.slug] - order[b.entry.slug]; })
+      .forEach(function (pair) { indexList.appendChild(pair.row); });
+
+    updateCount(shownPairs.length);
+    updateEmpty(shownPairs.length);
   }
 
   function updateCount(n) {
@@ -286,15 +248,31 @@
     countEl.textContent = text(key).replace("{n}", n);
   }
 
-  /* ---- §1 search band ------------------------------------------------------
-     The band is hidden and the input is inert; this only keeps its placeholder
-     in the right language so nothing is left in the wrong language when the
-     band is revealed in Phase 3. main.js handles data-i18n and data-i18n-alt
-     but not placeholders, so it is done here. */
-  function renderSearchPlaceholder() {
-    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
-      el.setAttribute("placeholder", text(el.getAttribute("data-i18n-placeholder")));
-    });
+  // projEmptySearch when a query is active (with or without tags), projEmpty
+  // when only tags are. Text is set here, not via data-i18n, because it
+  // depends on state.
+  function updateEmpty(shown) {
+    if (!emptyEl) return;
+    emptyEl.hidden = shown !== 0;
+    if (shown !== 0) return;
+    emptyEl.textContent = activeQuery.trim()
+      ? text("projEmptySearch").replace("{q}", activeQuery.trim())
+      : text("projEmpty");
+  }
+
+  /* ---- Deep links ---------------------------------------------------------
+     projects.html#<slug>: clear any active tags and query (a hidden target is
+     useless), scroll the row clear of the nav, mark it. Re-run on hashchange.
+     A language re-render re-marks without scrolling. */
+  function goToHash(scroll) {
+    if (!location.hash) return;
+    if (scroll) {
+      activeTags = [];
+      setQuery("");
+      syncFilterPills();
+      applyFilter();
+    }
+    siteData.targetFromHash(".project-row", scroll);
   }
 
   var observer = new IntersectionObserver(function (entries) {
@@ -310,27 +288,34 @@
     observer.disconnect();
 
     featuredList.innerHTML = "";
-    featuredEntries().forEach(function (entry, i) {
-      var article = buildFeatured(entry, i);
+    siteData.featuredProjects().forEach(function (entry, i) {
+      var article = siteData.buildFeatured(entry, i);
       featuredList.appendChild(article);
       observer.observe(article);
     });
 
     indexList.innerHTML = "";
     rows = [];
-    indexEntries().forEach(function (entry) {
-      var row = buildRow(entry);
+    siteData.indexProjects().forEach(function (entry) {
+      var row = siteData.buildRow(entry);
       indexList.appendChild(row);
       rows.push({ row: row, entry: entry });
     });
 
     renderFilter();
-    renderSearchPlaceholder();
+    renderSearchChrome();
     applyFilter(); // also paints the count and the empty state
+    goToHash(false);
   }
+
+  siteData.checkData();
+  buildCorpus();
+  wireSearch();
 
   // main.js fires langchange at the end of applyTranslations, so this runs after
   // the data-i18n elements are swapped and always wins on JS-rendered content.
   document.addEventListener("langchange", render);
+  window.addEventListener("hashchange", function () { goToHash(true); });
   render();
+  goToHash(true);
 }());

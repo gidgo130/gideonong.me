@@ -400,41 +400,13 @@ a:hover {
   margin: 0 0 18px;
 }
 
-.featured-card {
+/* The entries are .featured-entry articles built by js/home.js with the same
+   markup as projects.html §2 (styles under "§2 — Featured projects" below).
+   The home hero is left-aligned at 800px, so the list is left-aligned too —
+   not centered like the 1000px projects.html list. */
+.featured-work .featured-list {
   max-width: 900px;
-  width: 100%;
-}
-
-.featured-image-placeholder {
-  background: var(--border);
-  width: 100%;
-  aspect-ratio: 16 / 7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 0 14px;
-  overflow: hidden;
-}
-
-.featured-image-placeholder span {
-  font-size: 11px;
-  color: var(--muted);
-  font-style: italic;
-}
-
-.featured-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 8px;
-  line-height: 1.25;
-}
-
-.featured-desc {
-  font-size: 14px;
-  color: #4A4945;
-  line-height: 1.62;
   margin: 0;
-  max-width: 640px;
 }
 
 /* --------------------------------------------------------------------------
@@ -645,14 +617,6 @@ a:hover {
   .section-heading {
     font-size: 16px;
   }
-
-  .featured-title {
-    font-size: 22px;
-  }
-
-  .featured-desc {
-    font-size: 15px;
-  }
 }
 
 /* ==========================================================================
@@ -697,10 +661,6 @@ a:hover {
   :root:not([data-theme="light"]) .chip {
     color: var(--ink);
   }
-
-  :root:not([data-theme="light"]) .featured-desc {
-    color: var(--muted);
-  }
 }
 
 /* --------------------------------------------------------------------------
@@ -742,10 +702,6 @@ a:hover {
 
 :root[data-theme="dark"] .chip {
   color: var(--ink);
-}
-
-:root[data-theme="dark"] .featured-desc {
-  color: var(--muted);
 }
 
 /* ==========================================================================
@@ -1398,6 +1354,8 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   color: var(--entry-ink, var(--ink));
   border-top: 1px solid var(--entry-border, var(--border));
   padding: clamp(36px, 5vw, 64px) clamp(16px, 4vw, 36px);
+  /* experience.html#<slug>: keep the band clear of the sticky nav + dev banner. */
+  scroll-margin-top: 92px;
 }
 
 .exp-band:last-child {
@@ -1451,6 +1409,13 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
    toggle: accent left edge + the "Current" eyebrow above the role title. ----- */
 .exp-band--current {
   border-left: 3px solid var(--entry-accent, var(--bronze));
+}
+
+/* Deep-link target (experience.html#<slug>): the same left rule, in the site
+   bronze. Static — no animation. Declared after --current so it wins when the
+   targeted band is also the current one. */
+.exp-band.is-target {
+  border-left: 3px solid var(--bronze);
 }
 
 .exp-band-eyebrow {
@@ -1558,6 +1523,56 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   color: var(--entry-ink, var(--ink));
 }
 
+/* "Projects from this role" — the role → project half of the two-way link.
+   Rendered after the tags by js/experience.js, only when at least one index
+   project points at the band. Title links to projects.html#<slug>. */
+.exp-related {
+  margin: 4px 0 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--entry-border, var(--border));
+}
+
+.exp-related-heading {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--entry-ink, var(--ink));
+  margin: 0 0 8px;
+}
+
+.exp-related-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exp-related-list li {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--entry-ink, var(--ink));
+}
+
+.exp-related-title {
+  font-weight: 500;
+  color: var(--entry-accent, var(--bronze));
+  transition: color 150ms ease;
+}
+
+.exp-related-title:hover {
+  color: var(--entry-ink, var(--ink));
+}
+
+.exp-related-desc {
+  color: var(--muted);
+}
+
+.exp-related-desc::before {
+  content: " — ";
+}
+
 @media (max-width: 767px) {
   .exp-hero {
     min-height: 480px;
@@ -1648,11 +1663,7 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   §1 — Search band: BUILT BUT HIDDEN.
-
-   .is-hidden below is the only thing keeping the band off the page. Deleting
-   that class from the band element in projects.html reveals it — one edit, no
-   CSS change — once the Phase 3 semantic search actually works.
+   §1 — Search band: live keyword search over the §3 index (js/projects.js).
 
    Background treatment (b) from plan.md open decision #1: a --bg-section wash
    settling into --bg, distinct from both flat section colors without competing
@@ -1668,10 +1679,6 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   padding: clamp(20px, 3vw, 32px) clamp(16px, 4vw, 36px);
 }
 
-.search-band.is-hidden {
-  display: none;
-}
-
 .search-band-inner {
   max-width: 560px;
   width: 100%;
@@ -1681,15 +1688,33 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   gap: 8px;
 }
 
-.search-input {
+/* Input + the × clear control. The × is shown only while the input has text
+   (.has-text, toggled by js/projects.js). */
+.search-field {
+  position: relative;
   flex: 1 1 200px;
   min-width: 0;
-  padding: 9px 12px;
+  display: flex;
+}
+
+.search-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 34px 9px 12px;
   font-size: 14px;
   color: var(--ink);
   background: var(--nav-bg);
   border: 1px solid var(--border);
   border-radius: 2px;
+}
+
+/* The site draws its own clear control — suppress the browser's. */
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
 
 .search-input::placeholder {
@@ -1699,6 +1724,34 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 .search-input:focus-visible {
   outline: 2px solid var(--bronze-mid);
   outline-offset: 1px;
+}
+
+.search-clear {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted);
+  transition: color 150ms ease;
+}
+
+.search-field.has-text .search-clear {
+  display: inline-flex;
+}
+
+.search-clear:hover {
+  color: var(--ink);
+}
+
+.search-clear:focus-visible {
+  outline: 2px solid var(--bronze-mid);
+  outline-offset: -3px;
 }
 
 .search-btn {
@@ -1824,6 +1877,23 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 
 .project-link:hover {
   color: var(--ink);
+}
+
+/* "Part of: <role>, <org> →" — the project → role half of the two-way link.
+   Sits below the tags, above the "View project →" link, on any entry whose
+   `experience` field resolves to a visible role. Quieter than .project-link:
+   it is context, not the primary action. */
+.project-part-of {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: -4px 0 8px;
+  transition: color 150ms ease;
+}
+
+.project-part-of:hover {
+  color: var(--bronze);
 }
 
 /* --------------------------------------------------------------------------
@@ -1960,7 +2030,23 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 
 /* ---- Row internals (shared by both views) ------------------------------- */
 .project-row {
+  position: relative;
   transition: opacity 150ms ease;
+  /* projects.html#<slug>: keep the row clear of the sticky nav (56px) and the
+     dev banner (~36px) when it is scrolled into view. */
+  scroll-margin-top: 104px;
+}
+
+/* Deep-link target: a static bronze rule in the left gutter. No animation, no
+   layout shift — the rule sits outside the row's box. */
+.project-row.is-target::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 18px;
+  bottom: 18px;
+  width: 3px;
+  background: var(--bronze);
 }
 
 .project-thumb,

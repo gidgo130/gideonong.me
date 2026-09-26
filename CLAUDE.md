@@ -18,6 +18,14 @@ projects.html       Technical projects with photos, tags, descriptions
 css/style.css       All styles (single file, organized by section)
 js/main.js          Nav behavior, language toggle, scroll interactions
 js/translations.js  All EN and ES text strings for the bilingual toggle
+js/tags-data.js     The one shared tag vocabulary (id + i18n key)
+js/projects-data.js Project entries (feeds projects.html and the home featured block)
+js/experience-data.js  Experience entries (feeds experience.html)
+js/data-helpers.js  Shared selectors, builders, deep-link targeting, dev data check
+js/projects.js      projects.html renderer: featured, index, tag filter, search
+js/experience.js    experience.html renderer: bands + related projects
+js/home.js          index.html featured block renderer
+js/about.js         about.html behaviors
 assets/images/      Project photos and diagrams
 assets/pdfs/        Resume and project reports (resume.pdf goes here)
 assets/videos/      Project video clips
@@ -135,9 +143,11 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
 4. Featured work section (image-forward, eater.net-inspired):
    Background: var(--bg-section). Top border: 1px solid var(--border).
    "Featured work" as a readable section heading (~15px Lora, near-black)
-   Full-width image as visual anchor (16:9 or 16:7). Images are the focus.
-   Title below image. Description below title. Tags below description (not above).
-   "View project →" link below tags. 1-5 projects, dynamic over time.
+   Rendered by js/home.js from js/projects-data.js (featured: true, listing: "index")
+   with the same builders and markup as projects.html §2: 16:9 image as the anchor,
+   title, "<Context> · <dates>" meta, description, tags below description (not
+   above), "Part of: <role>, <org> →" when linked to a role, "View project →" link.
+   No project copy lives in index.html. 1-5 projects, dynamic over time.
 5. Footer (dark)
 
 ## Bilingual support (EN/ES)
@@ -158,9 +168,50 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
 
 ## Projects (projects.html)
 - Dynamic tag filter: clicking a tag filters visible projects (vanilla JS, no reload)
+- Keyword search band (§1): live, debounced, AND over whitespace tokens, diacritic-
+  insensitive, both languages indexed. Combines with the tag filter (AND). Only the
+  index is filtered; featured is not.
 - Tag pills placed BELOW description text, not above the title
 - Unlinked pages: exist at a URL, not listed in nav or project list
-  (for politically-sensitive or selectively shared work) — list filenames here as added
+  (for politically-sensitive or selectively shared work) — `listing: "unlisted"` in
+  js/projects-data.js. List filenames here as sub-pages are added.
+
+## Data conventions
+Data files: js/tags-data.js, js/projects-data.js, js/experience-data.js. Read-side
+helpers in js/data-helpers.js. Array order never matters — everything sorts by `sortDate`
+("YYYY-MM") descending; `pinned: true` lifts a project to the top of the index.
+
+- Listing tiers (`listing` on every project):
+    "index"    — in the §3 index, the tag filter, search, and its role's "Projects from
+                 this role" list; may be `featured` (max 3)
+    "unlisted" — direct URL only; excluded from index, bands, filter, featured, search
+    "hidden"   — excluded everywhere
+    "nested"   — RESERVED, not implemented. Intended for role-bound minor projects shown
+                 on their band and surfaced in the index only under an active filter or
+                 search. An entry set to it does not render and the dev check warns.
+                 Build trigger: the index passes ~30 rows, or 4+ minor role-bound items
+                 exist. Experience entries keep a `visible` boolean.
+- Two-way project ↔ experience links come from ONE field: project `experience` holds an
+  experience `slug` (or ""). Project → role: "Part of: <role>, <org> →" (key projPartOf)
+  below the tags, to experience.html#<slug>. Role → projects: the band lists every
+  listing:"index" project pointing at it (key expRelatedHeading), titles linking to
+  projects.html#<slug>. Index rows and bands carry id="<slug>"; a matching location.hash
+  clears filter/query, scrolls clear of the nav, and adds `.is-target` (static bronze
+  left rule). Only a visible role is a valid link target.
+- Tags are IDS from js/tags-data.js (`{ id, key }`); pills and filter buttons show the
+  translated label; filter state stores ids. Never store a label in a data file.
+- `context` on every project: industry | coursework | personal | service | research —
+  rendered as "<Context> · <dates>" (keys ctxIndustry …).
+- Key naming by slug: proj<SlugCamel>Title / Desc / LongDesc / Alt / Search
+  (slug "todo-project-1" → projTodoProject1Title); exp<SlugCamel>Role / Org / Bullet1…;
+  tag<IdCamel>; ctx<Context>. translations.js is the single source of display strings.
+- searchEntries(query, entries) → entries in js/projects.js is the ONE place matching
+  happens. Phase 3 (TF-IDF) replaces its body only — same signature, same return shape,
+  may reorder by score; no markup or caller changes.
+- Dev data check (siteData.checkData, console.warn only) runs on load of projects.html
+  and experience.html: unknown tag id, missing EN/ES key, duplicate slug, bad `experience`
+  target, featured on non-index, >3 featured, imageSrc without imageAlt, missing
+  sortDate/context, reserved "nested". Keep the console clean.
 
 ## Animation and scroll behavior
 - NO page-load animations — no rising text, no fading on arrival

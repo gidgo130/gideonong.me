@@ -1,9 +1,19 @@
 // experience-data.js
-// Data array driving §2 of experience.html. Reorder entries to change display
-// order; set visible: false to hide an entry without deleting it.
-// roleKey / orgKey / bulletKeys map to strings in js/translations.js.
+// Data array driving §2 of experience.html. Set visible: false to hide an
+// entry without deleting it. roleKey / orgKey / bulletKeys map to strings in
+// js/translations.js.
 //
-// SCHEMA (see plan.md → Page Spec — experience.html → §2):
+// ARRAY ORDER DOES NOT MATTER. Bands render in sortDate descending order.
+//
+// SCHEMA (see plan.md → Page Spec — experience.html → §2, and CLAUDE.md →
+// Data conventions):
+//   slug     Unique id for the role. The band gets id="<slug>" so
+//            experience.html#<slug> deep-links to it, and a project in
+//            js/projects-data.js points here with `experience: "<slug>"`. Per-
+//            entry i18n keys are exp<SlugCamel>Role / Org / Bullet1… — the
+//            existing names already follow this.
+//   sortDate "YYYY-MM" — the ONLY thing ordering reads. Newest first.
+//   tags     tag IDS from js/tags-data.js (never labels)
 //   layout   "imageLeft" | "imageRight" | "fullBleed" | "textOnly"
 //            Maps 1:1 to a CSS class (.exp-band--image-left, etc.). Adding a
 //            preset later means one new class — never bespoke markup.
@@ -11,6 +21,9 @@
 //            visitor toggle: the flagged entry supplies the hero status sentence
 //            and gets the .exp-band--current treatment. With no current entry the
 //            hero falls back to expHeroStatus and no band is marked.
+//   subpageUrl "" = no case-study page yet → the link is omitted. Every value
+//            is "" today because none of the /experience/<slug>.html pages
+//            exist; a live 404 link is worse than no link.
 //   color    Per-entry band colors, written to the band as inline custom
 //            properties by js/experience.js. These CANNOT live in :root — they
 //            are per-entry values, so the inline style is deliberate and is the
@@ -22,6 +35,11 @@
 //              accent  case-study link and tag pill borders (must clear 4.5:1
 //                      on bg; body text must clear 4.5:1, role titles 3:1).
 //            ink is optional and omitted here — bands inherit var(--ink).
+//   visible  false → hidden. A hidden role is also an invalid `experience`
+//            target for projects (the dev check warns, the link is omitted).
+//
+// Related projects: a band lists every listing: "index" project whose
+// `experience` equals this entry's slug — nothing is stored on this side.
 //
 // SCAFFOLD NOTE: every color below is a NEUTRAL GREY tint, not an employer
 // color. Real employer colors are TBD (plan.md open decision #9). Light mixes
@@ -30,17 +48,19 @@
 
 const experienceData = [
   {
+    slug: "baker-hughes",
     roleKey: "expBakerHughesRole",
     orgKey: "expBakerHughesOrg",
     dates: "Summer 2026",
+    sortDate: "2026-06",
     bulletKeys: [
       "expBakerHughesBullet1",
       "expBakerHughesBullet2",
       "expBakerHughesBullet3"
     ],
-    tags: ["Engineering", "R&D", "ALS"],
+    tags: ["engineering", "rd", "als"],
     imageSrc: "assets/images/placeholder.jpg",
-    subpageUrl: "/experience/baker-hughes-summer-2026.html",
+    subpageUrl: "",
     layout: "imageLeft",
     status: null,
     color: {
@@ -50,17 +70,19 @@ const experienceData = [
     visible: true
   },
   {
+    slug: "machine-shop",
     roleKey: "expMachineShopRole",
     orgKey: "expMachineShopOrg",
     dates: "Spring 2026 – present",
+    sortDate: "2026-02",
     bulletKeys: [
       "expMachineShopBullet1",
       "expMachineShopBullet2",
       "expMachineShopBullet3"
     ],
-    tags: ["Machining", "Prototyping", "Fabrication"],
+    tags: ["machining", "prototyping", "fabrication"],
     imageSrc: "assets/images/placeholder.jpg",
-    subpageUrl: "/experience/tu-machine-shop.html",
+    subpageUrl: "",
     layout: "imageLeft",
     status: "current",
     color: {
@@ -70,17 +92,19 @@ const experienceData = [
     visible: true
   },
   {
+    slug: "schultz-grader",
     roleKey: "expSchultzRole",
     orgKey: "expSchultzOrg",
     dates: "Spring 2026",
+    sortDate: "2026-01",
     bulletKeys: [
       "expSchultzBullet1",
       "expSchultzBullet2",
       "expSchultzBullet3"
     ],
-    tags: ["Data Analysis", "Grading", "Dynamics"],
+    tags: ["data-analysis", "grading", "dynamics"],
     imageSrc: "assets/images/placeholder.jpg",
-    subpageUrl: "/experience/dynamics-grading-schultz.html",
+    subpageUrl: "",
     layout: "imageLeft",
     status: null,
     color: {
@@ -90,17 +114,19 @@ const experienceData = [
     visible: true
   },
   {
+    slug: "turc",
     roleKey: "expTurcRole",
     orgKey: "expTurcOrg",
     dates: "TBD",
+    sortDate: "2025-09", // TODO — placeholder until the dates are confirmed
     bulletKeys: [
       "expTurcBullet1",
       "expTurcBullet2",
       "expTurcBullet3"
     ],
-    tags: ["Research"],
+    tags: ["research"],
     imageSrc: "assets/images/placeholder.jpg",
-    subpageUrl: "/experience/turc-tmtc-edmonds.html",
+    subpageUrl: "",
     layout: "imageLeft",
     status: null,
     color: {

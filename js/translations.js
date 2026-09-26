@@ -1,13 +1,16 @@
 // translations.js
-// All EN/ES display strings for the bare-bones build.
-// Keys match the [key] annotations in content.md where given.
-// Source of truth: content.md — do not edit strings here without updating there.
+// All EN/ES display strings. THIS FILE is the single source of display
+// strings — content.md records status and field references, not copies of
+// the strings. Placeholders are prefixed "TODO " in both languages.
+//
+// Per-entry keys are named by slug: proj<SlugCamel><Field> for projects
+// (Title / Desc / LongDesc / Alt / Search) and exp<SlugCamel><Field> for
+// experience (Role / Org / Bullet1…). Tag labels are tag<IdCamel>, context
+// labels ctx<Context>. See CLAUDE.md → Data conventions.
 
 const translations = {
   en: {
-    // Navbar — nav link labels (same words as the page headings below;
-    // content.md does not give separate ES nav strings, so these reuse the
-    // exact translations already provided for aboutHeading/expHeading/projectsHeading)
+    // Navbar — nav link labels
     navProjects: "Projects",
     navExperience: "Experience",
     navAbout: "About",
@@ -24,10 +27,39 @@ const translations = {
     // Resume button
     resumeBtn: "Download Resume",
 
-    // index.html — Featured work section
+    // index.html — Featured work section. The entries themselves render from
+    // js/projects-data.js (featured: true, listing: "index") with the same
+    // per-entry keys projects.html uses — nothing project-specific lives here.
     featuredWork: "Featured work",
-    featuredCardTitle: "Featured project coming soon",
-    featuredCardDesc: "Project descriptions are being finalized.",
+
+    // Shared tag labels (js/tags-data.js). Pills and filter buttons show these;
+    // the data files store the tag ID, never the label. Compact elements — keep
+    // EN and ES close in length. todo-a … todo-f are the project placeholders;
+    // the rest carried over from experience.html's former free-string tags.
+    tagTodoA: "TODO Tag A",
+    tagTodoB: "TODO Tag B",
+    tagTodoC: "TODO Tag C",
+    tagTodoD: "TODO Tag D",
+    tagTodoE: "TODO Tag E",
+    tagTodoF: "TODO Tag F",
+    tagEngineering: "Engineering",
+    tagRd: "R&D",
+    tagAls: "ALS",
+    tagMachining: "Machining",
+    tagPrototyping: "Prototyping",
+    tagFabrication: "Fabrication",
+    tagDataAnalysis: "Data Analysis",
+    tagGrading: "Grading",
+    tagDynamics: "Dynamics",
+    tagResearch: "Research",
+
+    // Project context labels — the `context` field in js/projects-data.js,
+    // rendered as "<Context> · <dates>" in every project meta line. Short.
+    ctxIndustry: "Industry",
+    ctxCoursework: "Coursework",
+    ctxPersonal: "Personal",
+    ctxService: "Service",
+    ctxResearch: "Research",
 
     // about.html — §1 hero
     aboutIdentifiersEN: "Engineer · Geographer · Federalist · Philomath",
@@ -60,10 +92,6 @@ const translations = {
     toggleDarkMode: "Dark mode",
     interestingSitesHeading: "Interesting sites",
 
-    // about.html stub
-    aboutHeading: "About",
-    aboutBody: "Full about page coming soon.",
-
     // experience.html — §1 hero
     // Key pair for the status sentence. expHeroStatus is the FALLBACK, shown
     // when no entry in js/experience-data.js carries status: "current".
@@ -76,6 +104,9 @@ const translations = {
     // experience.html — §2 entries
     expCaseStudyLink: "View full case study →",
     expCurrentLabel: "Current",
+    // Heading of the "Projects from this role" list a band shows when at least
+    // one listing: "index" project points at it via `experience`.
+    expRelatedHeading: "Projects from this role",
 
     expBakerHughesRole: "Engineering Intern, ALS R&D",
     expBakerHughesOrg: "Baker Hughes",
@@ -101,63 +132,63 @@ const translations = {
     expTurcBullet2: "TODO bullet 2 (EN)",
     expTurcBullet3: "TODO bullet 3 (EN)",
 
-    // projects.html — §1 search band (built but hidden until Phase 3 search works)
+    // projects.html — §1 search band (live keyword search over the index)
     projSearchPlaceholder: "Search my projects",
     projSearchBtn: "Search",
+    projSearchClear: "Clear search",       // aria-label on the × control
 
     // projects.html — §2 featured + §3 index chrome
     projFeaturedHeading: "Featured projects",
     projIndexHeading: "All projects",
     projViewLink: "View project →",
+    // {role} and {org} are filled from the linked experience entry's keys.
+    // Shown below the tags on any entry whose `experience` field is set.
+    projPartOf: "Part of: {role}, {org} →",
     projFilterLabel: "Filter by tag",      // aria-label on the filter row
     projFilterClear: "Clear",              // resets every active tag
     projCount: "{n} projects",             // {n} filled by js/projects.js
     projCountOne: "{n} project",
     projEmpty: "No projects match those tags.",
+    projEmptySearch: "No projects match “{q}”.",   // {q} = the search query
 
     // projects.html — placeholder entries (js/projects-data.js).
     // Every string here is a stand-in. Real project copy comes from the
     // projects content interview — do not invent any of it.
-    proj1Title: "TODO Project 1 title",
-    proj1Desc: "TODO one-line index description for project 1.",
-    proj1LongDesc: "TODO fuller featured description for project 1 — one short paragraph, used in the featured block and on the sub-page.",
-    proj1Alt: "TODO image description for project 1",
-    proj1Search: "TODO search text blob for project 1",
+    projTodoProject1Title: "TODO Project 1 title",
+    projTodoProject1Desc: "TODO one-line index description for project 1.",
+    projTodoProject1LongDesc: "TODO fuller featured description for project 1 — one short paragraph, used in the featured block and on the sub-page.",
+    projTodoProject1Alt: "TODO image description for project 1",
+    projTodoProject1Search: "TODO search text blob for project 1",
 
-    proj2Title: "TODO Project 2 title",
-    proj2Desc: "TODO one-line index description for project 2.",
-    proj2LongDesc: "TODO fuller featured description for project 2 — one short paragraph, used in the featured block and on the sub-page.",
-    proj2Alt: "TODO image description for project 2",
-    proj2Search: "TODO search text blob for project 2",
+    projTodoProject2Title: "TODO Project 2 title",
+    projTodoProject2Desc: "TODO one-line index description for project 2.",
+    projTodoProject2LongDesc: "TODO fuller featured description for project 2 — one short paragraph, used in the featured block and on the sub-page.",
+    projTodoProject2Alt: "TODO image description for project 2",
+    projTodoProject2Search: "TODO search text blob for project 2",
 
-    proj3Title: "TODO Project 3 title",
-    proj3Desc: "TODO one-line index description for project 3.",
-    proj3LongDesc: "TODO fuller description for project 3.",
-    proj3Alt: "TODO image description for project 3",
-    proj3Search: "TODO search text blob for project 3",
+    projTodoProject3Title: "TODO Project 3 title",
+    projTodoProject3Desc: "TODO one-line index description for project 3.",
+    projTodoProject3LongDesc: "TODO fuller description for project 3.",
+    projTodoProject3Alt: "TODO image description for project 3",
+    projTodoProject3Search: "TODO search text blob for project 3",
 
     // Entry 4 has no image — its imageSrc is "" and it carries no alt key.
-    proj4Title: "TODO Project 4 title (no image)",
-    proj4Desc: "TODO one-line index description for project 4 — this entry has no thumbnail, so its text runs the full row width.",
-    proj4LongDesc: "TODO fuller description for project 4.",
-    proj4Search: "TODO search text blob for project 4",
+    projTodoProject4Title: "TODO Project 4 title (no image)",
+    projTodoProject4Desc: "TODO one-line index description for project 4 — this entry has no thumbnail, so its text runs the full row width.",
+    projTodoProject4LongDesc: "TODO fuller description for project 4.",
+    projTodoProject4Search: "TODO search text blob for project 4",
 
-    proj5Title: "TODO Project 5 title (no sub-page)",
-    proj5Desc: "TODO one-line index description for project 5 — this entry has no sub-page yet, so no link is shown.",
-    proj5LongDesc: "TODO fuller description for project 5.",
-    proj5Alt: "TODO image description for project 5",
-    proj5Search: "TODO search text blob for project 5",
+    projTodoProject5Title: "TODO Project 5 title (no sub-page)",
+    projTodoProject5Desc: "TODO one-line index description for project 5 — this entry has no sub-page yet, so no link is shown.",
+    projTodoProject5LongDesc: "TODO fuller description for project 5.",
+    projTodoProject5Alt: "TODO image description for project 5",
+    projTodoProject5Search: "TODO search text blob for project 5",
 
-    proj6Title: "TODO Project 6 title",
-    proj6Desc: "TODO one-line index description for project 6.",
-    proj6LongDesc: "TODO fuller description for project 6.",
-    proj6Alt: "TODO image description for project 6",
-    proj6Search: "TODO search text blob for project 6",
-
-    // projects.html stub — dead keys, kept until the stub strings are retired
-    // from content.md. Nothing on the page references them any more.
-    projectsHeading: "Projects",
-    projectsBody: "Full projects page coming soon.",
+    projTodoProject6Title: "TODO Project 6 title",
+    projTodoProject6Desc: "TODO one-line index description for project 6.",
+    projTodoProject6LongDesc: "TODO fuller description for project 6.",
+    projTodoProject6Alt: "TODO image description for project 6",
+    projTodoProject6Search: "TODO search text blob for project 6",
 
     // Footer
     footerContact: "gao9819@utulsa.edu",
@@ -184,8 +215,33 @@ const translations = {
 
     // index.html — Featured work section
     featuredWork: "Proyectos destacados",
-    featuredCardTitle: "Proyecto destacado próximamente",
-    featuredCardDesc: "Las descripciones de proyectos están siendo finalizadas.",
+
+    // Shared tag labels — see the note in the en block. ES labels for the
+    // carried-over experience tags are provisional ("TODO ") until the
+    // vocabulary is settled in the content interviews.
+    tagTodoA: "TODO Etiqueta A",
+    tagTodoB: "TODO Etiqueta B",
+    tagTodoC: "TODO Etiqueta C",
+    tagTodoD: "TODO Etiqueta D",
+    tagTodoE: "TODO Etiqueta E",
+    tagTodoF: "TODO Etiqueta F",
+    tagEngineering: "TODO Engineering",
+    tagRd: "TODO R&D",
+    tagAls: "TODO ALS",
+    tagMachining: "TODO Machining",
+    tagPrototyping: "TODO Prototyping",
+    tagFabrication: "TODO Fabrication",
+    tagDataAnalysis: "TODO Data Analysis",
+    tagGrading: "TODO Grading",
+    tagDynamics: "TODO Dynamics",
+    tagResearch: "TODO Research",
+
+    // Project context labels — kept short (meta line).
+    ctxIndustry: "Industria",
+    ctxCoursework: "Curso",
+    ctxPersonal: "Personal",
+    ctxService: "Servicio",
+    ctxResearch: "Investigación",
 
     // about.html — §1 hero
     aboutIdentifiersEN: "Engineer · Geographer · Federalist · Philomath",
@@ -218,10 +274,6 @@ const translations = {
     toggleDarkMode: "Modo oscuro",
     interestingSitesHeading: "Sitios interesantes",
 
-    // about.html stub
-    aboutHeading: "Sobre mí",
-    aboutBody: "Página completa en construcción.",
-
     // experience.html — §1 hero
     // Same key pair as EN — see the comment in the en block above.
     expHeroStatus: "TODO Actualmente estudiante de Ingeniería Mecánica y Español IEL en la Universidad de Tulsa — buscando pasantías de verano de 2027 en ingeniería y español.",
@@ -231,6 +283,7 @@ const translations = {
     // experience.html — §2 entries
     expCaseStudyLink: "Ver caso completo →",
     expCurrentLabel: "Actual",
+    expRelatedHeading: "Proyectos de este puesto",
 
     expBakerHughesRole: "TODO Engineering Intern, ALS R&D",
     expBakerHughesOrg: "Baker Hughes",
@@ -256,9 +309,10 @@ const translations = {
     expTurcBullet2: "TODO bullet 2 (ES)",
     expTurcBullet3: "TODO bullet 3 (ES)",
 
-    // projects.html — §1 search band (built but hidden until Phase 3 search works)
+    // projects.html — §1 search band
     projSearchPlaceholder: "Buscar proyectos",
     projSearchBtn: "Buscar",
+    projSearchClear: "Borrar búsqueda",
 
     // projects.html — §2 featured + §3 index chrome.
     // projSearchBtn and projFilterClear sit inside fixed-shape controls, so the
@@ -267,53 +321,51 @@ const translations = {
     projFeaturedHeading: "Proyectos destacados",
     projIndexHeading: "Todos los proyectos",
     projViewLink: "Ver proyecto →",
+    projPartOf: "Parte de: {role}, {org} →",
     projFilterLabel: "Filtrar por etiqueta",
     projFilterClear: "Todos",
     projCount: "{n} proyectos",
     projCountOne: "{n} proyecto",
     projEmpty: "Ningún proyecto coincide con esas etiquetas.",
+    projEmptySearch: "Ningún proyecto coincide con «{q}».",
 
     // projects.html — placeholder entries (js/projects-data.js).
     // Same TODO convention as EN — real copy comes from the content interview.
-    proj1Title: "TODO título del proyecto 1",
-    proj1Desc: "TODO descripción de una línea para el proyecto 1.",
-    proj1LongDesc: "TODO descripción ampliada del proyecto 1 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
-    proj1Alt: "TODO descripción de la imagen del proyecto 1",
-    proj1Search: "TODO texto de búsqueda para el proyecto 1",
+    projTodoProject1Title: "TODO título del proyecto 1",
+    projTodoProject1Desc: "TODO descripción de una línea para el proyecto 1.",
+    projTodoProject1LongDesc: "TODO descripción ampliada del proyecto 1 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
+    projTodoProject1Alt: "TODO descripción de la imagen del proyecto 1",
+    projTodoProject1Search: "TODO texto de búsqueda para el proyecto 1",
 
-    proj2Title: "TODO título del proyecto 2",
-    proj2Desc: "TODO descripción de una línea para el proyecto 2.",
-    proj2LongDesc: "TODO descripción ampliada del proyecto 2 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
-    proj2Alt: "TODO descripción de la imagen del proyecto 2",
-    proj2Search: "TODO texto de búsqueda para el proyecto 2",
+    projTodoProject2Title: "TODO título del proyecto 2",
+    projTodoProject2Desc: "TODO descripción de una línea para el proyecto 2.",
+    projTodoProject2LongDesc: "TODO descripción ampliada del proyecto 2 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
+    projTodoProject2Alt: "TODO descripción de la imagen del proyecto 2",
+    projTodoProject2Search: "TODO texto de búsqueda para el proyecto 2",
 
-    proj3Title: "TODO título del proyecto 3",
-    proj3Desc: "TODO descripción de una línea para el proyecto 3.",
-    proj3LongDesc: "TODO descripción ampliada del proyecto 3.",
-    proj3Alt: "TODO descripción de la imagen del proyecto 3",
-    proj3Search: "TODO texto de búsqueda para el proyecto 3",
+    projTodoProject3Title: "TODO título del proyecto 3",
+    projTodoProject3Desc: "TODO descripción de una línea para el proyecto 3.",
+    projTodoProject3LongDesc: "TODO descripción ampliada del proyecto 3.",
+    projTodoProject3Alt: "TODO descripción de la imagen del proyecto 3",
+    projTodoProject3Search: "TODO texto de búsqueda para el proyecto 3",
 
     // La entrada 4 no tiene imagen — imageSrc es "" y no lleva clave alt.
-    proj4Title: "TODO título del proyecto 4 (sin imagen)",
-    proj4Desc: "TODO descripción de una línea para el proyecto 4 — esta entrada no tiene miniatura, así que su texto ocupa todo el ancho de la fila.",
-    proj4LongDesc: "TODO descripción ampliada del proyecto 4.",
-    proj4Search: "TODO texto de búsqueda para el proyecto 4",
+    projTodoProject4Title: "TODO título del proyecto 4 (sin imagen)",
+    projTodoProject4Desc: "TODO descripción de una línea para el proyecto 4 — esta entrada no tiene miniatura, así que su texto ocupa todo el ancho de la fila.",
+    projTodoProject4LongDesc: "TODO descripción ampliada del proyecto 4.",
+    projTodoProject4Search: "TODO texto de búsqueda para el proyecto 4",
 
-    proj5Title: "TODO título del proyecto 5 (sin subpágina)",
-    proj5Desc: "TODO descripción de una línea para el proyecto 5 — esta entrada todavía no tiene subpágina, así que no se muestra enlace.",
-    proj5LongDesc: "TODO descripción ampliada del proyecto 5.",
-    proj5Alt: "TODO descripción de la imagen del proyecto 5",
-    proj5Search: "TODO texto de búsqueda para el proyecto 5",
+    projTodoProject5Title: "TODO título del proyecto 5 (sin subpágina)",
+    projTodoProject5Desc: "TODO descripción de una línea para el proyecto 5 — esta entrada todavía no tiene subpágina, así que no se muestra enlace.",
+    projTodoProject5LongDesc: "TODO descripción ampliada del proyecto 5.",
+    projTodoProject5Alt: "TODO descripción de la imagen del proyecto 5",
+    projTodoProject5Search: "TODO texto de búsqueda para el proyecto 5",
 
-    proj6Title: "TODO título del proyecto 6",
-    proj6Desc: "TODO descripción de una línea para el proyecto 6.",
-    proj6LongDesc: "TODO descripción ampliada del proyecto 6.",
-    proj6Alt: "TODO descripción de la imagen del proyecto 6",
-    proj6Search: "TODO texto de búsqueda para el proyecto 6",
-
-    // projects.html stub — dead keys, see the note in the en block above.
-    projectsHeading: "Proyectos",
-    projectsBody: "Página completa en construcción.",
+    projTodoProject6Title: "TODO título del proyecto 6",
+    projTodoProject6Desc: "TODO descripción de una línea para el proyecto 6.",
+    projTodoProject6LongDesc: "TODO descripción ampliada del proyecto 6.",
+    projTodoProject6Alt: "TODO descripción de la imagen del proyecto 6",
+    projTodoProject6Search: "TODO texto de búsqueda para el proyecto 6",
 
     // Footer
     footerContact: "gao9819@utulsa.edu",

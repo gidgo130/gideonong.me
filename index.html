@@ -84,15 +84,12 @@
     <a class="btn-resume" data-i18n="resumeBtn" data-doc-link="resume" href="assets/pdfs/resume/en%20Gideon%20Ong%20Resume%2020260915.pdf" target="_blank" rel="noopener">Download Resume</a>
   </section>
 
+  <!-- Featured work. Rendered by js/home.js from js/projects-data.js — every
+       entry with featured: true and listing: "index" — with the same builders
+       and markup as projects.html §2. No project copy lives in this file. -->
   <section class="featured-work">
     <p class="section-heading" data-i18n="featuredWork">Featured work</p>
-    <div class="featured-card">
-      <div class="featured-image-placeholder">
-        <span>Full-width project image or diagram</span>
-      </div>
-      <h2 class="featured-title" data-i18n="featuredCardTitle">Featured project coming soon</h2>
-      <p class="featured-desc" data-i18n="featuredCardDesc">Project descriptions are being finalized.</p>
-    </div>
+    <div class="featured-list" id="home-featured"></div>
   </section>
 
   <footer class="site-footer">
@@ -107,5 +104,10 @@
 
   <script src="js/translations.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/tags-data.js"></script>
+  <script src="js/experience-data.js"></script>
+  <script src="js/projects-data.js"></script>
+  <script src="js/data-helpers.js"></script>
+  <script src="js/home.js"></script>
 </body>
 </html>

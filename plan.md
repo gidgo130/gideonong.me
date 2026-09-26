@@ -52,18 +52,20 @@ Build:
   Dr. Schultz grader role — scaffold built (2026-09-20). Roles, orgs, and dates are real;
   bullets, tags, photos, and employer band colors are still TODO. TURC is in the array with
   `visible: false` pending open decision #4 on that page.
-- [X] projects.html: scaffold built (2026-09-20) per Page Spec — projects.html below: hidden
-  search band (§1), featured entries (§2), index + tag filter (§3), all rendered from
-  `js/projects-data.js`. Six **placeholder** entries — the "real descriptions" this line
-  originally called for come from the projects content interview, not from the scaffold.
+- [X] projects.html: scaffold built (2026-09-20) per Page Spec — projects.html below: search
+  band (§1, live keyword search since 2026-09-26), featured entries (§2), index + tag filter
+  (§3), all rendered from `js/projects-data.js`. Six **placeholder** entries — the "real
+  descriptions" this line originally called for come from the projects content interview,
+  not from the scaffold.
 - [X] js/main.js: language toggle (instant DOM swap, localStorage, navigator.language default)
 - [X] Social link chips in hero: GitHub (gidgo130), LinkedIn (gideon-a-ong), email
 - [X] "Download resume" button → new tab. Note: the flat `assets/pdfs/resume.pdf` path on this
   line is not what shipped — main.js probes `assets/pdfs/<type>/<lang> Gideon Ong <Label>
   <YYYYMMDD>.pdf` backward from today and links the newest file it finds.
-- [ ] Featured work section: image-forward layout, 1-2 projects — placeholder card is in place
-  on index.html, but it is still hardcoded there rather than sourced from `js/projects-data.js`.
-  A project's copy must exist in exactly one place; wiring this up is what closes the box.
+- [X] Featured work section: image-forward layout, 1-2 projects — done 2026-09-26: `js/home.js`
+  renders every `featured: true` + `listing: "index"` entry from `js/projects-data.js` with the
+  projects.html §2 builders (shared via `js/data-helpers.js`). The hardcoded placeholder card
+  and its keys are gone; a project's copy exists in exactly one place.
 - [ ] Deploy to gideonong.me → review on desktop (Chrome, Firefox, Safari) — auto-deploys from
   GitHub on push; the three-browser desktop review has not been done.
 
@@ -278,8 +280,12 @@ Rules that override any employer color:
 - Role title — large, Lora serif
 - Organization + dates — DM Sans, `var(--muted)`
 - 2–3 bullet highlights — DM Sans body
-- Skill tag pills — small, same style as projects.html; placed below bullets
-- "View full case study →" link — `var(--entry-accent)`
+- Skill tag pills — small, same style as projects.html; placed below bullets. Tag IDS from
+  the shared `js/tags-data.js` vocabulary, labels translated.
+- "Projects from this role" (2026-09-26) — after the tags, only when at least one
+  `listing: "index"` project in `js/projects-data.js` points at this band via `experience`.
+  Title (→ `projects.html#<slug>`) + one-line description per project, in project sort order.
+- "View full case study →" link — `var(--entry-accent)`; omitted while `subpageUrl` is ""
 
 **Layout presets:** Layout variation is a named preset on the data object, not bespoke HTML.
 Each preset maps to a single CSS class on the band. Initial set:
@@ -303,36 +309,42 @@ This is an **author-side flag**, not a visitor-facing toggle. Changing jobs = ed
 field. If no entry has `status: "current"`, the hero falls back to the student status sentence
 and no band gets the current treatment — this fallback must work, not error.
 
-**Maintainability:** All entries defined in `js/experience-data.js`. Each object:
+**Maintainability:** All entries defined in `js/experience-data.js`. Each object
+(schema as of 2026-09-26 — see CLAUDE.md → Data conventions):
 ```js
 {
+  slug: "",               // unique; band id (experience.html#<slug>) and the target of a
+                          // project's `experience` field. Keys: exp<SlugCamel>Role / Org / BulletN
   roleKey: "",            // i18n key → EN + ES
   orgKey: "",             // i18n key
-  dates: "",              // literal, not translated
+  dates: "",              // literal display string, not translated
+  sortDate: "YYYY-MM",    // the ONLY thing ordering reads — newest first; array order is ignored
   bulletKeys: [],         // i18n keys → EN + ES
-  tags: [],
+  tags: [],               // tag IDS from js/tags-data.js
   imageSrc: "",
-  subpageUrl: "",
+  subpageUrl: "",         // "" = no case-study page yet → link omitted (all "" today: none exist)
   layout: "imageLeft",    // preset name — see table above
   status: null,           // "current" on at most one entry, else null
   color: {
     light: { bg: "", border: "", accent: "" },
     dark:  { bg: "", border: "", accent: "" }
   },
-  visible: true
+  visible: true           // false → hidden, and no longer a valid `experience` link target
 }
 ```
-Reorder by changing array order; hide with `visible: false`.
+Hide with `visible: false`. Related projects are not stored here — a band lists every
+`listing: "index"` project whose `experience` equals its slug.
 
-**Current entries (reverse chronological):**
-1. Baker Hughes — Engineering Intern, ALS R&D (Summer 2026, Claremore OK)
-2. McElroy Prototyping Lab — Machine Shop Technician (Spring 2026 – present)
-3. Dr. Joshua Schultz — Grader & Data Analyst (Spring 2026)
-4. TURC research — TBD (confirm whether to include before build)
+**Current entries (sortDate order):**
+1. `baker-hughes` — Baker Hughes, Engineering Intern, ALS R&D (Summer 2026, Claremore OK)
+2. `machine-shop` — McElroy Prototyping Lab, Machine Shop Technician (Spring 2026 – present)
+3. `schultz-grader` — Dr. Joshua Schultz, Grader & Data Analyst (Spring 2026)
+4. `turc` — TURC research, TBD, `visible: false` (confirm whether to include)
 
-**Sub-pages:** Each entry links to `/experience/[slug].html` (e.g.,
+**Sub-pages:** Each entry may link to `/experience/[slug].html` (e.g.,
 `/experience/baker-hughes.html`). Sub-pages are full case studies with flexible sections
-per role. Structure TBD per role — spec separately before building sub-pages.
+per role. Structure TBD per role — spec separately before building sub-pages. Every
+`subpageUrl` is "" as of 2026-09-26 because none of the pages exist; fill it in when one ships.
 
 **Background:** Per-band `--entry-bg` (see color contract above). The entries section as a
 whole has no single background — each band supplies its own. `var(--bg)` remains the fallback
@@ -352,8 +364,10 @@ No CLAUDE.md carve-outs required for experience.html. Standard rules apply:
 2. Hero collage photos — TBD; placeholder images OK for scaffold build
 3. Overlay vs. backup — build overlay first; evaluate once real photos are in place
 4. TURC research — include as an entry? Confirm before build
-5. Skill tags per entry — TBD per role
-6. Sub-page structure — spec separately per role before building sub-pages
+5. Skill tags per entry — TBD per role. The vocabulary question is settled structurally
+   (one shared list in `js/tags-data.js`, 2026-09-26); the real tag names are still open.
+6. Sub-page structure — spec separately per role before building sub-pages. `subpageUrl`
+   values are blank until then, so the 404 links are gone.
 7. Layout preset per entry — which entry uses which preset? Decided at content time
 8. Hero text color in dark mode — verify `var(--footer-text)` contrast in dark token block
 9. Employer color values (light + dark mix) per entry — TBD; scaffold uses neutral tints
@@ -375,19 +389,34 @@ layout loop top to bottom — the index is deliberately more compact than the fe
 
 #### §1 — Search band
 
-**Status:** BUILT AND HIDDEN (2026-09-20). Structure and styles exist; the band is hidden by
-`.search-band.is-hidden` (`display: none`) in `projects.html`. Deleting that one class reveals
-it — that is the entire Phase 3 reveal. Do not ship a visible search box that does not work.
+**Status:** LIVE — keyword search (2026-09-26). The band was built hidden on 2026-09-20 and
+unhidden once the search worked.
 
-**Layout:** Full-bleed band directly below the nav/dev-banner. Search input + submit button,
+**Layout:** Full-bleed band directly below the nav/dev-banner. Search input (with a × clear
+control shown only while it has text — aria-label `projSearchClear`) + search button,
 horizontally centered. Closed off at the bottom by a 2px accent rule in `var(--bronze)` —
 the rule is the transition into the featured section.
 
-The band is a `<div>`, **not a `<form>`**, and the button is `type="button"`: an inert input
-inside a form would navigate on Enter. Phase 3 can promote it to a form or keep the div and
-bind a listener — either way, nothing today can submit. The placeholder is set from
+The band is a `<div>`, **not a `<form>`**, and the button is `type="button"`: Enter is handled
+by `js/projects.js` and can never navigate. The placeholder is set from
 `data-i18n-placeholder` by `js/projects.js`, because `main.js` handles `data-i18n` and
 `data-i18n-alt` but not placeholders.
+
+**Behavior (built):**
+- Runs as the visitor types (debounced ~150ms); Enter and the button run it at once; × clears.
+- Matching: the query is split on whitespace and every token must appear (AND) as a
+  substring of the entry's corpus. Both sides are lowercased and diacritic-stripped
+  (`normalize("NFD")` + remove combining marks), so "diseño" and "diseno" match each other.
+- Corpus per entry, built once from BOTH languages regardless of the active one: title, desc,
+  longDesc, searchText, tag labels, context label, and the linked experience's role + org.
+  A Spanish word matches while the page is in English and vice versa.
+- Combines with the tag filter (AND). The count and the empty state reflect both:
+  `projEmpty` when only tags are active, `projEmptySearch` ("No projects match "{q}"." /
+  "Ningún proyecto coincide con «{q}».") when a query is active.
+- Query state lives outside `render()` like the tag state, so a language switch keeps the
+  query, the result set and the count.
+- Only `listing: "index"` entries are searchable. Featured §2 is never filtered.
+- All matching sits behind one function, `searchEntries(query, entries) → entries`.
 
 **Background:** Visually distinct from both `var(--bg)` and `var(--bg-section)` — this is the
 "innovative background" in the outline. Candidate treatments to compare in the color pass:
@@ -401,9 +430,10 @@ temporarily unhidden.
 **Placeholder text:** EN "Search my projects" / ES "Buscar proyectos" — via `data-i18n`.
 Keep EN and ES close in character length per the CLAUDE.md compact-element rule.
 
-**Phase 3 behavior:** TF-IDF + cosine similarity over each project's `searchText`, run in
-vanilla JS. Results reorder/filter the §3 index in place — no separate results page, no reload.
-The markup written in Phase 1 must not need to change when the search function is swapped in.
+**Phase 3 behavior:** TF-IDF + cosine similarity over the same corpus, run in vanilla JS.
+Phase 3 now only upgrades the BODY of `searchEntries()` — same signature, same return shape.
+It may return the entries reordered by score; `applyFilter()` already lays the rows out in the
+order it returns. No markup, no caller, no i18n change.
 
 #### §2 — Featured projects
 
@@ -415,10 +445,12 @@ entry 1 image-left / text-right, entry 2 text-left / image-right, matching the o
 Alternation here is fine because the set is small and fixed; this is the one place a global
 alternating rule applies.
 
-**Per entry:** Image → title (Lora) → description (DM Sans) → tag pills → "View project →" link.
+**Per entry:** Image → title (Lora) → "<Context> · <dates>" meta → description (DM Sans) →
+tag pills → "Part of: <role>, <org> →" (only when `experience` is set) → "View project →" link.
 **Tags go below the description, never above the title** (CLAUDE.md).
 
-**Background:** `var(--bg-section)`, per the index.html featured-work convention.
+**Background:** `var(--bg-section)`, per the index.html featured-work convention. The
+index.html featured block uses these same builders (`js/data-helpers.js`) since 2026-09-26.
 
 #### §3 — Project index
 
@@ -468,44 +500,67 @@ Decided at build time (2026-09-20), recorded so they are not re-decided:
   which re-renders both sections — restores the active filter and pill states rather than
   silently resetting them.
 
-**Order:** Reverse chronological by default. A `pinned: true` field may lift an entry to the top
-of the index independently of the featured flag.
+**Order:** `sortDate` descending (2026-09-26 — array order no longer matters). A `pinned: true`
+field lifts an entry to the top of the index independently of the featured flag.
+
+**Deep links (2026-09-26):** every index row carries `id="<slug>"`. Landing on
+`projects.html#<slug>` (or a hashchange) clears any active tags and query, scrolls the row
+clear of the sticky nav + dev banner (`scroll-margin-top`), and adds `.is-target` — a static
+`var(--bronze)` left rule, no animation. A language re-render re-marks without scrolling.
 
 **Background:** `var(--bg)`.
 
 #### Maintainability — `js/projects-data.js`
 
-New file, mirroring `js/experience-data.js`. One array, single source of truth for §2 and §3.
+One array, single source of truth for §2, §3 AND the index.html featured block.
+Schema as of 2026-09-26 (see CLAUDE.md → Data conventions):
 
 ```js
 {
-  slug: "",               // URL slug → /projects/[slug].html
-  titleKey: "",           // i18n key → EN + ES
-  descKey: "",            // i18n key — one line, used in the index row
-  longDescKey: "",        // i18n key — fuller paragraph, used in featured + sub-page
-  dates: "",              // literal, not translated
-  tags: [],               // must match the tag vocabulary below
+  slug: "",               // URL slug → /projects/[slug].html; also the row id (projects.html#<slug>)
+  titleKey: "",           // i18n keys, named by slug: proj<SlugCamel>Title / Desc / LongDesc /
+  descKey: "",            //   Alt / Search  (e.g. "todo-project-1" → projTodoProject1Title)
+  longDescKey: "",
+  dates: "",              // literal display string, not translated
+  sortDate: "YYYY-MM",    // the ONLY thing ordering reads — newest first
+  context: "coursework",  // industry | coursework | personal | service | research
+                          //   → "<Context> · <dates>" meta line via ctxIndustry … keys
+  tags: [],               // tag IDS from js/tags-data.js — never labels
   imageSrc: "",           // "" is valid — renders without a thumbnail
   imageAlt: "",           // i18n key — required whenever imageSrc is set
   subpageUrl: "",         // "" = no sub-page yet; the "View project →" link is then omitted
-  featured: false,        // true → also rendered in §2
+  featured: false,        // true → also rendered in §2 and on index.html (index tier only; max 3)
   pinned: false,          // true → lifted to top of §3
-  searchTextKey: "",      // i18n key — EN + ES blob indexed by Phase 3 search
-  visible: true,          // false → hidden from both §2 and §3 without deleting the entry
-  unlisted: false         // true → reachable by direct URL only; excluded from §2, §3 and search
+  searchTextKey: "",      // i18n key — EN + ES blob folded into the search corpus
+  listing: "index",       // "index" | "unlisted" | "hidden"  ("nested" reserved — see below)
+  experience: ""          // experience slug this project belongs to, or ""
 }
 ```
 
-`unlisted: true` is how the "unlinked pages" decision (politically-sensitive or selectively-shared
-work) is implemented — the entry lives in the array so its sub-page can be generated, but it never
-appears in any listing.
+**Listing tiers** (replaced the `visible` + `unlisted` pair on 2026-09-26):
+- `"index"` — in the §3 index, the tag filter, search, and its role's "Projects from this
+  role" list; may be featured.
+- `"unlisted"` — direct URL only. Excluded from the index, bands, filter, featured and search.
+  This is how the "unlinked pages" decision (politically-sensitive or selectively-shared work)
+  is implemented — the entry lives in the array so its sub-page can be generated, but it never
+  appears in any listing.
+- `"hidden"` — excluded everywhere.
+- `"nested"` — **reserved, not implemented.** For role-bound minor projects: shown on their
+  band, and surfaced in the index only under an active filter or search. An entry set to it
+  renders nowhere and the dev check warns. Build it when the index passes ~30 rows or 4+ minor
+  role-bound items exist.
 
-**Tag vocabulary:** A controlled list, defined once at the top of `projects-data.js`. Entries may
-only use tags from it. This prevents "CAD"/"cad"/"SolidWorks" fragmenting the filter.
-**TBD** — draft the vocabulary during the content interview, not before.
-The constant (`PROJECT_TAGS`) exists as of 2026-09-20 holding six placeholders, `TODO Tag A`
-through `TODO Tag F`. Tags are literal strings, not i18n keys, matching `experience-data.js`;
-if the real vocabulary needs translating, that is a deliberate change to both files.
+**Two-way links:** `experience` is the one field. Project → role: "Part of: <role>, <org> →"
+(`projPartOf`, placeholders filled from the role's keys) below the tags on featured entries and
+index rows, to `experience.html#<slug>`. Role → projects: the band lists every index project
+pointing at it. Only a visible role is a valid target; the dev check warns otherwise.
+
+**Tag vocabulary:** ONE controlled list, shared by projects and experience, in `js/tags-data.js`
+as `{ id, key }` pairs (2026-09-26 — replaced `PROJECT_TAGS`). Data files store ids; pills and
+filter buttons show the translated label; filter state stores ids so a language switch keeps the
+active filter. The real tag names are still **TBD** — draft them during the content interview.
+Six project placeholders `todo-a` … `todo-f` plus the ten ids carried over from
+experience.html's former free-string tags are in the file today.
 
 #### Animation
 
@@ -516,11 +571,11 @@ No CLAUDE.md carve-outs required. Standard rules apply:
 
 #### Open decisions for projects.html
 
-1. Search band background treatment — (b) section-tint is **built**; comparing it against
-   (a) dark and (c) bronze wash is still open, deferred to the color pass.
-2. Tag vocabulary — drafted during the content interview. Placeholders are in place; this is
-   still open, and still tied to open decision #2 on the experience.html sheet (shared list
-   or separate?).
+1. Search band background treatment — (b) section-tint is **built** and now visible; comparing
+   it against (a) dark and (c) bronze wash is still open, deferred to the color pass.
+2. Tag vocabulary — drafted during the content interview. Placeholders are in place. The
+   shared-or-separate question is **settled**: one list in `js/tags-data.js` for both pages
+   (2026-09-26). The names themselves are still open.
 3. Project list — which projects, and which 2–3 are featured? Content interview
 4. ~~Thumbnail aspect ratio~~ — **RESOLVED 2026-09-20: 4:3**, enforced on every row and every
    grid card via `object-fit: cover`. See the decisions log.
@@ -571,15 +626,17 @@ Content:
 Features:
 
 - [X] Tag filter system on projects.html (JS, no page reload) — **shipped early: built in the
-  Phase 1 scaffold, 2026-09-20.** Multi-select AND logic over `PROJECT_TAGS`, live count,
-  zero-result empty state, `display: none` on filtered rows. It runs against placeholder tags
-  today; the real vocabulary drops in without touching the filter code.
-- [ ] Semantic search box ("Search my experience") in hero section:
-  Phase 3a: TF-IDF + cosine similarity in vanilla JS (fast, no download)
+  Phase 1 scaffold, 2026-09-20.** Multi-select AND logic over the shared `js/tags-data.js`
+  vocabulary (id-based state, translated labels since 2026-09-26), live count, zero-result
+  empty state, `display: none` on filtered rows. It runs against placeholder tags today; the
+  real vocabulary drops in without touching the filter code.
+- [ ] Semantic search on projects.html:
+  **Keyword search shipped 2026-09-26** — the band is live, debounced, AND over tokens,
+  diacritic-insensitive, both languages indexed, combined with the tag filter (see §1 of the
+  page spec). What remains here:
+  Phase 3a: TF-IDF + cosine similarity in vanilla JS — replaces the body of
+  `searchEntries(query, entries)` in `js/projects.js` only. No markup or caller changes.
   Phase 3b (optional upgrade): Transformers.js in-browser embeddings (more semantic)
-  The projects.html band, its markup, and its i18n strings are already built and hidden (see
-  §1 of the page spec). Remaining work is the index function over each entry's `searchTextKey`
-  blob, wiring it to reorder/filter the §3 rows in place, and deleting `.is-hidden`.
 - [ ] Language detection refinement: add IP geolocation (free API) for regional default
 - [ ] Flag-based EN/ES toggle (cosmetic — replace pill buttons with small flag icons)
 
@@ -668,7 +725,8 @@ still outstanding there.
 
 [2026-09-20] projects.html search band ships hidden behind a single class
 (.search-band.is-hidden). Background treatment (b) built; (a) still worth comparing. The band
-is a div, not a form, so the inert input cannot navigate on Enter.
+is a div, not a form, so the inert input cannot navigate on Enter. *(Superseded 2026-09-26:
+the band is live with keyword search; see that entry.)*
 
 [2026-09-20] projects.html index view: rows are the default; .project-index--grid is written
 in style.css but unapplied. Verified in-browser that switching is a class swap with no data or
@@ -677,3 +735,44 @@ rows view was chosen to avoid — settle that before ever making grid the defaul
 
 [2026-09-20] Tag filter shipped in Phase 1 rather than Phase 3. It is annotated in place in the
 Phase 3 list rather than moved, so the original phase plan stays readable.
+
+[2026-09-26] Data conventions + keyword search session. No new content; the six placeholder
+projects and four experience entries were migrated. Recorded in CLAUDE.md → Data conventions.
+1. **Listing tiers.** `visible` + `unlisted` on projects replaced by one field,
+   `listing: "index" | "unlisted" | "hidden"`. `"nested"` is RESERVED and not implemented:
+   role-bound minor projects shown on their band and surfaced in the index only under an
+   active filter or search. Build trigger: the index passes ~30 rows, or 4+ minor role-bound
+   items exist. Until then an entry set to it does not render and the dev check warns.
+   Experience entries keep their `visible` boolean.
+2. **Two-way project ↔ experience links** from a single project field, `experience: "<slug>"`.
+   Experience entries gained `slug` (baker-hughes, machine-shop, schultz-grader, turc); bands
+   carry `id="<slug>"`, index rows `id="<slug>"`. Project → role: "Part of: <role>, <org> →"
+   below the tags (`projPartOf`). Role → projects: "Projects from this role"
+   (`expRelatedHeading`) after the band's tags, index-tier projects only. Deep links clear the
+   filter/query, scroll clear of the nav, and mark the target with a static bronze left rule.
+   Every experience `subpageUrl` was blanked — none of the case-study pages exist.
+3. **Keyword search** is live in the §1 band: debounced typing / Enter / button, × to clear,
+   whitespace-token AND matching, diacritic-insensitive, corpus built from both languages
+   (title, desc, longDesc, searchText, tag labels, context, linked role + org), combined with
+   the tag filter by AND, `projEmptySearch` empty state, query preserved across a language
+   switch, featured never filtered. All matching is `searchEntries(query, entries)`; Phase 3
+   TF-IDF replaces its body only.
+4. **Context + sort.** `context: industry | coursework | personal | service | research`
+   renders as "<Context> · <dates>". `sortDate: "YYYY-MM"` on projects and experience entries
+   is the only ordering input (descending; `pinned` still lifts a project). Array order is
+   irrelevant now.
+5. **Shared, translatable tags.** `js/tags-data.js` (`TAGS = [{ id, key }]`) replaces
+   `PROJECT_TAGS`; both data files store ids; labels come from translations.js; filter state
+   stores ids. The ten former free-string experience tags became ids with "TODO "-prefixed ES
+   labels pending the vocabulary interview. Settles the shared-or-separate question.
+6. **Keys named by slug**: `proj<SlugCamel>Title / Desc / LongDesc / Alt / Search`. Dead keys
+   `projectsHeading`, `projectsBody`, `aboutHeading`, `aboutBody`, `featuredCardTitle`,
+   `featuredCardDesc` deleted.
+7. **Home featured** renders from `js/projects-data.js` (`featured` + `listing: "index"`) via
+   `js/home.js`, using the §2 builders shared in `js/data-helpers.js`. Closes the Phase 1 box.
+8. **Dev-only data check** (`siteData.checkData`, console.warn only) on projects.html and
+   experience.html load. New shared file `js/data-helpers.js` holds selectors, builders,
+   deep-link targeting and the check; every page loads `tags-data → experience-data →
+   projects-data → data-helpers` before its page script.
+   Placeholder `todo-project-6` is set to `listing: "unlisted"` (with a Baker Hughes link) so
+   the exclusion path is exercised by the scaffold, like the no-image and no-sub-page cases.

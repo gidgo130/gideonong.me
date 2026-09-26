@@ -57,20 +57,20 @@
 
   <div class="dev-banner" data-i18n="banner">This site is under development.</div>
 
-  <!-- §1 — Search band. BUILT BUT HIDDEN.
-       .is-hidden is display:none and is the ONLY thing keeping this band off the
-       page: deleting that one class in this file reveals it. It stays hidden
-       until the Phase 3 semantic search actually works — a search box that does
-       nothing is worse than no search box.
-       The input is inert on purpose: nothing is wired to it, and this is a plain
-       <div>, not a <form>, so pressing Enter cannot navigate. Phase 3 search
-       (TF-IDF + cosine over each entry's searchText) reorders/filters the §3
-       rows in place — this markup does not need to change when it lands. -->
-  <div class="search-band is-hidden" id="search-band" aria-hidden="true">
+  <!-- §1 — Search band. Live keyword search over the §3 index (js/projects.js →
+       searchEntries). Runs as the visitor types, on Enter, and on the button;
+       the × clears. Combines with the tag filter (AND). Featured §2 is never
+       filtered. A plain <div>, not a <form>, so Enter is handled by the script
+       and can never navigate. Phase 3 swaps the body of searchEntries() for
+       TF-IDF — this markup does not change. -->
+  <div class="search-band" id="search-band">
     <div class="search-band-inner">
-      <input type="search" class="search-input" id="project-search"
-             data-i18n-placeholder="projSearchPlaceholder" placeholder="" autocomplete="off">
-      <button type="button" class="search-btn" data-i18n="projSearchBtn"></button>
+      <div class="search-field" id="project-search-field">
+        <input type="search" class="search-input" id="project-search"
+               data-i18n-placeholder="projSearchPlaceholder" placeholder="" autocomplete="off">
+        <button type="button" class="search-clear" id="project-search-clear" aria-label="">&times;</button>
+      </div>
+      <button type="button" class="search-btn" id="project-search-btn" data-i18n="projSearchBtn"></button>
     </div>
   </div>
 
@@ -90,16 +90,19 @@
     <h2 class="section-heading" data-i18n="projIndexHeading"></h2>
 
     <div class="index-controls">
-      <!-- Pills are built from the controlled vocabulary at the top of
-           js/projects-data.js. Multi-select, AND logic. -->
+      <!-- Pills are built from the shared vocabulary in js/tags-data.js
+           (translated labels, id-based state). Multi-select, AND logic. -->
       <div class="tag-filter" id="tag-filter" role="group"></div>
       <p class="index-count" id="index-count" aria-live="polite"></p>
     </div>
 
+    <!-- Rows carry id="<slug>" so projects.html#<slug> deep-links to one. -->
     <div class="project-index project-index--rows" id="project-index"></div>
 
-    <!-- Shown only when a filter combination matches nothing — never a blank page. -->
-    <p class="index-empty" id="index-empty" data-i18n="projEmpty" hidden></p>
+    <!-- Shown only when the filter + search combination matches nothing — never a
+         blank page. Text is set by js/projects.js (projEmpty or projEmptySearch,
+         depending on whether a query is active), so no data-i18n here. -->
+    <p class="index-empty" id="index-empty" hidden></p>
   </section>
 
   <footer class="site-footer">
@@ -114,7 +117,10 @@
 
   <script src="js/translations.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/tags-data.js"></script>
+  <script src="js/experience-data.js"></script>
   <script src="js/projects-data.js"></script>
+  <script src="js/data-helpers.js"></script>
   <script src="js/projects.js"></script>
 </body>
 </html>
