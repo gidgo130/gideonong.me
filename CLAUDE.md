@@ -148,6 +148,8 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
   run the script by hand afterwards.
 - This is dev-side tooling, not a site build step: the site still deploys as plain
   static files, and js/docs-data.js is committed like any other file.
+- Dev files are excluded from deploys by .vercelignore (*.md, scripts/, .githooks/,
+  .gitattributes, references/, staging/). Add any new dev-only path there.
 - about.html's resume → CV + transcript morph needs both CV and transcript to exist;
   while either is missing, js/about.js skips the morph and the resume button stays.
 

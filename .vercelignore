@@ -1,0 +1,9 @@
+# Dev-only files — never deployed. The site is plain static files; nothing it
+# loads lives under these paths (verified: only CSS/JS comments mention *.md).
+# Add new dev-only paths here. See CLAUDE.md → Documents / Data conventions.
+*.md
+scripts/
+.githooks/
+.gitattributes
+references/
+staging/
