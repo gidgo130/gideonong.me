@@ -128,6 +128,12 @@ button {
   border: none;
 }
 
+/* The hidden attribute must win over any display rule below (e.g. .btn-resume
+   is inline-block). js/main.js hides document buttons whose type has no file. */
+[hidden] {
+  display: none !important;
+}
+
 /* --------------------------------------------------------------------------
    Base typography
    -------------------------------------------------------------------------- */
@@ -1829,6 +1835,23 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 .featured-entry--image-right .featured-entry-media { grid-column: 2; grid-row: 1; }
 .featured-entry--image-right .featured-entry-body  { grid-column: 1; grid-row: 1; }
 
+/* ---- Home featured presets (index.html, per-project `homeLayout`) --------
+   stacked (default): full-width 16:9 image, text below. collage: full-width
+   16:9 grid of imageSrc + gallery. imageLeft / imageRight reuse the two rules
+   above. text-only: no imageSrc — the body takes the full width, no empty
+   frame. projects.html §2 never uses stacked/collage; it alternates. */
+.featured-entry--stacked,
+.featured-entry--collage,
+.featured-entry--text-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.featured-entry--stacked .featured-entry-media,
+.featured-entry--collage .featured-entry-media { grid-column: 1; grid-row: 1; }
+.featured-entry--stacked .featured-entry-body,
+.featured-entry--collage .featured-entry-body  { grid-column: 1; grid-row: 2; }
+.featured-entry--text-only .featured-entry-body { grid-column: 1; grid-row: 1; }
+
 .featured-entry-media,
 .featured-entry-body {
   min-width: 0;
@@ -1840,6 +1863,47 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   object-fit: cover;
   border-radius: 3px;
   background: var(--border);
+}
+
+/* Collage grid: overall 16:9, every cell object-fit: cover. Cell count is the
+   modifier (--2 / --3 / --4) set by js/data-helpers.js; the first cell is
+   always imageSrc. No fixed pixel widths anywhere. */
+.featured-collage {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  gap: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.featured-collage-image {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  display: block;
+  background: var(--border);
+}
+
+/* 2: two equal columns */
+.featured-collage--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* 3: imageSrc large left (2/3), two stacked right */
+.featured-collage--3 {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+.featured-collage--3 .featured-collage-image:first-child {
+  grid-row: 1 / 3;
+}
+
+/* 4: 2×2 */
+.featured-collage--4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
 .featured-entry-title {
@@ -2131,6 +2195,17 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   .featured-entry--image-right .featured-entry-body {
     grid-column: 1;
     grid-row: 2;
+  }
+
+  /* Collage on phones: 2 stays side by side; 3 → large on top + two below;
+     4 stays 2×2. Still 16:9 overall. */
+  .featured-collage--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  }
+  .featured-collage--3 .featured-collage-image:first-child {
+    grid-column: 1 / 3;
+    grid-row: 1;
   }
 
   /* Narrower thumbnail so the row keeps a usable text measure at 375px.

@@ -47,6 +47,17 @@
 //                 "Part of: <role>, <org> →" link to experience.html#<slug>,
 //                 and the band lists this project under "Projects from this
 //                 role". The two-way link is derived from this one field.
+//   homeLayout    OPTIONAL — how the entry renders in the index.html featured
+//                 block only (projects.html §2 keeps its alternating layout):
+//                   "stacked"    (default) full-width 16:9 image, text below
+//                   "imageLeft"  image ~55% left, text right
+//                   "imageRight" text left, image right
+//                   "collage"    full-width 16:9 grid of imageSrc + gallery
+//                 Fallbacks: collage with no usable gallery → stacked; any
+//                 preset with no imageSrc → text only.
+//   gallery       OPTIONAL, collage only — 1–3 EXTRA images after imageSrc:
+//                 [{ src: "", altKey: "" }]. altKey is an i18n key
+//                 (proj<SlugCamel>Gallery<N>Alt). Ignored on other presets.
 //
 // SCAFFOLD NOTE: every entry below is a PLACEHOLDER. No real project content is
 // recorded here yet — titles, descriptions, dates, tags, and images all arrive
@@ -72,7 +83,10 @@ const projectsData = [
     pinned: true,
     searchTextKey: "projTodoProject1Search",
     listing: "index",
-    experience: ""
+    experience: "",
+    // Home featured preset: the default, spelled out so the scaffold shows one
+    // stacked and one collage entry.
+    homeLayout: "stacked"
   },
   {
     // Linked to the Baker Hughes role: this is the featured-block "Part of"
@@ -92,7 +106,14 @@ const projectsData = [
     pinned: false,
     searchTextKey: "projTodoProject2Search",
     listing: "index",
-    experience: "baker-hughes"
+    experience: "baker-hughes",
+    // Home featured preset: collage of imageSrc + two extra placeholder images
+    // (three cells → large left, two stacked right; large on top below 768px).
+    homeLayout: "collage",
+    gallery: [
+      { src: "assets/images/book-placeholder-1.jpg", altKey: "projTodoProject2Gallery1Alt" },
+      { src: "assets/images/placeholder.jpg", altKey: "projTodoProject2Gallery2Alt" }
+    ]
   },
   {
     slug: "todo-project-3",

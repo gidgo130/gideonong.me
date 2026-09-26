@@ -165,6 +165,9 @@ const translations = {
     projTodoProject2LongDesc: "TODO fuller featured description for project 2 — one short paragraph, used in the featured block and on the sub-page.",
     projTodoProject2Alt: "TODO image description for project 2",
     projTodoProject2Search: "TODO search text blob for project 2",
+    // Extra collage images (home featured block only) — one alt per gallery item.
+    projTodoProject2Gallery1Alt: "TODO gallery image 1 description for project 2",
+    projTodoProject2Gallery2Alt: "TODO gallery image 2 description for project 2",
 
     projTodoProject3Title: "TODO Project 3 title",
     projTodoProject3Desc: "TODO one-line index description for project 3.",
@@ -342,6 +345,8 @@ const translations = {
     projTodoProject2LongDesc: "TODO descripción ampliada del proyecto 2 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
     projTodoProject2Alt: "TODO descripción de la imagen del proyecto 2",
     projTodoProject2Search: "TODO texto de búsqueda para el proyecto 2",
+    projTodoProject2Gallery1Alt: "TODO descripción de la imagen 1 de la galería del proyecto 2",
+    projTodoProject2Gallery2Alt: "TODO descripción de la imagen 2 de la galería del proyecto 2",
 
     projTodoProject3Title: "TODO título del proyecto 3",
     projTodoProject3Desc: "TODO descripción de una línea para el proyecto 3.",

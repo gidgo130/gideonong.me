@@ -60,12 +60,14 @@ Build:
 - [X] js/main.js: language toggle (instant DOM swap, localStorage, navigator.language default)
 - [X] Social link chips in hero: GitHub (gidgo130), LinkedIn (gideon-a-ong), email
 - [X] "Download resume" button → new tab. Note: the flat `assets/pdfs/resume.pdf` path on this
-  line is not what shipped — main.js probes `assets/pdfs/<type>/<lang> Gideon Ong <Label>
-  <YYYYMMDD>.pdf` backward from today and links the newest file it finds.
+  line is not what shipped — main.js links the newest `assets/pdfs/<type>/<lang> Gideon Ong
+  <Label> <YYYYMMDD>.pdf` from the generated manifest `js/docs-data.js` (2026-09-26; the
+  earlier date-probing is gone — see the decisions log).
 - [X] Featured work section: image-forward layout, 1-2 projects — done 2026-09-26: `js/home.js`
   renders every `featured: true` + `listing: "index"` entry from `js/projects-data.js` with the
   projects.html §2 builders (shared via `js/data-helpers.js`). The hardcoded placeholder card
-  and its keys are gone; a project's copy exists in exactly one place.
+  and its keys are gone; a project's copy exists in exactly one place. Layout is a per-project
+  `homeLayout` preset (stacked default, imageLeft, imageRight, collage) — see the schema.
 - [ ] Deploy to gideonong.me → review on desktop (Chrome, Firefox, Safari) — auto-deploys from
   GitHub on push; the three-browser desktop review has not been done.
 
@@ -533,9 +535,23 @@ Schema as of 2026-09-26 (see CLAUDE.md → Data conventions):
   pinned: false,          // true → lifted to top of §3
   searchTextKey: "",      // i18n key — EN + ES blob folded into the search corpus
   listing: "index",       // "index" | "unlisted" | "hidden"  ("nested" reserved — see below)
-  experience: ""          // experience slug this project belongs to, or ""
+  experience: "",         // experience slug this project belongs to, or ""
+  homeLayout: "stacked",  // OPTIONAL, index.html featured block only (default "stacked"):
+                          //   "stacked" | "imageLeft" | "imageRight" | "collage"
+  gallery: [              // OPTIONAL, collage only — 1–3 EXTRA images after imageSrc
+    { src: "", altKey: "" }   //   altKey = proj<SlugCamel>Gallery<N>Alt
+  ]
 }
 ```
+
+**Home featured presets (2026-09-26):** `homeLayout` is read by `js/home.js` only; projects.html
+§2 keeps its alternating image-left / image-right and ignores it. `siteData.buildFeatured(entry,
+i, options)` takes `options.layout` and maps each preset to one class (`.featured-entry--stacked`
+/ `--image-left` / `--image-right` / `--collage`); same markup order and data for all four.
+stacked = full-width 16:9 image, text below (the CLAUDE.md home spec, now the default).
+collage = full-width 16:9 grid, cells = imageSrc then gallery: 2 → two columns; 3 → imageSrc
+large left (2/3) + two stacked right; 4 → 2×2; below 768px 3 becomes large on top + two below.
+Fallbacks, never an error: collage with no usable gallery → stacked; no imageSrc → text only.
 
 **Listing tiers** (replaced the `visible` + `unlisted` pair on 2026-09-26):
 - `"index"` — in the §3 index, the tag filter, search, and its role's "Projects from this
@@ -776,3 +792,31 @@ projects and four experience entries were migrated. Recorded in CLAUDE.md → Da
    projects-data → data-helpers` before its page script.
    Placeholder `todo-project-6` is set to `listing: "unlisted"` (with a Baker Hughes link) so
    the exclusion path is exercised by the scaffold, like the no-image and no-sub-page cases.
+
+[2026-09-26] Home featured layout presets. The CLAUDE.md home spec (full-width 16:9 image,
+text below) is the DEFAULT of a per-project `homeLayout` preset — "stacked" | "imageLeft" |
+"imageRight" | "collage" — read only by index.html; projects.html §2 is unchanged and keeps its
+alternation. "collage" adds `gallery: [{ src, altKey }]` (1–3 extra images) to `imageSrc` in a
+full-width 16:9 grid (2 → two columns, 3 → large left + two stacked right, 4 → 2×2; on phones 3
+becomes large on top + two below). One builder for all four; fallbacks never error (collage
+without gallery → stacked; no imageSrc → text only). Dev check warns on unknown homeLayout,
+gallery on a non-collage entry, >3 items, items missing src/altKey, altKey without EN/ES.
+Scaffold state: `todo-project-1` stacked, `todo-project-2` collage with two placeholder images.
+
+[2026-09-26] Documents: date probing replaced by a generated manifest. `js/main.js` no longer
+HEAD-probes `assets/pdfs/` dates backward from today (the mechanism behind the 2026-09-17
+request-flood outage) and no longer caches anything in localStorage (old `docUrl_*` keys are
+removed once on load). `scripts/build-docs-manifest.js` (Node built-ins only) scans
+`assets/pdfs/{resume,cv,transcript}` for correctly named files, picks the newest date per type
+and language, and writes `js/docs-data.js` (`const DOCS`, sorted keys, rewritten only on
+change, exit 0 with warnings for unmatched files). `.githooks/pre-commit` runs it and stages the
+result on every commit, or warns and continues if node is missing; `.gitattributes` keeps the
+hook LF. One-time per clone: `git config core.hooksPath .githooks`. This is dev-side tooling,
+not a build step — the site still deploys as static files. `main.js` resolves each
+`data-doc-link` button: active language → other language → existing href; a type with no
+file at all has its buttons hidden. about.html's morph is skipped while CV or transcript is
+missing (the resume button stays; a lone available document shows in the bottom slot). The
+dev check HEADs each manifest path once and warns on non-2xx. Zero requests under
+`assets/pdfs/` on a cold load. Verified with a throwaway commit on a temporary branch: the hook
+regenerated and staged the manifest for a dummy `20991231` file; branch and file removed, main
+restored.

@@ -161,16 +161,63 @@
     return img;
   }
 
+  /* ---- Featured layout presets ---------------------------------------------
+     One class per preset. projects.html §2 alternates imageLeft / imageRight
+     from the index (the set is 2-3 entries and fixed, which is the one place a
+     global alternating rule is appropriate). index.html passes
+     options.layout = entry.homeLayout, default "stacked". Same markup order and
+     data for every preset; one builder. */
+  var FEATURED_LAYOUTS = {
+    stacked: "featured-entry--stacked",
+    imageLeft: "featured-entry--image-left",
+    imageRight: "featured-entry--image-right",
+    collage: "featured-entry--collage"
+  };
+  var GALLERY_MAX = 3;
+
+  // Extra images for the collage preset: items with both src and altKey, capped
+  // at GALLERY_MAX. Invalid items are skipped here and reported by checkData().
+  function validGallery(entry) {
+    return (entry.gallery || [])
+      .filter(function (g) { return g && g.src && g.altKey; })
+      .slice(0, GALLERY_MAX);
+  }
+
+  // Cells = imageSrc first, then the gallery. 2 → two columns; 3 → large left +
+  // two stacked right; 4 → 2×2 (style.css .featured-collage--N).
+  function buildCollage(entry, gallery) {
+    var media = document.createElement("div");
+    var cells = [{ src: entry.imageSrc, altKey: entry.imageAlt }].concat(gallery);
+    media.className = "featured-entry-media featured-collage featured-collage--" + cells.length;
+    cells.forEach(function (cell) {
+      var img = document.createElement("img");
+      img.className = "featured-collage-image";
+      img.src = cell.src;
+      img.alt = cell.altKey ? text(cell.altKey) : "";
+      img.loading = "lazy";
+      media.appendChild(img);
+    });
+    return media;
+  }
+
   /* Featured entry: image → title → meta → description → tags → "Part of" →
-     link. Arrangement alternates image-left / image-right from the index; the
-     set is 2-3 entries and fixed, which is the one place a global alternating
-     rule is appropriate. */
-  function buildFeatured(entry, i) {
+     link. options.layout (a FEATURED_LAYOUTS key) overrides the alternation.
+     Fallbacks, never an error: collage with no usable gallery → stacked; any
+     preset with no imageSrc → text only (no empty frame). */
+  function buildFeatured(entry, i, options) {
+    var layout = options && options.layout;
+    if (!layout) layout = i % 2 === 0 ? "imageLeft" : "imageRight";
+    if (!FEATURED_LAYOUTS[layout]) layout = "stacked";
+    var gallery = layout === "collage" ? validGallery(entry) : [];
+    if (layout === "collage" && !gallery.length) layout = "stacked";
+
     var article = document.createElement("article");
     article.className = "featured-entry " +
-      (i % 2 === 0 ? "featured-entry--image-left" : "featured-entry--image-right");
+      (entry.imageSrc ? FEATURED_LAYOUTS[layout] : "featured-entry--text-only");
 
-    if (entry.imageSrc) {
+    if (entry.imageSrc && layout === "collage") {
+      article.appendChild(buildCollage(entry, gallery));
+    } else if (entry.imageSrc) {
       var media = document.createElement("div");
       media.className = "featured-entry-media";
       media.appendChild(buildImage(entry, "featured-entry-image"));
@@ -367,8 +414,47 @@
       if (!SORT_DATE.test(p.sortDate || "")) warn(owner + ": missing or malformed sortDate (expected \"YYYY-MM\")");
       if (!p.context) warn(owner + ": missing context");
       else if (!CONTEXT_KEYS[p.context]) warn(owner + ": unknown context \"" + p.context + "\"");
+
+      // Home featured presets (optional fields)
+      if (p.homeLayout !== undefined && !FEATURED_LAYOUTS[p.homeLayout]) {
+        warn(owner + ": unknown homeLayout \"" + p.homeLayout + "\" (expected stacked | imageLeft | imageRight | collage) — falls back to stacked");
+      }
+      if (p.gallery !== undefined) {
+        if (!Array.isArray(p.gallery)) {
+          warn(owner + ": gallery must be an array of { src, altKey }");
+        } else {
+          if (p.homeLayout !== "collage") warn(owner + ": gallery is set but homeLayout is not \"collage\" — the gallery is ignored");
+          if (p.gallery.length > GALLERY_MAX) warn(owner + ": gallery has " + p.gallery.length + " items (max " + GALLERY_MAX + ") — extras are dropped");
+          p.gallery.forEach(function (g, n) {
+            var item = owner + ": gallery[" + n + "]";
+            if (!g || !g.src) warn(item + " is missing src — skipped");
+            if (!g || !g.altKey) warn(item + " is missing altKey — skipped");
+            else checkKey(item, "altKey", g.altKey);
+          });
+        }
+      }
     });
     if (featuredCount > 3) warn("projects: " + featuredCount + " featured entries (max 3)");
+
+    checkDocs(warn);
+  }
+
+  // Documents manifest (js/docs-data.js): one HEAD per listed file, warn on a
+  // non-2xx. Dev check only — the buttons themselves never make a request.
+  function checkDocs(warn) {
+    if (typeof DOCS === "undefined" || typeof fetch !== "function") return;
+    Object.keys(DOCS).forEach(function (type) {
+      Object.keys(DOCS[type]).forEach(function (lang) {
+        var p = DOCS[type][lang];
+        if (!p) return;
+        var url = p.split("/").map(encodeURIComponent).join("/");
+        fetch(url, { method: "HEAD" }).then(function (res) {
+          if (!res.ok) warn("docs: " + type + "." + lang + " \"" + p + "\" returned HTTP " + res.status);
+        }).catch(function () {
+          warn("docs: " + type + "." + lang + " \"" + p + "\" could not be fetched");
+        });
+      });
+    });
   }
 
   window.siteData = {

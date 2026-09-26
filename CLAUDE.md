@@ -26,8 +26,11 @@ js/projects.js      projects.html renderer: featured, index, tag filter, search
 js/experience.js    experience.html renderer: bands + related projects
 js/home.js          index.html featured block renderer
 js/about.js         about.html behaviors
+js/docs-data.js     GENERATED documents manifest (see Documents below) — never edit by hand
+scripts/build-docs-manifest.js  Dev-side generator for js/docs-data.js (Node built-ins only)
+.githooks/pre-commit  Runs the generator and stages the manifest on every commit
 assets/images/      Project photos and diagrams
-assets/pdfs/        Resume and project reports (resume.pdf goes here)
+assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)
 assets/videos/      Project video clips
 CLAUDE.md           This file
 plan.md             Development roadmap
@@ -125,7 +128,28 @@ Easy to show/hide via a single CSS class or display property.
 ### Footer (dark, full-width)
 See active palette for --footer-bg and --footer-text values.
 Contents: resume download button (bronze/accent border), contact links, copyright.
-"Download Resume" opens assets/pdfs/resume.pdf in a new tab.
+"Download Resume" opens the newest resume PDF (from js/docs-data.js) in a new tab.
+
+### Documents (resume / CV / transcript)
+- Buttons opt in with data-doc-link="resume" | "cv" | "transcript". js/main.js resolves
+  the href from the generated manifest js/docs-data.js (const DOCS): active language →
+  the other language → the element's existing href. A type with no file in any language
+  gets its buttons hidden (hidden attribute). No network requests, no localStorage.
+- To publish a new document: drop a dated PDF into assets/pdfs/<type>/ and commit. The
+  pre-commit hook regenerates and stages js/docs-data.js. Filenames must match
+    "<en|es> Gideon Ong Resume <YYYYMMDD>.pdf"   (assets/pdfs/resume/)
+    "<en|es> Gideon Ong CV <YYYYMMDD>.pdf"       (assets/pdfs/cv/)
+    "Gideon Ong Transcript <YYYYMMDD>.pdf"       (assets/pdfs/transcript/ — no language)
+  Anything else is ignored with a warning. To preview before committing:
+    node scripts/build-docs-manifest.js
+- One-time setup per clone (the hook lives in the repo, but git must be pointed at it):
+    git config core.hooksPath .githooks
+  If node is not on PATH the hook prints a warning and the commit still goes through;
+  run the script by hand afterwards.
+- This is dev-side tooling, not a site build step: the site still deploys as plain
+  static files, and js/docs-data.js is committed like any other file.
+- about.html's resume → CV + transcript morph needs both CV and transcript to exist;
+  while either is missing, js/about.js skips the morph and the resume button stays.
 
 ## Home page (index.html) structure
 1. Sticky white navbar
@@ -144,10 +168,20 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
    Background: var(--bg-section). Top border: 1px solid var(--border).
    "Featured work" as a readable section heading (~15px Lora, near-black)
    Rendered by js/home.js from js/projects-data.js (featured: true, listing: "index")
-   with the same builders and markup as projects.html §2: 16:9 image as the anchor,
-   title, "<Context> · <dates>" meta, description, tags below description (not
-   above), "Part of: <role>, <org> →" when linked to a role, "View project →" link.
+   with the same builders and markup as projects.html §2: image, title,
+   "<Context> · <dates>" meta, description, tags below description (not above),
+   "Part of: <role>, <org> →" when linked to a role, "View project →" link.
    No project copy lives in index.html. 1-5 projects, dynamic over time.
+   Layout is a per-project preset, `homeLayout` (index.html only — projects.html §2
+   keeps its alternating layout and ignores it):
+     "stacked"    DEFAULT — full-width 16:9 image (object-fit: cover), text below
+     "imageLeft"  image ~55% left, text right (the projects.html §2 style)
+     "imageRight" text left, image right
+     "collage"    full-width 16:9 grid of imageSrc + `gallery` (1–3 extra images):
+                  2 → two equal columns; 3 → imageSrc large left (2/3), two stacked
+                  right; 4 → 2×2. Below 768px: 2 side by side, 3 large on top + two
+                  below, 4 → 2×2. Every cell object-fit: cover, alt from its altKey.
+   Fallbacks, never an error: collage with no gallery → stacked; no imageSrc → text only.
 5. Footer (dark)
 
 ## Bilingual support (EN/ES)
@@ -202,7 +236,10 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
   translated label; filter state stores ids. Never store a label in a data file.
 - `context` on every project: industry | coursework | personal | service | research —
   rendered as "<Context> · <dates>" (keys ctxIndustry …).
-- Key naming by slug: proj<SlugCamel>Title / Desc / LongDesc / Alt / Search
+- Home featured presets: optional `homeLayout` ("stacked" default | "imageLeft" |
+  "imageRight" | "collage") and, for collage only, `gallery: [{ src, altKey }]` with 1–3
+  extra images. Ignored by projects.html §2. Gallery alt keys: proj<SlugCamel>Gallery<N>Alt.
+- Key naming by slug: proj<SlugCamel>Title / Desc / LongDesc / Alt / Search / Gallery<N>Alt
   (slug "todo-project-1" → projTodoProject1Title); exp<SlugCamel>Role / Org / Bullet1…;
   tag<IdCamel>; ctx<Context>. translations.js is the single source of display strings.
 - searchEntries(query, entries) → entries in js/projects.js is the ONE place matching
@@ -211,7 +248,9 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
 - Dev data check (siteData.checkData, console.warn only) runs on load of projects.html
   and experience.html: unknown tag id, missing EN/ES key, duplicate slug, bad `experience`
   target, featured on non-index, >3 featured, imageSrc without imageAlt, missing
-  sortDate/context, reserved "nested". Keep the console clean.
+  sortDate/context, reserved "nested", unknown homeLayout, gallery problems (on a
+  non-collage entry, >3 items, item missing src/altKey, altKey with no EN/ES string), and
+  one HEAD per js/docs-data.js path that returns non-2xx. Keep the console clean.
 
 ## Animation and scroll behavior
 - NO page-load animations — no rising text, no fading on arrival

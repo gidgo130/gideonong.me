@@ -30,6 +30,14 @@
     var group = buttons && buttons.querySelector('[data-btn-group]');
     if (!intro || !s1 || !s2 || !photoCol || !buttons || !resumeBtn || !cvBtn || !transcriptBtn || !group) return;
 
+    // js/main.js (loaded first) hides any document button whose type has no file
+    // in the manifest (hidden attribute). The morph needs BOTH CV and transcript;
+    // with one or both missing it is skipped: the resume button stays put and an
+    // available single document simply shows in the bottom slot. The portrait
+    // travel is unaffected.
+    var groupCount = (cvBtn.hidden ? 0 : 1) + (transcriptBtn.hidden ? 0 : 1);
+    var morphEnabled = groupCount === 2;
+
     // ---- TUNABLES (from the tuner) ----------------------------------------
     var NTEETH      = 16;     // spike count (more = finer rays)
     var DEPTH_FRAC  = 0.85;   // notch depth as a fraction of the shape's height
@@ -176,6 +184,7 @@
 
     function updateMorph(q) {
       qNow = q;
+      if (!morphEnabled) { show(resumeBtn, true); show(group, groupCount > 0); rest(); return; }
       if (q <= 0.0001) { show(resumeBtn, true); show(group, false); rest(); return; }
       if (q >= 0.9999) { show(group, true); show(resumeBtn, false); rest(); return; }
       show(resumeBtn, false); show(group, false);

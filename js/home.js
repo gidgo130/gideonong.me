@@ -4,6 +4,10 @@
 // projects.html §2 (js/data-helpers.js → siteData.buildFeatured), including the
 // "Part of: <role>, <org> →" link. A project's copy exists in exactly one place.
 //
+// Layout is per project: entry.homeLayout ("stacked" | "imageLeft" |
+// "imageRight" | "collage"), default "stacked" — full-width 16:9 image, text
+// below. projects.html §2 ignores homeLayout and keeps its alternation.
+//
 // Scroll-triggered fade only (IntersectionObserver, opacity 0→1, no movement).
 
 (function () {
@@ -23,7 +27,7 @@
     observer.disconnect();
     list.innerHTML = "";
     siteData.featuredProjects().forEach(function (entry, i) {
-      var article = siteData.buildFeatured(entry, i);
+      var article = siteData.buildFeatured(entry, i, { layout: entry.homeLayout || "stacked" });
       list.appendChild(article);
       observer.observe(article);
     });

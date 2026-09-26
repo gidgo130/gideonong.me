@@ -35,7 +35,8 @@ Strings and fields have different homes. Nothing is typed into HTML.
 | Tag vocabulary (shared) | `js/tags-data.js` | `{ id, key }` — ids in the data files, labels `tag<IdCamel>` in translations.js |
 | Experience entries (non-string fields) | `js/experience-data.js` | slug, dates, sortDate, tags (ids), imageSrc, subpageUrl, layout, status, color, visible |
 | about.html books / FAQ / sites | `js/about.js` | **inline** `titleEN`/`titleES` pairs — NOT i18n keys (see about.html note) |
-| Project entries (non-string fields) | `js/projects-data.js` | slug, dates, sortDate, context, tags (ids), imageSrc, subpageUrl, featured, pinned, listing, experience |
+| Project entries (non-string fields) | `js/projects-data.js` | slug, dates, sortDate, context, tags (ids), imageSrc, subpageUrl, featured, pinned, listing, experience, homeLayout, gallery |
+| Document PDFs | `assets/pdfs/<type>/` + generated `js/docs-data.js` | dated filenames — see Document links below |
 
 Non-string fields (dates, sort month, context, tag ids, image paths, colors, layout presets,
 listing tier, linked role) are listed in this file as intake prompts so the interview collects
@@ -80,13 +81,21 @@ Footer copyright: "© 2026 Gideon A. Ong"   [key: footerCopyright]
 ### Document links (resume / CV / transcript)
 
 Do **not** hardcode PDF paths. Elements opt in with `data-doc-link="resume" | "cv" | "transcript"`
-and `js/main.js` resolves the newest file by probing dates backward from today.
+and `js/main.js` resolves the href from the generated manifest `js/docs-data.js` (`const DOCS`):
+active language → the other language → the element's existing href. A type with no file at
+all has its buttons hidden. No probing, no network requests, no localStorage (2026-09-26).
 
-Naming convention: `assets/pdfs/<type>/<lang> Gideon Ong <Label> <YYYYMMDD>.pdf`
-e.g. `assets/pdfs/resume/en Gideon Ong Resume 20260915.pdf`
+**To publish a document:** drop the PDF into its folder with the right name and commit — the
+pre-commit hook (`.githooks/pre-commit`, one-time `git config core.hooksPath .githooks` per
+clone) regenerates and stages the manifest. Preview with `node scripts/build-docs-manifest.js`.
 
-The transcript is `bilingual: false` — one file, no `<lang>` prefix. See `DOC_TYPES` in
-`js/main.js` for the authoritative definition before changing anything here.
+Naming convention (anything else is ignored with a warning):
+- `assets/pdfs/resume/<en|es> Gideon Ong Resume <YYYYMMDD>.pdf`
+- `assets/pdfs/cv/<en|es> Gideon Ong CV <YYYYMMDD>.pdf`
+- `assets/pdfs/transcript/Gideon Ong Transcript <YYYYMMDD>.pdf` — one file, no language prefix
+
+Files today: one EN resume (20260915). No ES resume, CV or transcript yet, so the CV and
+transcript buttons on about.html are hidden and its button morph is skipped until both exist.
 
 ---
 
@@ -377,7 +386,8 @@ detail: if something is missing, mark it `TODO` and move on.
   field, in both languages.
 - a **featured** set of 2–3 projects — large image, title, a "Context · dates" line, a
   paragraph, tags, a "Part of: <role> →" link when the project belongs to a job or research
-  role, a link
+  role, a link. On the home page each featured project also picks a layout: a wide image
+  with the text below (default), image left, image right, or a collage of up to four photos.
 - an **index** of every project — one compact row each: small thumbnail, title, "Context ·
   dates", one-line description, tag pills, the same "Part of" link. A tag filter and a live
   project count sit above it.
@@ -403,6 +413,8 @@ its text is never duplicated. Everything displayed exists in both English and Sp
 | Search keywords | never displayed; feeds the search — synonyms, tools, acronyms, Spanish terms | any |
 | Sub-page | a deeper page per project, not built yet. "Later" is fine — the link simply doesn't appear | |
 | Listing | normal / hide for now / exists but unlisted (sensitive or selectively shared work — reachable by direct link only, never in any list, search or role) | |
+| Home layout | featured projects only — how it sits on the home page: stacked (default: wide image, text below) / image left / image right / collage | one word |
+| Extra photos | collage only — 1–3 more photos shown with the main one, each with alt text | |
 
 **Collect for the list as a whole:** which 2–3 are featured (at most 3), whether any one project
 should be pinned to the top of the index, and the **tag vocabulary** — one controlled list of
@@ -467,8 +479,11 @@ Context: industry / coursework / personal / service / research
 Tags: <from the vocabulary>
 Part of role: <role name, or none>
 Featured: yes / no     Pinned: yes / no     Listing: index / hidden / unlisted
+Home layout: stacked / imageLeft / imageRight / collage      [featured projects only]
 Photo: <filename, or "none">
 Alt (EN):              Alt (ES):
+Extra photos (collage only, 1–3):
+  - <filename>   Alt (EN):   Alt (ES):
 One-line (EN):
 One-line (ES):
 Paragraph (EN):        [featured projects only]
@@ -504,6 +519,10 @@ featured       true → also in projects.html §2 and the index.html featured bl
 pinned         true → top of the index regardless of sortDate
 listing        "index" | "unlisted" | "hidden"   ("nested" is reserved — see CLAUDE.md)
 experience     experience slug (baker-hughes, machine-shop, schultz-grader, turc) or ""
+homeLayout     OPTIONAL — index.html featured block only: "stacked" (default) | "imageLeft" |
+               "imageRight" | "collage". projects.html §2 ignores it.
+gallery        OPTIONAL, collage only — [{ src, altKey }] × 1–3 extra images after imageSrc;
+               altKey = proj<SlugCamel>Gallery<N>Alt (EN + ES)
 ```
 
 Tags: `js/tags-data.js` holds `{ id, key }` pairs; the label is `tag<IdCamel>` in
@@ -513,8 +532,8 @@ Tags: `js/tags-data.js` holds `{ id, key }` pairs; the label is `tag<IdCamel>` i
 
 | slug | sortDate | context | featured | pinned | listing | experience | exercises |
 |---|---|---|---|---|---|---|---|
-| `todo-project-1` | 2026-06 | coursework | yes | yes | index | — | pinned + featured |
-| `todo-project-2` | 2026-05 | industry | yes | — | index | baker-hughes | featured "Part of" link |
+| `todo-project-1` | 2026-06 | coursework | yes | yes | index | — | pinned + featured; home `stacked` |
+| `todo-project-2` | 2026-05 | industry | yes | — | index | baker-hughes | featured "Part of" link; home `collage` (2 gallery images) |
 | `todo-project-3` | 2026-04 | research | — | — | index | — | plain row |
 | `todo-project-4` | 2026-03 | industry | — | — | index | baker-hughes | no image; row "Part of" link |
 | `todo-project-5` | 2026-02 | personal | — | — | index | — | no sub-page |
