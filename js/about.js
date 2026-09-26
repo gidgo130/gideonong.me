@@ -25,8 +25,10 @@
     var photoCol = document.getElementById('about-photo-col');
     var buttons = document.getElementById('about-buttons');
     var resumeBtn = buttons && buttons.querySelector('[data-btn="resume"]');
+    var cvBtn = buttons && buttons.querySelector('[data-btn="cv"]');
+    var transcriptBtn = buttons && buttons.querySelector('[data-btn="transcript"]');
     var group = buttons && buttons.querySelector('[data-btn-group]');
-    if (!intro || !s1 || !s2 || !photoCol || !buttons || !resumeBtn || !group) return;
+    if (!intro || !s1 || !s2 || !photoCol || !buttons || !resumeBtn || !cvBtn || !transcriptBtn || !group) return;
 
     // ---- TUNABLES (from the tuner) ----------------------------------------
     var NTEETH      = 16;     // spike count (more = finer rays)
@@ -36,6 +38,7 @@
     var DEAD        = 0.16;   // dead zone at each end (fraction) — undeformed, clickable
     var TEXT_FADE   = 0.10;   // (reserved) label-fade fraction
     var FILL_W      = 42;     // width (px) below which the shape fills to solid
+    var HIT_PAD     = 8;      // invisible click padding around the shape (px) — hit stroke = 2 × this
     // Portrait travel speed. <1 = portrait travels DOWN faster than the page; lower = faster.
     // Two values: desktop/iPad (>=768px) and phone (<768px) can be tuned independently.
     var TRAVEL_SPAN_DESKTOP = 0.7;   // computer + iPad
@@ -44,11 +47,37 @@
     var mql = window.matchMedia('(max-width: 767px)');
 
     // ---- inject the morph SVG once ----------------------------------------
+    // Two visible lobes (top / bottom) plus, over each, an invisible "hit" twin
+    // with the same d and a fat transparent stroke (2 × HIT_PAD): the spiky
+    // outline and the tiny dot become forgiving click targets. Clicks forward to
+    // the real <a> buttons so main.js's probed hrefs and target="_blank" still apply.
+    // In the second half each hit path is clipped to its own side of the mirror line.
     var NS = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('class', 'morph-svg'); svg.setAttribute('aria-hidden', 'true');
-    var path = document.createElementNS(NS, 'path'); svg.appendChild(path);
+    var defs = document.createElementNS(NS, 'defs'); svg.appendChild(defs);
+    function clipRect(id) {
+      var cp = document.createElementNS(NS, 'clipPath'); cp.setAttribute('id', id);
+      var r = document.createElementNS(NS, 'rect'); cp.appendChild(r); defs.appendChild(cp);
+      return r;
+    }
+    var clipTopRect = clipRect('morph-clip-top'), clipBotRect = clipRect('morph-clip-bottom');
+    function mkPath(cls) { var p = document.createElementNS(NS, 'path'); p.setAttribute('class', cls); svg.appendChild(p); return p; }
+    var pathTop = mkPath('morph-lobe'), pathBot = mkPath('morph-lobe');   // visible
+    var hitTop = mkPath('morph-hit'), hitBot = mkPath('morph-hit');       // invisible, on top
+    hitTop.style.strokeWidth = hitBot.style.strokeWidth = (2 * HIT_PAD) + 'px';
     buttons.appendChild(svg);
+
+    // click routing: top pad = resume (first half) / CV (second half); bottom pad = transcript
+    var qNow = 0;
+    hitTop.addEventListener('click', function (e) { e.preventDefault(); (qNow <= 0.5 ? resumeBtn : cvBtn).click(); });
+    hitBot.addEventListener('click', function (e) { e.preventDefault(); transcriptBtn.click(); });
+    // hover: thicken the targeted visible lobe (style.css .morph-lobe.is-hover)
+    function hoverPair(hit, lobe) {
+      hit.addEventListener('pointerenter', function () { lobe.classList.add('is-hover'); });
+      hit.addEventListener('pointerleave', function () { lobe.classList.remove('is-hover'); });
+    }
+    hoverPair(hitTop, pathTop); hoverPair(hitBot, pathBot);
 
     var btnW = 200, btnH = 46, gap = 16, boxH = 112;
     function measure() {
@@ -59,6 +88,12 @@
       buttons.style.height = boxH + 'px';
       svg.setAttribute('viewBox', '0 0 ' + btnW + ' ' + boxH);
       svg.setAttribute('width', btnW); svg.setAttribute('height', boxH);
+      // half-plane clips for the hit pads: above / below the mirror line (y = boxH/2),
+      // oversized sideways so the padded stroke is never cut off at the box edges
+      [clipTopRect, clipBotRect].forEach(function (r, i) {
+        r.setAttribute('x', -btnW); r.setAttribute('width', 3 * btnW);
+        r.setAttribute('y', i ? boxH / 2 : -boxH); r.setAttribute('height', 1.5 * boxH);
+      });
     }
 
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -131,23 +166,38 @@
 
     function show(el, on) { el.style.opacity = on ? '1' : '0'; el.style.pointerEvents = on ? 'auto' : 'none'; }
 
+    // at rest the svg is opacity 0, but opacity does NOT stop pointer events —
+    // empty the hit pads so they can never sit over a visible real button
+    function rest() {
+      svg.style.opacity = '0';
+      hitTop.setAttribute('d', ''); hitBot.setAttribute('d', '');
+      pathTop.classList.remove('is-hover'); pathBot.classList.remove('is-hover');
+    }
+
     function updateMorph(q) {
-      if (q <= 0.0001) { show(resumeBtn, true); show(group, false); svg.style.opacity = '0'; return; }
-      if (q >= 0.9999) { show(group, true); show(resumeBtn, false); svg.style.opacity = '0'; return; }
+      qNow = q;
+      if (q <= 0.0001) { show(resumeBtn, true); show(group, false); rest(); return; }
+      if (q >= 0.9999) { show(group, true); show(resumeBtn, false); rest(); return; }
       show(resumeBtn, false); show(group, false);
       var Cc = gap/2 + btnH/2;              // each button's CENTRE distance from the mirror line
-      var d, wNow;
+      var dTop, dBot = '', wNow;
       if (q <= 0.5) {
         var c = q / 0.5, Yc = lerp(Cc, 0, smooth(c));   // resume: top-slot centre -> mirror line
-        d = lobeD(c, Yc, false, 0);
+        dTop = lobeD(c, Yc, false, 0);
         wNow = lerp(btnW, D0, smooth(c));
+        hitTop.removeAttribute('clip-path'); hitBot.removeAttribute('clip-path');  // one lobe: whole pad = resume
       } else {
         var e = (q - 0.5) / 0.5, c2 = 1 - e, off = lerp(0, Cc, smooth(e));
-        d = lobeD(c2, off, false, +1) + ' ' + lobeD(c2, -off, true, -1);  // grow from the centred dot
+        dTop = lobeD(c2, off, false, +1);                // grow from the centred dot
+        dBot = lobeD(c2, -off, true, -1);
         wNow = lerp(btnW, D0, smooth(c2));
+        hitTop.setAttribute('clip-path', 'url(#morph-clip-top)');       // upper half-plane = CV
+        hitBot.setAttribute('clip-path', 'url(#morph-clip-bottom)');    // lower half-plane = transcript
       }
-      path.setAttribute('d', d);
-      path.style.fillOpacity = vstep((FILL_W - wNow) / 12);
+      pathTop.setAttribute('d', dTop); pathBot.setAttribute('d', dBot);
+      hitTop.setAttribute('d', dTop);  hitBot.setAttribute('d', dBot);
+      var fo = vstep((FILL_W - wNow) / 12);
+      pathTop.style.fillOpacity = fo; pathBot.style.fillOpacity = fo;
       svg.style.opacity = '1';
     }
 

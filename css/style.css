@@ -845,9 +845,15 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 }
 .btn-resume-group .btn-resume{ text-align:center; }
 
-/* the single deforming loop (radial-fan starburst), injected by about.js */
+/* the deforming loop (radial-fan starburst), injected by about.js: two visible
+   lobes (.morph-lobe) plus an invisible fat-stroked "hit" twin over each
+   (.morph-hit — stroke width set inline from HIT_PAD in about.js). The svg
+   itself ignores the pointer; only the hit pads catch clicks. */
 .morph-svg{ position:absolute; left:0; top:0; width:100%; height:100%; overflow:visible; pointer-events:none; opacity:0; }
 .morph-svg path{ fill: var(--bronze); fill-opacity:0; stroke: var(--bronze); stroke-width:1.6; stroke-linejoin:round; }
+.morph-svg .morph-lobe{ transition: stroke-width 150ms ease; }
+.morph-svg .morph-lobe.is-hover{ stroke-width:2.4; }
+.morph-svg .morph-hit{ fill:transparent; stroke:transparent; stroke-linejoin:round; pointer-events:all; cursor:pointer; }
 
 /* --------------------------------------------------------------------------
    §3 — "What have I been reading?"
