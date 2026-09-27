@@ -231,8 +231,7 @@ data-i18n-alt="headshotAlt">` in about.html — swap the file or the src there.
   (for politically-sensitive or selectively shared work) — `listing: "unlisted"` in
   js/projects-data.js. List filenames here as sub-pages are added.
 - Sub-pages (projects/<slug>.html): see "Project sub-pages" under Data conventions.
-  Files today: projects/todo-project-2.html (scaffold, `listing: "hidden"` → renders on
-  localhost only).
+  Files today: projects/pump-cylinder-failure.html, eagle-pathway.html, g-view.html.
 
 ## Data conventions
 Data files: js/tags-data.js, js/projects-data.js, js/experience-data.js. Read-side
@@ -241,7 +240,9 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
 
 - Listing tiers (`listing` on every project):
     "index"    — in the §3 index, the tag filter, search, and its role's "Projects from
-                 this role" list; may be `featured` (max 3)
+                 this role" list; may be `featured` (max 3). Optional `featuredOrder`
+                 (number) orders the featured blocks; entries without it follow by sortDate.
+                 `longDescKey` (the featured-card paragraph) is required only when featured.
     "unlisted" — direct URL only; excluded from index, bands, filter, featured, search
     "hidden"   — excluded everywhere
     "nested"   — RESERVED, not implemented. Intended for role-bound minor projects shown
@@ -250,8 +251,11 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
                  Build trigger: the index passes ~30 rows, or 4+ minor role-bound items
                  exist. Experience entries keep a `visible` boolean.
 - Two-way project ↔ experience links come from ONE field: project `experience` holds an
-  experience `slug` (or ""). Project → role: "Part of: <role>, <org> →" (key projPartOf)
-  below the tags, to experience.html#<slug>. Role → projects: the band lists every
+  experience `slug` (or ""). Project → role: "Part of: <org short> →" (key projPartOf, {org}
+  = the role's `orgShortKey`, falling back to `orgKey`) below the tags, to
+  experience.html#<slug>. `orgKey` is the full string shown on the band and in the hero
+  status ("McElroy Prototyping Lab, University of Tulsa"); `orgShortKey` the short form
+  ("McElroy Prototyping Lab"). Experience entries with an image also carry `imageAltKey`. Role → projects: the band lists every
   listing:"index" project pointing at it (key expRelatedHeading), titles linking to
   projects.html#<slug>. Index rows and bands carry id="<slug>"; a matching location.hash
   clears filter/query, scrolls clear of the nav, and adds `.is-target` (static bronze

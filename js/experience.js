@@ -69,7 +69,8 @@
     var img = document.createElement("img");
     img.className = "exp-band-image";
     img.src = siteData.root + entry.imageSrc;
-    img.alt = text(entry.roleKey) + " — " + text(entry.orgKey);
+    // Alt from the entry's imageAltKey (image-manifest text); fallback role — org.
+    img.alt = entry.imageAltKey ? text(entry.imageAltKey) : text(entry.roleKey) + " — " + text(entry.orgKey);
     img.loading = "lazy";
     media.appendChild(img);
     return media;

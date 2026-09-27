@@ -5,8 +5,8 @@
 // featured blocks, and that same entry still appears in the index.
 //
 // ARRAY ORDER DOES NOT MATTER. Display order is sortDate descending, with
-// `pinned: true` lifting an entry to the top of the index. Reordering this
-// file changes nothing.
+// `pinned: true` lifting an entry to the top of the index and `featuredOrder`
+// ordering the featured blocks. Reordering this file changes nothing.
 //
 // SCHEMA (see plan.md → Page Spec — projects.html → Maintainability, and
 // CLAUDE.md → Data conventions):
@@ -14,7 +14,9 @@
 //                 projects.html#<slug> deep-links to the row. Must be unique.
 //   titleKey      i18n key → EN + ES. Per-entry keys are named by slug:
 //   descKey         proj<SlugCamel>Title / Desc / LongDesc / Alt / Search
-//   longDescKey     (e.g. slug "todo-project-1" → projTodoProject1Title).
+//   longDescKey     (e.g. slug "g-view" → projGViewTitle). longDescKey is the
+//                 featured-card paragraph — required on featured entries, ""
+//                 on index-only ones.
 //   dates         language-neutral, rendered per language (CLAUDE.md → Dates):
 //                   { from: { season: "summer", year: 2026 } }
 //                   { from: { month: 7, year: 2022 } }
@@ -37,10 +39,13 @@
 //                 each non-empty value (localhost only).
 //   featured      true → ALSO rendered in the featured blocks (still in the
 //                 index). Only honoured on listing: "index". Max 3.
+//   featuredOrder OPTIONAL number — order among the featured blocks (home and
+//                 projects.html §2), ascending. Entries without it follow, by
+//                 sortDate.
 //   pinned        true → lifted to the top of the index, independently of
 //                 `featured` and of sortDate
 //   searchTextKey i18n key — EN + ES blob folded into the search corpus. Never
-//                 displayed.
+//                 displayed. Tool and method names that are not tags.
 //   listing       "index"    → in the index, the tag filter, search, its role's
 //                              "Projects from this role" list; may be featured
 //                 "unlisted" → direct URL only. Excluded from the index, bands,
@@ -54,9 +59,9 @@
 //                              does not render and the dev check warns.
 //   experience    slug of the js/experience-data.js entry this project belongs
 //                 to, or "". Set → the row/featured block/sub-page shows a
-//                 "Part of: <role>, <org> →" link to experience.html#<slug>,
-//                 and the band lists this project under "Projects from this
-//                 role". The two-way link is derived from this one field.
+//                 "Part of: <org short> →" link to experience.html#<slug>, and
+//                 the band lists this project under "Projects from this role".
+//                 The two-way link is derived from this one field.
 //   homeLayout    OPTIONAL — how the entry renders in the index.html featured
 //                 block only (projects.html §2 keeps its alternating layout):
 //                   "stacked"    (default) full-width 16:9 image, text below
@@ -77,166 +82,375 @@
 //                   creditKey: ""                          proj<SlugCamel>Credit
 //                 `gallery` stays collage-only; sub-page photos use page.photos.
 //
-// SCAFFOLD NOTE: every entry below is a PLACEHOLDER. No real project content is
-// recorded here yet — titles, descriptions, dates, tags, and images all arrive
-// from the projects content interview (plan.md open decisions #2 and #3). Every
-// placeholder string is prefixed "TODO " in both languages so it stays greppable.
-// The sortDate / dates / context / experience values below are stand-ins chosen
-// to exercise each render path, not facts. Every subpageUrl except
-// todo-project-2's is "" because no other page file exists.
+// Content loaded 2026-09-27 from staging/copy-en.md, copy-es.md,
+// content-intake.md and image-manifest.md. Sort months with no explicit value
+// in the intake were derived from the season (Velora, AutoScan 2026-07;
+// Dynamics PDF Unifier 2026-09).
 
 const projectsData = [
+  /* ---- Featured ---------------------------------------------------------- */
   {
-    slug: "todo-project-1",
-    titleKey: "projTodoProject1Title",
-    descKey: "projTodoProject1Desc",
-    longDescKey: "projTodoProject1LongDesc",
-    dates: { from: { season: "summer", year: 2026 } },
-    sortDate: "2026-06",
-    context: "coursework",
-    tags: ["todo-a", "todo-b"],
-    imageSrc: "assets/images/placeholder.jpg",
-    imageAlt: "projTodoProject1Alt",
-    subpageUrl: "",
-    featured: true,
-    pinned: true,
-    searchTextKey: "projTodoProject1Search",
-    listing: "index",
-    experience: "",
-    // Home featured preset: the default, spelled out so the scaffold shows one
-    // stacked and one collage entry.
-    homeLayout: "stacked"
-  },
-  {
-    // The SUB-PAGE scaffold. listing: "hidden" so neither this entry nor any
-    // link to projects/todo-project-2.html can appear on the live site; the
-    // page itself renders on localhost only (js/project-page.js). Linked to
-    // Baker Hughes so the sub-page "Part of" link is exercised. Carries a full
-    // `page` object with fake sections, facts, photos, report and credit.
-    slug: "todo-project-2",
-    titleKey: "projTodoProject2Title",
-    descKey: "projTodoProject2Desc",
-    longDescKey: "projTodoProject2LongDesc",
+    slug: "pump-cylinder-failure",
+    titleKey: "projPumpCylinderFailureTitle",
+    descKey: "projPumpCylinderFailureDesc",
+    longDescKey: "projPumpCylinderFailureLongDesc",
     dates: { from: { season: "spring", year: 2026 } },
     sortDate: "2026-05",
-    context: "industry",
-    tags: ["todo-b", "todo-c"],
-    imageSrc: "assets/images/placeholder.jpg",
-    imageAlt: "projTodoProject2Alt",
-    subpageUrl: "/projects/todo-project-2.html",
-    featured: false,
+    context: "coursework",
+    tags: ["solid-mechanics", "fabrication", "cad", "leadership"],
+    imageSrc: "assets/images/projects/pump-cylinder-failure/pin-assembly.jpg",
+    imageAlt: "projPumpCylinderFailureAlt",
+    subpageUrl: "/projects/pump-cylinder-failure.html",
+    featured: true,
+    featuredOrder: 1,
     pinned: false,
-    searchTextKey: "projTodoProject2Search",
-    listing: "hidden",
-    experience: "baker-hughes",
+    searchTextKey: "projPumpCylinderFailureSearch",
+    listing: "index",
+    experience: "",
+    homeLayout: "stacked",
     page: {
       sections: [
-        { headingKey: "projTodoProject2Section1Heading", bodyKey: "projTodoProject2Section1Body" },
-        { headingKey: "projTodoProject2Section2Heading", bodyKey: "projTodoProject2Section2Body" }
+        { headingKey: "projPumpCylinderFailureSection1Heading", bodyKey: "projPumpCylinderFailureSection1Body" },
+        { headingKey: "projPumpCylinderFailureSection2Heading", bodyKey: "projPumpCylinderFailureSection2Body" },
+        { headingKey: "projPumpCylinderFailureSection3Heading", bodyKey: "projPumpCylinderFailureSection3Body" },
+        { headingKey: "projPumpCylinderFailureSection4Heading", bodyKey: "projPumpCylinderFailureSection4Body" }
       ],
       facts: [
-        { labelKey: "projTodoProject2Fact1Label", valueKey: "projTodoProject2Fact1Value" },
-        { labelKey: "projTodoProject2Fact2Label", valueKey: "projTodoProject2Fact2Value" },
-        { labelKey: "projTodoProject2Fact3Label", valueKey: "projTodoProject2Fact3Value" }
+        { labelKey: "projPumpCylinderFailureFact1Label", valueKey: "projPumpCylinderFailureFact1Value" },
+        { labelKey: "projPumpCylinderFailureFact2Label", valueKey: "projPumpCylinderFailureFact2Value" },
+        { labelKey: "projPumpCylinderFailureFact3Label", valueKey: "projPumpCylinderFailureFact3Value" },
+        { labelKey: "projPumpCylinderFailureFact4Label", valueKey: "projPumpCylinderFailureFact4Value" },
+        { labelKey: "projPumpCylinderFailureFact5Label", valueKey: "projPumpCylinderFailureFact5Value" }
       ],
       photos: [
-        { src: "assets/images/placeholder.jpg", altKey: "projTodoProject2Photo1Alt" },
-        { src: "assets/images/book-placeholder-1.jpg", altKey: "projTodoProject2Photo2Alt" },
-        { src: "assets/images/book-placeholder-2.jpg", altKey: "projTodoProject2Photo3Alt" }
+        { src: "assets/images/projects/pump-cylinder-failure/burst-and-cracked.jpg", altKey: "projPumpCylinderFailurePhoto1Alt" },
+        { src: "assets/images/projects/pump-cylinder-failure/pin-on-lathe.jpg", altKey: "projPumpCylinderFailurePhoto2Alt" },
+        { src: "assets/images/projects/pump-cylinder-failure/pin-installed.jpg", altKey: "projPumpCylinderFailurePhoto3Alt" },
+        { src: "assets/images/projects/pump-cylinder-failure/work-van.jpg", altKey: "projPumpCylinderFailurePhoto4Alt" },
+        { src: "assets/images/projects/pump-cylinder-failure/cracked-cylinder.jpg", altKey: "projPumpCylinderFailurePhoto5Alt" }
       ],
       reportPdf: "assets/pdfs/projects/paint-sprayer-pump-failure-analysis.pdf",
-      creditKey: "projTodoProject2Credit"
+      creditKey: ""
     }
   },
   {
-    // Linked to the Baker Hughes role: this is the featured-block "Part of"
-    // test case, and it appears under the Baker Hughes band on experience.html.
-    // Home featured preset: collage of imageSrc + two extra placeholder images
-    // (three cells → large left, two stacked right; large on top below 768px).
-    slug: "todo-project-3",
-    titleKey: "projTodoProject3Title",
-    descKey: "projTodoProject3Desc",
-    longDescKey: "projTodoProject3LongDesc",
-    dates: { from: { month: 2, year: 2026 }, to: { month: 4, year: 2026 } },
-    sortDate: "2026-04",
-    context: "research",
-    tags: ["todo-a", "todo-c", "todo-d"],
-    imageSrc: "assets/images/placeholder.jpg",
-    imageAlt: "projTodoProject3Alt",
-    subpageUrl: "",
+    slug: "eagle-pathway",
+    titleKey: "projEaglePathwayTitle",
+    descKey: "projEaglePathwayDesc",
+    longDescKey: "projEaglePathwayLongDesc",
+    dates: { from: { month: 7, year: 2022 } },
+    sortDate: "2022-07",
+    context: "service",
+    tags: ["leadership", "fabrication"],
+    imageSrc: "assets/images/projects/eagle-pathway/directing-volunteers.jpg",
+    imageAlt: "projEaglePathwayAlt",
+    subpageUrl: "/projects/eagle-pathway.html",
     featured: true,
+    featuredOrder: 2,
     pinned: false,
-    searchTextKey: "projTodoProject3Search",
+    searchTextKey: "projEaglePathwaySearch",
     listing: "index",
-    experience: "baker-hughes",
+    experience: "",
     homeLayout: "collage",
     gallery: [
-      { src: "assets/images/book-placeholder-1.jpg", altKey: "projTodoProject3Gallery1Alt" },
-      { src: "assets/images/placeholder.jpg", altKey: "projTodoProject3Gallery2Alt" }
-    ]
+      { src: "assets/images/projects/eagle-pathway/granite-and-compactor.jpg", altKey: "projEaglePathwayGallery1Alt" },
+      { src: "assets/images/projects/eagle-pathway/finished-path.jpg", altKey: "projEaglePathwayGallery2Alt" }
+    ],
+    page: {
+      sections: [
+        { headingKey: "projEaglePathwaySection1Heading", bodyKey: "projEaglePathwaySection1Body" },
+        { headingKey: "projEaglePathwaySection2Heading", bodyKey: "projEaglePathwaySection2Body" },
+        { headingKey: "projEaglePathwaySection3Heading", bodyKey: "projEaglePathwaySection3Body" },
+        { headingKey: "projEaglePathwaySection4Heading", bodyKey: "projEaglePathwaySection4Body" }
+      ],
+      facts: [
+        { labelKey: "projEaglePathwayFact1Label", valueKey: "projEaglePathwayFact1Value" },
+        { labelKey: "projEaglePathwayFact2Label", valueKey: "projEaglePathwayFact2Value" },
+        { labelKey: "projEaglePathwayFact3Label", valueKey: "projEaglePathwayFact3Value" },
+        { labelKey: "projEaglePathwayFact4Label", valueKey: "projEaglePathwayFact4Value" },
+        { labelKey: "projEaglePathwayFact5Label", valueKey: "projEaglePathwayFact5Value" },
+        { labelKey: "projEaglePathwayFact6Label", valueKey: "projEaglePathwayFact6Value" }
+      ],
+      photos: [
+        { src: "assets/images/projects/eagle-pathway/granite-and-compactor.jpg", altKey: "projEaglePathwayPhoto1Alt" },
+        { src: "assets/images/projects/eagle-pathway/finished-path.jpg", altKey: "projEaglePathwayPhoto2Alt" },
+        { src: "assets/images/projects/eagle-pathway/group.jpg", altKey: "projEaglePathwayPhoto3Alt" }
+      ],
+      reportPdf: "",
+      creditKey: "projEaglePathwayCredit"
+    }
   },
   {
-    // No photograph for this one — imageSrc is deliberately "". The row renders
-    // text-only at full width (see .project-row--no-image in style.css). This
-    // case is in the scaffold on purpose: the index must degrade cleanly for
-    // entries that will never have a good photo. Also the second Baker Hughes
-    // link — an index-only (not featured) row with the "Part of" link.
-    slug: "todo-project-4",
-    titleKey: "projTodoProject4Title",
-    descKey: "projTodoProject4Desc",
-    longDescKey: "projTodoProject4LongDesc",
-    dates: { from: { month: 3, year: 2026 } },
-    sortDate: "2026-03",
+    slug: "g-view",
+    titleKey: "projGViewTitle",
+    descKey: "projGViewDesc",
+    longDescKey: "projGViewLongDesc",
+    dates: { from: { season: "summer", year: 2026 } },
+    sortDate: "2026-07",
     context: "industry",
-    tags: ["todo-d"],
+    tags: ["python", "data-analysis", "automation", "machine-learning"],
+    imageSrc: "assets/images/projects/g-view/g-view-demo.png",
+    imageAlt: "projGViewAlt",
+    subpageUrl: "/projects/g-view.html",
+    featured: true,
+    featuredOrder: 3,
+    pinned: false,
+    searchTextKey: "projGViewSearch",
+    listing: "index",
+    experience: "baker-hughes",
+    homeLayout: "imageRight",
+    page: {
+      sections: [
+        { headingKey: "projGViewSection1Heading", bodyKey: "projGViewSection1Body" },
+        { headingKey: "projGViewSection2Heading", bodyKey: "projGViewSection2Body" },
+        { headingKey: "projGViewSection3Heading", bodyKey: "projGViewSection3Body" },
+        { headingKey: "projGViewSection4Heading", bodyKey: "projGViewSection4Body" }
+      ],
+      facts: [
+        { labelKey: "projGViewFact1Label", valueKey: "projGViewFact1Value" },
+        { labelKey: "projGViewFact2Label", valueKey: "projGViewFact2Value" },
+        { labelKey: "projGViewFact3Label", valueKey: "projGViewFact3Value" }
+      ],
+      photos: [],
+      reportPdf: "",
+      creditKey: ""
+    }
+  },
+
+  /* ---- Index ------------------------------------------------------------- */
+  {
+    slug: "velora",
+    titleKey: "projVeloraTitle",
+    descKey: "projVeloraDesc",
+    longDescKey: "",
+    dates: { from: { season: "summer", year: 2026 } },
+    sortDate: "2026-07",
+    context: "industry",
+    tags: ["python", "automation", "data-analysis"],
     imageSrc: "",
     imageAlt: "",
     subpageUrl: "",
     featured: false,
     pinned: false,
-    searchTextKey: "projTodoProject4Search",
+    searchTextKey: "projVeloraSearch",
     listing: "index",
     experience: "baker-hughes"
   },
   {
-    // No sub-page yet — subpageUrl is "" so the "View project →" link is
-    // omitted rather than rendered as a dead link. Year-only date.
-    slug: "todo-project-5",
-    titleKey: "projTodoProject5Title",
-    descKey: "projTodoProject5Desc",
-    longDescKey: "projTodoProject5LongDesc",
-    dates: { from: { year: 2026 } },
-    sortDate: "2026-02",
-    context: "personal",
-    tags: ["todo-b", "todo-e"],
-    imageSrc: "assets/images/placeholder.jpg",
-    imageAlt: "projTodoProject5Alt",
+    slug: "autoscan",
+    titleKey: "projAutoscanTitle",
+    descKey: "projAutoscanDesc",
+    longDescKey: "",
+    dates: { from: { season: "summer", year: 2026 } },
+    sortDate: "2026-07",
+    context: "industry",
+    tags: ["python", "automation", "fabrication"],
+    imageSrc: "assets/images/projects/autoscan/scan-fixtures.jpg",
+    imageAlt: "projAutoscanAlt",
     subpageUrl: "",
     featured: false,
     pinned: false,
-    searchTextKey: "projTodoProject5Search",
+    searchTextKey: "projAutoscanSearch",
+    listing: "index",
+    experience: "baker-hughes"
+  },
+  {
+    slug: "dynamics-pdf-unifier",
+    titleKey: "projDynamicsPdfUnifierTitle",
+    descKey: "projDynamicsPdfUnifierDesc",
+    longDescKey: "",
+    dates: { from: { season: "fall", year: 2026 } },
+    sortDate: "2026-09",
+    context: "personal",
+    tags: ["python", "automation"],
+    imageSrc: "",
+    imageAlt: "",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projDynamicsPdfUnifierSearch",
+    listing: "index",
+    experience: "schultz-grader"
+  },
+  {
+    slug: "keplinger-heating",
+    titleKey: "projKeplingerHeatingTitle",
+    descKey: "projKeplingerHeatingDesc",
+    longDescKey: "",
+    dates: { from: { season: "spring", year: 2026 } },
+    sortDate: "2026-05",
+    context: "coursework",
+    tags: ["python", "thermo-fluids"],
+    imageSrc: "",
+    imageAlt: "",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projKeplingerHeatingSearch",
     listing: "index",
     experience: ""
   },
   {
-    // Unlisted — the "unlinked pages" case. It lives here so its sub-page can
-    // exist, but it must never show up in the index, the filter, search, the
-    // featured blocks, or (despite the experience link) the Baker Hughes band.
-    slug: "todo-project-6",
-    titleKey: "projTodoProject6Title",
-    descKey: "projTodoProject6Desc",
-    longDescKey: "projTodoProject6LongDesc",
-    dates: { from: { season: "fall", year: 2025 }, to: { season: "spring", year: 2026 } },
-    sortDate: "2026-01",
-    context: "service",
-    tags: ["todo-e", "todo-f"],
-    imageSrc: "assets/images/placeholder.jpg",
-    imageAlt: "projTodoProject6Alt",
+    slug: "music-notes-matlab",
+    titleKey: "projMusicNotesMatlabTitle",
+    descKey: "projMusicNotesMatlabDesc",
+    longDescKey: "",
+    dates: { from: { season: "spring", year: 2026 } },
+    sortDate: "2026-05",
+    context: "coursework",
+    tags: ["matlab", "data-analysis"],
+    imageSrc: "assets/images/projects/music-notes-matlab/trumpet-notes.png",
+    imageAlt: "projMusicNotesMatlabAlt",
     subpageUrl: "",
     featured: false,
     pinned: false,
-    searchTextKey: "projTodoProject6Search",
-    listing: "unlisted",
-    experience: "baker-hughes"
+    searchTextKey: "projMusicNotesMatlabSearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    slug: "gender-employment-cs",
+    titleKey: "projGenderEmploymentCsTitle",
+    descKey: "projGenderEmploymentCsDesc",
+    longDescKey: "",
+    dates: { from: { season: "spring", year: 2026 } },
+    sortDate: "2026-05",
+    context: "coursework",
+    tags: ["data-analysis"],
+    imageSrc: "",
+    imageAlt: "",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projGenderEmploymentCsSearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    slug: "chilled-water-pipeline",
+    titleKey: "projChilledWaterPipelineTitle",
+    descKey: "projChilledWaterPipelineDesc",
+    longDescKey: "",
+    dates: { from: { season: "fall", year: 2025 } },
+    sortDate: "2025-12",
+    context: "coursework",
+    tags: ["python", "thermo-fluids"],
+    imageSrc: "assets/images/projects/chilled-water-pipeline/route-a.jpg",
+    imageAlt: "projChilledWaterPipelineAlt",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projChilledWaterPipelineSearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    slug: "notched-beam-stress-relief",
+    titleKey: "projNotchedBeamStressReliefTitle",
+    descKey: "projNotchedBeamStressReliefDesc",
+    longDescKey: "",
+    dates: { from: { season: "fall", year: 2025 } },
+    sortDate: "2025-12",
+    context: "coursework",
+    tags: ["cad", "solid-mechanics"],
+    imageSrc: "assets/images/projects/notched-beam-stress-relief/fea-spline.png",
+    imageAlt: "projNotchedBeamStressReliefAlt",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projNotchedBeamStressReliefSearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    slug: "diesel-dual-cycle",
+    titleKey: "projDieselDualCycleTitle",
+    descKey: "projDieselDualCycleDesc",
+    longDescKey: "",
+    dates: { from: { season: "fall", year: 2025 } },
+    sortDate: "2025-11",
+    context: "coursework",
+    tags: ["python", "thermo-fluids"],
+    imageSrc: "assets/images/projects/diesel-dual-cycle/pv-diagram.png",
+    imageAlt: "projDieselDualCycleAlt",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projDieselDualCycleSearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    slug: "mechanical-fuse",
+    titleKey: "projMechanicalFuseTitle",
+    descKey: "projMechanicalFuseDesc",
+    longDescKey: "",
+    dates: { from: { season: "fall", year: 2025 } },
+    sortDate: "2025-10",
+    context: "coursework",
+    tags: ["solid-mechanics", "cad"],
+    imageSrc: "assets/images/projects/mechanical-fuse/broken-links.jpg",
+    imageAlt: "projMechanicalFuseAlt",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projMechanicalFuseSearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    slug: "bicycle-crash-severity",
+    titleKey: "projBicycleCrashSeverityTitle",
+    descKey: "projBicycleCrashSeverityDesc",
+    longDescKey: "",
+    dates: { from: { season: "spring", year: 2025 } },
+    sortDate: "2025-05",
+    context: "coursework",
+    tags: ["python", "machine-learning", "transportation"],
+    imageSrc: "assets/images/projects/bicycle-crash-severity/shap.png",
+    imageAlt: "projBicycleCrashSeverityAlt",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projBicycleCrashSeveritySearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    // Gideon's favorite ML project — pinned to the top of the index.
+    slug: "uk-crash-hotspots",
+    titleKey: "projUkCrashHotspotsTitle",
+    descKey: "projUkCrashHotspotsDesc",
+    longDescKey: "",
+    dates: { from: { season: "spring", year: 2025 } },
+    sortDate: "2025-04",
+    context: "coursework",
+    tags: ["python", "machine-learning", "transportation", "data-analysis"],
+    imageSrc: "assets/images/projects/uk-crash-hotspots/qgis-england.jpg",
+    imageAlt: "projUkCrashHotspotsAlt",
+    subpageUrl: "",
+    featured: false,
+    pinned: true,
+    searchTextKey: "projUkCrashHotspotsSearch",
+    listing: "index",
+    experience: ""
+  },
+  {
+    slug: "landmine-classification",
+    titleKey: "projLandmineClassificationTitle",
+    descKey: "projLandmineClassificationDesc",
+    longDescKey: "",
+    dates: { from: { season: "spring", year: 2025 } },
+    sortDate: "2025-03",
+    context: "coursework",
+    tags: ["python", "machine-learning"],
+    imageSrc: "",
+    imageAlt: "",
+    subpageUrl: "",
+    featured: false,
+    pinned: false,
+    searchTextKey: "projLandmineClassificationSearch",
+    listing: "index",
+    experience: ""
   }
 ];

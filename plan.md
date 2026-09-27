@@ -318,7 +318,9 @@ and no band gets the current treatment — this fallback must work, not error.
   slug: "",               // unique; band id (experience.html#<slug>) and the target of a
                           // project's `experience` field. Keys: exp<SlugCamel>Role / Org / BulletN
   roleKey: "",            // i18n key → EN + ES
-  orgKey: "",             // i18n key
+  orgKey: "",             // i18n key — full string, band + hero ("…, University of Tulsa")
+  orgShortKey: "",        // OPTIONAL i18n key — short form for "Part of: <org> →" links
+  imageAltKey: "",        // i18n key for the band image's alt (required with imageSrc)
   dates: { from: { season: "summer", year: 2026 } },   // language-neutral (2026-09-27):
                           //   from/to points are { season, year } | { month, year } | { year };
                           //   to may be "present" or a point. Rendered per language.
@@ -340,11 +342,16 @@ and no band gets the current treatment — this fallback must work, not error.
 Hide with `visible: false`. Related projects are not stored here — a band lists every
 `listing: "index"` project whose `experience` equals its slug.
 
-**Current entries (sortDate order):**
-1. `baker-hughes` — Baker Hughes, Engineering Intern, ALS R&D (Summer 2026, Claremore OK)
-2. `machine-shop` — McElroy Prototyping Lab, Machine Shop Technician (Spring 2026 – present)
-3. `schultz-grader` — Dr. Joshua Schultz, Grader & Data Analyst (Spring 2026)
-4. `turc` — TURC research, TBD, `visible: false` (confirm whether to include)
+**Current entries (sortDate order, content loaded 2026-09-27):**
+1. `baker-hughes` — Baker Hughes, Claremore OK — Engineering Intern, ALS R&D (Summer 2026), imageLeft
+2. `machine-shop` — McElroy Prototyping Lab, University of Tulsa — Machine Shop Technician
+   (Spring 2026 – present, `current`), imageRight
+3. `schultz-grader` — Dr. Joshua Schultz, University of Tulsa — Grader & Data Analyst
+   (Spring 2026 – present), textOnly
+4. `turc` — Dr. Janica Edmonds, University of Tulsa — Undergraduate Research Assistant, TURC
+   (Summer 2025), imageLeft
+5. `esl-tutor`, `church-media`, `senior-patrol-leader` — pre-college, `visible: false`, EN role
+   title only (org / dates / ES pending)
 
 **Sub-pages:** Each entry may link to `/experience/[slug].html` (e.g.,
 `/experience/baker-hughes.html`). Sub-pages are full case studies with flexible sections
@@ -546,6 +553,7 @@ Schema as of 2026-09-26 (see CLAUDE.md → Data conventions):
   subpageUrl: "",         // "/projects/<slug>.html" once the file exists, else "" — the
                           //   "View project →" link is then omitted. Dev check HEADs each one.
   featured: false,        // true → also rendered in §2 and on index.html (index tier only; max 3)
+  featuredOrder: 1,       // OPTIONAL — order among the featured blocks (home + §2), ascending
   pinned: false,          // true → lifted to top of §3
   searchTextKey: "",      // i18n key — EN + ES blob folded into the search corpus
   listing: "index",       // "index" | "unlisted" | "hidden"  ("nested" reserved — see below)
@@ -902,3 +910,22 @@ Tested on Live Server at :5500 with Playwright in the scratchpad (nothing in the
 EN/ES, `?tag=` from a row, a band and a typed URL, tag + search, ✕, unknown id, hash deep link,
 chips, the sub-page in both languages, hidden About blocks, 375 / 768 / 1280 light and dark, no
 horizontal overflow, console clean.
+
+[2026-09-27] Content loaded (second session of the day) from staging/copy-en.md, copy-es.md,
+content-intake.md and image-manifest.md, verbatim. 11-tag vocabulary; 16 projects (3 featured
+with sub-pages: pump-cylinder-failure, eagle-pathway, g-view; pinned uk-crash-hotspots); 4
+visible experience bands + 3 hidden pre-college roles; hero status / paragraph / collage; bio
+1–3. Placeholder entries, keys and projects/todo-project-2.html removed. Decisions:
+- `orgKey` carries the location ("Baker Hughes, Claremore OK", "…, University of Tulsa") for the
+  band and the hero status; new optional `orgShortKey` feeds "Part of: {org} →" (`projPartOf`
+  no longer includes the role).
+- New optional `featuredOrder` fixes the featured order pump → Eagle → G-View (home and §2)
+  independent of sortDate; `longDescKey` is required only on featured entries.
+- New `imageAltKey` on experience entries (band image alt from the manifest).
+- Eagle quick facts use labels My role / Volunteers / Size / Materials / Beneficiary / Rank;
+  width and area merged into "Size". Eagle sub-page photos: granite-and-compactor,
+  finished-path, group (no names). Pump "Report PDF" is the report link, not a fact row.
+- Sort months derived from the season where the intake gave none: Velora and AutoScan
+  2026-07, Dynamics PDF Unifier 2026-09.
+- Search keywords drawn only from tools named in the copy / intake.
+- Employer band colors remain neutral grey placeholders (after the fair).

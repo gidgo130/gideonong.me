@@ -173,8 +173,15 @@
     return sortProjects(allProjects().filter(function (e) { return e.listing === "index"; }));
   }
 
+  // Featured blocks (home + projects.html §2): entries with a numeric
+  // `featuredOrder` come first, ascending; the rest follow in sortDate order.
   function featuredProjects() {
-    return indexProjects().filter(function (e) { return e.featured; });
+    return indexProjects().filter(function (e) { return e.featured; }).sort(function (a, b) {
+      var ao = typeof a.featuredOrder === "number", bo = typeof b.featuredOrder === "number";
+      if (ao && bo) return a.featuredOrder - b.featuredOrder;
+      if (ao !== bo) return ao ? -1 : 1;
+      return 0; // stable: keeps sortDate order
+    });
   }
 
   function projectsForExperience(slug) {
@@ -221,8 +228,9 @@
     return link;
   }
 
-  // "Part of: <role>, <org> →" → experience.html#<slug>. Null when the entry
-  // has no `experience`, or it points at a role that is unknown or hidden.
+  // "Part of: <org> →" → experience.html#<slug>. {org} is the role's short
+  // organization name (orgShortKey, falling back to orgKey). Null when the
+  // entry has no `experience`, or it points at a role that is unknown or hidden.
   function buildPartOfLink(entry) {
     var role = experienceBySlug(entry.experience);
     if (!role) return null;
@@ -231,7 +239,7 @@
     link.href = ROOT + "experience.html#" + role.slug;
     link.textContent = text("projPartOf")
       .replace("{role}", text(role.roleKey))
-      .replace("{org}", text(role.orgKey));
+      .replace("{org}", text(role.orgShortKey || role.orgKey));
     return link;
   }
 
@@ -487,6 +495,11 @@
       expSlugs[e.slug] = true;
       checkKey(owner, "roleKey", e.roleKey);
       checkKey(owner, "orgKey", e.orgKey);
+      if (e.orgShortKey) checkKey(owner, "orgShortKey", e.orgShortKey);
+      if (e.imageSrc && e.layout !== "textOnly") {
+        if (!e.imageAltKey) warn(owner + ": imageSrc set without imageAltKey — alt falls back to role — org");
+        else checkKey(owner, "imageAltKey", e.imageAltKey);
+      }
       (e.bulletKeys || []).forEach(function (k, n) { checkKey(owner, "bulletKeys[" + n + "]", k); });
       checkTags(owner, e.tags);
       if (!SORT_DATE.test(e.sortDate || "")) warn(owner + ": missing or malformed sortDate (expected \"YYYY-MM\")");
@@ -513,7 +526,9 @@
 
       checkKey(owner, "titleKey", p.titleKey);
       checkKey(owner, "descKey", p.descKey);
-      checkKey(owner, "longDescKey", p.longDescKey);
+      // longDesc is the featured-card paragraph: required when featured,
+      // otherwise "" is fine (index rows only show desc).
+      if (p.featured || p.longDescKey) checkKey(owner, "longDescKey", p.longDescKey);
       checkKey(owner, "searchTextKey", p.searchTextKey);
       if (p.imageSrc && !p.imageAlt) warn(owner + ": imageSrc set without imageAlt");
       else if (p.imageSrc) checkKey(owner, "imageAlt", p.imageAlt);
@@ -527,6 +542,7 @@
 
       if (p.featured && p.listing !== "index") warn(owner + ": featured on a non-index entry (listing \"" + p.listing + "\") — it will not be featured");
       if (p.featured && p.listing === "index") featuredCount++;
+      if (p.featuredOrder !== undefined && typeof p.featuredOrder !== "number") warn(owner + ": featuredOrder must be a number");
 
       if (!SORT_DATE.test(p.sortDate || "")) warn(owner + ": missing or malformed sortDate (expected \"YYYY-MM\")");
       checkDates(owner, p.dates, p.sortDate);

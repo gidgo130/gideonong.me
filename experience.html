@@ -60,12 +60,14 @@
   <!-- §1 — Hero: photo collage + gradient scrim. Remove .hero--overlay to switch
        to the 2-column backup layout (text left on var(--bg), collage right, no scrim). -->
   <section class="exp-hero hero--overlay" id="exp-hero">
-    <div class="exp-hero-collage" aria-hidden="true">
-      <img src="assets/images/placeholder.jpg" alt="">
-      <img src="assets/images/placeholder.jpg" alt="">
-      <img src="assets/images/placeholder.jpg" alt="">
-      <img src="assets/images/placeholder.jpg" alt="">
-      <img src="assets/images/placeholder.jpg" alt="">
+    <!-- Slots 1–5 in staging/image-manifest.md order; alt text from
+         expHeroCollage<N>Alt. Slot 5 shows at 1024px and up only. -->
+    <div class="exp-hero-collage">
+      <img src="assets/images/experience/hero/printer.jpg" data-i18n-alt="expHeroCollage1Alt" alt="Industrial 3D printer in the Baker Hughes R&amp;D lab">
+      <img src="assets/images/projects/g-view/g-view-demo.png" data-i18n-alt="expHeroCollage2Alt" alt="G-View plotting speed, torque, oil temperature, and vibration from a demo test file">
+      <img src="assets/images/experience/hero/basket-old-new.jpg" data-i18n-alt="expHeroCollage3Alt" alt="The old ultrasonic cleaning basket next to the smaller 3D-printed replacement">
+      <img src="assets/images/projects/pump-cylinder-failure/pin-on-lathe.jpg" data-i18n-alt="expHeroCollage4Alt" alt="Machining the pin on a lathe in the TU machine shop">
+      <img src="assets/images/projects/eagle-pathway/directing-volunteers.jpg" data-i18n-alt="expHeroCollage5Alt" alt="Gideon in his Scout uniform directing a volunteer on build day">
     </div>
     <div class="exp-hero-scrim" aria-hidden="true"></div>
     <!-- Both paragraphs are filled from js/translations.js — no display text here.

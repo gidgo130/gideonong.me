@@ -10,16 +10,25 @@
 //   slug     Unique id for the role. The band gets id="<slug>" so
 //            experience.html#<slug> deep-links to it, and a project in
 //            js/projects-data.js points here with `experience: "<slug>"`. Per-
-//            entry i18n keys are exp<SlugCamel>Role / Org / Bullet1… — the
-//            existing names already follow this.
+//            entry i18n keys are exp<SlugCamel>Role / Org / OrgShort / Bullet1… /
+//            ImageAlt.
+//   roleKey  i18n key → EN + ES
+//   orgKey   i18n key — the full organization string shown on the band and in
+//            the hero status ("McElroy Prototyping Lab, University of Tulsa").
+//   orgShortKey  OPTIONAL i18n key — the short form used by project "Part of"
+//            links ("Part of: Baker Hughes →"). Falls back to orgKey.
 //   dates    language-neutral, rendered per language (CLAUDE.md → Dates):
 //              { from: { season: "summer", year: 2026 } }
 //              { from: { season: "spring", year: 2026 }, to: "present" }
 //              { from: { month: 7, year: 2022 }, to: { month: 8, year: 2022 } }
 //   sortDate "YYYY-MM" — the ONLY thing ordering reads. Newest first. The dev
 //            check flags a sortDate that disagrees with `dates`.
+//   bulletKeys  i18n keys → EN + ES (any number; 2–5 in practice)
 //   tags     tag IDS from js/tags-data.js (never labels); each pill links to
 //            projects.html?tag=<id>
+//   imageSrc path, or "" for no image
+//   imageAltKey  i18n key for the band image's alt text — required whenever
+//            imageSrc is set (falls back to "<role> — <org>" if missing)
 //   layout   "imageLeft" | "imageRight" | "fullBleed" | "textOnly"
 //            Maps 1:1 to a CSS class (.exp-band--image-left, etc.). Adding a
 //            preset later means one new class — never bespoke markup.
@@ -47,25 +56,30 @@
 // Related projects: a band lists every listing: "index" project whose
 // `experience` equals this entry's slug — nothing is stored on this side.
 //
-// SCAFFOLD NOTE: every color below is a NEUTRAL GREY tint, not an employer
-// color. Real employer colors are TBD (plan.md open decision #9). Light mixes
-// are over #EDE6D5 (light --bg-section), dark mixes over #211C14 (dark
-// --bg-section) — a dark band is re-mixed, never the light value reused.
+// COLOR NOTE: every color below is still a NEUTRAL GREY tint, not an employer
+// color. Real employer colors are deferred until after the fair (plan.md open
+// decision #9). Light mixes are over #EDE6D5 (light --bg-section), dark mixes
+// over #211C14 (dark --bg-section) — a dark band is re-mixed, never the light
+// value reused.
 
 const experienceData = [
   {
     slug: "baker-hughes",
     roleKey: "expBakerHughesRole",
     orgKey: "expBakerHughesOrg",
+    orgShortKey: "expBakerHughesOrgShort",
     dates: { from: { season: "summer", year: 2026 } },
-    sortDate: "2026-06",
+    sortDate: "2026-07",
     bulletKeys: [
       "expBakerHughesBullet1",
       "expBakerHughesBullet2",
-      "expBakerHughesBullet3"
+      "expBakerHughesBullet3",
+      "expBakerHughesBullet4",
+      "expBakerHughesBullet5"
     ],
-    tags: ["engineering", "rd", "als"],
-    imageSrc: "assets/images/placeholder.jpg",
+    tags: ["python", "automation", "cad", "fabrication"],
+    imageSrc: "assets/images/projects/autoscan/scan-fixtures.jpg",
+    imageAltKey: "expBakerHughesImageAlt",
     subpageUrl: "",
     layout: "imageLeft",
     status: null,
@@ -79,6 +93,7 @@ const experienceData = [
     slug: "machine-shop",
     roleKey: "expMachineShopRole",
     orgKey: "expMachineShopOrg",
+    orgShortKey: "expMachineShopOrgShort",
     dates: { from: { season: "spring", year: 2026 }, to: "present" },
     sortDate: "2026-02",
     bulletKeys: [
@@ -86,10 +101,12 @@ const experienceData = [
       "expMachineShopBullet2",
       "expMachineShopBullet3"
     ],
-    tags: ["machining", "prototyping", "fabrication"],
-    imageSrc: "assets/images/placeholder.jpg",
+    tags: ["fabrication", "cad"],
+    // Pump lathe photo until Gideon supplies a shop photo (content-intake.md).
+    imageSrc: "assets/images/projects/pump-cylinder-failure/pin-on-lathe.jpg",
+    imageAltKey: "expMachineShopImageAlt",
     subpageUrl: "",
-    layout: "imageLeft",
+    layout: "imageRight",
     status: "current",
     color: {
       light: { bg: "#DED8C9", border: "#948C7E", accent: "#615951" }, // grey #6E6E6E @ 12%
@@ -101,17 +118,18 @@ const experienceData = [
     slug: "schultz-grader",
     roleKey: "expSchultzRole",
     orgKey: "expSchultzOrg",
-    dates: { from: { season: "spring", year: 2026 } },
+    orgShortKey: "expSchultzOrgShort",
+    dates: { from: { season: "spring", year: 2026 }, to: "present" },
     sortDate: "2026-01",
     bulletKeys: [
       "expSchultzBullet1",
-      "expSchultzBullet2",
-      "expSchultzBullet3"
+      "expSchultzBullet2"
     ],
-    tags: ["data-analysis", "grading", "dynamics"],
-    imageSrc: "assets/images/placeholder.jpg",
+    tags: ["python", "data-analysis", "automation"],
+    imageSrc: "",
+    imageAltKey: "",
     subpageUrl: "",
-    layout: "imageLeft",
+    layout: "textOnly",
     status: null,
     color: {
       light: { bg: "#CCC7B9", border: "#837B6E", accent: "#554E45" }, // grey #4A4A4A @ 20%
@@ -123,15 +141,17 @@ const experienceData = [
     slug: "turc",
     roleKey: "expTurcRole",
     orgKey: "expTurcOrg",
-    dates: { from: { season: "summer", year: 2025 } }, // TODO — placeholder until confirmed
+    orgShortKey: "expTurcOrgShort",
+    dates: { from: { season: "summer", year: 2025 } },
     sortDate: "2025-08",
     bulletKeys: [
       "expTurcBullet1",
       "expTurcBullet2",
       "expTurcBullet3"
     ],
-    tags: ["research"],
-    imageSrc: "assets/images/placeholder.jpg",
+    tags: ["leadership"],
+    imageSrc: "assets/images/experience/turc/map-projections-session.jpg",
+    imageAltKey: "expTurcImageAlt",
     subpageUrl: "",
     layout: "imageLeft",
     status: null,
@@ -139,6 +159,59 @@ const experienceData = [
       light: { bg: "#DBD5C8", border: "#8F8779", accent: "#5E564D" }, // grey #8A8A8A @ 18%
       dark:  { bg: "#3B3730", border: "#6B6255", accent: "#C7BDAC" }
     },
+    visible: true
+  },
+
+  // ---- Pre-college roles: in the data, never rendered (visible: false).
+  // Only the EN role title was collected (content-intake.md, Round 0). Org,
+  // dates and ES title are "TODO" until Gideon supplies them — see content.md
+  // → experience.html → Pending. Nothing here can reach a visible page.
+  {
+    slug: "esl-tutor",
+    roleKey: "expEslTutorRole",
+    orgKey: "expEslTutorOrg",
+    dates: { from: { year: 2022 } }, // TODO — placeholder year
+    sortDate: "2022-01",
+    bulletKeys: [],
+    tags: [],
+    imageSrc: "",
+    imageAltKey: "",
+    subpageUrl: "",
+    layout: "textOnly",
+    status: null,
+    color: null,
+    visible: false
+  },
+  {
+    slug: "church-media",
+    roleKey: "expChurchMediaRole",
+    orgKey: "expChurchMediaOrg",
+    dates: { from: { year: 2022 } }, // TODO — placeholder year
+    sortDate: "2022-01",
+    bulletKeys: [],
+    tags: [],
+    imageSrc: "",
+    imageAltKey: "",
+    subpageUrl: "",
+    layout: "textOnly",
+    status: null,
+    color: null,
+    visible: false
+  },
+  {
+    slug: "senior-patrol-leader",
+    roleKey: "expSeniorPatrolLeaderRole",
+    orgKey: "expSeniorPatrolLeaderOrg",
+    dates: { from: { year: 2022 } }, // TODO — placeholder year
+    sortDate: "2022-01",
+    bulletKeys: [],
+    tags: [],
+    imageSrc: "",
+    imageAltKey: "",
+    subpageUrl: "",
+    layout: "textOnly",
+    status: null,
+    color: null,
     visible: false
   }
 ];

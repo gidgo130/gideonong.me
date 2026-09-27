@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Static English fallbacks; js/project-page.js replaces both on every
+       render (and on language change) from the entry's title / desc keys. -->
+  <title>G-View: Test Data Review App — Gideon A. Ong</title>
+  <meta name="description" content="Built a desktop app for reviewing large test-data spreadsheets: plot the data, crop out bad sections, and export clean copies.">
+  <link rel="icon" href="../assets/glogo.ico" type="image/x-icon">
+  <!-- No-flash viewing settings: apply saved prefs to <html> before first paint.
+       Mirrors the writes in js/about.js §6 — keep the keys in sync. -->
+  <script>
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage;
+        var t = ls.getItem("viewTheme");
+        if (t !== "dark" && t !== "light") {
+          t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+        }
+        el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        if (ls.getItem("viewShowPrecollege") !== "1") el.setAttribute("data-hide-precollege", "1");
+      } catch (e) { /* storage blocked — site renders in its default light theme */ }
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<!-- Project sub-page shell. Everything visible is rendered by js/project-page.js
+     from the js/projects-data.js entry whose slug matches data-slug. data-root
+     tells the shared scripts to prefix relative links and images with "../". -->
+<body data-slug="g-view" data-root="../">
+
+  <nav class="navbar">
+    <a href="../index.html" class="logo">Gideon A. Ong</a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="../projects.html" data-i18n="navProjects">Projects</a>
+        <a href="../experience.html" data-i18n="navExperience">Experience</a>
+        <a href="../about.html" data-i18n="navAbout">About</a>
+      </div>
+      <button type="button" class="hamburger" id="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-dropdown">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <line class="ham-top" x1="3" y1="6" x2="21" y2="6"/>
+          <line class="ham-mid" x1="3" y1="12" x2="21" y2="12"/>
+          <line class="ham-bot" x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <button type="button" class="lang-toggle" data-lang-toggle aria-label="Toggle language (EN/ES)">
+        <span class="lang-btn" data-lang="en">EN</span>
+        <span class="lang-btn" data-lang="es">ES</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="nav-dropdown" id="nav-dropdown" aria-hidden="true">
+    <a href="../projects.html" data-i18n="navProjects">Projects</a>
+    <a href="../experience.html" data-i18n="navExperience">Experience</a>
+    <a href="../about.html" data-i18n="navAbout">About</a>
+  </div>
+
+  <div class="dev-banner" data-i18n="banner">This site is under development.</div>
+
+  <!-- Rendered by js/project-page.js: hero image → title → meta → "Part of" →
+       sections → photos → quick facts → report link → credit → tags → back link. -->
+  <main class="project-page" id="project-page"></main>
+
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="mailto:gao9819@utulsa.edu" data-i18n="footerContact">gao9819@utulsa.edu</a>
+      <a href="https://www.linkedin.com/in/gideon-a-ong" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/gidgo130" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <a class="btn-resume-footer" data-i18n="resumeBtn" data-doc-link="resume" href="../assets/pdfs/resume/en%20Gideon%20Ong%20Resume%2020260915.pdf" target="_blank" rel="noopener">Download Resume</a>
+    <p class="footer-copy" data-i18n="footerCopyright">© 2026 Gideon A. Ong</p>
+  </footer>
+
+  <script src="../js/translations.js"></script>
+  <script src="../js/docs-data.js"></script>
+  <script src="../js/chips.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/tags-data.js"></script>
+  <script src="../js/experience-data.js"></script>
+  <script src="../js/projects-data.js"></script>
+  <script src="../js/data-helpers.js"></script>
+  <script src="../js/project-page.js"></script>
+</body>
+</html>

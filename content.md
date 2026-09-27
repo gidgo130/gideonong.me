@@ -174,7 +174,16 @@ card is gone. A project's copy exists in exactly one place.
 
 ## experience.html — Status + field reference
 
-**Status: INTAKE — page is fully built and verified; every string slot is waiting for content.**
+**Status: VERIFIED (2026-09-27) — content loaded verbatim from staging/copy-en.md and
+copy-es.md; checked against the built page in EN and ES at 375 / 768 / 1280, light and dark.**
+
+Pending (not blocking the fair):
+- The three hidden pre-college roles (`esl-tutor`, `church-media`, `senior-patrol-leader`,
+  all `visible: false`) carry only the EN role title. Their `orgKey` strings and ES titles are
+  `TODO`, their `dates` a placeholder year. They are the ONLY `TODO` strings left in the site
+  and nothing can render them.
+- Employer band colors are still neutral grey placeholders (plan.md open decision #9).
+- McElroy band image is the pump lathe photo until Gideon supplies a shop photo.
 
 Built 2026-09-20 as full-width bands per plan.md → Page Spec — experience.html; data
 conventions revised 2026-09-26 (CLAUDE.md → Data conventions). Structure, CSS, and JS are
@@ -227,33 +236,26 @@ images, colors, layout — is a field in `js/experience-data.js`. Adding, hiding
 separately, none built yet — every `subpageUrl` is blank until one ships), and anything
 belonging to projects.html.
 
-### Resolve these first — they change what the interview asks
+### Resolved in the 2026-09-27 interview
 
-1. **ES role titles** — translate job titles into Spanish, or keep the English title inside
-   Spanish surrounding text? Employer names (Baker Hughes, McElroy Prototyping Lab) presumably
-   stay untranslated either way. Currently the ES titles are English behind a `TODO ` marker.
-2. **Tag vocabulary** — structurally settled (2026-09-26): one shared list in `js/tags-data.js`
-   for both pages, with translated labels. The names are still open. The ten ids carried over
-   from this page's old free-string tags (`engineering`, `rd`, `als`, `machining`,
-   `prototyping`, `fabrication`, `data-analysis`, `grading`, `dynamics`, `research`) are
-   placeholders with `TODO `-prefixed ES labels — replace them with the agreed vocabulary.
-3. **Bullet length target** — the spec says 2–3 bullets per role but sets no length. Bullets sit
-   in the ~60% text column of a band, and ES runs ~20% longer. Agree a rough ceiling (e.g. one
-   to two lines each at 1280px) so bands stay visually even.
-4. **TURC entry** — include it at all? It is in the array with `visible: false` and its role is
-   still `[role TBD]`. plan.md open decision #4.
+1. **ES role titles** — translated; employer names untranslated; the university is
+   "Universidad de Tulsa" (content-intake.md Round 0).
+2. **Tag vocabulary** — the 11 tags in `js/tags-data.js` (copy-en.md § Tags).
+3. **Bullet length** — no fixed ceiling; Baker Hughes carries five bullets, the others 2–3.
+4. **TURC entry** — included, `visible: true`.
 
 ### §1 — Hero: keys and status
 
 | Key | Role | EN | ES |
 |---|---|---|---|
-| `expHeroStatus` | fallback status sentence (no `current` entry) | written (approved, plan.md) | TODO — provisional |
-| `expHeroStatusCurrent` | template when an entry is `current`; must keep `{role}` and `{org}` | TODO — confirm provisional | TODO — provisional |
-| `expHeroPara` | paragraph under the status sentence | TODO | TODO |
+| `expHeroStatus` | fallback status sentence (no `current` entry) | written | written |
+| `expHeroStatusCurrent` | template when an entry is `current`; must keep `{role}` and `{org}` | written ("Currently {role} at {org}.") | written |
+| `expHeroPara` | paragraph under the status sentence | written | written |
 
-**Collage photos** — 3–5 images, currently all `assets/images/placeholder.jpg`, written as
-plain `<img>` tags in `experience.html`. Slot 1 is the large left cell; slot 5 only appears at
-1024px and up.
+**Collage photos** — five `<img>` tags in `experience.html`, in image-manifest order
+(printer, G-View screenshot, ultrasonic basket, pin on lathe, Eagle build day), alt text from
+`expHeroCollage1Alt…5Alt`. Slot 1 is the large left cell and sits entirely under the solid
+part of the scrim; slot 5 only appears at 1024px and up.
 
 ### §2 — Field reference (`js/experience-data.js`)
 
@@ -286,8 +288,10 @@ visible      true | false  (false also makes the role an invalid link target for
 | `schultz-grader` | Dr. Joshua Schultz — Grader & Data Analyst | `expSchultz` | spring 2026 | 2026-01 | true | null |
 | `turc` | TURC / TMTC (Edmonds) — role TBD | `expTurc` | summer 2025 (placeholder) | 2025-08 (placeholder) | **false** | null |
 
-Per-entry string status: EN role and org are written for the first three; every bullet is
-`TODO ` in both languages; every ES role title is `TODO `.
+All four visible entries are fully written in EN and ES: roles, orgs (with location:
+"Baker Hughes, Claremore OK", "…, University of Tulsa" / "Universidad de Tulsa"), short orgs
+for "Part of" links, bullets (5 / 3 / 2 / 3), tags, image alts. `turc` is now `visible: true`.
+Layouts: imageLeft / imageRight / textOnly / imageLeft.
 
 ### §2 — Chrome keys (written, VERIFIED)
 
@@ -323,7 +327,9 @@ in a comment beside each. plan.md open decision #9.
 
 ## about.html — NEEDS REVIEW
 
-**Status: NEEDS REVIEW — reconcile this section in a chat focused on about.html.**
+**Status: VERIFIED for the fair (2026-09-27) — bio 1–3 (EN/ES) loaded verbatim, headshot
+in place, §3 / §4 / interesting sites hidden. The hidden blocks' arrays are still placeholders
+and the inline-string question below is still open for after the fair.**
 
 > **What this section is and isn't.** about.html is **fully built** (hero, who-am-I, reading,
 > FAQ, AI statement, viewing settings). The old stub entry that used to live here was wrong and
@@ -341,9 +347,10 @@ in a comment beside each. plan.md open decision #9.
 - Section headings and viewing-settings toggle labels are all written.
 - [cvBtn] / [transcriptBtn] — "Download Full CV" / "Download Transcript".
 
-**Known-placeholder, awaiting content:**
-- [whoamiBio1] / [whoamiBio2] / [whoamiBio3] — §2 biographical paragraphs ("IEL" in the bio
-  gets the chip automatically)
+- [whoamiBio1] / [whoamiBio2] / [whoamiBio3] — §2 biographical paragraphs, written EN/ES
+  (2026-09-27); "IEL" in bio 1 gets the chip automatically.
+
+**Known-placeholder, hidden for the fair:**
 - §3 books — 5 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on `#about-reading`)
 - §4 FAQ — 4 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on `#about-faq`)
 - §6 interesting sites — 3 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on
@@ -364,22 +371,24 @@ string gets typed.
 
 ## projects.html — Status + field reference
 
-**Status: INTAKE — the scaffold is built; every project string is a placeholder.
-Do not invent project content.**
+**Status: VERIFIED (2026-09-27) — 16 projects loaded verbatim from staging/copy-en.md and
+copy-es.md, images and alt text from staging/image-manifest.md; checked against the built
+pages (projects.html, index.html, the three sub-pages) in EN and ES at 375 / 768 / 1280.**
+
+Loaded: 3 featured with sub-pages (`pump-cylinder-failure` stacked, `eagle-pathway` collage,
+`g-view` imageRight; `featuredOrder` 1–3), 13 index rows, `uk-crash-hotspots` pinned, 11-tag
+vocabulary. Deferred (LATER in content-intake.md): Arduino robot, R crash models, ESL
+peer-connection system, Spinelli translations (unlisted).
 
 > **What this section is and isn't.** projects.html is **built** per plan.md → Page Spec —
 > projects.html: live keyword search band (§1, since 2026-09-26), featured entries (§2), and
 > the index with its tag filter (§3), rendered by `js/projects.js` from `js/projects-data.js`.
-> The same array feeds the index.html featured block (`js/home.js`). Structure and behavior
-> are real; **all content is placeholder**. Six `TODO` entries are in the array — two featured,
-> one `pinned`, one with `imageSrc: ""` (no-thumbnail path), one with `subpageUrl: ""`
-> (omitted link), one `listing: "unlisted"` (exclusion path), and two linked to the
-> `baker-hughes` role (two-way link path). The content interview replaces the entries and the
-> tag vocabulary; the markup does not change.
+> The same array feeds the index.html featured block (`js/home.js`) and the sub-pages
+> (`js/project-page.js`). Content loaded 2026-09-27 — see the entries table below.
 
 **Strings live in `js/translations.js` only** — this section names the keys and their status,
-never the text. Find every unfilled slot with:
-`grep "TODO " js/translations.js js/projects-data.js js/tags-data.js`.
+never the text. `grep "TODO " js/translations.js js/projects-data.js js/tags-data.js` returns
+nothing for projects.
 
 ### Framework briefing — copy the whole block below into the projects interview
 
@@ -564,16 +573,30 @@ page           OPTIONAL — sub-page content (projects/<slug>.html, rendered by 
 Tags: `js/tags-data.js` holds `{ id, key }` pairs; the label is `tag<IdCamel>` in
 `js/translations.js`. Data files store ids only.
 
-**Entries in the array** (all strings `TODO ` in both languages):
+**Entries in the array** (all strings written, EN + ES):
 
-| slug | sortDate | context | featured | pinned | listing | experience | exercises |
+| slug | dates | sortDate | context | featured | pinned | experience | image |
 |---|---|---|---|---|---|---|---|
-| `todo-project-1` | 2026-06 | coursework | yes | yes | index | — | pinned + featured; home `stacked`; season date |
-| `todo-project-2` | 2026-05 | industry | — | — | **hidden** | baker-hughes | the sub-page scaffold (`page` object + projects/todo-project-2.html); renders on localhost only |
-| `todo-project-3` | 2026-04 | research | yes | — | index | baker-hughes | featured "Part of" link; home `collage` (2 gallery images); month range date |
-| `todo-project-4` | 2026-03 | industry | — | — | index | baker-hughes | no image; row "Part of" link; month date |
-| `todo-project-5` | 2026-02 | personal | — | — | index | — | no sub-page; year-only date |
-| `todo-project-6` | 2026-01 | service | — | — | **unlisted** | baker-hughes | excluded everywhere; season range date |
+| `pump-cylinder-failure` | Spring 2026 | 2026-05 | coursework | 1 (stacked) | — | — | pin-assembly.jpg + 5 sub-page photos + report PDF |
+| `eagle-pathway` | July 2022 | 2022-07 | service | 2 (collage) | — | — | directing-volunteers + 2 collage + 3 sub-page photos, credit |
+| `g-view` | Summer 2026 | 2026-07 | industry | 3 (imageRight) | — | baker-hughes | g-view-demo.png |
+| `velora` | Summer 2026 | 2026-07 | industry | — | — | baker-hughes | none |
+| `autoscan` | Summer 2026 | 2026-07 | industry | — | — | baker-hughes | scan-fixtures.jpg |
+| `dynamics-pdf-unifier` | Fall 2026 | 2026-09 | personal | — | — | schultz-grader | none |
+| `keplinger-heating` | Spring 2026 | 2026-05 | coursework | — | — | — | none |
+| `music-notes-matlab` | Spring 2026 | 2026-05 | coursework | — | — | — | trumpet-notes.png |
+| `gender-employment-cs` | Spring 2026 | 2026-05 | coursework | — | — | — | none |
+| `chilled-water-pipeline` | Fall 2025 | 2025-12 | coursework | — | — | — | route-a.jpg |
+| `notched-beam-stress-relief` | Fall 2025 | 2025-12 | coursework | — | — | — | fea-spline.png |
+| `diesel-dual-cycle` | Fall 2025 | 2025-11 | coursework | — | — | — | pv-diagram.png |
+| `mechanical-fuse` | Fall 2025 | 2025-10 | coursework | — | — | — | broken-links.jpg |
+| `bicycle-crash-severity` | Spring 2025 | 2025-05 | coursework | — | — | — | shap.png |
+| `uk-crash-hotspots` | Spring 2025 | 2025-04 | coursework | — | **yes** | — | qgis-england.jpg |
+| `landmine-classification` | Spring 2025 | 2025-03 | coursework | — | — | — | none |
+
+Sort months for Velora, AutoScan and Dynamics PDF Unifier were derived from their season
+(the intake gave none). Search keywords (`proj…Search`) list only tools and names that appear
+in the copy or content-intake.md.
 
 ### Chrome keys (written, VERIFIED)
 
@@ -589,11 +612,8 @@ were deleted with the filter row on 2026-09-27.)
 
 ### Still to fill
 
-- Tag vocabulary — `js/tags-data.js` ids `todo-a` … `todo-f` (labels `tagTodoA` …) plus the ten
-  ids carried over from experience.html. Shared by both pages; settle it in whichever interview
-  runs first and reuse it in the second.
-- The project list itself, which 2–3 are featured, and which role each belongs to
-- Per-project: every field in the reference above
+- Nothing for the fair. Sub-pages for the 13 index projects (later); the four deferred
+  projects above; employer band colors.
 
 ---
 
