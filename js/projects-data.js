@@ -1,8 +1,8 @@
 // projects-data.js
-// Single source of truth for projects.html §2 (featured) and §3 (index), AND
-// for the featured block on index.html. There is no second array and no
-// duplicated copy: `featured: true` promotes an entry into the featured blocks,
-// and that same entry still appears in the index.
+// Single source of truth for projects.html §2 (featured) and §3 (index), the
+// featured block on index.html, and the project sub-pages. There is no second
+// array and no duplicated copy: `featured: true` promotes an entry into the
+// featured blocks, and that same entry still appears in the index.
 //
 // ARRAY ORDER DOES NOT MATTER. Display order is sortDate descending, with
 // `pinned: true` lifting an entry to the top of the index. Reordering this
@@ -15,17 +15,26 @@
 //   titleKey      i18n key → EN + ES. Per-entry keys are named by slug:
 //   descKey         proj<SlugCamel>Title / Desc / LongDesc / Alt / Search
 //   longDescKey     (e.g. slug "todo-project-1" → projTodoProject1Title).
-//   dates         literal display string, never translated
-//   sortDate      "YYYY-MM" — the ONLY thing ordering reads. Newest first.
+//   dates         language-neutral, rendered per language (CLAUDE.md → Dates):
+//                   { from: { season: "summer", year: 2026 } }
+//                   { from: { month: 7, year: 2022 } }
+//                   { from: { year: 2025 } }
+//                   { from: {…}, to: "present" }  or  { from: {…}, to: {…} }
+//   sortDate      "YYYY-MM" — the ONLY thing ordering reads. Newest first. The
+//                 dev check flags a sortDate that disagrees with `dates`
+//                 (against `to` when it is a point, else `from`).
 //   context       "industry" | "coursework" | "personal" | "service" | "research"
 //                 Rendered in the meta line as "<Context> · <dates>" via the
 //                 ctxIndustry / ctxCoursework / … i18n keys.
-//   tags          tag IDS from js/tags-data.js (never labels)
+//   tags          tag IDS from js/tags-data.js (never labels). Every pill is a
+//                 link to projects.html?tag=<id>.
 //   imageSrc      "" is valid → the row renders with no thumbnail and the text
 //                 occupying the full width. Never a broken image, a grey box,
 //                 or a placeholder icon.
 //   imageAlt      i18n key — required whenever imageSrc is set
-//   subpageUrl    "" = no sub-page yet → the "View project →" link is omitted
+//   subpageUrl    "/projects/<slug>.html" once the page file exists, else ""
+//                 → the "View project →" link is omitted. The dev check HEADs
+//                 each non-empty value (localhost only).
 //   featured      true → ALSO rendered in the featured blocks (still in the
 //                 index). Only honoured on listing: "index". Max 3.
 //   pinned        true → lifted to the top of the index, independently of
@@ -37,13 +46,14 @@
 //                 "unlisted" → direct URL only. Excluded from the index, bands,
 //                              filter, featured and search. This is how the
 //                              "unlinked pages" decision is implemented — the
-//                              entry stays here so its sub-page can be
-//                              generated, but it never appears in any listing.
-//                 "hidden"   → excluded everywhere
+//                              entry stays here so its sub-page renders, but it
+//                              never appears in any listing.
+//                 "hidden"   → excluded everywhere; its sub-page renders only
+//                              on localhost.
 //                 "nested"   → RESERVED, not implemented. An entry set to it
 //                              does not render and the dev check warns.
 //   experience    slug of the js/experience-data.js entry this project belongs
-//                 to, or "". Set → the row/featured block shows a
+//                 to, or "". Set → the row/featured block/sub-page shows a
 //                 "Part of: <role>, <org> →" link to experience.html#<slug>,
 //                 and the band lists this project under "Projects from this
 //                 role". The two-way link is derived from this one field.
@@ -58,13 +68,22 @@
 //   gallery       OPTIONAL, collage only — 1–3 EXTRA images after imageSrc:
 //                 [{ src: "", altKey: "" }]. altKey is an i18n key
 //                 (proj<SlugCamel>Gallery<N>Alt). Ignored on other presets.
+//   page          OPTIONAL — sub-page content (js/project-page.js). Every
+//                 part is optional; a missing part renders nothing:
+//                   sections:  [{ headingKey, bodyKey }]   proj<SlugCamel>Section<N>Heading / Body
+//                   facts:     [{ labelKey, valueKey }]    proj<SlugCamel>Fact<N>Label / Value
+//                   photos:    [{ src, altKey }]           proj<SlugCamel>Photo<N>Alt
+//                   reportPdf: "assets/pdfs/projects/….pdf"  "Read the report" link, new tab
+//                   creditKey: ""                          proj<SlugCamel>Credit
+//                 `gallery` stays collage-only; sub-page photos use page.photos.
 //
 // SCAFFOLD NOTE: every entry below is a PLACEHOLDER. No real project content is
 // recorded here yet — titles, descriptions, dates, tags, and images all arrive
 // from the projects content interview (plan.md open decisions #2 and #3). Every
 // placeholder string is prefixed "TODO " in both languages so it stays greppable.
-// The sortDate / context / experience values below are stand-ins chosen to
-// exercise each render path, not facts.
+// The sortDate / dates / context / experience values below are stand-ins chosen
+// to exercise each render path, not facts. Every subpageUrl except
+// todo-project-2's is "" because no other page file exists.
 
 const projectsData = [
   {
@@ -72,13 +91,13 @@ const projectsData = [
     titleKey: "projTodoProject1Title",
     descKey: "projTodoProject1Desc",
     longDescKey: "projTodoProject1LongDesc",
-    dates: "TODO dates",
+    dates: { from: { season: "summer", year: 2026 } },
     sortDate: "2026-06",
     context: "coursework",
     tags: ["todo-a", "todo-b"],
     imageSrc: "assets/images/placeholder.jpg",
     imageAlt: "projTodoProject1Alt",
-    subpageUrl: "/projects/todo-project-1.html",
+    subpageUrl: "",
     featured: true,
     pinned: true,
     searchTextKey: "projTodoProject1Search",
@@ -89,49 +108,72 @@ const projectsData = [
     homeLayout: "stacked"
   },
   {
-    // Linked to the Baker Hughes role: this is the featured-block "Part of"
-    // test case, and it appears under the Baker Hughes band on experience.html.
+    // The SUB-PAGE scaffold. listing: "hidden" so neither this entry nor any
+    // link to projects/todo-project-2.html can appear on the live site; the
+    // page itself renders on localhost only (js/project-page.js). Linked to
+    // Baker Hughes so the sub-page "Part of" link is exercised. Carries a full
+    // `page` object with fake sections, facts, photos, report and credit.
     slug: "todo-project-2",
     titleKey: "projTodoProject2Title",
     descKey: "projTodoProject2Desc",
     longDescKey: "projTodoProject2LongDesc",
-    dates: "TODO dates",
+    dates: { from: { season: "spring", year: 2026 } },
     sortDate: "2026-05",
     context: "industry",
     tags: ["todo-b", "todo-c"],
     imageSrc: "assets/images/placeholder.jpg",
     imageAlt: "projTodoProject2Alt",
     subpageUrl: "/projects/todo-project-2.html",
-    featured: true,
+    featured: false,
     pinned: false,
     searchTextKey: "projTodoProject2Search",
-    listing: "index",
+    listing: "hidden",
     experience: "baker-hughes",
-    // Home featured preset: collage of imageSrc + two extra placeholder images
-    // (three cells → large left, two stacked right; large on top below 768px).
-    homeLayout: "collage",
-    gallery: [
-      { src: "assets/images/book-placeholder-1.jpg", altKey: "projTodoProject2Gallery1Alt" },
-      { src: "assets/images/placeholder.jpg", altKey: "projTodoProject2Gallery2Alt" }
-    ]
+    page: {
+      sections: [
+        { headingKey: "projTodoProject2Section1Heading", bodyKey: "projTodoProject2Section1Body" },
+        { headingKey: "projTodoProject2Section2Heading", bodyKey: "projTodoProject2Section2Body" }
+      ],
+      facts: [
+        { labelKey: "projTodoProject2Fact1Label", valueKey: "projTodoProject2Fact1Value" },
+        { labelKey: "projTodoProject2Fact2Label", valueKey: "projTodoProject2Fact2Value" },
+        { labelKey: "projTodoProject2Fact3Label", valueKey: "projTodoProject2Fact3Value" }
+      ],
+      photos: [
+        { src: "assets/images/placeholder.jpg", altKey: "projTodoProject2Photo1Alt" },
+        { src: "assets/images/book-placeholder-1.jpg", altKey: "projTodoProject2Photo2Alt" },
+        { src: "assets/images/book-placeholder-2.jpg", altKey: "projTodoProject2Photo3Alt" }
+      ],
+      reportPdf: "assets/pdfs/projects/paint-sprayer-pump-failure-analysis.pdf",
+      creditKey: "projTodoProject2Credit"
+    }
   },
   {
+    // Linked to the Baker Hughes role: this is the featured-block "Part of"
+    // test case, and it appears under the Baker Hughes band on experience.html.
+    // Home featured preset: collage of imageSrc + two extra placeholder images
+    // (three cells → large left, two stacked right; large on top below 768px).
     slug: "todo-project-3",
     titleKey: "projTodoProject3Title",
     descKey: "projTodoProject3Desc",
     longDescKey: "projTodoProject3LongDesc",
-    dates: "TODO dates",
+    dates: { from: { month: 2, year: 2026 }, to: { month: 4, year: 2026 } },
     sortDate: "2026-04",
     context: "research",
     tags: ["todo-a", "todo-c", "todo-d"],
     imageSrc: "assets/images/placeholder.jpg",
     imageAlt: "projTodoProject3Alt",
-    subpageUrl: "/projects/todo-project-3.html",
-    featured: false,
+    subpageUrl: "",
+    featured: true,
     pinned: false,
     searchTextKey: "projTodoProject3Search",
     listing: "index",
-    experience: ""
+    experience: "baker-hughes",
+    homeLayout: "collage",
+    gallery: [
+      { src: "assets/images/book-placeholder-1.jpg", altKey: "projTodoProject3Gallery1Alt" },
+      { src: "assets/images/placeholder.jpg", altKey: "projTodoProject3Gallery2Alt" }
+    ]
   },
   {
     // No photograph for this one — imageSrc is deliberately "". The row renders
@@ -143,13 +185,13 @@ const projectsData = [
     titleKey: "projTodoProject4Title",
     descKey: "projTodoProject4Desc",
     longDescKey: "projTodoProject4LongDesc",
-    dates: "TODO dates",
+    dates: { from: { month: 3, year: 2026 } },
     sortDate: "2026-03",
     context: "industry",
     tags: ["todo-d"],
     imageSrc: "",
     imageAlt: "",
-    subpageUrl: "/projects/todo-project-4.html",
+    subpageUrl: "",
     featured: false,
     pinned: false,
     searchTextKey: "projTodoProject4Search",
@@ -158,12 +200,12 @@ const projectsData = [
   },
   {
     // No sub-page yet — subpageUrl is "" so the "View project →" link is
-    // omitted rather than rendered as a dead link.
+    // omitted rather than rendered as a dead link. Year-only date.
     slug: "todo-project-5",
     titleKey: "projTodoProject5Title",
     descKey: "projTodoProject5Desc",
     longDescKey: "projTodoProject5LongDesc",
-    dates: "TODO dates",
+    dates: { from: { year: 2026 } },
     sortDate: "2026-02",
     context: "personal",
     tags: ["todo-b", "todo-e"],
@@ -184,13 +226,13 @@ const projectsData = [
     titleKey: "projTodoProject6Title",
     descKey: "projTodoProject6Desc",
     longDescKey: "projTodoProject6LongDesc",
-    dates: "TODO dates",
+    dates: { from: { season: "fall", year: 2025 }, to: { season: "spring", year: 2026 } },
     sortDate: "2026-01",
     context: "service",
     tags: ["todo-e", "todo-f"],
     imageSrc: "assets/images/placeholder.jpg",
     imageAlt: "projTodoProject6Alt",
-    subpageUrl: "/projects/todo-project-6.html",
+    subpageUrl: "",
     featured: false,
     pinned: false,
     searchTextKey: "projTodoProject6Search",

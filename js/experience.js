@@ -68,7 +68,7 @@
     media.className = "exp-band-media";
     var img = document.createElement("img");
     img.className = "exp-band-image";
-    img.src = entry.imageSrc;
+    img.src = siteData.root + entry.imageSrc;
     img.alt = text(entry.roleKey) + " — " + text(entry.orgKey);
     img.loading = "lazy";
     media.appendChild(img);
@@ -104,7 +104,7 @@
       var desc = document.createElement("span");
       desc.className = "exp-related-desc";
       desc.setAttribute("data-i18n", project.descKey);
-      desc.textContent = text(project.descKey);
+      siteData.fillText(desc, text(project.descKey));
       li.appendChild(desc);
       ul.appendChild(li);
     });
@@ -136,7 +136,9 @@
     org.setAttribute("data-i18n", entry.orgKey);
     org.textContent = text(entry.orgKey);
     meta.appendChild(org);
-    meta.appendChild(document.createTextNode(" · " + entry.dates)); // dates are literal, never translated
+    // Language-neutral dates ({ from, to }) rendered per language.
+    var dates = siteData.formatDates(entry.dates);
+    if (dates) meta.appendChild(document.createTextNode(" · " + dates));
     body.appendChild(meta);
 
     var bullets = document.createElement("ul");
@@ -144,12 +146,13 @@
     (entry.bulletKeys || []).forEach(function (key) {
       var li = document.createElement("li");
       li.setAttribute("data-i18n", key);
-      li.textContent = text(key);
+      siteData.fillText(li, text(key)); // phrase chips (js/chips.js)
       bullets.appendChild(li);
     });
     body.appendChild(bullets);
 
-    // Tag ids → translated labels (js/tags-data.js via data-helpers).
+    // Tag ids → translated labels (js/tags-data.js via data-helpers); each
+    // pill links to projects.html?tag=<id>.
     if (entry.tags && entry.tags.length) {
       body.appendChild(siteData.buildTagRow(entry));
     }

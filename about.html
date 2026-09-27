@@ -85,7 +85,7 @@
       <!-- Single portrait + buttons column. about.js translates it (the travel)
            and morphs the resume button into CV + Transcript as it moves. -->
       <div class="about-photo-col" id="about-photo-col">
-        <img class="about-headshot" src="assets/images/headshot.jpg" data-i18n-alt="headshotAlt" alt="Portrait of Gideon A. Ong">
+        <img class="about-headshot" src="assets/images/about/headshot.jpg" data-i18n-alt="headshotAlt" alt="Portrait of Gideon A. Ong">
         <div class="about-buttons" id="about-buttons">
           <a class="btn-resume" data-btn="resume" data-doc-link="resume" data-i18n="resumeBtn" href="assets/pdfs/resume/resume.pdf" target="_blank" rel="noopener">Download Resume</a>
           <div class="btn-resume-group" data-btn-group>
@@ -100,8 +100,10 @@
 
   <!-- §3 — "What have I been reading?" : pins full-screen; covers sit on a layer
        BEHIND the page and are seen through a rectangular hole (a page-coloured
-       mask). Covers slide vertically as you scroll. -->
-  <section class="section-reading" id="about-reading">
+       mask). Covers slide vertically as you scroll.
+       HIDDEN for the career fair (placeholder content): remove the `hidden`
+       attribute to show it again. js/about.js skips its setup while hidden. -->
+  <section class="section-reading" id="about-reading" hidden>
     <div class="reading-sticky" id="reading-sticky">
       <div class="reading-strip" id="book-covers" aria-hidden="true"></div>
       <div class="reading-hole" id="reading-hole"></div>
@@ -115,8 +117,9 @@
     </div>
   </section>
 
-  <!-- §4 — Interview FAQ -->
-  <section class="section-faq" id="about-faq">
+  <!-- §4 — Interview FAQ
+       HIDDEN for the career fair (placeholder content): remove `hidden` to show. -->
+  <section class="section-faq" id="about-faq" hidden>
     <p class="section-heading" data-i18n="faqHeading">Interview FAQ</p>
     <div class="faq-accordion" id="faq-accordion"></div>
   </section>
@@ -167,7 +170,9 @@
       </label>
     </div>
 
-    <div class="interesting-sites">
+    <!-- HIDDEN for the career fair (placeholder content): remove `hidden` to
+         show. The settings panel then takes the full width on its own. -->
+    <div class="interesting-sites" id="about-sites" hidden>
       <p class="section-heading" data-i18n="interestingSitesHeading">Interesting sites</p>
       <ul id="interesting-sites-list"></ul>
     </div>
@@ -185,6 +190,7 @@
 
   <script src="js/translations.js"></script>
   <script src="js/docs-data.js"></script>
+  <script src="js/chips.js"></script>
   <script src="js/main.js"></script>
   <script src="js/about.js"></script>
 </body>

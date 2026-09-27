@@ -281,6 +281,7 @@
     var titleEl = document.getElementById('book-title');
     var descEl = document.getElementById('book-desc');
     if (!section || !strip || !textWrap || !titleEl || !descEl) return;
+    if (section.hidden) return;   // §3 hidden in about.html (remove `hidden` there to bring it back)
 
     // ---- TUNABLES ----------------------------------------------------------
     var COMMIT_VH    = 48;   // scroll (vh) within ONE gesture that commits one book (a flick past this steps;
@@ -397,6 +398,7 @@
   (function () {
     var container = document.getElementById("faq-accordion");
     if (!container) return;
+    if (container.closest("[hidden]")) return;   // §4 hidden in about.html (remove `hidden` there to bring it back)
     var visibleItems = faqItems.filter(function (item) { return item.visible; });
 
     // Which items are open survives a re-render triggered by a language switch.
@@ -514,6 +516,7 @@
   (function () {
     var list = document.getElementById("interesting-sites-list");
     if (!list) return;
+    if (list.closest("[hidden]")) return;   // block hidden in about.html (remove `hidden` there to bring it back)
 
     function render() {
       var lang = currentLang();

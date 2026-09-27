@@ -1,13 +1,20 @@
 // projects.js
 // Renders §2 (featured) and §3 (index) of projects.html from the ONE array in
-// js/projects-data.js, runs the §3 tag filter and the §1 keyword search, and
-// handles projects.html#<slug> deep links. Markup builders and selectors are
-// shared with index.html via js/data-helpers.js (window.siteData).
+// js/projects-data.js, runs the §3 tag filter (from the URL) and the §1
+// keyword search, and handles projects.html#<slug> deep links. Markup
+// builders and selectors are shared with index.html and the sub-pages via
+// js/data-helpers.js (window.siteData).
 //
 // Only listing: "index" entries exist as far as this file is concerned —
 // siteData.indexProjects() has already dropped unlisted / hidden / reserved
 // entries, so nothing below can leak one into the index, the filter, search
 // or the featured block.
+//
+// Tag filter (2026-09-27): there is no filter row. Every tag pill on the site
+// is a link to projects.html?tag=<id>; this page reads ?tag= on load, filters
+// the index (AND with the search), and shows a "<Label> ✕" chip beside the
+// count. ✕ clears the tag and rewrites the URL (history.replaceState), so a
+// tag view is always linkable. An unknown id is ignored.
 //
 // Animation, per CLAUDE.md (no carve-outs on this page):
 //   - featured entries fade in on scroll (IntersectionObserver, opacity only)
@@ -23,17 +30,19 @@
 
   var text = siteData.text;
 
-  var filterRow = document.getElementById("tag-filter");
   var countEl = document.getElementById("index-count");
   var emptyEl = document.getElementById("index-empty");
+  var chipEl = document.getElementById("tag-chip");
+  var chipLabel = document.getElementById("tag-chip-label");
+  var chipClear = document.getElementById("tag-chip-clear");
   var searchInput = document.getElementById("project-search");
   var searchBtn = document.getElementById("project-search-btn");
   var searchClear = document.getElementById("project-search-clear");
   var searchField = document.getElementById("project-search-field");
 
   // Visitor state. Both live OUTSIDE render() so a language switch (which
-  // re-renders everything) keeps the active filter and the query exactly.
-  var activeTags = [];   // tag IDS (never labels) — AND logic
+  // re-renders everything) keeps the active tag and the query exactly.
+  var activeTag = null;  // one tag ID (never a label), from ?tag=
   var activeQuery = "";  // raw text as typed
 
   // Rows are kept paired with their entry so filtering reads the data rather
@@ -98,7 +107,7 @@
 
   /* ---- Search: band wiring ----------------------------------------------
      Runs as the visitor types (debounced ~150ms); Enter and the button run it
-     at once. The × clears and refocuses. Filter state and query state combine
+     at once. The × clears and refocuses. Tag state and query state combine
      with AND in applyFilter(). */
   var debounceTimer = null;
 
@@ -136,85 +145,56 @@
   }
 
   // main.js handles data-i18n and data-i18n-alt but not placeholders or
-  // aria-labels on the search chrome, so they are refreshed here each render.
+  // aria-labels on the chrome, so they are refreshed here each render.
   function renderSearchChrome() {
     document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
       el.setAttribute("placeholder", text(el.getAttribute("data-i18n-placeholder")));
     });
     if (searchClear) searchClear.setAttribute("aria-label", text("projSearchClear"));
+    if (chipClear) chipClear.setAttribute("aria-label", text("projTagClear"));
   }
 
-  /* ---- Tag filter ----------------------------------------------------------
-     Pills come from the shared vocabulary (js/tags-data.js) in vocabulary
-     order, narrowed to tags at least one index entry actually carries — a pill
-     that can only ever return zero results is noise, not a filter.
-     Multi-select, AND logic, state stored as ids. The "Clear" pill resets. */
-  function tagsInUse() {
-    var used = {};
-    siteData.indexProjects().forEach(function (entry) {
-      (entry.tags || []).forEach(function (id) { used[id] = true; });
-    });
-    return siteData.tagVocabulary().filter(function (tag) { return used[tag.id]; });
+  /* ---- Tag filter (URL state) ----------------------------------------------
+     ?tag=<id> is the whole state. Read on load; an unknown id is ignored.
+     ✕ clears and rewrites the URL in place. */
+  function readTagFromUrl() {
+    var id = null;
+    try { id = new URLSearchParams(location.search).get("tag"); } catch (e) { id = null; }
+    return (id && siteData.tagExists(id)) ? id : null;
   }
 
-  function toggleTag(id) {
-    var at = activeTags.indexOf(id);
-    if (at === -1) activeTags.push(id); else activeTags.splice(at, 1);
-    syncFilterPills();
+  function writeTagToUrl(id) {
+    var url;
+    try { url = new URL(location.href); } catch (e) { return; }
+    if (id) url.searchParams.set("tag", id); else url.searchParams.delete("tag");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
+
+  function setTag(id) {
+    activeTag = id || null;
+    writeTagToUrl(activeTag);
+    renderChip();
     applyFilter();
   }
 
-  function renderFilter() {
-    if (!filterRow) return;
-    filterRow.innerHTML = "";
-    filterRow.setAttribute("aria-label", text("projFilterLabel"));
-
-    var clear = document.createElement("button");
-    clear.type = "button";
-    clear.className = "tag-filter-pill tag-filter-pill--clear";
-    clear.setAttribute("data-i18n", "projFilterClear");
-    clear.textContent = text("projFilterClear");
-    clear.addEventListener("click", function () {
-      activeTags = [];
-      syncFilterPills();
-      applyFilter();
-    });
-    filterRow.appendChild(clear);
-
-    tagsInUse().forEach(function (tag) {
-      var pill = document.createElement("button");
-      pill.type = "button";
-      pill.className = "tag-filter-pill";
-      pill.textContent = siteData.tagLabel(tag.id);
-      pill.setAttribute("data-tag", tag.id);
-      pill.addEventListener("click", function () { toggleTag(tag.id); });
-      filterRow.appendChild(pill);
-    });
-
-    syncFilterPills();
+  // The chip beside the count: "<Label> ✕". Hidden when no tag is active.
+  // Label is derived from the id each render, so a language switch translates it.
+  function renderChip() {
+    if (!chipEl) return;
+    chipEl.hidden = !activeTag;
+    if (chipLabel) chipLabel.textContent = activeTag ? siteData.tagLabel(activeTag) : "";
   }
 
-  // Pill visual state is derived from activeTags, never stored on the element —
-  // so a re-render (language switch) restores it for free.
-  function syncFilterPills() {
-    if (!filterRow) return;
-    filterRow.querySelectorAll(".tag-filter-pill[data-tag]").forEach(function (pill) {
-      var isActive = activeTags.indexOf(pill.getAttribute("data-tag")) !== -1;
-      pill.classList.toggle("is-active", isActive);
-      pill.setAttribute("aria-pressed", isActive ? "true" : "false");
-    });
-    var clear = filterRow.querySelector(".tag-filter-pill--clear");
-    if (clear) clear.classList.toggle("is-active", activeTags.length === 0);
+  function wireChip() {
+    if (!chipClear) return;
+    chipClear.addEventListener("click", function () { setTag(null); });
   }
 
-  // AND logic: the entry must carry EVERY active tag, not any of them.
-  function matchesTags(entry) {
-    return activeTags.every(function (id) {
-      return (entry.tags || []).indexOf(id) !== -1;
-    });
+  function matchesTag(entry) {
+    return !activeTag || (entry.tags || []).indexOf(activeTag) !== -1;
   }
 
-  /* ---- Combine tags + search ----------------------------------------------
+  /* ---- Combine tag + search -----------------------------------------------
      A row stays visible only if it passes BOTH the tag filter and the search.
      The count and the empty state reflect the combination. Visible rows are
      re-appended in the order searchEntries() returned them (identical to index
@@ -222,7 +202,7 @@
      never filtered. */
   function applyFilter() {
     var matched = searchEntries(activeQuery, rows.map(function (pair) { return pair.entry; }))
-      .filter(matchesTags);
+      .filter(matchesTag);
     var order = {};
     matched.forEach(function (entry, i) { order[entry.slug] = i; });
 
@@ -248,8 +228,8 @@
     countEl.textContent = text(key).replace("{n}", n);
   }
 
-  // projEmptySearch when a query is active (with or without tags), projEmpty
-  // when only tags are. Text is set here, not via data-i18n, because it
+  // projEmptySearch when a query is active (with or without a tag), projEmpty
+  // when only the tag is. Text is set here, not via data-i18n, because it
   // depends on state.
   function updateEmpty(shown) {
     if (!emptyEl) return;
@@ -261,16 +241,14 @@
   }
 
   /* ---- Deep links ---------------------------------------------------------
-     projects.html#<slug>: clear any active tags and query (a hidden target is
+     projects.html#<slug>: clear any active tag and query (a hidden target is
      useless), scroll the row clear of the nav, mark it. Re-run on hashchange.
      A language re-render re-marks without scrolling. */
   function goToHash(scroll) {
     if (!location.hash) return;
     if (scroll) {
-      activeTags = [];
       setQuery("");
-      syncFilterPills();
-      applyFilter();
+      setTag(null); // also drops ?tag= from the URL and repaints
     }
     siteData.targetFromHash(".project-row", scroll);
   }
@@ -302,8 +280,8 @@
       rows.push({ row: row, entry: entry });
     });
 
-    renderFilter();
     renderSearchChrome();
+    renderChip();
     applyFilter(); // also paints the count and the empty state
     goToHash(false);
   }
@@ -311,6 +289,8 @@
   siteData.checkData();
   buildCorpus();
   wireSearch();
+  wireChip();
+  activeTag = readTagFromUrl();
 
   // main.js fires langchange at the end of applyTranslations, so this runs after
   // the data-i18n elements are swapped and always wins on JS-rendered content.

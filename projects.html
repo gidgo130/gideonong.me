@@ -89,11 +89,15 @@
   <section class="project-index-section" id="project-index-section">
     <h2 class="section-heading" data-i18n="projIndexHeading"></h2>
 
+    <!-- No filter row: every tag pill on the site links to
+         projects.html?tag=<id>. js/projects.js reads ?tag= and shows the active
+         tag as a "<Label> ✕" chip here; ✕ clears it and rewrites the URL. -->
     <div class="index-controls">
-      <!-- Pills are built from the shared vocabulary in js/tags-data.js
-           (translated labels, id-based state). Multi-select, AND logic. -->
-      <div class="tag-filter" id="tag-filter" role="group"></div>
       <p class="index-count" id="index-count" aria-live="polite"></p>
+      <span class="tag-chip" id="tag-chip" hidden>
+        <span class="tag-chip-label" id="tag-chip-label"></span>
+        <button type="button" class="tag-chip-clear" id="tag-chip-clear" aria-label="">&#x2715;</button>
+      </span>
     </div>
 
     <!-- Rows carry id="<slug>" so projects.html#<slug> deep-links to one. -->
@@ -117,6 +121,7 @@
 
   <script src="js/translations.js"></script>
   <script src="js/docs-data.js"></script>
+  <script src="js/chips.js"></script>
   <script src="js/main.js"></script>
   <script src="js/tags-data.js"></script>
   <script src="js/experience-data.js"></script>

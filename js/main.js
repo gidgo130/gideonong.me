@@ -1,11 +1,17 @@
 // main.js
 // Language toggle: instant DOM swap, localStorage persistence,
 // navigator.language default. No page reload, no scroll jump.
+//
+// Phrase chips (IEL, Zohaib Sheikh, …) come from js/chips.js (siteChips.fill),
+// loaded before this file: every data-i18n element and the hero paragraphs are
+// filled through it, so translations.js never holds HTML.
 
 (function () {
-  const IEL_URL_EN = "https://utulsa.edu/academics/interdisciplinary-programs/international-engineering-science-language/";
-  const IEL_URL_ES = "https://utulsa-edu.translate.goog/academics/interdisciplinary-programs/international-engineering-science-language/?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=en";
   const STORAGE_KEY = "lang";
+
+  // Pages in a subfolder (projects/<slug>.html) carry data-root="../" on <body>
+  // so relative asset and page links resolve from there. "" everywhere else.
+  const ROOT = (document.body && document.body.getAttribute("data-root")) || "";
 
   // Document links — resume / CV / transcript buttons opt in with
   // data-doc-link="resume" | "cv" | "transcript". Paths come from the generated
@@ -50,7 +56,7 @@
         return;
       }
       el.hidden = false;
-      el.setAttribute("href", encodeDocPath(p));
+      el.setAttribute("href", ROOT + encodeDocPath(p));
     });
   }
 
@@ -64,32 +70,19 @@
     return "en";
   }
 
-  const BOTS_URL_EN = "https://automatetheboringstuff.com/";
-  const BOTS_URL_ES = "https://automatetheboringstuff-com.translate.goog/?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=en";
-
-  // Ordered list of (phrase, url-per-lang) pairs to auto-link inside hero text.
-  const HERO_CHIPS = [
-    { phrase: /\bIEL\b/, urls: { en: IEL_URL_EN, es: IEL_URL_ES } },
-    { phrase: /automating the boring stuff/, urls: { en: BOTS_URL_EN, es: BOTS_URL_ES } },
-    { phrase: /automatizar lo aburrido/, urls: { en: BOTS_URL_EN, es: BOTS_URL_ES } }
-  ];
-
-  function withHeroChips(text, lang) {
-    return HERO_CHIPS.reduce(function (acc, chip) {
-      const url = chip.urls[lang];
-      return acc.replace(chip.phrase, function (match) {
-        return '<a class="iel-chip" href="' + url + '" target="_blank" rel="noopener">' + match + '</a>';
-      });
-    }, text);
+  // Fills el with text, linking phrase chips when js/chips.js is loaded.
+  function fillText(el, text, lang) {
+    if (typeof siteChips !== "undefined") siteChips.fill(el, text, lang);
+    else el.textContent = text;
   }
 
+  // Both hero paragraphs are always in the DOM (EN + ES); each is filled in its
+  // own language so its chips point at the right-language URL.
   function renderHeroParagraphs() {
     document.querySelectorAll("[data-hero-lang]").forEach(function (el) {
       const lang = el.getAttribute("data-hero-lang");
       const dict = translations[lang];
-      if (dict && dict.heroDesc) {
-        el.innerHTML = withHeroChips(dict.heroDesc, lang);
-      }
+      if (dict && dict.heroDesc) fillText(el, dict.heroDesc, lang);
     });
   }
 
@@ -101,10 +94,6 @@
     });
   }
 
-  // data-i18n keys whose translation string contains markup (e.g. an <a> link)
-  // and must be injected as HTML rather than escaped as plain text.
-  const HTML_I18N_KEYS = ["aiPara1"];
-
   function applyTranslations(lang) {
     const dict = translations[lang];
     if (!dict) return;
@@ -112,11 +101,7 @@
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
       const key = el.getAttribute("data-i18n");
       if (dict[key] === undefined) return;
-      if (HTML_I18N_KEYS.indexOf(key) !== -1) {
-        el.innerHTML = dict[key];
-      } else {
-        el.textContent = dict[key];
-      }
+      fillText(el, dict[key], lang);
     });
 
     document.querySelectorAll("[data-i18n-alt]").forEach(function (el) {

@@ -4,9 +4,14 @@
 // the strings. Placeholders are prefixed "TODO " in both languages.
 //
 // Per-entry keys are named by slug: proj<SlugCamel><Field> for projects
-// (Title / Desc / LongDesc / Alt / Search) and exp<SlugCamel><Field> for
-// experience (Role / Org / Bullet1…). Tag labels are tag<IdCamel>, context
-// labels ctx<Context>. See CLAUDE.md → Data conventions.
+// (Title / Desc / LongDesc / Alt / Search / Gallery<N>Alt, and for sub-pages
+// Section<N>Heading / Section<N>Body / Fact<N>Label / Fact<N>Value /
+// Photo<N>Alt / Credit) and exp<SlugCamel><Field> for experience (Role / Org
+// / Bullet1…). Tag labels are tag<IdCamel>, context labels ctx<Context>, date
+// words date<Season> / dateMonth<N>. See CLAUDE.md → Data conventions.
+//
+// PLAIN TEXT ONLY — no HTML in any string. Inline links (IEL, Zohaib Sheikh,
+// …) are added at render time by the phrase table in js/chips.js.
 
 const translations = {
   en: {
@@ -61,6 +66,30 @@ const translations = {
     ctxService: "Service",
     ctxResearch: "Research",
 
+    // Dates — the language-neutral `dates` field on projects and experience
+    // entries renders through these (js/data-helpers.js → formatDates).
+    // Seasons are capitalized in both languages; ES month names are lowercase.
+    dateSpring: "Spring",
+    dateSummer: "Summer",
+    dateFall: "Fall",
+    dateWinter: "Winter",
+    dateMonth1: "January",
+    dateMonth2: "February",
+    dateMonth3: "March",
+    dateMonth4: "April",
+    dateMonth5: "May",
+    dateMonth6: "June",
+    dateMonth7: "July",
+    dateMonth8: "August",
+    dateMonth9: "September",
+    dateMonth10: "October",
+    dateMonth11: "November",
+    dateMonth12: "December",
+    datePresent: "present",
+    dateSeasonYear: "{season} {year}",   // "Summer 2026"
+    dateMonthYear: "{month} {year}",     // "July 2022"
+    dateRange: "{from} – {to}",          // "Spring 2026 – present"
+
     // about.html — §1 hero
     aboutIdentifiersEN: "Engineer · Geographer · Federalist · Philomath",
     aboutIdentifiersES: "Ingeniero · Geógrafo · Federalista · Aprendiz eterno",
@@ -82,7 +111,8 @@ const translations = {
 
     // about.html — §5 Statement on AI
     aiHeading: "Statement on AI",
-    aiPara1: 'This website was inspired by <a class="iel-chip" href="https://zohaibsheikh.dev" target="_blank" rel="noopener">Zohaib Sheikh</a>, who I had the great pleasure of working together with at Baker Hughes in Claremore the summer of 2026. I have used Claude heavily to help develop and flesh out this website. Nearly all of the code, HTML and otherwise, has been written by AI. Claude has also assisted in grammar-checking and reorganizing content as I have populated this site with my projects and experiences.',
+    // Plain text — "Zohaib Sheikh" becomes a chip via js/chips.js, never HTML here.
+    aiPara1: "This website was inspired by Zohaib Sheikh, who I had the great pleasure of working together with at Baker Hughes in Claremore the summer of 2026. I have used Claude heavily to help develop and flesh out this website. Nearly all of the code, HTML and otherwise, has been written by AI. Claude has also assisted in grammar-checking and reorganizing content as I have populated this site with my projects and experiences.",
 
     // about.html — §6 Viewing settings + Interesting sites
     settingsHeading: "Viewing settings",
@@ -144,12 +174,15 @@ const translations = {
     // {role} and {org} are filled from the linked experience entry's keys.
     // Shown below the tags on any entry whose `experience` field is set.
     projPartOf: "Part of: {role}, {org} →",
-    projFilterLabel: "Filter by tag",      // aria-label on the filter row
-    projFilterClear: "Clear",              // resets every active tag
+    projTagClear: "Clear tag filter",      // aria-label on the ✕ of the "<Tag> ✕" chip
     projCount: "{n} projects",             // {n} filled by js/projects.js
     projCountOne: "{n} project",
-    projEmpty: "No projects match those tags.",
+    projEmpty: "No projects carry that tag.",
     projEmptySearch: "No projects match “{q}”.",   // {q} = the search query
+
+    // projects/<slug>.html — sub-page chrome (js/project-page.js)
+    projReportLink: "Read the report →",
+    projAllProjects: "← All projects",
 
     // projects.html — placeholder entries (js/projects-data.js).
     // Every string here is a stand-in. Real project copy comes from the
@@ -165,15 +198,32 @@ const translations = {
     projTodoProject2LongDesc: "TODO fuller featured description for project 2 — one short paragraph, used in the featured block and on the sub-page.",
     projTodoProject2Alt: "TODO image description for project 2",
     projTodoProject2Search: "TODO search text blob for project 2",
-    // Extra collage images (home featured block only) — one alt per gallery item.
-    projTodoProject2Gallery1Alt: "TODO gallery image 1 description for project 2",
-    projTodoProject2Gallery2Alt: "TODO gallery image 2 description for project 2",
+    // Sub-page scaffold strings (projects/todo-project-2.html — hidden entry,
+    // renders on localhost only). Keys: proj<SlugCamel>Section<N>Heading /
+    // Section<N>Body / Fact<N>Label / Fact<N>Value / Photo<N>Alt / Credit.
+    projTodoProject2Section1Heading: "TODO The problem",
+    projTodoProject2Section1Body: "TODO section 1 body for project 2 — a short paragraph. Mentions IEL and Zohaib Sheikh so the phrase chips can be checked here.",
+    projTodoProject2Section2Heading: "TODO What we did",
+    projTodoProject2Section2Body: "TODO section 2 body for project 2 — another short paragraph.",
+    projTodoProject2Fact1Label: "TODO Team",
+    projTodoProject2Fact1Value: "TODO fact 1 value",
+    projTodoProject2Fact2Label: "TODO My role",
+    projTodoProject2Fact2Value: "TODO fact 2 value",
+    projTodoProject2Fact3Label: "TODO Course",
+    projTodoProject2Fact3Value: "TODO fact 3 value",
+    projTodoProject2Photo1Alt: "TODO sub-page photo 1 description for project 2",
+    projTodoProject2Photo2Alt: "TODO sub-page photo 2 description for project 2",
+    projTodoProject2Photo3Alt: "TODO sub-page photo 3 description for project 2",
+    projTodoProject2Credit: "TODO Photos: placeholder credit",
 
     projTodoProject3Title: "TODO Project 3 title",
     projTodoProject3Desc: "TODO one-line index description for project 3.",
-    projTodoProject3LongDesc: "TODO fuller description for project 3.",
+    projTodoProject3LongDesc: "TODO fuller featured description for project 3 — one short paragraph, used in the featured block.",
     projTodoProject3Alt: "TODO image description for project 3",
     projTodoProject3Search: "TODO search text blob for project 3",
+    // Extra collage images (home featured block only) — one alt per gallery item.
+    projTodoProject3Gallery1Alt: "TODO gallery image 1 description for project 3",
+    projTodoProject3Gallery2Alt: "TODO gallery image 2 description for project 3",
 
     // Entry 4 has no image — its imageSrc is "" and it carries no alt key.
     projTodoProject4Title: "TODO Project 4 title (no image)",
@@ -246,6 +296,28 @@ const translations = {
     ctxService: "Servicio",
     ctxResearch: "Investigación",
 
+    // Fechas — estaciones con mayúscula, meses en minúscula ("julio de 2022").
+    dateSpring: "Primavera",
+    dateSummer: "Verano",
+    dateFall: "Otoño",
+    dateWinter: "Invierno",
+    dateMonth1: "enero",
+    dateMonth2: "febrero",
+    dateMonth3: "marzo",
+    dateMonth4: "abril",
+    dateMonth5: "mayo",
+    dateMonth6: "junio",
+    dateMonth7: "julio",
+    dateMonth8: "agosto",
+    dateMonth9: "septiembre",
+    dateMonth10: "octubre",
+    dateMonth11: "noviembre",
+    dateMonth12: "diciembre",
+    datePresent: "presente",
+    dateSeasonYear: "{season} {year}",   // "Verano 2026"
+    dateMonthYear: "{month} de {year}",  // "julio de 2022"
+    dateRange: "{from} – {to}",          // "Primavera 2026 – presente"
+
     // about.html — §1 hero
     aboutIdentifiersEN: "Engineer · Geographer · Federalist · Philomath",
     aboutIdentifiersES: "Ingeniero · Geógrafo · Federalista · Aprendiz eterno",
@@ -267,7 +339,7 @@ const translations = {
 
     // about.html — §5 Declaración sobre la IA
     aiHeading: "Declaración sobre la IA",
-    aiPara1: 'Este sitio web fue inspirado por <a class="iel-chip" href="https://zohaibsheikh.dev" target="_blank" rel="noopener">Zohaib Sheikh</a>, con quien tuve el gran placer de trabajar juntos en Baker Hughes en Claremore el verano de 2026. He usado Claude ampliamente para desarrollar y dar cuerpo a este sitio web; casi todo el código fue escrito por IA. Claude también me asistió en corregir mi gramática y mis traducciones, y en reorganizar mis experiencias y proyectos mientras los iba añadiendo a este sitio.',
+    aiPara1: "Este sitio web fue inspirado por Zohaib Sheikh, con quien tuve el gran placer de trabajar juntos en Baker Hughes en Claremore el verano de 2026. He usado Claude ampliamente para desarrollar y dar cuerpo a este sitio web; casi todo el código fue escrito por IA. Claude también me asistió en corregir mi gramática y mis traducciones, y en reorganizar mis experiencias y proyectos mientras los iba añadiendo a este sitio.",
 
     // about.html — §6 Preferencias de visualización + Sitios interesantes
     settingsHeading: "Preferencias de visualización",
@@ -318,19 +390,21 @@ const translations = {
     projSearchClear: "Borrar búsqueda",
 
     // projects.html — §2 featured + §3 index chrome.
-    // projSearchBtn and projFilterClear sit inside fixed-shape controls, so the
-    // ES strings are kept the same length as the EN ones (CLAUDE.md compact
-    // element rule) — the pill must not resize when the language toggles.
+    // projSearchBtn sits inside a fixed-shape control, so the ES string is
+    // kept the same length as the EN one (CLAUDE.md compact element rule).
     projFeaturedHeading: "Proyectos destacados",
     projIndexHeading: "Todos los proyectos",
     projViewLink: "Ver proyecto →",
     projPartOf: "Parte de: {role}, {org} →",
-    projFilterLabel: "Filtrar por etiqueta",
-    projFilterClear: "Todos",
+    projTagClear: "Quitar el filtro de etiqueta",
     projCount: "{n} proyectos",
     projCountOne: "{n} proyecto",
-    projEmpty: "Ningún proyecto coincide con esas etiquetas.",
+    projEmpty: "Ningún proyecto tiene esa etiqueta.",
     projEmptySearch: "Ningún proyecto coincide con «{q}».",
+
+    // projects/<slug>.html — subpágina
+    projReportLink: "Leer el reporte →",
+    projAllProjects: "← Todos los proyectos",
 
     // projects.html — placeholder entries (js/projects-data.js).
     // Same TODO convention as EN — real copy comes from the content interview.
@@ -345,14 +419,29 @@ const translations = {
     projTodoProject2LongDesc: "TODO descripción ampliada del proyecto 2 — un párrafo corto, usado en el bloque destacado y en la subpágina.",
     projTodoProject2Alt: "TODO descripción de la imagen del proyecto 2",
     projTodoProject2Search: "TODO texto de búsqueda para el proyecto 2",
-    projTodoProject2Gallery1Alt: "TODO descripción de la imagen 1 de la galería del proyecto 2",
-    projTodoProject2Gallery2Alt: "TODO descripción de la imagen 2 de la galería del proyecto 2",
+    // Subpágina de prueba (projects/todo-project-2.html — entrada oculta).
+    projTodoProject2Section1Heading: "TODO El problema",
+    projTodoProject2Section1Body: "TODO cuerpo de la sección 1 del proyecto 2 — un párrafo corto. Menciona IEL y a Zohaib Sheikh para comprobar los chips.",
+    projTodoProject2Section2Heading: "TODO Lo que hicimos",
+    projTodoProject2Section2Body: "TODO cuerpo de la sección 2 del proyecto 2 — otro párrafo corto.",
+    projTodoProject2Fact1Label: "TODO Equipo",
+    projTodoProject2Fact1Value: "TODO valor del dato 1",
+    projTodoProject2Fact2Label: "TODO Mi rol",
+    projTodoProject2Fact2Value: "TODO valor del dato 2",
+    projTodoProject2Fact3Label: "TODO Curso",
+    projTodoProject2Fact3Value: "TODO valor del dato 3",
+    projTodoProject2Photo1Alt: "TODO descripción de la foto 1 de la subpágina del proyecto 2",
+    projTodoProject2Photo2Alt: "TODO descripción de la foto 2 de la subpágina del proyecto 2",
+    projTodoProject2Photo3Alt: "TODO descripción de la foto 3 de la subpágina del proyecto 2",
+    projTodoProject2Credit: "TODO Fotos: crédito de prueba",
 
     projTodoProject3Title: "TODO título del proyecto 3",
     projTodoProject3Desc: "TODO descripción de una línea para el proyecto 3.",
-    projTodoProject3LongDesc: "TODO descripción ampliada del proyecto 3.",
+    projTodoProject3LongDesc: "TODO descripción ampliada del proyecto 3 — un párrafo corto, usado en el bloque destacado.",
     projTodoProject3Alt: "TODO descripción de la imagen del proyecto 3",
     projTodoProject3Search: "TODO texto de búsqueda para el proyecto 3",
+    projTodoProject3Gallery1Alt: "TODO descripción de la imagen 1 de la galería del proyecto 3",
+    projTodoProject3Gallery2Alt: "TODO descripción de la imagen 2 de la galería del proyecto 3",
 
     // La entrada 4 no tiene imagen — imageSrc es "" y no lleva clave alt.
     projTodoProject4Title: "TODO título del proyecto 4 (sin imagen)",

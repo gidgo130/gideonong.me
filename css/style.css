@@ -979,11 +979,13 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 /* --------------------------------------------------------------------------
    §6 — Viewing settings + Interesting sites
    -------------------------------------------------------------------------- */
+/* auto-fit, not a fixed two columns: while the interesting-sites block is
+   hidden (about.html, `hidden` attribute) the settings panel takes the row. */
 .section-settings {
   background: var(--bg-section);
   padding: clamp(48px, 8vw, 72px) clamp(16px, 4vw, 36px);
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: clamp(32px, 5vw, 64px);
   max-width: 1100px;
   margin: 0 auto;
@@ -1256,11 +1258,18 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   .exp-hero-collage img:nth-child(5) { display: block; grid-column: 5 / 6; grid-row: 1 / 3; }
 }
 
+/* Scrim (2026-09-27): pixel-based, not percentage-based, so it tracks the text
+   column rather than the viewport. .exp-hero-content is at most 520px wide,
+   so the scrim stays SOLID footer-bg to 540px and only then fades out (fully
+   transparent by 960px). Slot 1 of the collage may be a mostly white photo;
+   with a solid scrim under every line, #D4C9BB text clears 4.5:1 in light and
+   dark mode. Checked at 768–1024px too: slot 1 spans 0–50% (≤512px) there and
+   sits entirely under the solid part. */
 .exp-hero-scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(to right, var(--footer-bg) 0%, var(--footer-bg) 18%, transparent 62%);
+  background: linear-gradient(to right, var(--footer-bg) 0, var(--footer-bg) 540px, transparent 960px);
   pointer-events: none;
 }
 
@@ -1493,8 +1502,12 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   background: var(--entry-accent, var(--bronze-mid));
 }
 
-/* Tag pills — shared with projects.html's tag filter system. Inside a band they
-   pick up the entry accent instead of the site-wide border/muted pair. */
+/* Tag pills — shared by index rows, featured entries, experience bands and the
+   project sub-pages (js/data-helpers.js buildTagRow). Every pill is a LINK to
+   projects.html?tag=<id>. Deliberately quiet: pointer cursor only, no hover
+   effect, no enlarged tap target — the global a:hover bronze is cancelled
+   below so a pill never changes color. Inside a band they pick up the entry
+   accent instead of the site-wide border/muted pair. */
 .tag-row {
   display: flex;
   flex-wrap: wrap;
@@ -1509,9 +1522,21 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   border: 1px solid var(--border);
   border-radius: 12px;
   color: var(--muted);
+  cursor: pointer;
+  transition: none;
 }
 
-.exp-band .tag-pill {
+.tag-pill:hover {
+  color: var(--muted);
+}
+
+.tag-pill:focus-visible {
+  outline: 2px solid var(--bronze-mid);
+  outline-offset: 2px;
+}
+
+.exp-band .tag-pill,
+.exp-band .tag-pill:hover {
   border-color: var(--entry-accent, var(--border));
   color: var(--entry-accent, var(--muted));
 }
@@ -1591,10 +1616,11 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 
   /* Below 768px the hero text spans the full width, so the desktop
      left-to-right scrim leaves the end of every line sitting on bare photo.
-     Cover the whole hero instead — the desktop gradient is untouched. */
+     Cover the whole hero instead — the desktop gradient is untouched. 0.88 of
+     footer-bg over a pure white photo still clears 4.5:1 for the text. */
   .exp-hero.hero--overlay .exp-hero-scrim {
     background: var(--footer-bg);
-    opacity: 0.82;
+    opacity: 0.88;
   }
 
   .exp-hero:not(.hero--overlay) {
@@ -1974,50 +2000,54 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   width: 100%;
 }
 
-/* Filter pills on the left, live count beside them. */
+/* Live count, and beside it the active-tag chip ("<Label> ✕") when the page
+   was opened as projects.html?tag=<id>. There is no filter row (2026-09-27):
+   the pills on rows, featured entries, bands and sub-pages are the filter. */
 .index-controls {
   max-width: 1000px;
   margin: 0 auto 8px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px 16px;
+  justify-content: flex-start;
+  gap: 10px 14px;
 }
 
-.tag-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* Inactive: bordered, muted text. Active: filled bronze, light text.
-   The active text color is var(--bg), not a hardcoded white — in dark mode the
+/* Filled bronze with var(--bg) text, not a hardcoded white — in dark mode the
    bronze token lightens and --bg darkens, so the pair stays legible both ways. */
-.tag-filter-pill {
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-sans);
   font-size: 12px;
-  padding: 4px 11px;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
-}
-
-.tag-filter-pill:hover {
-  color: var(--ink);
-  border-color: var(--bronze-mid);
-}
-
-.tag-filter-pill.is-active {
+  padding: 3px 6px 3px 11px;
   background: var(--bronze);
-  border-color: var(--bronze);
+  border: 1px solid var(--bronze);
+  border-radius: 12px;
   color: var(--bg);
 }
 
-.tag-filter-pill:focus-visible {
-  outline: 2px solid var(--bronze-mid);
-  outline-offset: 2px;
+.tag-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--bg);
+  border-radius: 50%;
+  transition: background-color 150ms ease;
+}
+
+.tag-chip-clear:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.tag-chip-clear:focus-visible {
+  outline: 2px solid var(--bg);
+  outline-offset: 1px;
 }
 
 .index-count {
@@ -2257,7 +2287,172 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   }
 
   .index-count,
-  .tag-filter-pill {
+  .tag-chip {
     font-size: 13px;
+  }
+}
+
+/* ==========================================================================
+   projects/<slug>.html — project sub-pages (js/project-page.js)
+
+   One narrow reading measure. Every block is optional and absent when its
+   data is missing — no empty boxes. Tags sit near the end, after the credit,
+   never above the title (CLAUDE.md).
+   ========================================================================== */
+.project-page {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 44px) clamp(16px, 4vw, 36px) clamp(48px, 6vw, 72px);
+}
+
+.project-page-hero {
+  margin: 0 0 22px;
+}
+
+.project-page-hero-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 3px;
+  background: var(--bg-section);
+}
+
+.project-page-title {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 2.4vw + 14px, 40px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+.project-page-meta {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+/* "Part of" on the sub-page sits under the meta line; the shared rule gives it
+   a negative top margin meant for the tag row, so reset it here. */
+.project-page > .project-part-of {
+  margin: 0 0 24px;
+}
+
+.project-page-section {
+  margin: 0 0 22px;
+}
+
+.project-page-section-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(19px, 1vw + 13px, 23px);
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.project-page-section-body {
+  font-size: 15.5px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Photo grid: 2-up on desktop, 1-up below 768px. Each cell links to the full
+   image in a new tab. */
+.project-page-photos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 28px 0;
+}
+
+.project-page-photo {
+  display: block;
+  min-width: 0;
+}
+
+.project-page-photo-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 3px;
+  background: var(--bg-section);
+}
+
+/* Quick-facts box: a <dl> of label/value rows. */
+.project-page-facts {
+  margin: 0 0 22px;
+  padding: 16px 20px;
+  background: var(--bg-section);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-page-fact {
+  display: grid;
+  grid-template-columns: minmax(96px, 30%) minmax(0, 1fr);
+  gap: 4px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.project-page-fact dt {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.project-page-fact dd {
+  margin: 0;
+  color: var(--muted);
+}
+
+.project-page-report {
+  margin: 0 0 16px;
+}
+
+.project-page-credit {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.project-page > .tag-row {
+  margin: 0 0 22px;
+}
+
+.project-page-back {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--bronze);
+  transition: color 150ms ease;
+}
+
+.project-page-back:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 767px) {
+  .project-page-photos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-page-fact {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+
+@media (min-width: 1440px) {
+  .project-page {
+    max-width: 860px;
+  }
+
+  .project-page-section-body {
+    font-size: 16.5px;
   }
 }

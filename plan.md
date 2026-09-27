@@ -319,10 +319,13 @@ and no band gets the current treatment — this fallback must work, not error.
                           // project's `experience` field. Keys: exp<SlugCamel>Role / Org / BulletN
   roleKey: "",            // i18n key → EN + ES
   orgKey: "",             // i18n key
-  dates: "",              // literal display string, not translated
-  sortDate: "YYYY-MM",    // the ONLY thing ordering reads — newest first; array order is ignored
+  dates: { from: { season: "summer", year: 2026 } },   // language-neutral (2026-09-27):
+                          //   from/to points are { season, year } | { month, year } | { year };
+                          //   to may be "present" or a point. Rendered per language.
+  sortDate: "YYYY-MM",    // the ONLY thing ordering reads — newest first; array order is ignored.
+                          //   The dev check flags a sortDate that disagrees with `dates`.
   bulletKeys: [],         // i18n keys → EN + ES
-  tags: [],               // tag IDS from js/tags-data.js
+  tags: [],               // tag IDS from js/tags-data.js — every pill links to projects.html?tag=<id>
   imageSrc: "",
   subpageUrl: "",         // "" = no case-study page yet → link omitted (all "" today: none exist)
   layout: "imageLeft",    // preset name — see table above
@@ -482,25 +485,32 @@ before ever making grid the default.
 **Missing images:** An entry with no `imageSrc` renders with no thumbnail and the text occupying
 the full row width. It must not render a broken image, a grey box, or a generic placeholder icon.
 
-**Tag filter:** Row of tag pills above the index. Clicking toggles a tag; multiple tags may be
-active simultaneously (AND logic — an entry must carry all active tags). A "Clear"/"Todos" pill
-resets. Filtering is instant vanilla JS, no reload. Filtered-out rows are removed from flow
-(`display: none`) so the list closes up rather than leaving gaps.
+**Tag filter — REVISED 2026-09-27 (clickable tags, no filter row).** The always-visible row
+of filter pills above the index is gone. Instead every tag pill on the site — index rows,
+featured entries, experience bands, sub-pages — is a link to `projects.html?tag=<id>`.
+projects.html reads `?tag=` on load, filters the index (AND with the keyword search), and
+shows a small "<Tag label> ✕" chip beside the count; ✕ clears the tag and rewrites the URL
+with `history.replaceState`, so a tag view is always linkable. One tag at a time. An unknown
+id is ignored. A language switch keeps it (state lives outside `render()`); a `#<slug>` deep
+link clears it. Filtered-out rows are removed from flow (`display: none`) so the list closes
+up rather than leaving gaps.
 
-- Active tag pill: filled `var(--bronze)`, light text. Inactive: bordered, `var(--muted)` text.
-  The active text color is `var(--bg)`, not a literal white — in dark mode `--bronze` lightens
-  and `--bg` darkens, so the pair stays legible in both themes without a dark-mode override.
-- A live count ("8 projects" / "8 proyectos") sits beside the filter row and updates on filter.
-- If a filter combination yields zero results, show a short empty-state line — never a blank page.
+- Pills: pointer cursor ONLY — no hover effect, no enlarged tap target (Gideon: they must not
+  distract from the content). `:focus-visible` outlines stay.
+- The chip is filled `var(--bronze)` with `var(--bg)` text, not a literal white — in dark mode
+  `--bronze` lightens and `--bg` darkens, so the pair stays legible in both themes.
+- A live count ("8 projects" / "8 proyectos") sits beside the chip and updates on filter.
+- If the tag + search combination yields zero results, show a short empty-state line
+  (`projEmpty` tag-only, `projEmptySearch` with a query) — never a blank page.
+- A pill click on projects.html itself is a plain link: the page reloads and a typed search
+  is lost. Accepted (2026-09-27) for simplicity.
 
-Decided at build time (2026-09-20), recorded so they are not re-decided:
-- The filter row renders only the vocabulary tags that at least one listed entry actually
-  carries, in vocabulary order. A pill that can only ever return zero results is noise.
+Still true from the 2026-09-20 build:
 - The count has separate singular and plural keys (`projCountOne` / `projCount`), so one match
   reads "1 project" / "1 proyecto" rather than "1 projects".
-- Filter state lives in `js/projects.js`, not on the pill elements, so an EN/ES toggle —
-  which re-renders both sections — restores the active filter and pill states rather than
-  silently resetting them.
+
+*(The original 2026-09-20 spec — a multi-select AND row of pills with a "Clear"/"Todos" reset,
+narrowed to tags in use — shipped and was removed on 2026-09-27; see the decisions log.)*
 
 **Order:** `sortDate` descending (2026-09-26 — array order no longer matters). A `pinned: true`
 field lifts an entry to the top of the index independently of the featured flag.
@@ -523,14 +533,18 @@ Schema as of 2026-09-26 (see CLAUDE.md → Data conventions):
   titleKey: "",           // i18n keys, named by slug: proj<SlugCamel>Title / Desc / LongDesc /
   descKey: "",            //   Alt / Search  (e.g. "todo-project-1" → projTodoProject1Title)
   longDescKey: "",
-  dates: "",              // literal display string, not translated
-  sortDate: "YYYY-MM",    // the ONLY thing ordering reads — newest first
+  dates: { from: { season: "spring", year: 2026 } },   // language-neutral (2026-09-27):
+                          //   { from: <point> } | { from, to: "present" } | { from, to: <point> }
+                          //   point = { season: spring|summer|fall|winter, year } | { month: 1–12, year } | { year }
+  sortDate: "YYYY-MM",    // the ONLY thing ordering reads — newest first. The dev check flags
+                          //   a sortDate that disagrees with `dates` (to when a point, else from)
   context: "coursework",  // industry | coursework | personal | service | research
                           //   → "<Context> · <dates>" meta line via ctxIndustry … keys
-  tags: [],               // tag IDS from js/tags-data.js — never labels
+  tags: [],               // tag IDS from js/tags-data.js — never labels; pills link to ?tag=<id>
   imageSrc: "",           // "" is valid — renders without a thumbnail
   imageAlt: "",           // i18n key — required whenever imageSrc is set
-  subpageUrl: "",         // "" = no sub-page yet; the "View project →" link is then omitted
+  subpageUrl: "",         // "/projects/<slug>.html" once the file exists, else "" — the
+                          //   "View project →" link is then omitted. Dev check HEADs each one.
   featured: false,        // true → also rendered in §2 and on index.html (index tier only; max 3)
   pinned: false,          // true → lifted to top of §3
   searchTextKey: "",      // i18n key — EN + ES blob folded into the search corpus
@@ -540,9 +554,28 @@ Schema as of 2026-09-26 (see CLAUDE.md → Data conventions):
                           //   "stacked" | "imageLeft" | "imageRight" | "collage"
   gallery: [              // OPTIONAL, collage only — 1–3 EXTRA images after imageSrc
     { src: "", altKey: "" }   //   altKey = proj<SlugCamel>Gallery<N>Alt
-  ]
+  ],
+  page: {                 // OPTIONAL (2026-09-27) — sub-page content for js/project-page.js.
+    sections: [{ headingKey: "", bodyKey: "" }],   //   proj<SlugCamel>Section<N>Heading / Body
+    facts:    [{ labelKey: "", valueKey: "" }],    //   proj<SlugCamel>Fact<N>Label / Value
+    photos:   [{ src: "", altKey: "" }],           //   proj<SlugCamel>Photo<N>Alt
+    reportPdf: "",        //   optional "Read the report →" link (new tab)
+    creditKey: ""         //   optional photo credit line, proj<SlugCamel>Credit
+  }                       // Every part optional; a missing part renders nothing.
 }
 ```
+
+**Sub-pages (2026-09-27):** one renderer, `js/project-page.js`, and one shell per page at
+`projects/<slug>.html` — same nav / dev banner / footer / language toggle as every page, all
+paths `../`, `<body data-slug="<slug>" data-root="../">`, a static English `<title>` and meta
+description that the renderer replaces from the entry on every render (and on language
+change), and an empty `<main id="project-page">`. Layout: hero image (imageSrc, 16:9) → title →
+"<Context> · <dates>" → "Part of" link → sections → photo grid (2-up desktop, 1-up mobile, each
+opens the full image in a new tab) → quick-facts box → report link → credit → tags → "← All
+projects". `data-root` is read by `js/main.js` and `js/data-helpers.js` so the shared builders
+(document links, images, tag links, "Part of" links) work from `/projects/`. Listing tiers on a
+sub-page: `index` and `unlisted` render for everyone; `hidden` renders on localhost only. Scaffold:
+`projects/todo-project-2.html` for the hidden `todo-project-2` entry. No sitemap for now.
 
 **Home featured presets (2026-09-26):** `homeLayout` is read by `js/home.js` only; projects.html
 §2 keeps its alternating image-left / image-right and ignores it. `siteData.buildFeatured(entry,
@@ -596,9 +629,9 @@ No CLAUDE.md carve-outs required. Standard rules apply:
 4. ~~Thumbnail aspect ratio~~ — **RESOLVED 2026-09-20: 4:3**, enforced on every row and every
    grid card via `object-fit: cover`. See the decisions log.
 5. Index row density — one-line description vs. two. Evaluate once real descriptions exist
-6. Sub-page structure — spec separately. **Unblocked**: §2/§3 are built, so this is next up
-   once the scaffold has been reviewed. `subpageUrl: ""` already omits the link, so entries
-   can ship before their sub-pages exist.
+6. ~~Sub-page structure~~ — **RESOLVED 2026-09-27**: one shared renderer + one shell per page
+   (see "Sub-pages" under Maintainability). Filling the three featured projects' pages is the
+   content session's job. `subpageUrl: ""` still omits the link until a page file exists.
 7. Whether a visitor-facing rows/grid view switcher is worth building at all (Phase 3, optional).
    Both view classes now exist and the swap is verified, so this is purely a product question —
    no build risk either way.
@@ -641,11 +674,12 @@ Content:
 
 Features:
 
-- [X] Tag filter system on projects.html (JS, no page reload) — **shipped early: built in the
-  Phase 1 scaffold, 2026-09-20.** Multi-select AND logic over the shared `js/tags-data.js`
-  vocabulary (id-based state, translated labels since 2026-09-26), live count, zero-result
-  empty state, `display: none` on filtered rows. It runs against placeholder tags today; the
-  real vocabulary drops in without touching the filter code.
+- [X] Tag filter system on projects.html — **shipped early: built in the Phase 1 scaffold,
+  2026-09-20**, then **revised 2026-09-27**: the filter row is gone; every tag pill on the site
+  links to `projects.html?tag=<id>`, which filters the index (AND with search) and shows a
+  "<Tag> ✕" chip. Live count, zero-result empty state, `display: none` on filtered rows,
+  translated labels from `js/tags-data.js`. The real vocabulary drops in without touching
+  the filter code.
 - [ ] Semantic search on projects.html:
   **Keyword search shipped 2026-09-26** — the band is live, debounced, AND over tokens,
   diacritic-insensitive, both languages indexed, combined with the tag filter (see §1 of the
@@ -820,3 +854,51 @@ dev check HEADs each manifest path once and warns on non-2xx. Zero requests unde
 `assets/pdfs/` on a cold load. Verified with a throwaway commit on a temporary branch: the hook
 regenerated and staged the manifest for a dummy `20991231` file; branch and file removed, main
 restored.
+
+[2026-09-27] Pre-fair code session (content follows in a second session). Placeholder data
+migrated; nothing committed by the session itself.
+1. **Translatable dates.** `dates` on projects and experience is now `{ from, to? }` with
+   points `{ season, year }` / `{ month, year }` / `{ year }` and `to` = "present" or a point.
+   Rendered by `siteData.formatDates` through `dateSpring…`, `dateMonth1…12`, `datePresent`,
+   `dateSeasonYear`, `dateMonthYear` (EN "{month} {year}", ES "{month} de {year}"), `dateRange`.
+   Seasons capitalized; ES months lowercase. Literal strings are no longer accepted. `sortDate`
+   stays the ordering input; the dev check flags a sortDate that disagrees with the dates
+   (year must match; a month must match; a season must contain the month; `to` wins when it is
+   a point). TURC's placeholder sortDate moved 2025-09 → 2025-08 to satisfy that.
+2. **Clickable tags, no filter row.** Removed the multi-select row (and `projFilterLabel` /
+   `projFilterClear`). Pills are `<a href="projects.html?tag=<id>">` everywhere — pointer cursor
+   only, no hover effect, no enlarged tap target, `:focus-visible` kept. projects.html reads
+   `?tag=`, ANDs it with search, shows a "<Label> ✕" chip beside the count (✕ has a translated
+   aria-label `projTagClear`; `history.replaceState` rewrites the URL). One tag at a time;
+   unknown ids ignored; a language switch keeps it; a hash deep link clears it. A pill click on
+   projects.html reloads the page (typed search lost) — accepted. `projEmpty` reworded for one
+   tag.
+3. **Phrase chips.** `js/chips.js` replaces `HERO_CHIPS` + `HTML_I18N_KEYS`: one table
+   `{ phrase, urls: { en, es } }` (Zohaib Sheikh, IEL, "automating the boring stuff" pair),
+   DOM-built (no innerHTML), whole-word, first occurrence per phrase per element, headings /
+   links / buttons get plain text, idempotent. Applied to every `data-i18n` element, both hero
+   paragraphs, and every builder-rendered body string. `aiPara1` is plain text now; translations.js
+   holds no HTML. Verified: no `<a>` ever nests inside another `<a>`.
+4. **Project sub-pages.** `js/project-page.js` + `projects/<slug>.html` shells with
+   `data-slug` / `data-root="../"`; optional `page: { sections, facts, photos, reportPdf,
+   creditKey }` on the entry; layout per the spec; missing pieces render nothing; static
+   `<title>` / meta description replaced on render. Shared scripts read `data-root` so document
+   links, images, tag links and "Part of" links resolve from `/projects/`. `hidden` entries
+   render on localhost only. Scaffold: `todo-project-2` set to `listing: "hidden"` with a full
+   `page` object and `projects/todo-project-2.html`; its featured / collage / Baker Hughes
+   featured-link duties moved to `todo-project-3`; the other placeholder `subpageUrl`s blanked
+   (their files never existed). No sitemap for now.
+5. **Dev checks are localhost-only** (`siteData.isDev`), including the docs HEAD probes and the
+   new one-HEAD-per-`subpageUrl` check; `page` shape and date consistency added.
+6. **About for the fair.** §3 books, §4 FAQ and the interesting-sites block carry the `hidden`
+   attribute (the one flag each; remove to restore); `js/about.js` skips their setup while
+   hidden; the settings grid is auto-fit. Headshot src fixed in about.html to
+   `assets/images/about/headshot.jpg` (the old path did not exist).
+7. **Experience hero scrim** is pixel-based: solid `--footer-bg` to 540px (the text column ends
+   at 520px), transparent by 960px; mobile full-cover opacity 0.82 → 0.88. Verified with a pure
+   white slot-1 image at 768 / 900 / 1024 / 1280, light and dark: every hero line sits on solid
+   scrim.
+Tested on Live Server at :5500 with Playwright in the scratchpad (nothing in the repo): dates
+EN/ES, `?tag=` from a row, a band and a typed URL, tag + search, ✕, unknown id, hash deep link,
+chips, the sub-page in both languages, hidden About blocks, 375 / 768 / 1280 light and dark, no
+horizontal overflow, console clean.

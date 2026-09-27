@@ -12,8 +12,14 @@
 //            js/projects-data.js points here with `experience: "<slug>"`. Per-
 //            entry i18n keys are exp<SlugCamel>Role / Org / Bullet1… — the
 //            existing names already follow this.
-//   sortDate "YYYY-MM" — the ONLY thing ordering reads. Newest first.
-//   tags     tag IDS from js/tags-data.js (never labels)
+//   dates    language-neutral, rendered per language (CLAUDE.md → Dates):
+//              { from: { season: "summer", year: 2026 } }
+//              { from: { season: "spring", year: 2026 }, to: "present" }
+//              { from: { month: 7, year: 2022 }, to: { month: 8, year: 2022 } }
+//   sortDate "YYYY-MM" — the ONLY thing ordering reads. Newest first. The dev
+//            check flags a sortDate that disagrees with `dates`.
+//   tags     tag IDS from js/tags-data.js (never labels); each pill links to
+//            projects.html?tag=<id>
 //   layout   "imageLeft" | "imageRight" | "fullBleed" | "textOnly"
 //            Maps 1:1 to a CSS class (.exp-band--image-left, etc.). Adding a
 //            preset later means one new class — never bespoke markup.
@@ -51,7 +57,7 @@ const experienceData = [
     slug: "baker-hughes",
     roleKey: "expBakerHughesRole",
     orgKey: "expBakerHughesOrg",
-    dates: "Summer 2026",
+    dates: { from: { season: "summer", year: 2026 } },
     sortDate: "2026-06",
     bulletKeys: [
       "expBakerHughesBullet1",
@@ -73,7 +79,7 @@ const experienceData = [
     slug: "machine-shop",
     roleKey: "expMachineShopRole",
     orgKey: "expMachineShopOrg",
-    dates: "Spring 2026 – present",
+    dates: { from: { season: "spring", year: 2026 }, to: "present" },
     sortDate: "2026-02",
     bulletKeys: [
       "expMachineShopBullet1",
@@ -95,7 +101,7 @@ const experienceData = [
     slug: "schultz-grader",
     roleKey: "expSchultzRole",
     orgKey: "expSchultzOrg",
-    dates: "Spring 2026",
+    dates: { from: { season: "spring", year: 2026 } },
     sortDate: "2026-01",
     bulletKeys: [
       "expSchultzBullet1",
@@ -117,8 +123,8 @@ const experienceData = [
     slug: "turc",
     roleKey: "expTurcRole",
     orgKey: "expTurcOrg",
-    dates: "TBD",
-    sortDate: "2025-09", // TODO — placeholder until the dates are confirmed
+    dates: { from: { season: "summer", year: 2025 } }, // TODO — placeholder until confirmed
+    sortDate: "2025-08",
     bulletKeys: [
       "expTurcBullet1",
       "expTurcBullet2",

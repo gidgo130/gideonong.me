@@ -15,14 +15,17 @@ index.html          Home page
 about.html          About / education / skills / honors / languages
 experience.html     Work experience and research roles
 projects.html       Technical projects with photos, tags, descriptions
+projects/<slug>.html  One tiny shell per project sub-page (body data-slug + data-root="../")
 css/style.css       All styles (single file, organized by section)
-js/main.js          Nav behavior, language toggle, scroll interactions
-js/translations.js  All EN and ES text strings for the bilingual toggle
+js/chips.js         The one phrase auto-linker (IEL, Zohaib Sheikh, …) — see Phrase chips
+js/main.js          Nav behavior, language toggle, document links
+js/translations.js  All EN and ES text strings for the bilingual toggle (plain text, no HTML)
 js/tags-data.js     The one shared tag vocabulary (id + i18n key)
 js/projects-data.js Project entries (feeds projects.html and the home featured block)
 js/experience-data.js  Experience entries (feeds experience.html)
-js/data-helpers.js  Shared selectors, builders, deep-link targeting, dev data check
-js/projects.js      projects.html renderer: featured, index, tag filter, search
+js/data-helpers.js  Shared selectors, builders, date formatter, deep-link targeting, dev data check
+js/projects.js      projects.html renderer: featured, index, ?tag= filter, search
+js/project-page.js  projects/<slug>.html renderer (one renderer for every sub-page)
 js/experience.js    experience.html renderer: bands + related projects
 js/home.js          index.html featured block renderer
 js/about.js         about.html behaviors
@@ -153,6 +156,15 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
 - about.html's resume → CV + transcript morph needs both CV and transcript to exist;
   while either is missing, js/about.js skips the morph and the resume button stays.
 
+### About page — hidden sections (career fair, 2026-09-27)
+§3 books (`#about-reading`), §4 FAQ (`#about-faq`) and the interesting-sites block of §6
+(`#about-sites`) carry the `hidden` attribute in about.html. That attribute is the ONE
+flag: remove it to show the block again. js/about.js skips each block's setup while it is
+hidden (no scroll runway, no FAQ items), and .section-settings uses an auto-fit grid so
+the settings panel takes the full row on its own. The AI statement and viewing settings
+stay. The headshot is a plain `<img src="assets/images/about/headshot.jpg"
+data-i18n-alt="headshotAlt">` in about.html — swap the file or the src there.
+
 ## Home page (index.html) structure
 1. Sticky white navbar
 2. Under-development banner (easily removable)
@@ -203,7 +215,14 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
   footer/hero layouts absorb the extra width. Do not "shorten" it back to CV.
 
 ## Projects (projects.html)
-- Dynamic tag filter: clicking a tag filters visible projects (vanilla JS, no reload)
+- Clickable tags, no filter row (2026-09-27): every tag pill anywhere on the site (index
+  rows, featured entries, experience bands, sub-pages) is a link to
+  `projects.html?tag=<id>`. projects.html reads `?tag=` on load, filters the index (AND with
+  the search), and shows a "<Tag label> ✕" chip beside the count; ✕ clears it and rewrites
+  the URL with history.replaceState. One tag at a time. Unknown id → ignored. A language
+  switch keeps it. A `#<slug>` deep link clears it. Pills: pointer cursor ONLY — no hover
+  effect, no enlarged tap target (the global a:hover bronze is cancelled on .tag-pill).
+  A pill click on projects.html itself is a plain link (page reloads).
 - Keyword search band (§1): live, debounced, AND over whitespace tokens, diacritic-
   insensitive, both languages indexed. Combines with the tag filter (AND). Only the
   index is filtered; featured is not.
@@ -211,6 +230,9 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
 - Unlinked pages: exist at a URL, not listed in nav or project list
   (for politically-sensitive or selectively shared work) — `listing: "unlisted"` in
   js/projects-data.js. List filenames here as sub-pages are added.
+- Sub-pages (projects/<slug>.html): see "Project sub-pages" under Data conventions.
+  Files today: projects/todo-project-2.html (scaffold, `listing: "hidden"` → renders on
+  localhost only).
 
 ## Data conventions
 Data files: js/tags-data.js, js/projects-data.js, js/experience-data.js. Read-side
@@ -234,25 +256,68 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
   projects.html#<slug>. Index rows and bands carry id="<slug>"; a matching location.hash
   clears filter/query, scrolls clear of the nav, and adds `.is-target` (static bronze
   left rule). Only a visible role is a valid link target.
-- Tags are IDS from js/tags-data.js (`{ id, key }`); pills and filter buttons show the
-  translated label; filter state stores ids. Never store a label in a data file.
+- Tags are IDS from js/tags-data.js (`{ id, key }`); pills show the translated label and
+  link to projects.html?tag=<id>; the filter state is the id in the URL. Never store a
+  label in a data file.
 - `context` on every project: industry | coursework | personal | service | research —
   rendered as "<Context> · <dates>" (keys ctxIndustry …).
+- Dates (2026-09-27): `dates` on projects AND experience entries is language-neutral,
+  never a literal string. Shape: `{ from: <point> }`, `{ from, to: "present" }`, or
+  `{ from, to: <point> }`, where a point is `{ season: "spring"|"summer"|"fall"|"winter",
+  year }`, `{ month: 1–12, year }` or `{ year }`. Rendered per language by
+  siteData.formatDates via keys dateSpring…dateWinter, dateMonth1…12, datePresent,
+  dateSeasonYear ("{season} {year}"), dateMonthYear (EN "{month} {year}", ES
+  "{month} de {year}"), dateRange ("{from} – {to}"). Seasons capitalized in both
+  languages; ES month names lowercase. `sortDate` stays the only ordering input; the dev
+  check flags a sortDate that disagrees with the dates (against `to` when it is a point,
+  else `from`: year must match, a month must match, a season must contain the month).
 - Home featured presets: optional `homeLayout` ("stacked" default | "imageLeft" |
   "imageRight" | "collage") and, for collage only, `gallery: [{ src, altKey }]` with 1–3
   extra images. Ignored by projects.html §2. Gallery alt keys: proj<SlugCamel>Gallery<N>Alt.
+- Project sub-pages (2026-09-27): one renderer, js/project-page.js, plus one shell per page
+  at projects/<slug>.html whose <body> carries `data-slug="<slug>"` and `data-root="../"`.
+  The shell has the same nav / dev banner / footer / toggle as every page with `../` paths,
+  a static English <title> + meta description (replaced from the entry on every render),
+  and an empty `<main id="project-page">`. `data-root` is read by main.js (document links)
+  and data-helpers.js (images, tag links, "Part of" links), so the shared builders work
+  from /projects/. Optional `page` object on the entry:
+    page: { sections: [{ headingKey, bodyKey }], facts: [{ labelKey, valueKey }],
+            photos: [{ src, altKey }], reportPdf: "", creditKey: "" }
+  Layout: hero image (imageSrc, 16:9) → title → "<Context> · <dates>" → "Part of" link →
+  sections → photo grid (2-up, 1-up below 768px, each opens the full image in a new tab)
+  → quick-facts box → "Read the report →" (new tab) → credit → tags → "← All projects".
+  Any missing piece renders nothing. `gallery` stays collage-only; sub-page photos use
+  page.photos. `subpageUrl` = "/projects/<slug>.html" once the file exists, else "" (link
+  omitted). Listing: index + unlisted entries render for everyone; a hidden entry renders
+  only on localhost. Keys: proj<SlugCamel>Section<N>Heading / Section<N>Body /
+  Fact<N>Label / Fact<N>Value / Photo<N>Alt / Credit.
+- Phrase chips (2026-09-27): js/chips.js holds ONE table `CHIPS = [{ phrase, urls: { en,
+  es } }]` (Zohaib Sheikh → zohaibsheikh.dev, IEL → the IEL URLs, "automating the boring
+  stuff" / "automatizar lo aburrido"). `siteChips.fill(el, text, lang)` builds text nodes +
+  `<a class="iel-chip">` — never innerHTML. Whole-word matches, first occurrence per
+  phrase per element, headings / links / buttons (and anything inside a link or button)
+  get plain text, idempotent across language switches. main.js runs it on every data-i18n
+  element and both hero paragraphs; the builders run it on descriptions, bullets, section
+  bodies, fact values and credits. translations.js therefore holds NO HTML (the old
+  HTML_I18N_KEYS / HERO_CHIPS in main.js are gone). Adding a phrase = one line in CHIPS.
 - Key naming by slug: proj<SlugCamel>Title / Desc / LongDesc / Alt / Search / Gallery<N>Alt
+  / Section<N>Heading / Section<N>Body / Fact<N>Label / Fact<N>Value / Photo<N>Alt / Credit
   (slug "todo-project-1" → projTodoProject1Title); exp<SlugCamel>Role / Org / Bullet1…;
   tag<IdCamel>; ctx<Context>. translations.js is the single source of display strings.
 - searchEntries(query, entries) → entries in js/projects.js is the ONE place matching
   happens. Phase 3 (TF-IDF) replaces its body only — same signature, same return shape,
   may reorder by score; no markup or caller changes.
-- Dev data check (siteData.checkData, console.warn only) runs on load of projects.html
-  and experience.html: unknown tag id, missing EN/ES key, duplicate slug, bad `experience`
-  target, featured on non-index, >3 featured, imageSrc without imageAlt, missing
-  sortDate/context, reserved "nested", unknown homeLayout, gallery problems (on a
-  non-collage entry, >3 items, item missing src/altKey, altKey with no EN/ES string), and
-  one HEAD per js/docs-data.js path that returns non-2xx. Keep the console clean.
+- Dev data check (siteData.checkData, console.warn only) runs on load of projects.html,
+  experience.html and every sub-page — on LOCALHOST ONLY (siteData.isDev: localhost,
+  127.0.0.1, ::1, file:), so real visitors never get its HEAD probes. Checks: unknown tag
+  id, missing EN/ES key, duplicate slug, bad `experience` target, featured on non-index,
+  >3 featured, imageSrc without imageAlt, missing sortDate/context, malformed `dates` or a
+  sortDate that disagrees with them, reserved "nested", unknown homeLayout, gallery
+  problems (on a non-collage entry, >3 items, item missing src/altKey, altKey with no
+  EN/ES string), `page` problems (bad shape, missing keys, page set with subpageUrl ""),
+  one HEAD per js/docs-data.js path and one HEAD per non-empty subpageUrl that returns
+  non-2xx. Keep the console clean. (Live Server answers HEAD with a body; Chromium logs
+  those as aborted network requests, not console messages — ignore them.)
 
 ## Animation and scroll behavior
 - NO page-load animations — no rising text, no fading on arrival
@@ -290,6 +355,8 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
 - Do not make navbar anything other than white (#FFFFFF) in light mode
   (dark mode overrides --nav-bg to a dark warm background, which is expected)
 - Do not hardcode display text in HTML — use data-i18n attributes
+- Do not put HTML in translations.js — links come from the js/chips.js phrase table
+- Do not store `dates` as a literal string — use the { from, to } shape so it translates
 - Do not animate on page load or cause layout shift
 - Do not use dark mode toggle
 - Do not use fixed pixel widths on containers

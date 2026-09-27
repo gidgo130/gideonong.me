@@ -18,6 +18,10 @@ Every page section carries a status line. Respect it.
 | **INTAKE** | The page is built and waiting for content. Every slot is listed below — fill them in, don't restructure. |
 | **NEEDS REVIEW** | This section has NOT been checked against the built page and may be stale. Do not trust it as-is. |
 
+**Updated 2026-09-27** for the pre-fair code session: translatable `dates`, clickable tags (no
+filter row), phrase chips (`js/chips.js`), project sub-pages (`page` field +
+`projects/<slug>.html`), and the hidden About blocks. See plan.md → Decisions log [2026-09-27].
+
 **Reconciled 2026-09-26.** The experience.html and projects.html sections are status + field
 reference only (the strings themselves moved out — translations.js is the source), each with
 a framework briefing to paste at the start of its interview, updated for the 2026-09-26 data
@@ -33,9 +37,11 @@ Strings and fields have different homes. Nothing is typed into HTML.
 |---|---|---|
 | EN/ES display strings | `js/translations.js` | `key: "string"` under `en` and `es` |
 | Tag vocabulary (shared) | `js/tags-data.js` | `{ id, key }` — ids in the data files, labels `tag<IdCamel>` in translations.js |
-| Experience entries (non-string fields) | `js/experience-data.js` | slug, dates, sortDate, tags (ids), imageSrc, subpageUrl, layout, status, color, visible |
-| about.html books / FAQ / sites | `js/about.js` | **inline** `titleEN`/`titleES` pairs — NOT i18n keys (see about.html note) |
-| Project entries (non-string fields) | `js/projects-data.js` | slug, dates, sortDate, context, tags (ids), imageSrc, subpageUrl, featured, pinned, listing, experience, homeLayout, gallery |
+| Experience entries (non-string fields) | `js/experience-data.js` | slug, dates ({ from, to }), sortDate, tags (ids), imageSrc, subpageUrl, layout, status, color, visible |
+| about.html books / FAQ / sites | `js/about.js` | **inline** `titleEN`/`titleES` pairs — NOT i18n keys (see about.html note). All three blocks are HIDDEN for the fair (2026-09-27). |
+| Project entries (non-string fields) | `js/projects-data.js` | slug, dates ({ from, to }), sortDate, context, tags (ids), imageSrc, subpageUrl, featured, pinned, listing, experience, homeLayout, gallery, page |
+| Project sub-pages | `projects/<slug>.html` (shell) + `page` on the entry | one shell file per page; strings are proj<SlugCamel>Section/Fact/Photo/Credit keys |
+| Phrase chips (inline links) | `js/chips.js` | `{ phrase, urls: { en, es } }` — strings stay plain text; the linker adds the chip |
 | Document PDFs | `assets/pdfs/<type>/` + generated `js/docs-data.js` | dated filenames — see Document links below |
 
 Non-string fields (dates, sort month, context, tag ids, image paths, colors, layout presets,
@@ -112,8 +118,10 @@ Display: "Gideon A. Ong"
 
 Chip text: IEL
 URL: https://utulsa.edu/academics/interdisciplinary-programs/international-engineering-science-language/
-Placement: auto-linked inside the hero description by `HERO_CHIPS` in `js/main.js` —
-it is not written into the HTML. The ES link goes through the Google-translate proxy URL.
+Placement: auto-linked wherever the word "IEL" appears (hero, bio, bullets, sub-pages) by
+the phrase table in `js/chips.js` — it is never written into the HTML or into a string. The
+ES link goes through the Google-translate proxy URL. Same mechanism links "Zohaib Sheikh" →
+zohaibsheikh.dev. To add a phrase: one line in `CHIPS`.
 Style: tonsky.me-style small bordered chip (same style as social chips, but inline in text)
 
 ### Description (top section)
@@ -254,9 +262,12 @@ slug         unique id → band id (experience.html#<slug>); projects link to it
 roleKey      exp<SlugCamel>Role     → EN + ES in translations.js
 orgKey       exp<SlugCamel>Org      → EN + ES (employer names usually identical)
 bulletKeys   [exp<SlugCamel>Bullet1, …]  (2–3; any number works)
-dates        literal display string, never translated (e.g. "Summer 2026")
+dates        { from: <point>, to?: "present" | <point> } — <point> is { season: "spring"|"summer"|
+             "fall"|"winter", year } or { month: 1–12, year } or { year }. Renders per language
+             ("Summer 2026" / "Verano 2026", "Spring 2026 – present" / "Primavera 2026 – presente").
 sortDate     "YYYY-MM" — the only thing ordering reads; newest first. Array order is ignored.
-tags         [tag ids from js/tags-data.js]
+             Must agree with `dates` (the dev check warns otherwise).
+tags         [tag ids from js/tags-data.js] — each pill links to projects.html?tag=<id>
 imageSrc     path, or "" for no image (renders text-only, no broken image)
 subpageUrl   "/experience/<slug>.html" once the page exists, else "" (link omitted)
 layout       imageLeft | imageRight | fullBleed | textOnly
@@ -270,10 +281,10 @@ visible      true | false  (false also makes the role an invalid link target for
 
 | slug | Entry | Key prefix | dates | sortDate | visible | status |
 |---|---|---|---|---|---|---|
-| `baker-hughes` | Baker Hughes — Engineering Intern, ALS R&D | `expBakerHughes` | Summer 2026 | 2026-06 | true | null |
-| `machine-shop` | McElroy Prototyping Lab — Machine Shop Technician | `expMachineShop` | Spring 2026 – present | 2026-02 | true | **"current"** |
-| `schultz-grader` | Dr. Joshua Schultz — Grader & Data Analyst | `expSchultz` | Spring 2026 | 2026-01 | true | null |
-| `turc` | TURC / TMTC (Edmonds) — role TBD | `expTurc` | TBD | 2025-09 (placeholder) | **false** | null |
+| `baker-hughes` | Baker Hughes — Engineering Intern, ALS R&D | `expBakerHughes` | summer 2026 | 2026-06 | true | null |
+| `machine-shop` | McElroy Prototyping Lab — Machine Shop Technician | `expMachineShop` | spring 2026 – present | 2026-02 | true | **"current"** |
+| `schultz-grader` | Dr. Joshua Schultz — Grader & Data Analyst | `expSchultz` | spring 2026 | 2026-01 | true | null |
+| `turc` | TURC / TMTC (Edmonds) — role TBD | `expTurc` | summer 2025 (placeholder) | 2025-08 (placeholder) | **false** | null |
 
 Per-entry string status: EN role and org are written for the first three; every bullet is
 `TODO ` in both languages; every ES role title is `TODO `.
@@ -325,16 +336,20 @@ in a comment beside each. plan.md open decision #9.
 - [aboutIdentifiersEN] "Engineer · Geographer · Federalist · Philomath"
 - [aboutIdentifiersES] "Ingeniero · Geógrafo · Federalista · Aprendiz eterno"
   (EN and ES are independent, not translations of each other — plan.md 2026-09-17)
-- [aiPara1] — the AI statement is written and contains inline HTML (an `<a>` to zohaibsheikh.dev).
-  It is listed in `HTML_I18N_KEYS` in `js/main.js` so it injects as HTML, not escaped text.
+- [aiPara1] — the AI statement is written, as plain text. "Zohaib Sheikh" becomes a link chip
+  through `js/chips.js` (2026-09-27); there is no HTML in translations.js any more.
 - Section headings and viewing-settings toggle labels are all written.
 - [cvBtn] / [transcriptBtn] — "Download Full CV" / "Download Transcript".
 
 **Known-placeholder, awaiting content:**
-- [whoamiBio1] / [whoamiBio2] / [whoamiBio3] — §2 biographical paragraphs
-- §3 books — 5 entries in `js/about.js`
-- §4 FAQ — 4 entries in `js/about.js`
-- §6 interesting sites — 3 entries in `js/about.js`
+- [whoamiBio1] / [whoamiBio2] / [whoamiBio3] — §2 biographical paragraphs ("IEL" in the bio
+  gets the chip automatically)
+- §3 books — 5 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on `#about-reading`)
+- §4 FAQ — 4 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on `#about-faq`)
+- §6 interesting sites — 3 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on
+  `#about-sites`)
+- Headshot — `<img src="assets/images/about/headshot.jpg">` in about.html, alt from
+  `headshotAlt` (EN/ES written). Swap the file in place.
 
 **Flag for the about.html session — a real inconsistency:**
 The §3/§4/§6 data arrays in `js/about.js` carry **inline** `titleEN`/`titleES`/`descEN`/`descES`
@@ -389,8 +404,9 @@ detail: if something is missing, mark it `TODO` and move on.
   role, a link. On the home page each featured project also picks a layout: a wide image
   with the text below (default), image left, image right, or a collage of up to four photos.
 - an **index** of every project — one compact row each: small thumbnail, title, "Context ·
-  dates", one-line description, tag pills, the same "Part of" link. A tag filter and a live
-  project count sit above it.
+  dates", one-line description, tag pills, the same "Part of" link. A live project count sits
+  above it. Clicking any tag pill anywhere on the site shows the index filtered to that tag,
+  with a removable chip beside the count — there is no separate filter row.
 
 Both zones read one list, and so does the home page's "Featured work" block. Marking a
 project "featured" promotes it into the featured blocks and it still appears in the index —
@@ -401,7 +417,7 @@ its text is never duplicated. Everything displayed exists in both English and Sp
 | What | Notes | Rough length |
 |---|---|---|
 | Name | | a few words |
-| Dates | free text — "Spring 2026", "2025–2026" | short |
+| Dates | a season or month + year, optionally to another one or "present" — "Summer 2026", "July 2022", "Spring 2026 – present". The site translates them itself. | short |
 | Sort month | the year-month the project should sort by (newest first); usually when it finished | YYYY-MM |
 | Context | one of: industry / coursework / personal / service / research | one word |
 | One-line description | shown in the index row | one line |
@@ -411,7 +427,8 @@ its text is never duplicated. Everything displayed exists in both English and Sp
 | Photo | one, or none. "No photo" is a perfectly good answer — the row then renders clean, with the text at full width | |
 | Alt text | what the photo shows, for screen readers; only if there is a photo | one line |
 | Search keywords | never displayed; feeds the search — synonyms, tools, acronyms, Spanish terms | any |
-| Sub-page | a deeper page per project, not built yet. "Later" is fine — the link simply doesn't appear | |
+| Sub-page | a deeper page per project (featured projects only, for now). Collect: 2–5 titled sections of a paragraph each, a quick-facts list (team, role, course, methods, award…), extra photos with alt text, whether a report PDF may be linked, and a photo credit if any. "Later" is fine — the link simply doesn't appear | 250–400 words |
+| Linked names | any person or program in the text that should become a link (e.g. a collaborator's site) — the site links them by phrase | name + URL |
 | Listing | normal / hide for now / exists but unlisted (sensitive or selectively shared work — reachable by direct link only, never in any list, search or role) | |
 | Home layout | featured projects only — how it sits on the home page: stacked (default: wide image, text below) / image left / image right / collage | one word |
 | Extra photos | collage only — 1–3 more photos shown with the main one, each with alt text | |
@@ -448,7 +465,8 @@ filter pills that each match a third of the work.
 
 - A new context beyond the five above
 - Showing the index as a card grid instead of rows
-- A new field per project — a report PDF, a video, a second link, a collaborator credit
+- A new field per project beyond the sub-page set — a video, a second link (report PDF and
+  photo credit are already fields on the sub-page)
 - Two-line descriptions in the index rows
 - Minor projects that should show on a role's band but stay out of the index unless someone
   searches or filters for them (planned, not built — note them as "nested" and move on)
@@ -474,7 +492,7 @@ straight into the site's data files:
 ```
 Project: <name>
 Slug: <url-safe-name>
-Dates: <free text>              Sort month: <YYYY-MM>
+Dates: <season|month> <year> [– <season|month> <year> | present]     Sort month: <YYYY-MM>
 Context: industry / coursework / personal / service / research
 Tags: <from the vocabulary>
 Part of role: <role name, or none>
@@ -489,13 +507,20 @@ One-line (ES):
 Paragraph (EN):        [featured projects only]
 Paragraph (ES):
 Search keywords (EN / ES):
+Linked names: <phrase → URL, or none>
 Sub-page: <planned / later>
+  Sections (2–5):  <Heading (EN) / (ES)> — <paragraph (EN)> / <(ES)>
+  Quick facts:     <Label (EN/ES)> — <value (EN/ES)>   (team, role, course, methods, award…)
+  Photos:          <filename>   Alt (EN):   Alt (ES):
+  Report PDF:      <filename, or "do not link">
+  Photo credit:    <text (EN/ES), or none>
 ```
 
 Then the tag vocabulary as a final list of `id — EN label / ES label`, and any wording changes
 to the page chrome (search placeholder, "Search", "Clear search", "Featured projects",
-"All projects", "View project →", "Part of: {role}, {org} →", "Filter by tag", "Clear",
-"{n} projects" / "{n} project", the two empty-state lines, and the five context labels).
+"All projects", "View project →", "Part of: {role}, {org} →", "Clear tag filter" (the ✕ label),
+"{n} projects" / "{n} project", the two empty-state lines, "Read the report →", "← All
+projects", the five context labels, and the season / month / "present" words used in dates).
 Mark anything still unknown as `TODO` rather than filling it with a guess.
 
 <!-- ============================= COPY TO HERE ============================= -->
@@ -509,12 +534,14 @@ descKey        proj<SlugCamel>Desc       one line, index row
 longDescKey    proj<SlugCamel>LongDesc   paragraph, featured blocks + sub-page
 imageAlt       proj<SlugCamel>Alt        required whenever imageSrc is set; "" otherwise
 searchTextKey  proj<SlugCamel>Search     never displayed; folded into the search corpus
-dates          literal display string, never translated
+dates          { from: <point>, to?: "present" | <point> }; <point> = { season, year } |
+               { month: 1–12, year } | { year }. Rendered per language (never a literal string).
 sortDate       "YYYY-MM" — the only thing ordering reads; newest first. Array order is ignored.
+               Must agree with `dates` (dev check warns).
 context        industry | coursework | personal | service | research  → ctx<Context> label
-tags           [tag ids from js/tags-data.js]
+tags           [tag ids from js/tags-data.js] — each pill links to projects.html?tag=<id>
 imageSrc       path, or "" (row renders text-only)
-subpageUrl     "/projects/<slug>.html", or "" (link omitted)
+subpageUrl     "/projects/<slug>.html" once projects/<slug>.html exists, or "" (link omitted)
 featured       true → also in projects.html §2 and the index.html featured block (max 3)
 pinned         true → top of the index regardless of sortDate
 listing        "index" | "unlisted" | "hidden"   ("nested" is reserved — see CLAUDE.md)
@@ -523,6 +550,15 @@ homeLayout     OPTIONAL — index.html featured block only: "stacked" (default) 
                "imageRight" | "collage". projects.html §2 ignores it.
 gallery        OPTIONAL, collage only — [{ src, altKey }] × 1–3 extra images after imageSrc;
                altKey = proj<SlugCamel>Gallery<N>Alt (EN + ES)
+page           OPTIONAL — sub-page content (projects/<slug>.html, rendered by js/project-page.js):
+                 sections:  [{ headingKey, bodyKey }]   proj<SlugCamel>Section<N>Heading / Body
+                 facts:     [{ labelKey, valueKey }]    proj<SlugCamel>Fact<N>Label / Value
+                 photos:    [{ src, altKey }]           proj<SlugCamel>Photo<N>Alt
+                 reportPdf: "assets/pdfs/projects/<file>.pdf"   ("" = no link)
+                 creditKey: proj<SlugCamel>Credit       ("" = no credit line)
+               Every part optional. To publish a sub-page: copy projects/todo-project-2.html to
+               projects/<slug>.html, set data-slug, the static <title> and meta description, then
+               set subpageUrl on the entry.
 ```
 
 Tags: `js/tags-data.js` holds `{ id, key }` pairs; the label is `tag<IdCamel>` in
@@ -532,21 +568,24 @@ Tags: `js/tags-data.js` holds `{ id, key }` pairs; the label is `tag<IdCamel>` i
 
 | slug | sortDate | context | featured | pinned | listing | experience | exercises |
 |---|---|---|---|---|---|---|---|
-| `todo-project-1` | 2026-06 | coursework | yes | yes | index | — | pinned + featured; home `stacked` |
-| `todo-project-2` | 2026-05 | industry | yes | — | index | baker-hughes | featured "Part of" link; home `collage` (2 gallery images) |
-| `todo-project-3` | 2026-04 | research | — | — | index | — | plain row |
-| `todo-project-4` | 2026-03 | industry | — | — | index | baker-hughes | no image; row "Part of" link |
-| `todo-project-5` | 2026-02 | personal | — | — | index | — | no sub-page |
-| `todo-project-6` | 2026-01 | service | — | — | **unlisted** | baker-hughes | excluded everywhere |
+| `todo-project-1` | 2026-06 | coursework | yes | yes | index | — | pinned + featured; home `stacked`; season date |
+| `todo-project-2` | 2026-05 | industry | — | — | **hidden** | baker-hughes | the sub-page scaffold (`page` object + projects/todo-project-2.html); renders on localhost only |
+| `todo-project-3` | 2026-04 | research | yes | — | index | baker-hughes | featured "Part of" link; home `collage` (2 gallery images); month range date |
+| `todo-project-4` | 2026-03 | industry | — | — | index | baker-hughes | no image; row "Part of" link; month date |
+| `todo-project-5` | 2026-02 | personal | — | — | index | — | no sub-page; year-only date |
+| `todo-project-6` | 2026-01 | service | — | — | **unlisted** | baker-hughes | excluded everywhere; season range date |
 
 ### Chrome keys (written, VERIFIED)
 
 `projSearchPlaceholder`, `projSearchBtn`, `projSearchClear` (× aria-label), `projFeaturedHeading`,
 `projIndexHeading`, `projViewLink`, `projPartOf` (must keep `{role}` and `{org}`),
-`projFilterLabel` (aria-label), `projFilterClear` (compact — EN/ES lengths matched),
-`projCount` / `projCountOne` (`{n}`), `projEmpty` (tags-only empty state), `projEmptySearch`
-(`{q}`, query empty state), `ctxIndustry`, `ctxCoursework`, `ctxPersonal`, `ctxService`,
-`ctxResearch`. The placeholder is set via `data-i18n-placeholder` by `js/projects.js`.
+`projTagClear` (aria-label on the ✕ of the "<Tag> ✕" chip), `projCount` / `projCountOne`
+(`{n}`), `projEmpty` (tag-only empty state), `projEmptySearch` (`{q}`, query empty state),
+`projReportLink` / `projAllProjects` (sub-page chrome), `ctxIndustry`, `ctxCoursework`,
+`ctxPersonal`, `ctxService`, `ctxResearch`, and the date keys `dateSpring…dateWinter`,
+`dateMonth1…12`, `datePresent`, `dateSeasonYear`, `dateMonthYear`, `dateRange`. The placeholder
+is set via `data-i18n-placeholder` by `js/projects.js`. (`projFilterLabel` / `projFilterClear`
+were deleted with the filter row on 2026-09-27.)
 
 ### Still to fill
 
