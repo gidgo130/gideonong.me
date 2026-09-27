@@ -34,7 +34,11 @@
 //                 occupying the full width. Never a broken image, a grey box,
 //                 or a placeholder icon.
 //   imageAlt      i18n key — required whenever imageSrc is set
+//   thumbSrc      OPTIONAL — index-row thumbnail; falls back to imageSrc
+//   thumbAltKey   OPTIONAL i18n key for thumbSrc; falls back to imageAlt
 //   subpageUrl    "/projects/<slug>.html" once the page file exists, else ""
+//                 → the "View project →" link is omitted AND the entry's images
+//                 stay plain (an image links to the sub-page only when one exists).
 //                 → the "View project →" link is omitted. The dev check HEADs
 //                 each non-empty value (localhost only).
 //   featured      true → ALSO rendered in the featured blocks (still in the
@@ -67,12 +71,14 @@
 //                   "stacked"    (default) full-width 16:9 image, text below
 //                   "imageLeft"  image ~55% left, text right
 //                   "imageRight" text left, image right
-//                   "collage"    full-width 16:9 grid of imageSrc + gallery
-//                 Fallbacks: collage with no usable gallery → stacked; any
-//                 preset with no imageSrc → text only.
-//   gallery       OPTIONAL, collage only — 1–3 EXTRA images after imageSrc:
-//                 [{ src: "", altKey: "" }]. altKey is an i18n key
-//                 (proj<SlugCamel>Gallery<N>Alt). Ignored on other presets.
+//                   "collage"    full-width 16:9 grid of the `gallery` images
+//                 Fallbacks: collage with fewer than 2 usable gallery items →
+//                 stacked; stacked / imageLeft / imageRight with no imageSrc →
+//                 text only.
+//   gallery       OPTIONAL, collage only — the collage cells, 2–4 images:
+//                 [{ src: "", altKey: "" }]. imageSrc is NOT a cell. altKey is
+//                 an i18n key (proj<SlugCamel>Gallery<N>Alt). Ignored on other
+//                 presets.
 //   page          OPTIONAL — sub-page content (js/project-page.js). Every
 //                 part is optional; a missing part renders nothing:
 //                   sections:  [{ headingKey, bodyKey }]   proj<SlugCamel>Section<N>Heading / Body
@@ -98,8 +104,10 @@ const projectsData = [
     sortDate: "2026-05",
     context: "coursework",
     tags: ["solid-mechanics", "fabrication", "cad", "leadership"],
-    imageSrc: "assets/images/projects/pump-cylinder-failure/pin-assembly.jpg",
+    imageSrc: "assets/images/projects/pump-cylinder-failure/pin-installed-wide.jpg",
     imageAlt: "projPumpCylinderFailureAlt",
+    thumbSrc: "assets/images/projects/pump-cylinder-failure/pin-installed-thumb.jpg",
+    thumbAltKey: "projPumpCylinderFailureAlt",
     subpageUrl: "/projects/pump-cylinder-failure.html",
     featured: true,
     featuredOrder: 1,
@@ -142,8 +150,10 @@ const projectsData = [
     sortDate: "2022-07",
     context: "service",
     tags: ["leadership", "fabrication"],
-    imageSrc: "assets/images/projects/eagle-pathway/directing-volunteers.jpg",
+    imageSrc: "assets/images/projects/eagle-pathway/compacting-path.jpg",
     imageAlt: "projEaglePathwayAlt",
+    thumbSrc: "assets/images/projects/eagle-pathway/finished-path.jpg",
+    thumbAltKey: "projEaglePathwayGallery3Alt",
     subpageUrl: "/projects/eagle-pathway.html",
     featured: true,
     featuredOrder: 2,
@@ -151,10 +161,12 @@ const projectsData = [
     searchTextKey: "projEaglePathwaySearch",
     listing: "index",
     experience: "",
+    // Home collage = exactly these three cells (imageSrc is not a cell).
     homeLayout: "collage",
     gallery: [
-      { src: "assets/images/projects/eagle-pathway/granite-and-compactor.jpg", altKey: "projEaglePathwayGallery1Alt" },
-      { src: "assets/images/projects/eagle-pathway/finished-path.jpg", altKey: "projEaglePathwayGallery2Alt" }
+      { src: "assets/images/projects/eagle-pathway/directing-volunteers.jpg", altKey: "projEaglePathwayGallery1Alt" },
+      { src: "assets/images/projects/eagle-pathway/granite-and-compactor.jpg", altKey: "projEaglePathwayGallery2Alt" },
+      { src: "assets/images/projects/eagle-pathway/finished-path.jpg", altKey: "projEaglePathwayGallery3Alt" }
     ],
     page: {
       sections: [
@@ -191,6 +203,8 @@ const projectsData = [
     tags: ["python", "data-analysis", "automation", "machine-learning"],
     imageSrc: "assets/images/projects/g-view/g-view-demo.png",
     imageAlt: "projGViewAlt",
+    thumbSrc: "assets/images/projects/g-view/g-view-thumb.png",
+    thumbAltKey: "projGViewAlt",
     subpageUrl: "/projects/g-view.html",
     featured: true,
     featuredOrder: 3,
@@ -245,7 +259,7 @@ const projectsData = [
     sortDate: "2026-07",
     context: "industry",
     tags: ["python", "automation", "fabrication"],
-    imageSrc: "assets/images/projects/autoscan/scan-fixtures.jpg",
+    imageSrc: "assets/images/projects/autoscan/scanner-station.jpg",
     imageAlt: "projAutoscanAlt",
     subpageUrl: "",
     featured: false,

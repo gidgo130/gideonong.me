@@ -252,6 +252,33 @@
     return img;
   }
 
+  // Index-row thumbnail: thumbSrc / thumbAltKey when set, else imageSrc / imageAlt.
+  function buildThumbImage(entry, className) {
+    var img = document.createElement("img");
+    img.className = className;
+    img.src = ROOT + (entry.thumbSrc || entry.imageSrc);
+    var altKey = entry.thumbSrc ? (entry.thumbAltKey || entry.imageAlt) : entry.imageAlt;
+    img.alt = altKey ? text(altKey) : "";
+    img.loading = "lazy";
+    return img;
+  }
+
+  /* ---- Image links (2026-09-27) --------------------------------------------
+     An image with a destination is wrapped in <a class="image-link"> — a
+     clipped frame with a subtle scale on hover / focus-visible (style.css;
+     the one sanctioned motion exception, off under prefers-reduced-motion).
+     Images with no destination are returned bare: never an empty link. `href`
+     is used as given when absolute or root-absolute, else prefixed with ROOT. */
+  function linkImage(node, href, label) {
+    if (!href) return node;
+    var a = document.createElement("a");
+    a.className = "image-link";
+    a.href = /^(\/|https?:|mailto:)/.test(href) ? href : ROOT + href;
+    if (label) a.setAttribute("aria-label", label);
+    a.appendChild(node);
+    return a;
+  }
+
   /* ---- Featured layout presets ---------------------------------------------
      One class per preset. projects.html §2 alternates imageLeft / imageRight
      from the index (the set is 2-3 entries and fixed, which is the one place a
@@ -264,23 +291,26 @@
     imageRight: "featured-entry--image-right",
     collage: "featured-entry--collage"
   };
-  var GALLERY_MAX = 3;
+  var GALLERY_MIN = 2;
+  var GALLERY_MAX = 4;
 
-  // Extra images for the collage preset: items with both src and altKey, capped
-  // at GALLERY_MAX. Invalid items are skipped here and reported by checkData().
+  // Collage cells: the `gallery` items with both src and altKey, capped at
+  // GALLERY_MAX. imageSrc is NOT a cell (2026-09-27) — the collage is exactly
+  // what `gallery` lists. Invalid items are skipped here and reported by
+  // checkData().
   function validGallery(entry) {
     return (entry.gallery || [])
       .filter(function (g) { return g && g.src && g.altKey; })
       .slice(0, GALLERY_MAX);
   }
 
-  // Cells = imageSrc first, then the gallery. 2 → two columns; 3 → large left +
-  // two stacked right; 4 → 2×2 (style.css .featured-collage--N).
+  // 2 → two columns; 3 → first cell large left + two stacked right; 4 → 2×2
+  // (style.css .featured-collage--N). The whole grid links to the sub-page when
+  // there is one.
   function buildCollage(entry, gallery) {
     var media = document.createElement("div");
-    var cells = [{ src: entry.imageSrc, altKey: entry.imageAlt }].concat(gallery);
-    media.className = "featured-entry-media featured-collage featured-collage--" + cells.length;
-    cells.forEach(function (cell) {
+    media.className = "featured-entry-media featured-collage featured-collage--" + gallery.length;
+    gallery.forEach(function (cell) {
       var img = document.createElement("img");
       img.className = "featured-collage-image";
       img.src = ROOT + cell.src;
@@ -300,18 +330,24 @@
     if (!layout) layout = i % 2 === 0 ? "imageLeft" : "imageRight";
     if (!FEATURED_LAYOUTS[layout]) layout = "stacked";
     var gallery = layout === "collage" ? validGallery(entry) : [];
-    if (layout === "collage" && !gallery.length) layout = "stacked";
+    if (layout === "collage" && gallery.length < GALLERY_MIN) layout = "stacked";
+    var hasMedia = layout === "collage" || !!entry.imageSrc;
 
     var article = document.createElement("article");
     article.className = "featured-entry " +
-      (entry.imageSrc ? FEATURED_LAYOUTS[layout] : "featured-entry--text-only");
+      (hasMedia ? FEATURED_LAYOUTS[layout] : "featured-entry--text-only");
 
-    if (entry.imageSrc && layout === "collage") {
-      article.appendChild(buildCollage(entry, gallery));
+    if (layout === "collage") {
+      var collage = buildCollage(entry, gallery);
+      // The link wraps the grid; the grid keeps the media class so the
+      // preset rules still place it.
+      var wrapped = linkImage(collage, entry.subpageUrl, text(entry.titleKey));
+      if (wrapped !== collage) { wrapped.classList.add("featured-entry-media"); collage.classList.remove("featured-entry-media"); }
+      article.appendChild(wrapped);
     } else if (entry.imageSrc) {
       var media = document.createElement("div");
       media.className = "featured-entry-media";
-      media.appendChild(buildImage(entry, "featured-entry-image"));
+      media.appendChild(linkImage(buildImage(entry, "featured-entry-image"), entry.subpageUrl, text(entry.titleKey)));
       article.appendChild(media);
     }
 
@@ -362,7 +398,7 @@
     if (entry.imageSrc) {
       var thumb = document.createElement("div");
       thumb.className = "project-thumb";
-      thumb.appendChild(buildImage(entry, "project-thumb-image"));
+      thumb.appendChild(linkImage(buildThumbImage(entry, "project-thumb-image"), entry.subpageUrl, text(entry.titleKey)));
       row.appendChild(thumb);
     }
 
@@ -496,6 +532,8 @@
       checkKey(owner, "roleKey", e.roleKey);
       checkKey(owner, "orgKey", e.orgKey);
       if (e.orgShortKey) checkKey(owner, "orgShortKey", e.orgShortKey);
+      if (e.imageLink !== undefined && typeof e.imageLink !== "string") warn(owner + ": imageLink must be a URL string");
+      if (e.imageLink && !e.imageSrc) warn(owner + ": imageLink set without imageSrc — nothing to link");
       if (e.imageSrc && e.layout !== "textOnly") {
         if (!e.imageAltKey) warn(owner + ": imageSrc set without imageAltKey — alt falls back to role — org");
         else checkKey(owner, "imageAltKey", e.imageAltKey);
@@ -532,6 +570,11 @@
       checkKey(owner, "searchTextKey", p.searchTextKey);
       if (p.imageSrc && !p.imageAlt) warn(owner + ": imageSrc set without imageAlt");
       else if (p.imageSrc) checkKey(owner, "imageAlt", p.imageAlt);
+      if (p.thumbSrc) {
+        if (!p.imageSrc) warn(owner + ": thumbSrc set without imageSrc — the row shows no thumbnail");
+        if (!p.thumbAltKey) warn(owner + ": thumbSrc set without thumbAltKey — falls back to imageAlt");
+        else checkKey(owner, "thumbAltKey", p.thumbAltKey);
+      }
 
       checkTags(owner, p.tags);
 
@@ -559,6 +602,7 @@
         } else {
           if (p.homeLayout !== "collage") warn(owner + ": gallery is set but homeLayout is not \"collage\" — the gallery is ignored");
           if (p.gallery.length > GALLERY_MAX) warn(owner + ": gallery has " + p.gallery.length + " items (max " + GALLERY_MAX + ") — extras are dropped");
+          if (p.homeLayout === "collage" && p.gallery.length < GALLERY_MIN) warn(owner + ": collage needs at least " + GALLERY_MIN + " gallery items — falls back to stacked");
           p.gallery.forEach(function (g, n) {
             var item = owner + ": gallery[" + n + "]";
             if (!g || !g.src) warn(item + " is missing src — skipped");
@@ -669,6 +713,7 @@
     buildViewLink: buildViewLink,
     buildPartOfLink: buildPartOfLink,
     buildImage: buildImage,
+    linkImage: linkImage,
     buildFeatured: buildFeatured,
     buildRow: buildRow,
     targetFromHash: targetFromHash,

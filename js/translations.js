@@ -129,12 +129,13 @@ const translations = {
     expHeroStatus: "Currently a Mechanical Engineering and Spanish IEL student at the University of Tulsa — seeking summer 2027 internships in engineering and Spanish.",
     expHeroStatusCurrent: "Currently {role} at {org}.",
     expHeroPara: "This past summer I worked at Baker Hughes, doing some mechanical engineering and some process automation. Now I'm looking for a summer 2027 internship where I can get more hands-on experience.",
-    // Hero collage images (experience.html, slots 1–5 in manifest order)
-    expHeroCollage1Alt: "Industrial 3D printer in the Baker Hughes R&D lab",
-    expHeroCollage2Alt: "G-View plotting speed, torque, oil temperature, and vibration from a demo test file",
-    expHeroCollage3Alt: "The old ultrasonic cleaning basket next to the smaller 3D-printed replacement",
-    expHeroCollage4Alt: "Machining the pin on a lathe in the TU machine shop",
-    expHeroCollage5Alt: "Gideon in his Scout uniform directing a volunteer on build day",
+    // Hero tiles (experience.html): three captioned photos beside the text panel.
+    expHeroTile1Cap: "3D scanner automation · Baker Hughes",
+    expHeroTile1Alt: "A 3D-printed fixture on the 3D scanner's turntable",
+    expHeroTile2Cap: "Machining the valve pin · TU machine shop",
+    expHeroTile2Alt: "Machining the valve pin on a lathe",
+    expHeroTile3Cap: "Eagle Scout pathway · build day",
+    expHeroTile3Alt: "Gideon and volunteers building the pathway",
 
     // experience.html — §2 entries
     expCaseStudyLink: "View full case study →",
@@ -151,7 +152,7 @@ const translations = {
     expBakerHughesBullet3: "Spun off G-View, a standalone data-review app, and a no-code automation builder, G-RPA, from those two projects.",
     expBakerHughesBullet4: "Wrote user and technical guides for each app with AI assistance, cutting documentation time from weeks to days; presented my GitHub Copilot workflow to the R&D team and was asked to write a white paper on it.",
     expBakerHughesBullet5: "Reviewed and revised drawings for a precision stage tester fix, using 3D-printed parts to check fit before machining.",
-    expBakerHughesImageAlt: "3D-printed fixtures for holding parts in the optical scanner",
+    expBakerHughesImageAlt: "The KEYENCE 3D scanner workstation in the Baker Hughes R&D lab",
 
     expMachineShopRole: "Machine Shop Technician",
     expMachineShopOrg: "McElroy Prototyping Lab, University of Tulsa",
@@ -197,20 +198,25 @@ const translations = {
     // orgKey). Shown below the tags on any entry whose `experience` field is set.
     projPartOf: "Part of: {org} →",
     projTagClear: "Clear tag filter",      // aria-label on the ✕ of the "<Tag> ✕" chip
+    projPartClear: "Clear role filter",    // aria-label on the ✕ of the "<Org> ✕" chip (?part=)
     projCount: "{n} projects",             // {n} filled by js/projects.js
     projCountOne: "{n} project",
-    projEmpty: "No projects carry that tag.",
+    projEmpty: "No projects match that filter.",   // tag / role filter, no query
     projEmptySearch: "No projects match “{q}”.",   // {q} = the search query
 
     // projects/<slug>.html — sub-page chrome (js/project-page.js)
     projReportLink: "Read the report →",
     projAllProjects: "← All projects",
+    // Lightbox (sub-page photos) — aria-labels on the three buttons
+    projLightboxClose: "Close",
+    projLightboxPrev: "Previous photo",
+    projLightboxNext: "Next photo",
 
     /* ---- Projects: featured -------------------------------------------- */
     projPumpCylinderFailureTitle: "Paint Sprayer Pump Cylinder Failure Analysis",
     projPumpCylinderFailureDesc: "Traced cracked paint-sprayer pump cylinders to freezing rinse water, then built a $135 fix that drains it in 20 seconds.",
     projPumpCylinderFailureLongDesc: "Ultimate Painting & Drywall had ten paint sprayers down with cracked pump cylinders, at $10–15k per failure. Our team traced it to water freezing inside, and we designed and prototyped a valve-actuating pin to drain the water. Draining takes a painter about 20 seconds, and if it prevents even one failure, the $135 pin has paid for itself 80 times over. The project won the 2026 HackworthWillson Prize for Excellence in Failure Analysis.",
-    projPumpCylinderFailureAlt: "The valve-actuating pin assembly, taken apart next to a ruler",
+    projPumpCylinderFailureAlt: "The valve-actuating pin installed on the sprayer's inlet elbow",
     projPumpCylinderFailureSearch: "Titan PowrTwin 8900 airless sprayer 440C stainless steel Rockwell hardness HRC microstructure hoop stress freezing ME 3033 Properties of Materials Henshaw HackworthWillson Prize Ultimate Painting & Drywall Impact 440 3D printing",
     projPumpCylinderFailureSection1Heading: "The problem",
     projPumpCylinderFailureSection1Body: "Ultimate Painting & Drywall runs Titan PowrTwin 8900 airless sprayers on jobs across the country. Ten of them were out of service with the same failure: a cracked or burst pump cylinder, often within the first year of a part meant to last five. On a job with only one sprayer, that meant at least two weeks of downtime, and $10–15k in repairs and lost labor.",
@@ -239,9 +245,11 @@ const translations = {
     projEaglePathwayTitle: "Wheelchair-Accessible Pathway (Eagle Scout Project)",
     projEaglePathwayDesc: "Planned and led 27 volunteers to build a 273.5 sq ft ADA-compliant pathway for a business that employs adults with special needs.",
     projEaglePathwayLongDesc: "The Bee Community in Bryan, Texas, employs adults with special needs. Their artisans who use wheelchairs couldn't reach the picnic tables out back, especially once rain turned the yard to mud. For my Eagle Scout project, I designed a 3-foot-wide, ADA-compliant decomposed granite pathway and led 27 volunteers to build it in one day.",
-    projEaglePathwayAlt: "Gideon in his Scout uniform directing a volunteer on build day",
-    projEaglePathwayGallery1Alt: "Volunteers spreading decomposed granite next to a plate compactor",
-    projEaglePathwayGallery2Alt: "The finished decomposed granite pathway",
+    projEaglePathwayAlt: "Volunteers compacting the decomposed granite pathway with a plate compactor",
+    // Home collage cells (gallery), in order.
+    projEaglePathwayGallery1Alt: "Gideon in his Scout uniform directing a volunteer on build day",
+    projEaglePathwayGallery2Alt: "Volunteers spreading decomposed granite next to a plate compactor",
+    projEaglePathwayGallery3Alt: "The finished decomposed granite pathway",
     projEaglePathwaySearch: "Eagle Scout BSA Boy Scouts ADA accessibility decomposed granite landscape fabric lumber edging plate compactor The Bee Community Bryan Texas volunteers",
     projEaglePathwaySection1Heading: "How it started",
     projEaglePathwaySection1Body: "My first Eagle project plan was rainwater tanks for a community garden, and it fell through when COVID hit. About a year later, through a connection in my troop, I found The Bee Community, a Bryan business that employs adults with special needs. Their artisans make goods like dog treats and soap. Their backyard was spacious, but artisans who use wheelchairs couldn't get to the picnic tables, especially when it was muddy.",
@@ -295,7 +303,7 @@ const translations = {
 
     projAutoscanTitle: "AutoScan: 3D Scanner Automation",
     projAutoscanDesc: "Automated a KEYENCE 3D optical scanner so scan batches run unattended, saving around 10 hours of operator time per batch.",
-    projAutoscanAlt: "3D-printed fixtures for holding parts in the optical scanner",
+    projAutoscanAlt: "The KEYENCE 3D scanner workstation in the Baker Hughes R&D lab",
     projAutoscanSearch: "KEYENCE 3D optical scanner scan fixtures 3D printing AutoScan Baker Hughes",
 
     projDynamicsPdfUnifierTitle: "Dynamics PDF Unifier",
@@ -453,11 +461,12 @@ const translations = {
     expHeroStatus: "Actualmente estudiante de Ingeniería Mecánica y Español del programa IEL en la Universidad de Tulsa, en busca de pasantías de ingeniería y español para el verano de 2027.",
     expHeroStatusCurrent: "Actualmente trabajo como {role} en {org}.",
     expHeroPara: "El verano pasado trabajé en Baker Hughes, haciendo algo de ingeniería mecánica y algo de automatización de procesos. Ahora busco una pasantía para el verano de 2027 donde pueda ganar más experiencia práctica.",
-    expHeroCollage1Alt: "Impresora 3D industrial en el laboratorio de I+D de Baker Hughes",
-    expHeroCollage2Alt: "G-View graficando velocidad, par, temperatura del aceite y vibración de un archivo de prueba de demostración",
-    expHeroCollage3Alt: "La canasta ultrasónica original junto al reemplazo más pequeño impreso en 3D",
-    expHeroCollage4Alt: "Maquinando el pasador en un torno del taller de TU",
-    expHeroCollage5Alt: "Gideon con su uniforme scout dirigiendo a un voluntario el día de la obra",
+    expHeroTile1Cap: "Automatización de un escáner 3D · Baker Hughes",
+    expHeroTile1Alt: "Un soporte impreso en 3D sobre la plataforma giratoria del escáner 3D",
+    expHeroTile2Cap: "Maquinando el pasador de la válvula · taller de TU",
+    expHeroTile2Alt: "Maquinando el pasador de la válvula en un torno",
+    expHeroTile3Cap: "Sendero Eagle Scout · día de la obra",
+    expHeroTile3Alt: "Gideon y voluntarios construyendo el sendero",
 
     // experience.html — §2 entries
     expCaseStudyLink: "Ver caso completo →",
@@ -472,7 +481,7 @@ const translations = {
     expBakerHughesBullet3: "A partir de esos dos proyectos, desarrollé G-View, una aplicación independiente para revisar datos, y G-RPA, una herramienta para crear automatizaciones sin programar.",
     expBakerHughesBullet4: "Redacté guías técnicas y de usuario para cada aplicación con ayuda de IA, lo que redujo el tiempo de documentación de semanas a días; presenté mi flujo de trabajo con GitHub Copilot al equipo de I+D y me pidieron escribir un documento técnico al respecto.",
     expBakerHughesBullet5: "Revisé y corregí los planos para reparar un banco de precisión que prueba etapas de bomba, y usé piezas impresas en 3D para comprobar el ajuste antes del maquinado.",
-    expBakerHughesImageAlt: "Soportes impresos en 3D para sujetar piezas en el escáner óptico",
+    expBakerHughesImageAlt: "La estación del escáner 3D KEYENCE en el laboratorio de I+D de Baker Hughes",
 
     expMachineShopRole: "Técnico del Taller de Maquinado",
     expMachineShopOrg: "McElroy Prototyping Lab, Universidad de Tulsa",
@@ -517,20 +526,24 @@ const translations = {
     projViewLink: "Ver proyecto →",
     projPartOf: "Parte de: {org} →",
     projTagClear: "Quitar el filtro de etiqueta",
+    projPartClear: "Quitar el filtro de puesto",
     projCount: "{n} proyectos",
     projCountOne: "{n} proyecto",
-    projEmpty: "Ningún proyecto tiene esa etiqueta.",
+    projEmpty: "Ningún proyecto coincide con ese filtro.",
     projEmptySearch: "Ningún proyecto coincide con «{q}».",
 
     // projects/<slug>.html — subpágina
     projReportLink: "Leer el reporte →",
     projAllProjects: "← Todos los proyectos",
+    projLightboxClose: "Cerrar",
+    projLightboxPrev: "Foto anterior",
+    projLightboxNext: "Foto siguiente",
 
     /* ---- Proyectos destacados ------------------------------------------ */
     projPumpCylinderFailureTitle: "Análisis de falla del cilindro de bomba de un equipo de pintura",
     projPumpCylinderFailureDesc: "Identificamos que los cilindros agrietados de unos equipos de pintura airless se debían al agua de enjuague congelada, y construimos una solución de $135 que la drena en 20 segundos.",
     projPumpCylinderFailureLongDesc: "Ultimate Painting & Drywall tenía diez equipos de pintura airless fuera de servicio por cilindros de bomba agrietados, con un costo de $10,000 a $15,000 por falla. Nuestro equipo encontró que la causa era agua que se congelaba adentro, y diseñamos e hicimos un prototipo de un pasador que acciona la válvula para drenar el agua. Drenarla le toma a un pintor unos 20 segundos, y si evita aunque sea una falla, el pasador de $135 recupera 80 veces lo que cuesta. El proyecto ganó el HackworthWillson Prize for Excellence in Failure Analysis de 2026.",
-    projPumpCylinderFailureAlt: "El conjunto del pasador con resorte que acciona la válvula, desarmado junto a una regla",
+    projPumpCylinderFailureAlt: "El pasador que acciona la válvula, instalado en el codo de entrada del equipo",
     projPumpCylinderFailureSearch: "Titan PowrTwin 8900 equipo de pintura airless acero inoxidable 440C dureza Rockwell HRC microestructura esfuerzo circunferencial congelación ME 3033 Properties of Materials Henshaw HackworthWillson Prize Ultimate Painting & Drywall Impact 440 impresión 3D",
     projPumpCylinderFailureSection1Heading: "El problema",
     projPumpCylinderFailureSection1Body: "Ultimate Painting & Drywall usa equipos de pintura airless Titan PowrTwin 8900 en obras por todo el país. Diez de ellos estaban fuera de servicio por la misma falla: un cilindro de bomba agrietado o reventado, muchas veces dentro del primer año de una pieza diseñada para durar cinco. En una obra con un solo equipo, eso significaba al menos dos semanas de inactividad y de $10,000 a $15,000 en reparaciones y mano de obra perdida.",
@@ -559,9 +572,10 @@ const translations = {
     projEaglePathwayTitle: "Sendero accesible para sillas de ruedas (proyecto Eagle Scout)",
     projEaglePathwayDesc: "Planeé la obra y dirigí a 27 voluntarios para construir un sendero de 273.5 pies² que cumple con la ADA para una empresa que emplea a adultos con necesidades especiales.",
     projEaglePathwayLongDesc: "The Bee Community, en Bryan, Texas, emplea a adultos con necesidades especiales. Sus artesanos que usan silla de ruedas no podían llegar a las mesas de picnic, sobre todo cuando la lluvia convertía el patio en lodo. Para mi proyecto Eagle Scout, diseñé un sendero de granito descompuesto de 3 pies de ancho que cumple con la ADA y dirigí a 27 voluntarios para construirlo en un día.",
-    projEaglePathwayAlt: "Gideon con su uniforme scout dirigiendo a un voluntario el día de la obra",
-    projEaglePathwayGallery1Alt: "Voluntarios esparciendo granito descompuesto junto a una compactadora",
-    projEaglePathwayGallery2Alt: "El sendero de granito descompuesto terminado",
+    projEaglePathwayAlt: "Voluntarios compactando el sendero de granito descompuesto con una compactadora",
+    projEaglePathwayGallery1Alt: "Gideon con su uniforme scout dirigiendo a un voluntario el día de la obra",
+    projEaglePathwayGallery2Alt: "Voluntarios esparciendo granito descompuesto junto a una compactadora",
+    projEaglePathwayGallery3Alt: "El sendero de granito descompuesto terminado",
     projEaglePathwaySearch: "Eagle Scout BSA scouts ADA accesibilidad granito descompuesto malla geotextil bordes de madera compactadora The Bee Community Bryan Texas voluntarios",
     projEaglePathwaySection1Heading: "Cómo empezó",
     projEaglePathwaySection1Body: "Mi primer plan para el proyecto Eagle eran tanques de agua de lluvia para un huerto comunitario, y se cayó cuando llegó el COVID. Como un año después, gracias a un contacto en mi tropa, conocí The Bee Community, una empresa de Bryan que emplea a adultos con necesidades especiales. Sus artesanos hacen productos como premios para perros y jabón. Su patio era amplio, pero los artesanos que usan silla de ruedas no podían llegar a las mesas de picnic, sobre todo cuando había lodo.",
@@ -615,7 +629,7 @@ const translations = {
 
     projAutoscanTitle: "AutoScan: automatización de un escáner 3D",
     projAutoscanDesc: "Automaticé un escáner óptico 3D KEYENCE para que los lotes de escaneo corran sin supervisión, lo que ahorra unas 10 horas de trabajo de operador por lote.",
-    projAutoscanAlt: "Soportes impresos en 3D para sujetar piezas en el escáner óptico",
+    projAutoscanAlt: "La estación del escáner 3D KEYENCE en el laboratorio de I+D de Baker Hughes",
     projAutoscanSearch: "KEYENCE escáner óptico 3D soportes impresión 3D AutoScan Baker Hughes",
 
     projDynamicsPdfUnifierTitle: "Dynamics PDF Unifier",

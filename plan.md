@@ -435,9 +435,10 @@ by `js/projects.js` and can never navigate. The placeholder is set from
 a) `var(--footer-bg)` dark band with light text (bookends the dark footer)
 b) `var(--bg-section)` with a subtle texture or gradient
 c) A bronze-tinted wash
-**(b) IS BUILT** (2026-09-20): a `--bg-section` → `--bg` vertical gradient under the 2px bronze
-rule. (a) remains the more striking option — compare it in the color pass, with the band
-temporarily unhidden.
+**RESOLVED 2026-09-27: (c) bronze wash.** Built 2026-09-20 as a `--bg-section` → `--bg`
+gradient, briefly a solid `--bg-section` (which matched the featured section under it), now a
+per-palette `--search-bg` token: bronze ≈10% over `--bg-section` (light #E0D7C2, dark
+#32291A). (a) dark and the page background were weighed and passed over.
 
 **Placeholder text:** EN "Search my projects" / ES "Buscar proyectos" — via `data-i18n`.
 Keep EN and ES close in character length per the CLAUDE.md compact-element rule.
@@ -929,3 +930,60 @@ visible experience bands + 3 hidden pre-college roles; hero status / paragraph /
   2026-07, Dynamics PDF Unifier 2026-09.
 - Search keywords drawn only from tools named in the copy / intake.
 - Employer band colors remain neutral grey placeholders (after the fair).
+
+[2026-09-27] Polish pass (third session of the day). No commit.
+1. **Images.** Optional `thumbSrc` / `thumbAltKey` on projects (index rows only; fallback
+   imageSrc / imageAlt). Pump: pin-installed-wide (featured) + pin-installed-thumb; Eagle:
+   compacting-path (featured) + finished-path thumb; G-View: g-view-thumb; AutoScan and the
+   Baker Hughes band: scanner-station. The home collage now reads its 2–4 cells from
+   `gallery` alone (imageSrc is not a cell; GALLERY_MAX 4); Eagle's gallery lists
+   directing-volunteers, granite-and-compactor, finished-path so the collage is unchanged.
+2. **Text-only index rows** keep the two-column grid at ≥768px with the text in column 2,
+   so their left edge and width match the image rows. Phones unchanged.
+3. **Home featured** centered at the index width (1000 / 1120px), "Featured work" is a real
+   `<h2 class="section-heading">` like projects.html. `js/site-config.js` →
+   `homeFeaturedSideBySide` (default false) alternates image/text at ≥1200px and stacks
+   below; a collage keeps its grid in the image column.
+4. **Experience hero** rebuilt: solid text panel (min(540px, 52%)) + three captioned tiles
+   (scanner-fixture tall; lathe, eagle stacked) starting at the panel edge, height
+   min(80vh, 640px), no scrim; under 768px text first, tiles stacked at 4:3. printer.jpg and
+   basket-old-new.jpg deleted (unreferenced). Keys `expHeroTile<N>Cap / Alt`.
+5. **Image links + hover.** Images with a destination are wrapped in `<a class="image-link">`
+   (clipped frame, image scales 1.03 on hover / :focus-visible, 250ms, pointer; off under
+   prefers-reduced-motion) — thumbnails / featured images / collages → subpageUrl; band
+   images → new optional `imageLink` (baker-hughes → `projects.html?part=baker-hughes`,
+   machine-shop → `projects/pump-cylinder-failure.html`). Recorded as THE motion exception
+   in CLAUDE.md. New `?part=<experience slug>` filter on projects.html: own chip (short org
+   name + ✕, `projPartClear`), AND with tag + search, unknown slugs ignored, hash clears both;
+   `projEmpty` reworded to cover both filters.
+6. **Lightbox** on sub-pages: native `<dialog class="lightbox">`, image ≤ 92vw × 88vh,
+   caption = alt, ✕ / prev / next (`projLightboxClose / Prev / Next`), ← → keys, Esc and
+   backdrop close, scroll locked, focus returned, opacity-only fade; anchors keep their href
+   as the no-JS fallback. The dialog is seeded with the first photo so it never holds an
+   empty `<img>`.
+7. **About morph** by manifest state: neither doc → static resume; one → Resume + that
+   document (resume button cloned into the group's top slot); both → CV + Transcript.
+   Verified all three by stubbing js/docs-data.js in the scratchpad test.
+8. **About alignment.** "Statement on AI" now sits in the same 1100px container (padding
+   included) as the §1/§2 grid, so its left edge matches "Who am I?" at every width; on
+   phones it takes the §2 side padding. Measured equal at 375 / 768 / 1024 / 1280 / 1440 / 1800.
+9. **Featured collapses while filtering** (projects.html). Any active filter — search text,
+   `?tag=`, `?part=` — adds `.is-collapsed` + aria-hidden to `#featured-projects`: a one-row
+   grid animates 1fr → 0fr with padding and opacity over 300ms so the index glides up under
+   the search band; clearing everything expands it. A page opened with a filter starts
+   collapsed with no animation; reduced motion → instant. Chosen over "fade, then instant
+   collapse" and "instant" after seeing all three described — Gideon may revert (second
+   movement exception in CLAUDE.md). The × in the search field became a bordered chip
+   (36×28, opacity-only appear) rather than adding a separate Clear button.
+10. **List headings + search band color.** New `.list-heading` class (Lora 600,
+   clamp(1.5rem, 1.2rem + 1.2vw, 2rem), left on the column edge, margin-bottom
+   clamp(20px, 3vw, 28px)) on the three list tops — home "Featured work", projects "Featured
+   projects" / "All projects". Chosen over resizing the shared `.section-heading` (which
+   would have grown the About panel label too) and over a page-scoped size: two classes,
+   two jobs; `.section-heading` stays 15px for panel labels. Experience hero/band headings
+   untouched. Search band: `--search-bg` per palette (bronze wash) — see open decision #1.
+Verified with Playwright (scratchpad) at 375 / 768 / 1280 / 1440 × EN / ES × light / dark on
+every page and the three sub-pages: no overflow, no nested anchors, no broken images, alt on
+every image, console clean; hover scale on and off (reduced motion); `?part=` alone, with
+`?tag=`, with search, unknown, ES; lightbox keyboard-only (Enter, → ←, Esc, focus return);
+side-by-side flag on at 1280 / 1024.

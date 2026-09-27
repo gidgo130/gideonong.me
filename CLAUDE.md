@@ -18,6 +18,7 @@ projects.html       Technical projects with photos, tags, descriptions
 projects/<slug>.html  One tiny shell per project sub-page (body data-slug + data-root="../")
 css/style.css       All styles (single file, organized by section)
 js/chips.js         The one phrase auto-linker (IEL, Zohaib Sheikh, …) — see Phrase chips
+js/site-config.js   Author-side switches (home featured side-by-side flag); index.html only
 js/main.js          Nav behavior, language toggle, document links
 js/translations.js  All EN and ES text strings for the bilingual toggle (plain text, no HTML)
 js/tags-data.js     The one shared tag vocabulary (id + i18n key)
@@ -62,6 +63,7 @@ Stamen gold → deep bronze primary. Mid petal desaturated → rose-gold on cont
 --border:       #DDD5C8    warm neutral divider
 --footer-bg:    #1C1510    very dark warm near-black
 --footer-text:  #D4C9BB    warm light text on footer
+--search-bg:    #E1D7CF    projects.html search band (bronze ≈10% over bg-section)
 
 ## PALETTE B — Warm Neutral (CURRENT ACTIVE)
 The original warm brass direction. Warmer and more golden than A, with a more noticeably cream-tinted background. Good if the site feels too cold or clinical.
@@ -77,6 +79,7 @@ The original warm brass direction. Warmer and more golden than A, with a more no
 --border:       #DDD5C8    warm neutral divider
 --footer-bg:    #1A1510    dark warm
 --footer-text:  #D4C9BB    warm light text
+--search-bg:    #E0D7C2    projects.html search band (bronze ≈10% over bg-section; dark #32291A)
 
 ## PALETTE C — Bluebonnet
 Inspired by Lupinus texensis (Texas state flower). Cool blue accent.
@@ -93,6 +96,7 @@ Good if the site should feel more technical, precise, and engineering-forward.
 --border:       #D4D8E4    cool blue-grey divider
 --footer-bg:    #1A1F2E    dark blue-charcoal
 --footer-text:  #C8D4E4    cool light text
+--search-bg:    #D8E0ED    projects.html search band (blue ≈10% over bg-section)
 
 ## PALETTE D — Winecup Prairie
 Inspired by Callirhoe involucrata (Texas Winecup). Warm rose-burgundy primary, sage green secondary. The most botanical and personal of the four. Good if the site should feel warmer and more openly personal/expressive.
@@ -108,6 +112,7 @@ Inspired by Callirhoe involucrata (Texas Winecup). Warm rose-burgundy primary, s
 --border:       #DDD0CE    warm rose-tinted divider
 --footer-bg:    #1A1018    dark rose-near-black
 --footer-text:  #D8C8C4    warm rose-light text
+--search-bg:    #E4D6D6    projects.html search band (wine ≈10% over bg-section)
 
 ================================================================================
 DESIGN TOKENS IN USE (copy from active palette above into style.css)
@@ -153,8 +158,18 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
   static files, and js/docs-data.js is committed like any other file.
 - Dev files are excluded from deploys by .vercelignore (*.md, scripts/, .githooks/,
   .gitattributes, references/, staging/). Add any new dev-only path there.
-- about.html's resume → CV + transcript morph needs both CV and transcript to exist;
-  while either is missing, js/about.js skips the morph and the resume button stays.
+- about.html's resume → CV + transcript morph (js/about.js), by what the manifest holds:
+  both CV and transcript → resume morphs into CV + Transcript; exactly one → resume morphs
+  into Resume + that document (a clone of the resume button fills the top slot); neither →
+  no morph, the resume button stays static.
+
+### Experience hero (2026-09-27)
+A solid `--footer-bg` text panel (min(540px, 52%) wide) and three captioned photo tiles
+that start where the panel ends — nothing sits under the text, so there is no scrim.
+Height min(80vh, 640px). Desktop: tile 1 (scanner-fixture) tall, tiles 2–3 (lathe, eagle)
+stacked, 4px gap; captions in a dark translucent bar along each tile's bottom
+(`expHeroTile<N>Cap`), alts `expHeroTile<N>Alt`. Under 768px: text first, tiles stacked
+below at 4:3, captions still shown. Images live in assets/images/experience/hero/.
 
 ### About page — hidden sections (career fair, 2026-09-27)
 §3 books (`#about-reading`), §4 FAQ (`#about-faq`) and the interesting-sites block of §6
@@ -180,7 +195,15 @@ data-i18n-alt="headshotAlt">` in about.html — swap the file or the src there.
    f. "Download resume" button — primary accent border and text, border-radius: 2px
 4. Featured work section (image-forward, eater.net-inspired):
    Background: var(--bg-section). Top border: 1px solid var(--border).
-   "Featured work" as a readable section heading (~15px Lora, near-black)
+   "Featured work" is an <h2 class="list-heading"> — Lora 600, clamp(1.5rem, 1.2rem + 1.2vw,
+   2rem), left on the column edge — the same element and size as "Featured projects" /
+   "All projects" on projects.html. (.section-heading, 15px, is for small panel labels only.)
+   The column is centered (margin-inline: auto) at the projects.html index width (1000px,
+   1120px at 1440+), heading aligned to it.
+   Wide-screen option: js/site-config.js → `homeFeaturedSideBySide: true` lays the entries
+   out side by side at ≥1200px (image one side, text the other, alternating; a collage
+   keeps its grid in the image column) and stacks them below 1200px. Default OFF. That flag
+   is the only switch; no data or markup changes.
    Rendered by js/home.js from js/projects-data.js (featured: true, listing: "index")
    with the same builders and markup as projects.html §2: image, title,
    "<Context> · <dates>" meta, description, tags below description (not above),
@@ -191,11 +214,12 @@ data-i18n-alt="headshotAlt">` in about.html — swap the file or the src there.
      "stacked"    DEFAULT — full-width 16:9 image (object-fit: cover), text below
      "imageLeft"  image ~55% left, text right (the projects.html §2 style)
      "imageRight" text left, image right
-     "collage"    full-width 16:9 grid of imageSrc + `gallery` (1–3 extra images):
-                  2 → two equal columns; 3 → imageSrc large left (2/3), two stacked
-                  right; 4 → 2×2. Below 768px: 2 side by side, 3 large on top + two
-                  below, 4 → 2×2. Every cell object-fit: cover, alt from its altKey.
-   Fallbacks, never an error: collage with no gallery → stacked; no imageSrc → text only.
+     "collage"    full-width 16:9 grid of the `gallery` images (2–4; imageSrc is NOT a
+                  cell): 2 → two equal columns; 3 → first cell large left (2/3), two
+                  stacked right; 4 → 2×2. Below 768px: 2 side by side, 3 large on top +
+                  two below, 4 → 2×2. Every cell object-fit: cover, alt from its altKey.
+   Fallbacks, never an error: collage with fewer than 2 gallery items → stacked; no
+   imageSrc → text only.
 5. Footer (dark)
 
 ## Bilingual support (EN/ES)
@@ -223,9 +247,16 @@ data-i18n-alt="headshotAlt">` in about.html — swap the file or the src there.
   switch keeps it. A `#<slug>` deep link clears it. Pills: pointer cursor ONLY — no hover
   effect, no enlarged tap target (the global a:hover bronze is cancelled on .tag-pill).
   A pill click on projects.html itself is a plain link (page reloads).
+- Role filter (2026-09-27): `projects.html?part=<experience slug>` works the same way — its
+  own chip beside the count showing the role's short org name + ✕ (aria-label
+  `projPartClear`), ANDed with the tag filter and the search, unknown or hidden slugs
+  ignored, `#<slug>` clears both filters. The Baker Hughes band image links here.
 - Keyword search band (§1): live, debounced, AND over whitespace tokens, diacritic-
   insensitive, both languages indexed. Combines with the tag filter (AND). Only the
-  index is filtered; featured is not.
+  index is filtered; featured is not — instead the whole featured section COLLAPSES
+  (`.is-collapsed`, aria-hidden) while any filter is active (search text, ?tag=, ?part=),
+  so results sit directly under the search band, and returns when all are cleared. The ×
+  inside the field (bordered chip, shown only with text) clears the query.
 - Tag pills placed BELOW description text, not above the title
 - Unlinked pages: exist at a URL, not listed in nav or project list
   (for politically-sensitive or selectively shared work) — `listing: "unlisted"` in
@@ -276,8 +307,16 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
   check flags a sortDate that disagrees with the dates (against `to` when it is a point,
   else `from`: year must match, a month must match, a season must contain the month).
 - Home featured presets: optional `homeLayout` ("stacked" default | "imageLeft" |
-  "imageRight" | "collage") and, for collage only, `gallery: [{ src, altKey }]` with 1–3
-  extra images. Ignored by projects.html §2. Gallery alt keys: proj<SlugCamel>Gallery<N>Alt.
+  "imageRight" | "collage") and, for collage only, `gallery: [{ src, altKey }]` — the 2–4
+  collage cells themselves (imageSrc is not one). Ignored by projects.html §2. Gallery alt
+  keys: proj<SlugCamel>Gallery<N>Alt.
+- Thumbnails (2026-09-27): optional `thumbSrc` + `thumbAltKey` on a project. Index rows use
+  them and fall back to imageSrc / imageAlt; featured blocks and sub-pages always use
+  imageSrc.
+- Image links (2026-09-27): a project's thumbnail / featured image / collage links to its
+  `subpageUrl` when one exists (else plain); a band image links to the experience entry's
+  optional `imageLink` (site-root-relative, e.g. "projects.html?part=baker-hughes" or
+  "projects/pump-cylinder-failure.html"; absent → plain). See the animation exception.
 - Project sub-pages (2026-09-27): one renderer, js/project-page.js, plus one shell per page
   at projects/<slug>.html whose <body> carries `data-slug="<slug>"` and `data-root="../"`.
   The shell has the same nav / dev banner / footer / toggle as every page with `../` paths,
@@ -288,8 +327,13 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
     page: { sections: [{ headingKey, bodyKey }], facts: [{ labelKey, valueKey }],
             photos: [{ src, altKey }], reportPdf: "", creditKey: "" }
   Layout: hero image (imageSrc, 16:9) → title → "<Context> · <dates>" → "Part of" link →
-  sections → photo grid (2-up, 1-up below 768px, each opens the full image in a new tab)
-  → quick-facts box → "Read the report →" (new tab) → credit → tags → "← All projects".
+  sections → photo grid (2-up, 1-up below 768px) → quick-facts box → "Read the report →"
+  (new tab) → credit → tags → "← All projects".
+  Lightbox (2026-09-27): clicking a photo opens it in a native <dialog class="lightbox">
+  (image ≤ 92vw × 88vh, caption = alt text, ✕ with `projLightboxClose`, prev/next with
+  `projLightboxPrev` / `projLightboxNext`, ← → keys, Esc and backdrop click close, page
+  scroll locked, focus returns to the photo, opacity-only fade). The anchor keeps its href
+  as the no-JS fallback (new tab). No libraries.
   Any missing piece renders nothing. `gallery` stays collage-only; sub-page photos use
   page.photos. `subpageUrl` = "/projects/<slug>.html" once the file exists, else "" (link
   omitted). Listing: index + unlisted entries render for everyone; a hidden entry renders
@@ -327,6 +371,20 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
 - NO page-load animations — no rising text, no fading on arrival
 - Scroll-triggered fades only: IntersectionObserver, opacity 0→1, ~300ms, no movement
 - Hover: color transitions only, ~150ms ease
+- DELIBERATE EXCEPTION (2026-09-27): images that link somewhere (index thumbnails,
+  featured images and collages → their sub-page; band images → `imageLink`) are wrapped in
+  `<a class="image-link">`, a clipped frame in which the image scales to 1.03 on hover and
+  :focus-visible, 250ms ease, pointer cursor. Images with no destination are never wrapped
+  and never move. Off under prefers-reduced-motion. Nothing else may scale or move.
+- The sub-page lightbox fades in with opacity only (200ms); no other motion.
+- SECOND EXCEPTION (2026-09-27, may revert): on projects.html the featured section
+  collapses — grid row 1fr → 0fr plus padding, with an opacity fade — over 300ms while any
+  filter is active, and expands the same way when cleared. Gideon chose the animated
+  collapse over fade-then-instant "for now"; to revert, drop grid-template-rows / padding /
+  border-top-width from the two `.featured-projects` transitions in style.css. Off under
+  prefers-reduced-motion. The section starts with `.is-settling` (transitions off) and
+  js/projects.js removes it one frame after the first render, so a page opened already
+  filtered never animates on load.
 - Sticky nav: position: sticky, always opaque
 
 ## Mobile / responsive (Phase 2)
@@ -360,6 +418,9 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
   (dark mode overrides --nav-bg to a dark warm background, which is expected)
 - Do not hardcode display text in HTML — use data-i18n attributes
 - Do not put HTML in translations.js — links come from the js/chips.js phrase table
+- Two heading classes, two jobs: `.list-heading` (clamp(1.5rem, 1.2rem + 1.2vw, 2rem)) tops a
+  list of entries (home featured, projects §2 / §3); `.section-heading` (15px) labels a small
+  panel (About). Do not use one for the other's job.
 - Do not store `dates` as a literal string — use the { from, to } shape so it translates
 - Do not animate on page load or cause layout shift
 - Do not use dark mode toggle

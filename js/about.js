@@ -31,12 +31,26 @@
     if (!intro || !s1 || !s2 || !photoCol || !buttons || !resumeBtn || !cvBtn || !transcriptBtn || !group) return;
 
     // js/main.js (loaded first) hides any document button whose type has no file
-    // in the manifest (hidden attribute). The morph needs BOTH CV and transcript;
-    // with one or both missing it is skipped: the resume button stays put and an
-    // available single document simply shows in the bottom slot. The portrait
-    // travel is unaffected.
+    // in the manifest (hidden attribute). Three cases (2026-09-27):
+    //   both CV + transcript  → resume morphs into CV + Transcript (top / bottom)
+    //   exactly one of them   → resume morphs into Resume + that document: a
+    //                           clone of the resume button is inserted as the
+    //                           group's first child (same data-doc-link /
+    //                           data-i18n, so main.js keeps its href and label
+    //                           on later language toggles)
+    //   neither               → no morph; the resume button stays static
+    // The portrait travel is unaffected in every case.
     var groupCount = (cvBtn.hidden ? 0 : 1) + (transcriptBtn.hidden ? 0 : 1);
-    var morphEnabled = groupCount === 2;
+    var morphEnabled = groupCount >= 1;
+    var topBtn = cvBtn, bottomBtn = transcriptBtn;   // second-half targets
+    if (groupCount === 1) {
+      var resumeClone = resumeBtn.cloneNode(true);
+      resumeClone.removeAttribute('id');
+      resumeClone.setAttribute('data-btn', 'resume-copy');
+      group.insertBefore(resumeClone, group.firstChild);
+      topBtn = resumeClone;
+      bottomBtn = cvBtn.hidden ? transcriptBtn : cvBtn;
+    }
 
     // ---- TUNABLES (from the tuner) ----------------------------------------
     var NTEETH      = 16;     // spike count (more = finer rays)
@@ -76,10 +90,10 @@
     hitTop.style.strokeWidth = hitBot.style.strokeWidth = (2 * HIT_PAD) + 'px';
     buttons.appendChild(svg);
 
-    // click routing: top pad = resume (first half) / CV (second half); bottom pad = transcript
+    // click routing: top pad = resume (first half) / topBtn (second half); bottom pad = bottomBtn
     var qNow = 0;
-    hitTop.addEventListener('click', function (e) { e.preventDefault(); (qNow <= 0.5 ? resumeBtn : cvBtn).click(); });
-    hitBot.addEventListener('click', function (e) { e.preventDefault(); transcriptBtn.click(); });
+    hitTop.addEventListener('click', function (e) { e.preventDefault(); (qNow <= 0.5 ? resumeBtn : topBtn).click(); });
+    hitBot.addEventListener('click', function (e) { e.preventDefault(); bottomBtn.click(); });
     // hover: thicken the targeted visible lobe (style.css .morph-lobe.is-hover)
     function hoverPair(hit, lobe) {
       hit.addEventListener('pointerenter', function () { lobe.classList.add('is-hover'); });

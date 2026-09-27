@@ -101,7 +101,9 @@ Naming convention (anything else is ignored with a warning):
 - `assets/pdfs/transcript/Gideon Ong Transcript <YYYYMMDD>.pdf` — one file, no language prefix
 
 Files today: one EN resume (20260915). No ES resume, CV or transcript yet, so the CV and
-transcript buttons on about.html are hidden and its button morph is skipped until both exist.
+transcript buttons on about.html are hidden and the resume button stays static. Once ONE of
+CV / transcript exists the button morphs into Resume + that document; with both it morphs
+into CV + Transcript (2026-09-27).
 
 ---
 
@@ -252,10 +254,10 @@ belonging to projects.html.
 | `expHeroStatusCurrent` | template when an entry is `current`; must keep `{role}` and `{org}` | written ("Currently {role} at {org}.") | written |
 | `expHeroPara` | paragraph under the status sentence | written | written |
 
-**Collage photos** — five `<img>` tags in `experience.html`, in image-manifest order
-(printer, G-View screenshot, ultrasonic basket, pin on lathe, Eagle build day), alt text from
-`expHeroCollage1Alt…5Alt`. Slot 1 is the large left cell and sits entirely under the solid
-part of the scrim; slot 5 only appears at 1024px and up.
+**Hero tiles (2026-09-27)** — three captioned `<figure>` tiles in `experience.html` beside
+the solid text panel: scanner-fixture (tall), lathe-tile, eagle-tile (stacked). Captions
+`expHeroTile1Cap…3Cap`, alts `expHeroTile1Alt…3Alt` — all written EN/ES. Under 768px the text
+comes first and the tiles stack below it. No scrim: nothing sits under the text.
 
 ### §2 — Field reference (`js/experience-data.js`)
 
@@ -271,6 +273,9 @@ sortDate     "YYYY-MM" — the only thing ordering reads; newest first. Array or
              Must agree with `dates` (the dev check warns otherwise).
 tags         [tag ids from js/tags-data.js] — each pill links to projects.html?tag=<id>
 imageSrc     path, or "" for no image (renders text-only, no broken image)
+imageAltKey  i18n key for the band image's alt text (exp<SlugCamel>ImageAlt)
+imageLink    OPTIONAL — where the band image links (site-root-relative, e.g. "projects.html?part=<slug>");
+             absent → the image is plain, no hover
 subpageUrl   "/experience/<slug>.html" once the page exists, else "" (link omitted)
 layout       imageLeft | imageRight | fullBleed | textOnly
 status       "current" on AT MOST ONE entry across the whole array, else null
@@ -415,7 +420,9 @@ detail: if something is missing, mark it `TODO` and move on.
 - an **index** of every project — one compact row each: small thumbnail, title, "Context ·
   dates", one-line description, tag pills, the same "Part of" link. A live project count sits
   above it. Clicking any tag pill anywhere on the site shows the index filtered to that tag,
-  with a removable chip beside the count — there is no separate filter row.
+  with a removable chip beside the count — there is no separate filter row. While any filter
+  or search is active the featured set folds away so the results sit right under the search
+  band.
 
 Both zones read one list, and so does the home page's "Featured work" block. Marking a
 project "featured" promotes it into the featured blocks and it still appears in the index —
@@ -549,16 +556,20 @@ sortDate       "YYYY-MM" — the only thing ordering reads; newest first. Array 
                Must agree with `dates` (dev check warns).
 context        industry | coursework | personal | service | research  → ctx<Context> label
 tags           [tag ids from js/tags-data.js] — each pill links to projects.html?tag=<id>
-imageSrc       path, or "" (row renders text-only)
-subpageUrl     "/projects/<slug>.html" once projects/<slug>.html exists, or "" (link omitted)
+imageSrc       path, or "" (row renders text-only). Featured image / sub-page hero.
+thumbSrc       OPTIONAL — index-row thumbnail (4:3 crop); falls back to imageSrc
+thumbAltKey    OPTIONAL — alt key for thumbSrc; falls back to imageAlt
+subpageUrl     "/projects/<slug>.html" once projects/<slug>.html exists, or "" (link
+               omitted; the images then stay plain — they link to the sub-page only when
+               one exists)
 featured       true → also in projects.html §2 and the index.html featured block (max 3)
 pinned         true → top of the index regardless of sortDate
 listing        "index" | "unlisted" | "hidden"   ("nested" is reserved — see CLAUDE.md)
 experience     experience slug (baker-hughes, machine-shop, schultz-grader, turc) or ""
 homeLayout     OPTIONAL — index.html featured block only: "stacked" (default) | "imageLeft" |
                "imageRight" | "collage". projects.html §2 ignores it.
-gallery        OPTIONAL, collage only — [{ src, altKey }] × 1–3 extra images after imageSrc;
-               altKey = proj<SlugCamel>Gallery<N>Alt (EN + ES)
+gallery        OPTIONAL, collage only — [{ src, altKey }] × 2–4: the collage cells themselves
+               (imageSrc is NOT a cell); altKey = proj<SlugCamel>Gallery<N>Alt (EN + ES)
 page           OPTIONAL — sub-page content (projects/<slug>.html, rendered by js/project-page.js):
                  sections:  [{ headingKey, bodyKey }]   proj<SlugCamel>Section<N>Heading / Body
                  facts:     [{ labelKey, valueKey }]    proj<SlugCamel>Fact<N>Label / Value
@@ -581,7 +592,7 @@ Tags: `js/tags-data.js` holds `{ id, key }` pairs; the label is `tag<IdCamel>` i
 | `eagle-pathway` | July 2022 | 2022-07 | service | 2 (collage) | — | — | directing-volunteers + 2 collage + 3 sub-page photos, credit |
 | `g-view` | Summer 2026 | 2026-07 | industry | 3 (imageRight) | — | baker-hughes | g-view-demo.png |
 | `velora` | Summer 2026 | 2026-07 | industry | — | — | baker-hughes | none |
-| `autoscan` | Summer 2026 | 2026-07 | industry | — | — | baker-hughes | scan-fixtures.jpg |
+| `autoscan` | Summer 2026 | 2026-07 | industry | — | — | baker-hughes | scanner-station.jpg |
 | `dynamics-pdf-unifier` | Fall 2026 | 2026-09 | personal | — | — | schultz-grader | none |
 | `keplinger-heating` | Spring 2026 | 2026-05 | coursework | — | — | — | none |
 | `music-notes-matlab` | Spring 2026 | 2026-05 | coursework | — | — | — | trumpet-notes.png |

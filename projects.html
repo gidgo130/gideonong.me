@@ -77,9 +77,15 @@
   <!-- §2 — Featured projects. Rendered from js/projects-data.js by js/projects.js:
        every entry with featured: true. The SAME array drives §3 below — a featured
        project is promoted here, not copied here, and it still appears in the index. -->
-  <section class="featured-projects" id="featured-projects">
-    <h2 class="section-heading" data-i18n="projFeaturedHeading"></h2>
-    <div class="featured-list" id="featured-list"></div>
+  <!-- Collapses (height + opacity, js/projects.js adds .is-collapsed) while any
+       filter is active — search text, ?tag= or ?part= — so results sit right
+       under the search band. The inner wrapper is what the grid-row collapse
+       clips. -->
+  <section class="featured-projects is-settling" id="featured-projects">
+    <div class="featured-projects-inner">
+      <h2 class="list-heading" data-i18n="projFeaturedHeading"></h2>
+      <div class="featured-list" id="featured-list"></div>
+    </div>
   </section>
 
   <!-- §3 — Project index. Complete listing, deliberately more compact than §2:
@@ -87,13 +93,19 @@
        coverage. Rows by default; .project-index--grid is written in style.css and
        switching to it is a class swap on #project-index — no data or markup change. -->
   <section class="project-index-section" id="project-index-section">
-    <h2 class="section-heading" data-i18n="projIndexHeading"></h2>
+    <h2 class="list-heading" data-i18n="projIndexHeading"></h2>
 
     <!-- No filter row: every tag pill on the site links to
-         projects.html?tag=<id>. js/projects.js reads ?tag= and shows the active
-         tag as a "<Label> ✕" chip here; ✕ clears it and rewrites the URL. -->
+         projects.html?tag=<id>, and a band image links to
+         projects.html?part=<experience slug>. js/projects.js reads both and shows
+         each active filter as a "<Label> ✕" chip here; ✕ clears it and rewrites
+         the URL. -->
     <div class="index-controls">
       <p class="index-count" id="index-count" aria-live="polite"></p>
+      <span class="tag-chip" id="part-chip" hidden>
+        <span class="tag-chip-label" id="part-chip-label"></span>
+        <button type="button" class="tag-chip-clear" id="part-chip-clear" aria-label="">&#x2715;</button>
+      </span>
       <span class="tag-chip" id="tag-chip" hidden>
         <span class="tag-chip-label" id="tag-chip-label"></span>
         <button type="button" class="tag-chip-clear" id="tag-chip-clear" aria-label="">&#x2715;</button>

@@ -72,14 +72,19 @@
     return frag;
   }
 
-  // 2-up on desktop, 1-up on phones (style.css). Each photo links to its
-  // full-size file in a new tab.
-  function buildPhotos() {
-    var list = (Array.isArray(page.photos) ? page.photos : [])
+  function validPhotos() {
+    return (Array.isArray(page.photos) ? page.photos : [])
       .filter(function (ph) { return ph && ph.src && ph.altKey; });
+  }
+
+  // 2-up on desktop, 1-up on phones (style.css). Each photo is a link to its
+  // full-size file (the no-JS fallback, new tab); with JS the click opens the
+  // lightbox below instead.
+  function buildPhotos() {
+    var list = validPhotos();
     if (!list.length) return null;
     var grid = el("div", "project-page-photos");
-    list.forEach(function (ph) {
+    list.forEach(function (ph, i) {
       var a = el("a", "project-page-photo");
       a.href = root + ph.src;
       a.target = "_blank";
@@ -89,9 +94,111 @@
       img.alt = text(ph.altKey);
       img.loading = "lazy";
       a.appendChild(img);
+      a.addEventListener("click", function (e) {
+        if (!lightbox || typeof lightbox.showModal !== "function") return; // no <dialog> → follow the link
+        e.preventDefault();
+        openLightbox(i, a);
+      });
       grid.appendChild(a);
     });
     return grid;
+  }
+
+  /* ---- Lightbox ------------------------------------------------------------
+     One native <dialog class="lightbox"> per page: image (≤ 92vw × 88vh),
+     caption from the photo's alt text, ✕ top-right, prev / next. Esc (native),
+     backdrop click and ✕ close; ← → and the buttons step through this page's
+     photos. Page scroll is locked while open, focus returns to the clicked
+     photo on close, and it fades in with opacity only. No libraries. */
+  var lightbox = null, lbImg = null, lbCaption = null, lbPrev = null, lbNext = null;
+  var lbIndex = 0, lbOpener = null;
+
+  function buildLightbox() {
+    var dlg = el("dialog", "lightbox");
+    dlg.setAttribute("aria-label", text(entry.titleKey));
+
+    var close = el("button", "lightbox-close");
+    close.type = "button";
+    close.setAttribute("aria-label", text("projLightboxClose"));
+    close.textContent = "✕";
+    close.addEventListener("click", closeLightbox);
+
+    lbPrev = el("button", "lightbox-nav lightbox-prev");
+    lbPrev.type = "button";
+    lbPrev.setAttribute("aria-label", text("projLightboxPrev"));
+    lbPrev.textContent = "‹";
+    lbPrev.addEventListener("click", function () { stepLightbox(-1); });
+
+    lbNext = el("button", "lightbox-nav lightbox-next");
+    lbNext.type = "button";
+    lbNext.setAttribute("aria-label", text("projLightboxNext"));
+    lbNext.textContent = "›";
+    lbNext.addEventListener("click", function () { stepLightbox(1); });
+
+    var figure = el("figure", "lightbox-figure");
+    lbImg = el("img", "lightbox-image");
+    lbCaption = el("figcaption", "lightbox-caption");
+    // Start on the first photo so the (closed) dialog never holds an empty
+    // <img>; the file is already on the page, so nothing extra is fetched.
+    var first = validPhotos()[0];
+    lbImg.src = root + first.src;
+    lbImg.alt = text(first.altKey);
+    lbCaption.textContent = text(first.altKey);
+    figure.appendChild(lbImg);
+    figure.appendChild(lbCaption);
+
+    dlg.appendChild(close);
+    dlg.appendChild(lbPrev);
+    dlg.appendChild(figure);
+    dlg.appendChild(lbNext);
+
+    // Backdrop click: the dialog element itself is the target only outside
+    // its children (the figure fills the visible box).
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) closeLightbox(); });
+    dlg.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight") { e.preventDefault(); stepLightbox(1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); stepLightbox(-1); }
+    });
+    dlg.addEventListener("close", onLightboxClosed);
+    return dlg;
+  }
+
+  function showLightboxPhoto(i) {
+    var list = validPhotos();
+    if (!list.length) return;
+    lbIndex = (i + list.length) % list.length;
+    var ph = list[lbIndex];
+    lbImg.src = root + ph.src;
+    lbImg.alt = text(ph.altKey);
+    lbCaption.textContent = text(ph.altKey);
+    var many = list.length > 1;
+    lbPrev.hidden = !many;
+    lbNext.hidden = !many;
+  }
+
+  function openLightbox(i, opener) {
+    lbOpener = opener || null;
+    showLightboxPhoto(i);
+    document.documentElement.style.overflow = "hidden";
+    lightbox.showModal();
+    // Opacity-only fade: the class lands on the next frame so the transition runs.
+    requestAnimationFrame(function () { lightbox.classList.add("is-open"); });
+  }
+
+  function stepLightbox(delta) {
+    if (!lightbox.open) return;
+    showLightboxPhoto(lbIndex + delta);
+  }
+
+  function closeLightbox() {
+    if (lightbox.open) lightbox.close();
+  }
+
+  function onLightboxClosed() {
+    lightbox.classList.remove("is-open");
+    document.documentElement.style.overflow = "";
+    if (lbOpener && typeof lbOpener.focus === "function") lbOpener.focus();
+    lbOpener = null;
   }
 
   function buildFacts() {
@@ -171,6 +278,12 @@
     parts.push(buildBack());
 
     parts.forEach(function (node) { if (node) main.appendChild(node); });
+
+    // A fresh lightbox per render (labels follow the language); a re-render
+    // never happens while one is open in practice, but close it if it is.
+    if (lightbox && lightbox.open) { lightbox.close(); }
+    lightbox = validPhotos().length ? buildLightbox() : null;
+    if (lightbox) main.appendChild(lightbox);
   }
 
   siteData.checkData();

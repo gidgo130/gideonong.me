@@ -25,6 +25,7 @@
   --border:       #DDD5C8;
   --footer-bg:    #1C1510;
   --footer-text:  #D4C9BB;
+  --search-bg:    #E1D7CF;
 
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -47,6 +48,7 @@
   --border:       #DDD5C8;
   --footer-bg:    #1A1510;
   --footer-text:  #D4C9BB;
+  --search-bg:    #E0D7C2;   /* projects.html search band: bronze ≈10% over --bg-section */
 
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -68,6 +70,7 @@
   --border:       #D4D8E4;
   --footer-bg:    #1A1F2E;
   --footer-text:  #C8D4E4;
+  --search-bg:    #D8E0ED;
 
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -398,21 +401,79 @@ a:hover {
   width: 100%;
 }
 
-.section-heading {
+/* Two heading kinds (2026-09-27):
+   .list-heading    — the visible top of a LIST of entries: index.html "Featured
+                      work", projects.html "Featured projects" / "All projects".
+                      Real <h2>s, clearly larger than body text, left on the
+                      column edge, no rule or decoration.
+   .section-heading — a small panel / block label (about.html "Viewing settings"
+                      and the hidden About blocks). Deliberately label-sized. */
+.list-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 clamp(20px, 3vw, 28px);
+}
+
+.section-heading,
+h2.section-heading {
   font-family: var(--font-serif);
   font-size: 15px;
   font-weight: 600;
+  line-height: 1.3;
   color: var(--ink);
   margin: 0 0 18px;
 }
 
 /* The entries are .featured-entry articles built by js/home.js with the same
    markup as projects.html §2 (styles under "§2 — Featured projects" below).
-   The home hero is left-aligned at 800px, so the list is left-aligned too —
-   not centered like the 1000px projects.html list. */
+   The column is centered at the same content width as the projects.html
+   index (1000px, 1120px at 1440+), heading aligned to it (2026-09-27). */
+.featured-work .list-heading,
 .featured-work .featured-list {
-  max-width: 900px;
-  margin: 0;
+  max-width: 1000px;
+  margin-inline: auto;
+}
+
+/* Wide-screen option (js/site-config.js → homeFeaturedSideBySide: true):
+   js/home.js adds .featured-list--side-by-side and alternates imageLeft /
+   imageRight. The two-column presets apply at 1200px and wider only; below
+   that the entries stack, image above text. A collage entry keeps its grid
+   in the image column (.featured-entry--side-left / --side-right). */
+@media (max-width: 1199px) {
+  .featured-list--side-by-side .featured-entry--image-left,
+  .featured-list--side-by-side .featured-entry--image-right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .featured-list--side-by-side .featured-entry--image-left .featured-entry-media,
+  .featured-list--side-by-side .featured-entry--image-right .featured-entry-media {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .featured-list--side-by-side .featured-entry--image-left .featured-entry-body,
+  .featured-list--side-by-side .featured-entry--image-right .featured-entry-body {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+@media (min-width: 1200px) {
+  .featured-list--side-by-side .featured-entry--side-left {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+  .featured-list--side-by-side .featured-entry--side-left .featured-entry-media { grid-column: 1; grid-row: 1; }
+  .featured-list--side-by-side .featured-entry--side-left .featured-entry-body  { grid-column: 2; grid-row: 1; }
+
+  .featured-list--side-by-side .featured-entry--side-right {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+  .featured-list--side-by-side .featured-entry--side-right .featured-entry-media { grid-column: 2; grid-row: 1; }
+  .featured-list--side-by-side .featured-entry--side-right .featured-entry-body  { grid-column: 1; grid-row: 1; }
 }
 
 /* --------------------------------------------------------------------------
@@ -437,6 +498,60 @@ a:hover {
   line-height: 1.6;
   max-width: 480px;
   margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Image links (2026-09-27) — the ONE sanctioned motion exception.
+
+   An image with a destination (index thumbnail / featured image / collage →
+   its sub-page; band image → its `imageLink`) is wrapped in <a class="image-link">
+   by js/data-helpers.js / js/experience.js. The link is a clipped frame; the
+   image (or the collage grid) scales to 1.03 inside it on hover and on
+   :focus-visible, 250ms ease, pointer cursor. Images with no destination are
+   never wrapped, so they never move. Off under prefers-reduced-motion.
+   -------------------------------------------------------------------------- */
+.image-link {
+  display: block;
+  overflow: hidden;
+  border-radius: 3px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.image-link > img,
+.image-link > .featured-collage {
+  transition: transform 250ms ease;
+  will-change: transform;
+}
+
+.image-link:hover > img,
+.image-link:hover > .featured-collage,
+.image-link:focus-visible > img,
+.image-link:focus-visible > .featured-collage {
+  transform: scale(1.03);
+}
+
+.image-link:focus-visible {
+  outline: 2px solid var(--bronze-mid);
+  outline-offset: 2px;
+}
+
+.project-thumb .image-link {
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-link > img,
+  .image-link > .featured-collage {
+    transition: none;
+  }
+
+  .image-link:hover > img,
+  .image-link:hover > .featured-collage,
+  .image-link:focus-visible > img,
+  .image-link:focus-visible > .featured-collage {
+    transform: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -644,6 +759,7 @@ a:hover {
     --border:       #3C3530;
     --footer-bg:    #0F0D0B;
     --footer-text:  #C8BDB0;
+    --search-bg:    #332A1E;
   }
 
   /* IEL chip: light overlay on dark background */
@@ -688,6 +804,7 @@ a:hover {
   --border:       #3C3530;
   --footer-bg:    #0F0D0B;
   --footer-text:  #C8BDB0;
+  --search-bg:    #332A1E;
 }
 
 :root[data-theme="dark"] .iel-chip {
@@ -956,13 +1073,24 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 /* --------------------------------------------------------------------------
    §5 — Statement on AI
    -------------------------------------------------------------------------- */
+/* Sits in the same centered 1100px container as §1/§2 (.about-intro-grid), so
+   "Statement on AI" left-aligns with "Who am I?" at every width (2026-09-27).
+   The text keeps the §2 measure (760px) inside that container. */
 .section-ai {
   background: var(--bg);
-  padding: clamp(48px, 8vw, 72px) clamp(16px, 4vw, 36px);
+  padding: clamp(48px, 8vw, 72px) 0;
 }
 
+/* Same box as .about-intro-grid: 1100px max INCLUDING the side padding. */
 .ai-content {
-  max-width: 680px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 36px);
+}
+
+.ai-heading,
+.ai-content p {
+  max-width: 760px;
 }
 
 .ai-heading {
@@ -1107,6 +1235,7 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   --border:       #38301F;
   --footer-bg:    #0E0B07;
   --footer-text:  #D4C9BB;
+  --search-bg:    #32291A;   /* bronze #CE9E4F ≈10% over the dark --bg-section */
   color-scheme: dark;        /* native form controls, scrollbars follow */
 }
 /* Soften images a touch so they don't glare against the dark page */
@@ -1186,6 +1315,10 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
     box-sizing:border-box; background: var(--bg-section); border-top:1px solid var(--border);
     min-height:92vh; display:block; padding: clamp(32px,8vw,48px) clamp(16px,5vw,28px) 56px;
   }
+  /* Statement on AI keeps the same side padding as "Who am I?" on phones. */
+  .ai-content{
+    padding: 0 clamp(16px,5vw,28px);
+  }
   .whoami-title{ font-size: clamp(34px,10vw,50px); }
   .whoami-content{ max-width:none; }
 
@@ -1218,67 +1351,27 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   §1 — Hero: photo collage + gradient scrim (default). Remove .hero--overlay
-   from the section to switch to the 2-column backup (text left on var(--bg),
-   collage right, no scrim) — see .exp-hero:not(.hero--overlay) below.
+   §1 — Hero (2026-09-27): a solid text panel + three captioned photo tiles.
+
+   The panel (var(--footer-bg), footer-text) holds the status sentence and the
+   paragraph; the tiles start exactly where it ends, so no image ever sits under
+   text and no scrim is needed. Desktop: tile 1 tall on the left of the tile
+   area, tiles 2–3 stacked to its right, thin gap. Height is capped at
+   min(80vh, 640px). Under 768px (see the mobile block) the text comes first
+   and the three tiles stack below it, captions visible.
    -------------------------------------------------------------------------- */
 .exp-hero {
-  position: relative;
-  min-height: clamp(440px, 62vw, 620px);
+  display: grid;
+  grid-template-columns: min(540px, 52%) minmax(0, 1fr);
+  height: min(80vh, 640px);
   width: 100%;
   overflow: hidden;
-}
-
-.exp-hero-collage {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 3px;
-}
-
-.exp-hero-collage img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: var(--bg-section);
-}
-
-.exp-hero-collage img:nth-child(1) { grid-column: 1 / 3; grid-row: 1 / 3; }
-.exp-hero-collage img:nth-child(2) { grid-column: 3 / 4; grid-row: 1 / 2; }
-.exp-hero-collage img:nth-child(3) { grid-column: 4 / 5; grid-row: 1 / 2; }
-.exp-hero-collage img:nth-child(4) { grid-column: 3 / 5; grid-row: 2 / 3; }
-.exp-hero-collage img:nth-child(5) { display: none; }
-
-@media (min-width: 1024px) {
-  .exp-hero-collage { grid-template-columns: repeat(5, 1fr); }
-  .exp-hero-collage img:nth-child(4) { grid-column: 3 / 5; grid-row: 2 / 3; }
-  .exp-hero-collage img:nth-child(5) { display: block; grid-column: 5 / 6; grid-row: 1 / 3; }
-}
-
-/* Scrim (2026-09-27): pixel-based, not percentage-based, so it tracks the text
-   column rather than the viewport. .exp-hero-content is at most 520px wide,
-   so the scrim stays SOLID footer-bg to 540px and only then fades out (fully
-   transparent by 960px). Slot 1 of the collage may be a mostly white photo;
-   with a solid scrim under every line, #D4C9BB text clears 4.5:1 in light and
-   dark mode. Checked at 768–1024px too: slot 1 spans 0–50% (≤512px) there and
-   sits entirely under the solid part. */
-.exp-hero-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(to right, var(--footer-bg) 0, var(--footer-bg) 540px, transparent 960px);
-  pointer-events: none;
+  background: var(--footer-bg);
 }
 
 .exp-hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 520px;
-  min-height: 100%;
-  padding: clamp(56px, 9vw, 96px) clamp(16px, 4vw, 36px);
+  min-width: 0;
+  padding: clamp(40px, 6vw, 72px) clamp(16px, 4vw, 36px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1301,37 +1394,48 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   margin: 0;
 }
 
-/* Backup layout: 2-column, no scrim. Toggle by removing .hero--overlay. */
-.exp-hero:not(.hero--overlay) {
+.exp-hero-tiles {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: var(--bg);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding-left: 4px;
+  background: var(--footer-bg);
 }
 
-.exp-hero:not(.hero--overlay) .exp-hero-collage {
-  position: static;
-  grid-column: 2;
-  grid-row: 1;
+.exp-tile {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg-section);
 }
 
-.exp-hero:not(.hero--overlay) .exp-hero-scrim {
-  display: none;
+.exp-tile--tall {
+  grid-row: 1 / 3;
 }
 
-.exp-hero:not(.hero--overlay) .exp-hero-content {
-  grid-column: 1;
-  grid-row: 1;
-  max-width: none;
-  color: var(--ink);
+.exp-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-.exp-hero:not(.hero--overlay) .exp-hero-status {
-  color: var(--ink);
-}
-
-.exp-hero:not(.hero--overlay) .exp-hero-para {
-  color: var(--muted);
-  opacity: 1;
+/* Dark translucent caption bar along the bottom of each tile. */
+.exp-tile-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 10px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--footer-text);
+  background: rgba(26, 21, 16, 0.72);
 }
 
 /* --------------------------------------------------------------------------
@@ -1605,37 +1709,28 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 }
 
 @media (max-width: 767px) {
+  /* Hero: text panel first, then the three tiles stacked below it (4:3),
+     captions visible. No overlay of any kind. */
   .exp-hero {
-    min-height: 480px;
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
   }
 
   .exp-hero-content {
-    max-width: 100%;
     padding: 40px clamp(16px, 4vw, 36px);
   }
 
-  /* Below 768px the hero text spans the full width, so the desktop
-     left-to-right scrim leaves the end of every line sitting on bare photo.
-     Cover the whole hero instead — the desktop gradient is untouched. 0.88 of
-     footer-bg over a pure white photo still clears 4.5:1 for the text. */
-  .exp-hero.hero--overlay .exp-hero-scrim {
-    background: var(--footer-bg);
-    opacity: 0.88;
+  .exp-hero-tiles {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    padding: 0;
+    gap: 4px;
   }
 
-  .exp-hero:not(.hero--overlay) {
-    grid-template-columns: 1fr;
-  }
-
-  .exp-hero:not(.hero--overlay) .exp-hero-collage {
-    grid-column: 1;
-    grid-row: 2;
-    height: 240px;
-  }
-
-  .exp-hero:not(.hero--overlay) .exp-hero-content {
-    grid-column: 1;
-    grid-row: 1;
+  .exp-tile,
+  .exp-tile--tall {
+    grid-row: auto;
+    aspect-ratio: 4 / 3;
   }
 
   /* Every layout preset collapses to one column; the image always leads. */
@@ -1697,16 +1792,16 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 /* --------------------------------------------------------------------------
    §1 — Search band: live keyword search over the §3 index (js/projects.js).
 
-   Background treatment (b) from plan.md open decision #1: a --bg-section wash
-   settling into --bg, distinct from both flat section colors without competing
-   with project imagery. Treatment (a), a --footer-bg dark band, is the more
-   striking alternative to compare in the color pass. The 2px bronze rule at the
-   bottom is the transition into the featured section.
+   Background: var(--search-bg), a bronze wash (~10% bronze over --bg-section,
+   per palette; Gideon, 2026-09-27) so the band reads as a control strip and
+   never matches the featured section under it. The 2px bronze rule at the
+   bottom is the transition into the featured section, or straight into the
+   index while the featured section is collapsed.
    -------------------------------------------------------------------------- */
 .search-band {
   width: 100%;
   max-width: 100%;
-  background: linear-gradient(180deg, var(--bg-section) 0%, var(--bg) 100%);
+  background: var(--search-bg);    /* bronze wash token (2026-09-27), distinct from the featured section */
   border-bottom: 2px solid var(--bronze);
   padding: clamp(20px, 3vw, 32px) clamp(16px, 4vw, 36px);
 }
@@ -1733,7 +1828,7 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
-  padding: 9px 34px 9px 12px;
+  padding: 9px 50px 9px 12px;
   font-size: 14px;
   color: var(--ink);
   background: var(--nav-bg);
@@ -1758,32 +1853,44 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   outline-offset: 1px;
 }
 
+/* The × clear control: a small bordered chip inside the field's right edge,
+   present only while the input has text (opacity-only appear, 150ms). It
+   clears the query, which also brings the featured block back. */
 .search-clear {
-  display: none;
   position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 32px;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 28px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   color: var(--muted);
-  transition: color 150ms ease;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease, visibility 0s linear 150ms, color 150ms ease, border-color 150ms ease;
 }
 
 .search-field.has-text .search-clear {
-  display: inline-flex;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 150ms ease, visibility 0s linear 0s, color 150ms ease, border-color 150ms ease;
 }
 
 .search-clear:hover {
   color: var(--ink);
+  border-color: var(--bronze-mid);
 }
 
 .search-clear:focus-visible {
   outline: 2px solid var(--bronze-mid);
-  outline-offset: -3px;
+  outline-offset: 2px;
 }
 
 .search-btn {
@@ -1817,12 +1924,54 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   border-top: 1px solid var(--border);
   padding: clamp(32px, 5vw, 56px) clamp(16px, 4vw, 36px);
   width: 100%;
+  /* Collapse mechanics (2026-09-27): a one-row grid whose row animates 1fr → 0fr
+     while the section fades, so the index glides up under the search band as
+     soon as any filter is active. This is a recorded MOVEMENT exception
+     (CLAUDE.md → Animation) and may be swapped for fade-then-instant later:
+     to do that, drop grid-template-rows and padding from the transition. */
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 300ms ease, padding 300ms ease, border-top-width 300ms ease,
+              opacity 200ms ease, visibility 0s linear 0s;
 }
 
-.featured-projects .section-heading,
-.project-index-section .section-heading {
+.featured-projects-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* While a search query, ?tag= or ?part= is active. visibility waits for the
+   collapse to finish so the links inside stop being focusable once hidden. */
+.featured-projects.is-collapsed {
+  grid-template-rows: 0fr;
+  padding-block: 0;
+  border-top-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 300ms ease, padding 300ms ease, border-top-width 300ms ease,
+              opacity 200ms ease, visibility 0s linear 300ms;
+}
+
+/* .is-settling is on the section in the HTML and removed by js/projects.js one
+   frame after the first render: a page opened already filtered (?tag=, ?part=)
+   starts collapsed with no animation, even if the browser painted before the
+   script ran. */
+.featured-projects.is-settling,
+.featured-projects.is-settling.is-collapsed {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-projects,
+  .featured-projects.is-collapsed {
+    transition: none;
+  }
+}
+
+.featured-projects .list-heading,
+.project-index-section .list-heading {
   max-width: 1000px;
-  margin: 0 auto 20px;
+  margin-inline: auto;
 }
 
 .featured-list {
@@ -2082,10 +2231,13 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   border-bottom: 1px dotted var(--border);
 }
 
-/* No imageSrc: no thumbnail column and no img node at all — the text runs the
-   full row width. Never a broken image, a grey box, or a placeholder icon. */
-.project-index--rows .project-row--no-image {
-  grid-template-columns: minmax(0, 1fr);
+/* No imageSrc: no thumbnail column and no img node at all. Never a broken
+   image, a grey box, or a placeholder icon. At 768px and up the row keeps the
+   two-column grid and the text sits in the text column (same width, same left
+   edge as the image rows, still left-aligned) — 2026-09-27. Phones: the
+   mobile block below collapses it to one column like every other row. */
+.project-index--rows .project-row--no-image .project-row-body {
+  grid-column: 2;
 }
 
 /* ---- Grid view (written, not applied) -----------------------------------
@@ -2245,11 +2397,13 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
     gap: 14px;
   }
 
-  /* Restated after the rule above — same specificity, so the desktop no-image
-     rule would otherwise lose here and squeeze a text-only entry into the
-     104px thumbnail column. */
+  /* Text-only rows collapse to one column here, text at full width. */
   .project-index--rows .project-row--no-image {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-index--rows .project-row--no-image .project-row-body {
+    grid-column: 1;
   }
 
   .index-controls {
@@ -2265,8 +2419,10 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
    projects.html — wide screens. Text and measure grow; layout is unchanged.
    -------------------------------------------------------------------------- */
 @media (min-width: 1440px) {
-  .featured-projects .section-heading,
-  .project-index-section .section-heading,
+  .featured-work .list-heading,
+  .featured-work .featured-list,
+  .featured-projects .list-heading,
+  .project-index-section .list-heading,
   .featured-list,
   .index-controls,
   .index-empty,
@@ -2434,6 +2590,119 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
 
 .project-page-back:hover {
   color: var(--ink);
+}
+
+/* ---- Lightbox (js/project-page.js) ------------------------------------------
+   Native <dialog>. Image fits ~92vw × 88vh, caption from the alt text, ✕ top
+   right, prev / next at the sides. Opacity-only fade in (.is-open lands one
+   frame after showModal). */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--footer-text);
+  display: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.lightbox[open] {
+  display: grid;
+  place-items: center;
+}
+
+.lightbox.is-open {
+  opacity: 1;
+}
+
+.lightbox::backdrop {
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.lightbox-figure {
+  margin: 0;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.lightbox-image {
+  max-width: 92vw;
+  max-height: 88vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 3px;
+  background: #000;
+}
+
+.lightbox-caption {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--footer-text);
+  text-align: center;
+  max-width: 70ch;
+  padding: 0 16px;
+}
+
+.lightbox-close,
+.lightbox-nav {
+  position: fixed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--footer-text);
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  transition: background-color 150ms ease;
+  z-index: 1;
+}
+
+.lightbox-close:hover,
+.lightbox-nav:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.lightbox-close:focus-visible,
+.lightbox-nav:focus-visible {
+  outline: 2px solid var(--bronze-mid);
+  outline-offset: 2px;
+}
+
+.lightbox-close {
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+
+.lightbox-nav {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox {
+    transition: none;
+  }
 }
 
 @media (max-width: 767px) {

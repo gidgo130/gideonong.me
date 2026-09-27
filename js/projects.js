@@ -10,13 +10,17 @@
 // entries, so nothing below can leak one into the index, the filter, search
 // or the featured block.
 //
-// Tag filter (2026-09-27): there is no filter row. Every tag pill on the site
-// is a link to projects.html?tag=<id>; this page reads ?tag= on load, filters
-// the index (AND with the search), and shows a "<Label> ✕" chip beside the
-// count. ✕ clears the tag and rewrites the URL (history.replaceState), so a
-// tag view is always linkable. An unknown id is ignored.
+// Filters (2026-09-27): there is no filter row. Every tag pill on the site is
+// a link to projects.html?tag=<id>, and a band image on experience.html can
+// link to projects.html?part=<experience slug>. This page reads both on load,
+// filters the index (AND with each other and with the search), and shows each
+// active filter as a "<Label> ✕" chip beside the count. ✕ clears that filter
+// and rewrites the URL (history.replaceState), so a filtered view is always
+// linkable. An unknown id / slug is ignored.
 //
-// Animation, per CLAUDE.md (no carve-outs on this page):
+// Animation, per CLAUDE.md:
+//   - the featured section collapses (height + opacity, 300ms) while any
+//     filter is active — a recorded movement exception (see updateFeaturedCollapse)
 //   - featured entries fade in on scroll (IntersectionObserver, opacity only)
 //   - the filter transitions opacity only; filtered-out rows are display:none so
 //     the list closes up. Rows never slide or animate position.
@@ -25,6 +29,7 @@
 
 (function () {
   var featuredList = document.getElementById("featured-list");
+  var featuredSection = document.getElementById("featured-projects");
   var indexList = document.getElementById("project-index");
   if (!featuredList || !indexList || typeof siteData === "undefined") return;
 
@@ -35,6 +40,9 @@
   var chipEl = document.getElementById("tag-chip");
   var chipLabel = document.getElementById("tag-chip-label");
   var chipClear = document.getElementById("tag-chip-clear");
+  var partChipEl = document.getElementById("part-chip");
+  var partChipLabel = document.getElementById("part-chip-label");
+  var partChipClear = document.getElementById("part-chip-clear");
   var searchInput = document.getElementById("project-search");
   var searchBtn = document.getElementById("project-search-btn");
   var searchClear = document.getElementById("project-search-clear");
@@ -43,6 +51,7 @@
   // Visitor state. Both live OUTSIDE render() so a language switch (which
   // re-renders everything) keeps the active tag and the query exactly.
   var activeTag = null;  // one tag ID (never a label), from ?tag=
+  var activePart = null; // one visible experience slug, from ?part=
   var activeQuery = "";  // raw text as typed
 
   // Rows are kept paired with their entry so filtering reads the data rather
@@ -152,57 +161,83 @@
     });
     if (searchClear) searchClear.setAttribute("aria-label", text("projSearchClear"));
     if (chipClear) chipClear.setAttribute("aria-label", text("projTagClear"));
+    if (partChipClear) partChipClear.setAttribute("aria-label", text("projPartClear"));
   }
 
-  /* ---- Tag filter (URL state) ----------------------------------------------
-     ?tag=<id> is the whole state. Read on load; an unknown id is ignored.
-     ✕ clears and rewrites the URL in place. */
-  function readTagFromUrl() {
-    var id = null;
-    try { id = new URLSearchParams(location.search).get("tag"); } catch (e) { id = null; }
-    return (id && siteData.tagExists(id)) ? id : null;
+  /* ---- Tag + role filters (URL state) --------------------------------------
+     ?tag=<id> and ?part=<experience slug> are the whole state. Both are read
+     on load; an unknown id / slug (or a hidden role) is ignored. Each has its
+     own chip beside the count; ✕ clears that one and rewrites the URL in
+     place. They combine with each other and with the search by AND. */
+  function readFiltersFromUrl() {
+    var params;
+    try { params = new URLSearchParams(location.search); } catch (e) { return; }
+    var tag = params.get("tag");
+    var part = params.get("part");
+    activeTag = (tag && siteData.tagExists(tag)) ? tag : null;
+    activePart = (part && siteData.experienceBySlug(part)) ? part : null;
   }
 
-  function writeTagToUrl(id) {
+  function writeFiltersToUrl() {
     var url;
     try { url = new URL(location.href); } catch (e) { return; }
-    if (id) url.searchParams.set("tag", id); else url.searchParams.delete("tag");
+    if (activeTag) url.searchParams.set("tag", activeTag); else url.searchParams.delete("tag");
+    if (activePart) url.searchParams.set("part", activePart); else url.searchParams.delete("part");
     history.replaceState(null, "", url.pathname + url.search + url.hash);
   }
 
   function setTag(id) {
     activeTag = id || null;
-    writeTagToUrl(activeTag);
-    renderChip();
+    writeFiltersToUrl();
+    renderChips();
     applyFilter();
   }
 
-  // The chip beside the count: "<Label> ✕". Hidden when no tag is active.
-  // Label is derived from the id each render, so a language switch translates it.
-  function renderChip() {
-    if (!chipEl) return;
-    chipEl.hidden = !activeTag;
-    if (chipLabel) chipLabel.textContent = activeTag ? siteData.tagLabel(activeTag) : "";
+  function setPart(slug) {
+    activePart = slug || null;
+    writeFiltersToUrl();
+    renderChips();
+    applyFilter();
   }
 
-  function wireChip() {
-    if (!chipClear) return;
-    chipClear.addEventListener("click", function () { setTag(null); });
+  // The chips beside the count: "<Label> ✕". Each is hidden when its filter
+  // is off. Labels are derived from the id / slug each render, so a language
+  // switch translates them.
+  function renderChips() {
+    if (chipEl) {
+      chipEl.hidden = !activeTag;
+      if (chipLabel) chipLabel.textContent = activeTag ? siteData.tagLabel(activeTag) : "";
+    }
+    if (partChipEl) {
+      var role = siteData.experienceBySlug(activePart);
+      partChipEl.hidden = !role;
+      if (partChipLabel) partChipLabel.textContent = role ? text(role.orgShortKey || role.orgKey) : "";
+    }
+  }
+
+  function wireChips() {
+    if (chipClear) chipClear.addEventListener("click", function () { setTag(null); });
+    if (partChipClear) partChipClear.addEventListener("click", function () { setPart(null); });
   }
 
   function matchesTag(entry) {
     return !activeTag || (entry.tags || []).indexOf(activeTag) !== -1;
   }
 
-  /* ---- Combine tag + search -----------------------------------------------
-     A row stays visible only if it passes BOTH the tag filter and the search.
-     The count and the empty state reflect the combination. Visible rows are
-     re-appended in the order searchEntries() returned them (identical to index
-     order today; a ranking search later reorders for free). Featured §2 is
-     never filtered. */
+  function matchesPart(entry) {
+    return !activePart || entry.experience === activePart;
+  }
+
+  /* ---- Combine filters + search -------------------------------------------
+     A row stays visible only if it passes the tag filter, the role filter AND
+     the search. The count and the empty state reflect the combination. Visible
+     rows are re-appended in the order searchEntries() returned them (identical
+     to index order today; a ranking search later reorders for free). Featured
+     §2 is never filtered. */
   function applyFilter() {
     var matched = searchEntries(activeQuery, rows.map(function (pair) { return pair.entry; }))
-      .filter(matchesTag);
+      .filter(matchesTag)
+      .filter(matchesPart);
     var order = {};
     matched.forEach(function (entry, i) { order[entry.slug] = i; });
 
@@ -220,6 +255,23 @@
 
     updateCount(shownPairs.length);
     updateEmpty(shownPairs.length);
+    updateFeaturedCollapse();
+  }
+
+  /* ---- Featured collapse ---------------------------------------------------
+     While ANY filter is active (search text, ?tag=, ?part=) the featured
+     section collapses (style.css .featured-projects.is-collapsed: height +
+     opacity, 300ms) so the results sit right under the search band. The
+     section starts with .is-settling (transitions off) and loses it one frame
+     after the first render, so a page opened as ?tag=… starts collapsed with
+     no animation even if the browser painted before this script ran.
+     Clearing every filter brings it back. */
+  function updateFeaturedCollapse() {
+    if (!featuredSection) return;
+    var filtering = !!activeQuery.trim() || !!activeTag || !!activePart;
+    featuredSection.classList.toggle("is-collapsed", filtering);
+    if (filtering) featuredSection.setAttribute("aria-hidden", "true");
+    else featuredSection.removeAttribute("aria-hidden");
   }
 
   function updateCount(n) {
@@ -228,9 +280,9 @@
     countEl.textContent = text(key).replace("{n}", n);
   }
 
-  // projEmptySearch when a query is active (with or without a tag), projEmpty
-  // when only the tag is. Text is set here, not via data-i18n, because it
-  // depends on state.
+  // projEmptySearch when a query is active (with or without filters), projEmpty
+  // when only the tag / role filters are. Text is set here, not via data-i18n,
+  // because it depends on state.
   function updateEmpty(shown) {
     if (!emptyEl) return;
     emptyEl.hidden = shown !== 0;
@@ -241,14 +293,15 @@
   }
 
   /* ---- Deep links ---------------------------------------------------------
-     projects.html#<slug>: clear any active tag and query (a hidden target is
+     projects.html#<slug>: clear the filters and the query (a hidden target is
      useless), scroll the row clear of the nav, mark it. Re-run on hashchange.
      A language re-render re-marks without scrolling. */
   function goToHash(scroll) {
     if (!location.hash) return;
     if (scroll) {
       setQuery("");
-      setTag(null); // also drops ?tag= from the URL and repaints
+      activeTag = null;
+      setPart(null); // drops ?tag= and ?part= from the URL and repaints
     }
     siteData.targetFromHash(".project-row", scroll);
   }
@@ -281,7 +334,7 @@
     });
 
     renderSearchChrome();
-    renderChip();
+    renderChips();
     applyFilter(); // also paints the count and the empty state
     goToHash(false);
   }
@@ -289,8 +342,8 @@
   siteData.checkData();
   buildCorpus();
   wireSearch();
-  wireChip();
-  activeTag = readTagFromUrl();
+  wireChips();
+  readFiltersFromUrl();
 
   // main.js fires langchange at the end of applyTranslations, so this runs after
   // the data-i18n elements are swapped and always wins on JS-rendered content.
@@ -298,4 +351,10 @@
   window.addEventListener("hashchange", function () { goToHash(true); });
   render();
   goToHash(true);
+  // Initial state is painted; from the next frame on, collapse / expand animate.
+  if (featuredSection) {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { featuredSection.classList.remove("is-settling"); });
+    });
+  }
 }());

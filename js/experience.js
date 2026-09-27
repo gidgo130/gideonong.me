@@ -63,6 +63,8 @@
     }
   }
 
+  // Band image; wrapped in an image link (hover scale) only when the entry has
+  // an `imageLink` destination — otherwise plain.
   function buildMedia(entry) {
     var media = document.createElement("div");
     media.className = "exp-band-media";
@@ -72,7 +74,7 @@
     // Alt from the entry's imageAltKey (image-manifest text); fallback role — org.
     img.alt = entry.imageAltKey ? text(entry.imageAltKey) : text(entry.roleKey) + " — " + text(entry.orgKey);
     img.loading = "lazy";
-    media.appendChild(img);
+    media.appendChild(siteData.linkImage(img, entry.imageLink, text(entry.roleKey)));
     return media;
   }
 

@@ -29,6 +29,10 @@
 //   imageSrc path, or "" for no image
 //   imageAltKey  i18n key for the band image's alt text — required whenever
 //            imageSrc is set (falls back to "<role> — <org>" if missing)
+//   imageLink  OPTIONAL — where the band image links (relative to the site
+//            root, e.g. "projects.html?part=baker-hughes" or
+//            "projects/pump-cylinder-failure.html"). Absent → the image is
+//            plain, no hover.
 //   layout   "imageLeft" | "imageRight" | "fullBleed" | "textOnly"
 //            Maps 1:1 to a CSS class (.exp-band--image-left, etc.). Adding a
 //            preset later means one new class — never bespoke markup.
@@ -78,8 +82,9 @@ const experienceData = [
       "expBakerHughesBullet5"
     ],
     tags: ["python", "automation", "cad", "fabrication"],
-    imageSrc: "assets/images/projects/autoscan/scan-fixtures.jpg",
+    imageSrc: "assets/images/projects/autoscan/scanner-station.jpg",
     imageAltKey: "expBakerHughesImageAlt",
+    imageLink: "projects.html?part=baker-hughes",
     subpageUrl: "",
     layout: "imageLeft",
     status: null,
@@ -105,6 +110,7 @@ const experienceData = [
     // Pump lathe photo until Gideon supplies a shop photo (content-intake.md).
     imageSrc: "assets/images/projects/pump-cylinder-failure/pin-on-lathe.jpg",
     imageAltKey: "expMachineShopImageAlt",
+    imageLink: "projects/pump-cylinder-failure.html",
     subpageUrl: "",
     layout: "imageRight",
     status: "current",
