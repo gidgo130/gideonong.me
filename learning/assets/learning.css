@@ -198,3 +198,16 @@ a.module-row:hover .m-title { color: var(--fix); }
 .chart .vline-fit { stroke: var(--fit); stroke-width: 2.5; }
 .chart .lbl-fit { fill: var(--fit); font-family: var(--font-display); font-weight: 600; font-size: 13px; }
 .chart .lbl-truth { fill: var(--ink); font-family: var(--font-display); font-weight: 600; font-size: 13px; }
+
+/* ---------- added with Module 2 ---------- */
+.quiz h3 { font-size: 22px; }
+.quiz .plots { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.quiz-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.quiz-score { font-family: var(--font-mono); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chart .pt-ring { fill: none; stroke: var(--ink); stroke-width: 2; }
+.chart .pt-mark { fill: var(--ink); }
+.chart .bar-hi { fill: var(--fit); fill-opacity: .85; }
+.chart .thresh { stroke: var(--muted); stroke-width: 1.25; stroke-dasharray: 5 4; }
+.chart .fit-curve { stroke: var(--fit); stroke-width: 2.75; fill: none; }
+.chart .fix-curve { stroke: var(--fix); stroke-width: 2.75; fill: none; }
+.chart .truth-curve { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }

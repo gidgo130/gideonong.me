@@ -4,7 +4,7 @@
 // A module's page lives at learning/fits/<slug>/index.html.
 window.LEARN_MODULES = [
   { key: "RSquared",      slug: "r-squared",      ready: false },
-  { key: "Residuals",     slug: "residual-plots", ready: false },
+  { key: "Residuals",     slug: "residual-plots", ready: true  },
   { key: "UnevenScatter", slug: "uneven-scatter", ready: false },
   { key: "TimeOrder",     slug: "time-order",     ready: false },
   { key: "InvisibleBias", slug: "invisible-bias", ready: true  },

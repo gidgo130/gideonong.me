@@ -58,6 +58,50 @@
     var b1 = (d + Math.sqrt(d * d + 4 * delta * sxy * sxy)) / (2 * sxy);
     return { b0: my - b1 * mx, b1: b1 };
   }
+  // Coefficient of determination for a fit (y, fitted).
+  function r2(y, fitted) {
+    var n = y.length, my = 0, i, sst = 0, sse = 0;
+    for (i = 0; i < n; i++) my += y[i];
+    my /= n;
+    for (i = 0; i < n; i++) { sst += (y[i] - my) * (y[i] - my); sse += (y[i] - fitted[i]) * (y[i] - fitted[i]); }
+    return 1 - sse / sst;
+  }
+  // Simple-regression influence measures for every point: leverage h, internally studentized
+  // residual r, and Cook's distance D (k = 2 coefficients).
+  function influence(x, y) {
+    var f = ols(x, y), n = x.length, mx = 0, i, sxx = 0;
+    for (i = 0; i < n; i++) mx += x[i];
+    mx /= n;
+    for (i = 0; i < n; i++) sxx += (x[i] - mx) * (x[i] - mx);
+    var h = new Float64Array(n), r = new Float64Array(n), D = new Float64Array(n);
+    for (i = 0; i < n; i++) {
+      h[i] = 1 / n + (x[i] - mx) * (x[i] - mx) / sxx;
+      r[i] = f.resid[i] / (f.s * Math.sqrt(1 - h[i]));
+      D[i] = r[i] * r[i] * h[i] / (2 * (1 - h[i]));
+    }
+    return { fit: f, h: h, r: r, D: D };
+  }
+  // Least-squares fit of y = B + A·exp(−t/τ) (a first-order step response).
+  // For a fixed τ the model is linear in A and B, so search τ on a log grid, then refine
+  // with golden-section search.
+  function expFit(t, y) {
+    function at(tau) {
+      var n = t.length, z = new Float64Array(n);
+      for (var i = 0; i < n; i++) z[i] = Math.exp(-t[i] / tau);
+      var f = ols(z, y), sse = 0;
+      for (i = 0; i < n; i++) sse += f.resid[i] * f.resid[i];
+      return { tau: tau, A: f.b1, B: f.b0, sse: sse, fitted: f.fitted, resid: f.resid };
+    }
+    var span = t[t.length - 1] - t[0], best = null, lo = Math.log(span / 50), hi = Math.log(span * 20);
+    for (var k = 0; k <= 120; k++) { var c = at(Math.exp(lo + (hi - lo) * k / 120)); if (!best || c.sse < best.sse) best = c; }
+    var g = (Math.sqrt(5) - 1) / 2, a = Math.log(best.tau) - (hi - lo) / 120, b = Math.log(best.tau) + (hi - lo) / 120;
+    for (k = 0; k < 40; k++) {
+      var m1 = b - g * (b - a), m2 = a + g * (b - a);
+      if (at(Math.exp(m1)).sse < at(Math.exp(m2)).sse) b = m2; else a = m1;
+    }
+    var fin = at(Math.exp((a + b) / 2));
+    return fin.sse <= best.sse ? fin : best;
+  }
   // Two-sided 95% t critical value (Cornish-Fisher expansion; good to 3 decimals for df >= 8).
   function tcrit(df) {
     var z = 1.959964;
@@ -166,7 +210,7 @@
 
   window.LF = {
     mulberry32: mulberry32, normals: normals, uniforms: uniforms, newSeed: newSeed,
-    ols: ols, deming: deming, tcrit: tcrit, num: num,
+    ols: ols, deming: deming, tcrit: tcrit, num: num, r2: r2, influence: influence, expFit: expFit,
     chart: chart, line: line, dots: dots, esc: esc,
     seriesNav: seriesNav, moduleList: moduleList, fixFileLinks: fixFileLinks
   };

@@ -16,7 +16,7 @@ Series "Reading Your Fits" — six modules, in this order:
 | # | Module | Slug | Status |
 | --- | --- | --- | --- |
 | 1 | Why R² isn't enough (Anscombe's quartet, what R² hides) | r-squared | Planned |
-| 2 | Reading a residual plot (four patterns; curvature and the cooling-curve shape example) | residual-plots | Planned — build next |
+| 2 | Reading a residual plot (four patterns; curvature and the cooling-curve shape example) | residual-plots | **Built** (EN) — Fable review pending |
 | 3 | Uneven scatter (heteroskedasticity, weighted fits, honest error bars) | uneven-scatter | Planned |
 | 4 | Time-ordered data (autocorrelation, drift, cooling-curve log trap as the worked example) | time-order | Planned |
 | 5 | The Invisible Bias (endogeneity: noise in x, unmeasured drift, fixes) | invisible-bias | **Built** (EN) |
@@ -53,7 +53,10 @@ Audience: engineering students with no statistics background, some Excel/MATLAB.
 For each: 3-line outline for Gideon's OK → build page + slides + script → verify (375 / 768 /
 1280, light / dark, console clean, numbers sanity-checked by simulation) → Fable review → push.
 Order: 2 → 1 → 3 → 4 → 6.
-- [ ] Module 2 — Reading a residual plot
+- [X] Module 2 — Reading a residual plot (built 2026-09-28: pattern gallery + "Name that pattern"
+  quiz, cooling-curve shape trial, one-point influence trial; engine gained LF.r2,
+  LF.influence, LF.expFit)
+- [ ] Fable review of Module 2, then build 1, 3, 4, 6 and review them together
 - [ ] Module 1 — Why R² isn't enough
 - [ ] Module 3 — Uneven scatter
 - [ ] Module 4 — Time-ordered data

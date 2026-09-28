@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning is unlisted while in progress: remove this line to let search engines index the page. -->
+  <meta name="robots" content="noindex">
+  <title data-i18n-title="pageTitle">Reading a Residual Plot · Reading Your Fits</title>
+  <meta name="description" content="Interactive module: how to read a residual plot, the four patterns that matter, and when one point steers the whole fit.">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/invisible-bias/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Theme: follow the main site's saved choice (About → Viewing settings). Keep in sync with index.html. */
+    (function () {
+      try {
+        var t = localStorage.getItem("viewTheme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { /* storage blocked: the OS setting decides */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+</head>
+<body>
+
+<nav class="series-bar" data-i18n-aria="navSeriesAria" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../" data-i18n="siteHome">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../" data-i18n="learningHome">Learning</a><span aria-hidden="true">/</span>
+    <span data-i18n="seriesName">Reading Your Fits</span>
+  </div>
+  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Toggle language (EN/ES)" hidden>
+    <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
+  </button>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow" data-i18n="eyebrow">Reading Your Fits · Module 2</div>
+    <h1 data-i18n="h1">Reading a Residual Plot</h1>
+    <p class="lead" data-i18n="lead">After you fit a line, the leftovers are the most useful thing on your screen. A handful of shapes tell you almost everything that can go wrong with the fit.</p>
+    <p data-i18n-html="introHtml">A <b>residual</b> is the vertical gap between a point and the fitted line: measured y minus fitted y. Plot the residuals against the fitted value, and again in the order you took the data, and look for shape. Healthy residuals are a flat, even band around zero. All data here is simulated, so the true model is known.</p>
+    <div class="legend-key" data-i18n-aria="keyAria" aria-label="Color key">
+      <span><i class="sw truth"></i><span data-i18n="keyTruth">The truth</span></span>
+      <span><i class="sw fit"></i><span data-i18n="keyFit">The fitted line</span></span>
+      <span><i class="sw fix"></i><span data-i18n="keyFix">A better fit (right shape, or without one point)</span></span>
+      <span><i class="sw dot"></i><span data-i18n="keyPts">Measured points</span></span>
+    </div>
+    <div class="takeaway-links">
+      <span data-i18n="takeLabel">Take it with you:</span>
+      <a href="slides.html" data-i18n="takeSlides">Slides</a>
+      <a href="residual-plots.py" download data-i18n="takePy">Python script</a>
+    </div>
+  </header>
+
+  <!-- TRIAL 1 -->
+  <section class="trial" id="trial1">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t1Num">Trial 1 of 3</div>
+      <h2 data-i18n="t1Title">The pattern gallery</h2>
+      <p data-i18n="t1Intro">Pick a hidden problem and turn it up. Watch what it does to the residual plot, and try both ways of plotting the residuals.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <span class="lbl" id="t1-p-lbl" data-i18n="t1ProblemLabel">Hidden problem</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t1-p-lbl">
+            <input type="radio" name="t1p" id="t1p-none" value="none"><label for="t1p-none" data-i18n="pNone">None</label>
+            <input type="radio" name="t1p" id="t1p-curve" value="curve" checked><label for="t1p-curve" data-i18n="pCurve">Curve</label>
+            <input type="radio" name="t1p" id="t1p-fan" value="fan"><label for="t1p-fan" data-i18n="pFan">Fan</label>
+            <input type="radio" name="t1p" id="t1p-drift" value="drift"><label for="t1p-drift" data-i18n="pDrift">Drift</label>
+            <input type="radio" name="t1p" id="t1p-outlier" value="outlier"><label for="t1p-outlier" data-i18n="pOutlier">Outlier</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <label for="t1-sev"><span data-i18n="t1SevLabel">How strong</span> <output id="t1-sev-out">0.7</output></label>
+          <input type="range" id="t1-sev" min="0" max="1" step="0.05" value="0.7">
+          <small data-i18n="t1SevHelp">0 = no problem at all, 1 = hard to miss.</small>
+        </div>
+        <div class="ctl">
+          <span class="lbl" id="t1-a-lbl" data-i18n="t1AxisLabel">Plot residuals against</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t1-a-lbl">
+            <input type="radio" name="t1a" id="t1a-fitted" value="fitted" checked><label for="t1a-fitted" data-i18n="axisFitted">Fitted value</label>
+            <input type="radio" name="t1a" id="t1a-order" value="order"><label for="t1a-order" data-i18n="axisOrder">Run order</label>
+          </div>
+        </div>
+        <button type="button" class="btn" id="t1-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roTrueSlope">True slope</dt><dd class="v" data-num="2">2.00</dd></div>
+          <div><dt data-i18n="roSlope">Fitted slope</dt><dd class="v" id="t1-b">–</dd></div>
+          <div><dt data-i18n="roR2">R²</dt><dd class="v" id="t1-r2">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t1-scatter" role="img" data-i18n-aria="t1ScatterAria" aria-label="Data and the fitted line"></svg>
+          <figcaption data-i18n-html="t1ScatterCapHtml"><b>The data and the fit.</b> 40 readings, taken in random x order.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t1-resid" role="img" data-i18n-aria="t1ResidAria" aria-label="Residual plot"></svg>
+          <figcaption id="t1-resid-cap"></figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t1-note"></p>
+
+    <div class="quiz" id="quiz">
+      <h3 data-i18n="quizTitle">Name that pattern</h3>
+      <p data-i18n-html="quizIntroHtml"><b>Mystery dataset.</b> Both residual plots, no labels. Which problem is hiding in it?</p>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="qz-fitted" role="img" data-i18n-aria="quizMysteryAria1" aria-label="Mystery residuals against fitted value"></svg>
+          <figcaption data-i18n="quizFittedCap">Against fitted value</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="qz-order" role="img" data-i18n-aria="quizMysteryAria2" aria-label="Mystery residuals in run order"></svg>
+          <figcaption data-i18n="quizOrderCap">In run order</figcaption>
+        </figure>
+      </div>
+      <div class="opts" role="group" data-i18n-aria="quizAria" aria-label="Your answer">
+        <button type="button" class="btn" data-a="none" aria-pressed="false" data-i18n="pNone">None</button>
+        <button type="button" class="btn" data-a="curve" aria-pressed="false" data-i18n="pCurve">Curve</button>
+        <button type="button" class="btn" data-a="fan" aria-pressed="false" data-i18n="pFan">Fan</button>
+        <button type="button" class="btn" data-a="drift" aria-pressed="false" data-i18n="pDrift">Drift</button>
+        <button type="button" class="btn" data-a="outlier" aria-pressed="false" data-i18n="pOutlier">Outlier</button>
+      </div>
+      <p class="answer" id="quiz-answer" aria-live="polite" hidden></p>
+      <div class="quiz-foot">
+        <button type="button" class="btn" id="quiz-new" data-i18n="quizNew">New mystery</button>
+        <span class="quiz-score" id="quiz-score"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRIAL 2 -->
+  <section class="trial" id="trial2">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t2Num">Trial 2 of 3</div>
+      <h2 data-i18n="t2Title">When the shape is wrong</h2>
+      <p data-i18n="t2Intro">A thermocouple at 80 °C is dropped into a 22 °C room and logged every 15 seconds. Physics says it cools exponentially toward room temperature. Fit a straight line anyway and read the residuals.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <span class="lbl" id="t2-m-lbl" data-i18n="t2ModelLabel">Model</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t2-m-lbl">
+            <input type="radio" name="t2m" id="t2m-line" value="line" checked><label for="t2m-line" data-i18n="modelLine">Straight line</label>
+            <input type="radio" name="t2m" id="t2m-exp" value="exp"><label for="t2m-exp" data-i18n="modelExp">Exponential</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <label for="t2-noise"><span data-i18n="t2NoiseLabel">Sensor noise</span> <output id="t2-noise-out">0.5 °C</output></label>
+          <input type="range" id="t2-noise" min="0" max="2" step="0.1" value="0.5">
+        </div>
+        <div class="ctl">
+          <label for="t2-win"><span data-i18n="t2WindowLabel">Stop recording after</span> <output id="t2-win-out">15 min</output></label>
+          <input type="range" id="t2-win" min="3" max="20" step="0.5" value="15">
+          <small data-i18n="t2WindowHelp">A short recording hides the curve.</small>
+        </div>
+        <button type="button" class="btn" id="t2-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roR2">R²</dt><dd class="v" id="t2-r2">–</dd></div>
+          <div><dt data-i18n="roS">Residual SD</dt><dd class="v" id="t2-s">–</dd></div>
+          <div><dt data-i18n="roTau">Fitted time constant</dt><dd class="v" id="t2-tau">–</dd></div>
+          <div><dt data-i18n="roTrueTau">True time constant</dt><dd class="v" id="t2-truetau">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t2-data" role="img" data-i18n-aria="t2DataAria" aria-label="Temperature against time with the fitted curve"></svg>
+          <figcaption data-i18n-html="t2DataCapHtml"><b>Cooling curve and the fit.</b></figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t2-resid" role="img" data-i18n-aria="t2ResidAria" aria-label="Residuals against time"></svg>
+          <figcaption data-i18n-html="t2ResidCapHtml"><b>Residuals in time order.</b></figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t2-note"></p>
+  </section>
+
+  <!-- TRIAL 3 -->
+  <section class="trial" id="trial3">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t3Num">Trial 3 of 3</div>
+      <h2 data-i18n="t3Title">One point steering the line</h2>
+      <p data-i18n="t3Intro">Twenty well-behaved readings, plus one you control. Move it far out in x, off the line, or both, and watch how much the fit follows it.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t3-x"><span data-i18n="t3XLabel">Its x position</span> <output id="t3-x-out">20</output></label>
+          <input type="range" id="t3-x" min="0" max="25" step="0.5" value="20">
+        </div>
+        <div class="ctl">
+          <label for="t3-y"><span data-i18n="t3YLabel">Its distance from the true line</span> <output id="t3-y-out">0</output></label>
+          <input type="range" id="t3-y" min="-15" max="15" step="0.5" value="-10">
+          <small data-i18n="t3YHelp">In y units, above (+) or below (−) the truth.</small>
+        </div>
+        <button type="button" class="btn" id="t3-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roWith">Slope with the point</dt><dd class="v" id="t3-with">–</dd></div>
+          <div><dt data-i18n="roWithout">Slope without it</dt><dd class="v" id="t3-without">–</dd></div>
+          <div><dt id="t3-lev-lbl">–</dt><dd class="v" id="t3-lev">–</dd></div>
+          <div><dt data-i18n="roStud">Studentized residual</dt><dd class="v" id="t3-stud">–</dd></div>
+          <div><dt data-i18n="roCook">Cook's distance</dt><dd class="v" id="t3-cook">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t3-data" role="img" data-i18n-aria="t3DataAria" aria-label="Data with the fit including and excluding the controlled point"></svg>
+          <figcaption data-i18n-html="t3DataCapHtml"><b>Red: fit with the point. Blue: fit without it.</b> The ringed point is yours.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t3-cook-chart" role="img" data-i18n-aria="t3CookAria" aria-label="Cook's distance for every point"></svg>
+          <figcaption data-i18n-html="t3CookCapHtml"><b>Cook's distance for every point.</b> How much the whole fit moves if that point is removed. Dashed line: 4/n, a common flag.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t3-note"></p>
+    <details>
+      <summary data-i18n="makeSummary">Make these plots yourself (Excel, MATLAB, Python)</summary>
+<pre><code>' Excel (data in A = x, B = y, rows in the order you took them)
+F1  =SLOPE(B:B, A:A)          F2  =INTERCEPT(B:B, A:A)
+C2  =$F$1*A2 + $F$2           fitted value, fill down
+D2  =B2 - C2                  residual, fill down
+Scatter D against C (shape, spread), then D against row number (run order).
+
+% MATLAB
+mdl = fitlm(x, y);
+plotResiduals(mdl, 'fitted')          % shape and spread
+figure; plot(mdl.Residuals.Raw, 'o')  % run order
+plotDiagnostics(mdl, 'cookd')         % single points
+
+# Python
+import numpy as np, matplotlib.pyplot as plt
+b1, b0 = np.polyfit(x, y, 1)
+fitted = b0 + b1 * x
+resid = y - fitted
+plt.scatter(fitted, resid); plt.axhline(0)   # shape and spread
+plt.figure(); plt.plot(resid, "o")           # run order (keep data in the order taken)</code></pre>
+    </details>
+  </section>
+
+  <section class="takeaways" id="takeaways">
+    <h2 data-i18n="takeTitle">What to take away</h2>
+    <ol>
+      <li data-i18n-html="take1Html"><b>Make the same three checks after every fit:</b> residuals against the fitted value, residuals in run order, and a look for single points that stand out.</li>
+      <li data-i18n-html="take2Html"><b>Read them in order:</b> shape first (a wrong shape fakes the other patterns), then spread, then time order, then single points.</li>
+      <li data-i18n-html="take3Html"><b>Healthy is boring:</b> a flat, even band around zero with no shape. Anything else is a clue, not a verdict. Check the notes from the session before changing the model.</li>
+      <li data-i18n-html="take4Html"><b>A clean residual plot still can't catch everything.</b> Noise in your x readings and unmeasured drift can bias the slope and leave the residuals looking fine. That's Module 5.</li>
+    </ol>
+    <h3 data-i18n="patternsTitle">The four patterns</h3>
+    <div class="checklist">
+      <div><h4 data-i18n="pat1Title">A bend</h4><p data-i18n="pat1Body">Wrong shape. Fit the model the physics gives you.</p></div>
+      <div><h4 data-i18n="pat2Title">A fan</h4><p data-i18n="pat2Body">Uneven scatter. The line is fine; the error bars aren't. Module 3.</p></div>
+      <div><h4 data-i18n="pat3Title">A trend in run order</h4><p data-i18n="pat3Body">Something changed during the session. Module 4.</p></div>
+      <div><h4 data-i18n="pat4Title">One point far away</h4><p data-i18n="pat4Body">Check the notes, then check its influence. Don't just delete it.</p></div>
+    </div>
+  </section>
+
+  <nav class="series-nav" id="series-nav" data-i18n-aria="navSeriesNavAria" aria-label="Series navigation"></nav>
+  <p class="foot"><span data-i18n="footNote">Simulated data. Trials 1 and 3: y = 1 + 2x + error. Trial 2: T = 22 + 58·e^(−t/4) + error, in °C and minutes.</span></p>
+</div>
+
+<script src="../../assets/strings-common.js"></script>
+<script src="../../assets/modules.js"></script>
+<script src="strings.js"></script>
+<script src="../../assets/learning-i18n.js"></script>
+<script src="../../assets/learning.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
