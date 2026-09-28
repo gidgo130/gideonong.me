@@ -1,0 +1,29 @@
+{
+  "_comment": "Courses to add that are NOT printed on the TU transcript. The generator lists them as a warning every run. Remove an entry once TU's transcript shows the course.",
+  "add": [
+    {
+      "block": "AP",
+      "after": "PHYS 2053",
+      "course": {
+        "code": "PHYS 2051",
+        "transcript_title": "",
+        "credits": 1,
+        "grade": "P",
+        "points": 0.0
+      },
+      "reason": "AP credit per Gideon (2026-09-28)"
+    },
+    {
+      "block": "AP",
+      "after": "PHYS 2063",
+      "course": {
+        "code": "PHYS 2061",
+        "transcript_title": "",
+        "credits": 1,
+        "grade": "P",
+        "points": 0.0
+      },
+      "reason": "AP credit per Gideon (2026-09-28)"
+    }
+  ]
+}

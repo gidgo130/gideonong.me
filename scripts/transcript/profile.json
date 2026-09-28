@@ -1,0 +1,40 @@
+{
+  "name": "Gideon A. Ong",
+  "contact": "gao9819@utulsa.edu | gideonong.me | linkedin.com/in/gideon-a-ong",
+  "en": {
+    "university": "The University of Tulsa, Tulsa, OK",
+    "program": "International Engineering and Language Program (IEL)",
+    "majors": [
+      "Mechanical Engineering, B.S.M.E.",
+      "Spanish, B.A.",
+      "International Business, B.S.B.A.",
+      "Mathematics, B.S."
+    ],
+    "minors": [
+      "Economics",
+      "Computational Science",
+      "High Performance Computing",
+      "Energy",
+      "Aerospace Engineering"
+    ],
+    "expected_graduation": "May 2029"
+  },
+  "es": {
+    "university": "Universidad de Tulsa, Tulsa, Oklahoma, EE. UU.",
+    "program": "Programa Internacional de Ingeniería e Idiomas (IEL)",
+    "majors": [
+      "Ingeniería Mecánica (B.S.M.E.)",
+      "Español (B.A.)",
+      "Negocios Internacionales (B.S.B.A.)",
+      "Matemáticas (B.S.)"
+    ],
+    "minors": [
+      "Economía",
+      "Ciencia Computacional",
+      "Computación de Alto Rendimiento",
+      "Energía",
+      "Ingeniería Aeroespacial"
+    ],
+    "expected_graduation": "mayo de 2029"
+  }
+}

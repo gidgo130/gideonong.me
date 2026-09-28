@@ -1,0 +1,536 @@
+{
+  "transcript_printed": "2026-09-14",
+  "parsed_on": "2026-09-28",
+  "blocks": [
+    {
+      "kind": "exam",
+      "source": "Proficiency",
+      "courses": [
+        {
+          "code": "ENGL 1033",
+          "transcript_title": "Exposition & Argument",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        }
+      ]
+    },
+    {
+      "kind": "exam",
+      "source": "AP",
+      "courses": [
+        {
+          "code": "ECON 2013",
+          "transcript_title": "Prin of Econ I - Macro",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "PHYS 2053",
+          "transcript_title": "General Physics I",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "PHYS 2063",
+          "transcript_title": "General Physics II",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "CHEM 1013",
+          "transcript_title": "General Chemistry I",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "MATH 2014",
+          "transcript_title": "Calculus I",
+          "credits": 4,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "MATH 2024",
+          "transcript_title": "Calculus II",
+          "credits": 4,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "SPAN 3003",
+          "transcript_title": "Composition in Spanish",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "SPAN 3033",
+          "transcript_title": "Hispanic Literary Texts",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "QM 2013",
+          "transcript_title": "Statistics I",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "CS 1043",
+          "transcript_title": "Intro Pgrm Prob Slvg",
+          "credits": 3,
+          "grade": "P",
+          "points": 0.0
+        }
+      ],
+      "term_totals": {
+        "earned": 35,
+        "attempted": 35,
+        "gpa_hours": 0,
+        "grade_points": 0.0,
+        "gpa": 0.0
+      },
+      "cumulative_totals": {
+        "earned": 35,
+        "attempted": 35,
+        "gpa_hours": 0,
+        "grade_points": 0.0,
+        "gpa": 0.0
+      }
+    },
+    {
+      "kind": "term",
+      "season": "Fall",
+      "year": 2024,
+      "courses": [
+        {
+          "code": "ES 2013",
+          "transcript_title": "Statics",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "FYE 1001",
+          "transcript_title": "First Year Experience",
+          "credits": 1,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "ME 1123",
+          "transcript_title": "Design & Manufacturing",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ME 1212",
+          "transcript_title": "Mech Engr Graphic",
+          "credits": 2,
+          "grade": "A",
+          "points": 8.0
+        },
+        {
+          "code": "HON 2123",
+          "transcript_title": "Three Ancient Cities",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "MATH 2073",
+          "transcript_title": "Calculus III",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "QM 2023",
+          "transcript_title": "Statistics II : Data An",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        }
+      ],
+      "term_totals": {
+        "earned": 18,
+        "attempted": 18,
+        "gpa_hours": 17,
+        "grade_points": 68.0,
+        "gpa": 4.0
+      },
+      "cumulative_totals": {
+        "earned": 53,
+        "attempted": 53,
+        "gpa_hours": 17,
+        "grade_points": 68.0,
+        "gpa": 4.0
+      }
+    },
+    {
+      "kind": "term",
+      "season": "Spring",
+      "year": 2025,
+      "courses": [
+        {
+          "code": "BIS 1001",
+          "transcript_title": "Intro to Spreadsheets",
+          "credits": 1,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "BUS 2001",
+          "transcript_title": "Essential Bus Skill Dev",
+          "credits": 1,
+          "grade": "P",
+          "points": 0.0
+        },
+        {
+          "code": "ECON 2023",
+          "transcript_title": "Prin of Econ II - Micro",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ME 2001",
+          "transcript_title": "Professional Aspects of",
+          "credits": 1,
+          "grade": "A",
+          "points": 4.0
+        },
+        {
+          "code": "ME 2023",
+          "transcript_title": "Intro to Dynamics",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "SPAN 3123",
+          "transcript_title": "Intro Span Linguistics",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "SPAN 3463",
+          "transcript_title": "Business Spanish",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "MATH 4123",
+          "transcript_title": "Linear Algebra Mtrx Thy",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "MATH 3073",
+          "transcript_title": "Differential Equations",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ES 4863",
+          "transcript_title": "ST: AI for Engineers",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        }
+      ],
+      "term_totals": {
+        "earned": 24,
+        "attempted": 24,
+        "gpa_hours": 22,
+        "grade_points": 88.0,
+        "gpa": 4.0
+      },
+      "cumulative_totals": {
+        "earned": 77,
+        "attempted": 77,
+        "gpa_hours": 39,
+        "grade_points": 156.0,
+        "gpa": 4.0
+      }
+    },
+    {
+      "kind": "term",
+      "season": "Summer",
+      "year": 2025,
+      "courses": [
+        {
+          "code": "TURC 3100",
+          "transcript_title": "UG Research Project",
+          "credits": 0,
+          "grade": "P",
+          "points": 0.0
+        }
+      ]
+    },
+    {
+      "kind": "term",
+      "season": "Fall",
+      "year": 2025,
+      "courses": [
+        {
+          "code": "HON 2223",
+          "transcript_title": "The Birth of Modernity",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ECE 2003",
+          "transcript_title": "Electric Circuit Analys",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ES 3023",
+          "transcript_title": "Mechanics of Materials",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ECE 2001",
+          "transcript_title": "Basic Elect Measure Lab",
+          "credits": 1,
+          "grade": "A",
+          "points": 4.0
+        },
+        {
+          "code": "MATH 3033",
+          "transcript_title": "Intro to Advanced Math",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ES 3053",
+          "transcript_title": "Thermodynamics",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ES 3003",
+          "transcript_title": "Intro Fluid Mechanics",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "MATH 3971",
+          "transcript_title": "Seminar in Mathematics",
+          "credits": 1,
+          "grade": "A",
+          "points": 4.0
+        },
+        {
+          "code": "MATH 4143",
+          "transcript_title": "Partial Differntl Equat",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "MKTG 3003",
+          "transcript_title": "Principles of Marketing",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        }
+      ],
+      "term_totals": {
+        "earned": 26,
+        "attempted": 26,
+        "gpa_hours": 26,
+        "grade_points": 104.0,
+        "gpa": 4.0
+      },
+      "cumulative_totals": {
+        "earned": 103,
+        "attempted": 103,
+        "gpa_hours": 65,
+        "grade_points": 260.0,
+        "gpa": 4.0
+      }
+    },
+    {
+      "kind": "term",
+      "season": "Spring",
+      "year": 2026,
+      "courses": [
+        {
+          "code": "ES 3073",
+          "transcript_title": "Heat Transfer",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "BIS 2003",
+          "transcript_title": "Intro Busn Info Systems",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ECON 4273",
+          "transcript_title": "Applied Econometrics",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "REL 1133",
+          "transcript_title": "Scottish Reformation",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "CHE 2003",
+          "transcript_title": "Principles of Chem Engr",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ME 3033",
+          "transcript_title": "Properties of Materials",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "ME 2123",
+          "transcript_title": "Materials & Techncl Com",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        },
+        {
+          "code": "MATH 5353",
+          "transcript_title": "Discrete/Integral Trans",
+          "credits": 3,
+          "grade": "A",
+          "points": 12.0
+        }
+      ],
+      "term_totals": {
+        "earned": 24,
+        "attempted": 24,
+        "gpa_hours": 24,
+        "grade_points": 96.0,
+        "gpa": 4.0
+      },
+      "cumulative_totals": {
+        "earned": 127,
+        "attempted": 127,
+        "gpa_hours": 89,
+        "grade_points": 356.0,
+        "gpa": 4.0
+      }
+    },
+    {
+      "kind": "term",
+      "season": "Fall",
+      "year": 2026,
+      "courses": [
+        {
+          "code": "ME 3120",
+          "transcript_title": "Dynamic Systems Lab",
+          "credits": 0,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "ME 3123",
+          "transcript_title": "Dynamic Systems",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "ME 3063",
+          "transcript_title": "Manufacturing Processes",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "SPAN 4983",
+          "transcript_title": "Latin American Lit",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "MATH 4003",
+          "transcript_title": "Advanced Calculus I",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "QM 3023",
+          "transcript_title": "Operations Management I",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "MATH 3971",
+          "transcript_title": "Seminar in Mathematics",
+          "credits": 1,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "ME 4863",
+          "transcript_title": "ST: Intro Aerospace Eng",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "ME 4863",
+          "transcript_title": "ST: Mech Composite Mate",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "MATH 5423",
+          "transcript_title": "Probability",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        },
+        {
+          "code": "STAT 4843",
+          "transcript_title": "Mathematical Statistics",
+          "credits": 3,
+          "grade": "",
+          "points": 0.0
+        }
+      ]
+    }
+  ]
+}

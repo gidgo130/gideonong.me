@@ -1,0 +1,364 @@
+{
+  "BIS 1001": {
+    "en": "Introduction to Spreadsheets",
+    "es": "Introducción a las hojas de cálculo",
+    "source": "bulletin.utulsa.edu (search result, catoid 48)",
+    "verified": true
+  },
+  "BIS 2003": {
+    "en": "Introduction to Business Information Systems",
+    "es": "Introducción a los Sistemas de Información Empresarial",
+    "source": "bulletin.utulsa.edu (search result, catoid 51)",
+    "verified": true
+  },
+  "BUS 2001": {
+    "en": "Essential Business Skills Development",
+    "es": "Desarrollo de habilidades empresariales esenciales",
+    "source": "transcript",
+    "verified": false
+  },
+  "CHE 2003": {
+    "en": "Principles of Chemical Engineering",
+    "es": "Principios de Ingeniería Química",
+    "source": "transcript",
+    "verified": false
+  },
+  "CHEM 1013": {
+    "en": "General Chemistry I",
+    "es": "Química General I",
+    "source": "transcript",
+    "verified": false
+  },
+  "CS 1043": {
+    "en": "Introduction to Programming and Problem-solving",
+    "es": "Introducción a la programación y la resolución de problemas",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "ECE 2001": {
+    "en": "Basic Electrical Measurements Laboratory",
+    "es": "Laboratorio de Mediciones Eléctricas Básicas",
+    "source": "bulletin.utulsa.edu (search result, catoid 48)",
+    "verified": true
+  },
+  "ECE 2003": {
+    "en": "Electric Circuit Analysis",
+    "es": "Análisis de Circuitos Eléctricos",
+    "source": "transcript",
+    "verified": false
+  },
+  "ECON 2013": {
+    "en": "Principles of Economics I: Macroeconomics",
+    "es": "Principios de Economía I: Macroeconomía",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "ECON 2023": {
+    "en": "Principles of Economics II: Microeconomics",
+    "es": "Principios de Economía II: Microeconomía",
+    "source": "bulletin.utulsa.edu (search result, catoid 51)",
+    "verified": true
+  },
+  "ECON 4273": {
+    "en": "Applied Econometrics",
+    "es": "Econometría Aplicada",
+    "source": "bulletin.utulsa.edu (search result, catoid 51)",
+    "verified": true
+  },
+  "ENGL 1033": {
+    "en": "Exposition and Argument",
+    "es": "Exposición y argumentación",
+    "source": "transcript",
+    "verified": false
+  },
+  "ES 2013": {
+    "en": "Statics",
+    "es": "Estática",
+    "source": "transcript",
+    "verified": false
+  },
+  "ES 3003": {
+    "en": "Introductory Fluid Mechanics",
+    "es": "Introducción a la Mecánica de Fluidos",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "ES 3023": {
+    "en": "Mechanics of Materials",
+    "es": "Mecánica de Materiales",
+    "source": "transcript",
+    "verified": false
+  },
+  "ES 3053": {
+    "en": "Thermodynamics",
+    "es": "Termodinámica",
+    "source": "transcript",
+    "verified": false
+  },
+  "ES 3073": {
+    "en": "Heat Transfer",
+    "es": "Transferencia de Calor",
+    "source": "transcript",
+    "verified": false
+  },
+  "ES 4863": {
+    "sections": {
+      "ST: AI for Engineers": {
+        "en": "Special Topics: AI for Engineers",
+        "es": "Temas selectos: IA para ingenieros",
+        "source": "transcript (section title)",
+        "verified": false
+      }
+    }
+  },
+  "FYE 1001": {
+    "en": "First Year Experience",
+    "es": "Experiencia de primer año",
+    "source": "bulletin.utulsa.edu (search result, catoid 33)",
+    "verified": true
+  },
+  "HON 2123": {
+    "en": "Three Ancient Cities",
+    "es": "Tres ciudades antiguas",
+    "source": "transcript (honors seminar title)",
+    "verified": false
+  },
+  "HON 2223": {
+    "en": "The Birth of Modernity",
+    "es": "El nacimiento de la modernidad",
+    "source": "transcript (honors seminar title)",
+    "verified": false
+  },
+  "MATH 2014": {
+    "en": "Calculus I",
+    "es": "Cálculo I",
+    "source": "bulletin.utulsa.edu (search result, catoid 33)",
+    "verified": true
+  },
+  "MATH 2024": {
+    "en": "Calculus II",
+    "es": "Cálculo II",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "MATH 2073": {
+    "en": "Calculus III",
+    "es": "Cálculo III",
+    "source": "bulletin.utulsa.edu (search result, catoid 33)",
+    "verified": true
+  },
+  "MATH 3033": {
+    "en": "Introduction to Advanced Mathematics",
+    "es": "Introducción a las Matemáticas Avanzadas",
+    "source": "bulletin.utulsa.edu (search result, catoid 48)",
+    "verified": true
+  },
+  "MATH 3073": {
+    "en": "Differential Equations",
+    "es": "Ecuaciones Diferenciales",
+    "source": "transcript",
+    "verified": false
+  },
+  "MATH 3971": {
+    "en": "Seminar in Mathematics",
+    "es": "Seminario de Matemáticas",
+    "source": "transcript",
+    "verified": false
+  },
+  "MATH 4003": {
+    "en": "Advanced Calculus I",
+    "es": "Cálculo Avanzado I",
+    "source": "transcript",
+    "verified": false
+  },
+  "MATH 4123": {
+    "en": "Linear Algebra and Matrix Theory",
+    "es": "Álgebra Lineal y Teoría de Matrices",
+    "source": "bulletin.utulsa.edu (search result, catoid 48)",
+    "verified": true
+  },
+  "MATH 4143": {
+    "en": "Introduction to Partial Differential Equations",
+    "es": "Introducción a las Ecuaciones Diferenciales Parciales",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "MATH 5353": {
+    "en": "Discrete and Integral Transforms",
+    "es": "Transformadas Discretas e Integrales",
+    "source": "transcript",
+    "verified": false
+  },
+  "MATH 5423": {
+    "en": "Probability",
+    "es": "Probabilidad",
+    "source": "transcript",
+    "verified": false
+  },
+  "ME 1123": {
+    "en": "Design and Manufacturing",
+    "es": "Diseño y Manufactura",
+    "source": "bulletin.utulsa.edu (search result, catoid 33)",
+    "verified": true
+  },
+  "ME 1212": {
+    "en": "Mechanical Engineering Graphics",
+    "es": "Dibujo de Ingeniería Mecánica",
+    "source": "bulletin.utulsa.edu (search result, catoid 36)",
+    "verified": true
+  },
+  "ME 2001": {
+    "en": "Professional Aspects of Mechanical Engineering",
+    "es": "Aspectos profesionales de la ingeniería mecánica",
+    "source": "confirmed by Gideon",
+    "verified": true
+  },
+  "ME 2023": {
+    "en": "Introduction to Dynamics",
+    "es": "Introducción a la Dinámica",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "ME 2123": {
+    "en": "Materials and Technical Communication",
+    "es": "Materiales y comunicación técnica",
+    "source": "confirmed by Gideon",
+    "verified": true
+  },
+  "ME 3033": {
+    "en": "Properties of Materials",
+    "es": "Propiedades de los Materiales",
+    "source": "bulletin.utulsa.edu (search result, catoid 48)",
+    "verified": true
+  },
+  "ME 3063": {
+    "en": "Manufacturing Processes",
+    "es": "Procesos de Manufactura",
+    "source": "transcript",
+    "verified": false
+  },
+  "ME 3120": {
+    "en": "Dynamic Systems Laboratory",
+    "es": "Laboratorio de Sistemas Dinámicos",
+    "source": "transcript",
+    "verified": false
+  },
+  "ME 3123": {
+    "en": "Dynamic Systems",
+    "es": "Sistemas Dinámicos",
+    "source": "bulletin.utulsa.edu (search result, catoid 36)",
+    "verified": true
+  },
+  "ME 4863": {
+    "sections": {
+      "ST: Intro Aerospace Eng": {
+        "en": "Special Topics: Introduction to Aerospace Engineering",
+        "es": "Temas selectos: Introducción a la Ingeniería Aeroespacial",
+        "source": "transcript (section title)",
+        "verified": false
+      },
+      "ST: Mech Composite Mate": {
+        "en": "Special Topics: Mechanics of Composite Materials",
+        "es": "Temas selectos: Mecánica de Materiales Compuestos",
+        "source": "transcript (section title)",
+        "verified": false
+      }
+    }
+  },
+  "MKTG 3003": {
+    "en": "Principles of Marketing",
+    "es": "Principios de Mercadotecnia",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "PHYS 2051": {
+    "en": "General Physics I Laboratory",
+    "es": "Laboratorio de Física General I",
+    "source": "title assumed from the CHEM 1011 lab naming pattern",
+    "verified": false
+  },
+  "PHYS 2053": {
+    "en": "General Physics I",
+    "es": "Física General I",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "PHYS 2061": {
+    "en": "General Physics II Laboratory",
+    "es": "Laboratorio de Física General II",
+    "source": "title assumed from the CHEM 1011 lab naming pattern",
+    "verified": false
+  },
+  "PHYS 2063": {
+    "en": "General Physics II",
+    "es": "Física General II",
+    "source": "bulletin.utulsa.edu (search result, catoid 29)",
+    "verified": true
+  },
+  "QM 2013": {
+    "en": "Statistics I",
+    "es": "Estadística I",
+    "source": "transcript",
+    "verified": false
+  },
+  "QM 2023": {
+    "en": "Statistics II: Data Analytics",
+    "es": "Estadística II: Análisis de Datos",
+    "source": "bulletin.utulsa.edu (search result, catoid 51)",
+    "verified": true
+  },
+  "QM 3023": {
+    "en": "Operations Management",
+    "es": "Administración de Operaciones",
+    "source": "bulletin.utulsa.edu (search result, catoid 29) — transcript shows 'Operations Management I'",
+    "verified": true
+  },
+  "REL 1133": {
+    "en": "Scottish Reformation",
+    "es": "La Reforma escocesa",
+    "source": "transcript (section title)",
+    "verified": false
+  },
+  "SPAN 3003": {
+    "en": "Composition in Spanish",
+    "es": "Composición en español",
+    "source": "transcript",
+    "verified": false
+  },
+  "SPAN 3033": {
+    "en": "Hispanic Literary Texts",
+    "es": "Textos literarios hispánicos",
+    "source": "transcript",
+    "verified": false
+  },
+  "SPAN 3123": {
+    "en": "Introduction to Spanish Linguistics",
+    "es": "Introducción a la lingüística hispánica",
+    "source": "transcript",
+    "verified": false
+  },
+  "SPAN 3463": {
+    "en": "Business Spanish",
+    "es": "Español para los negocios",
+    "source": "transcript",
+    "verified": false
+  },
+  "SPAN 4983": {
+    "en": "Latin American Literature",
+    "es": "Literatura latinoamericana",
+    "source": "transcript",
+    "verified": false
+  },
+  "STAT 4843": {
+    "en": "Mathematical Statistics",
+    "es": "Estadística Matemática",
+    "source": "bulletin.utulsa.edu (search result, catoid 36)",
+    "verified": true
+  },
+  "TURC 3100": {
+    "en": "Undergraduate Research Project",
+    "es": "Proyecto de investigación de licenciatura",
+    "source": "bulletin.utulsa.edu (search result, catoid 48)",
+    "verified": true
+  }
+}
