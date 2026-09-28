@@ -15,12 +15,12 @@ Series "Reading Your Fits" — six modules, in this order:
 
 | # | Module | Slug | Status |
 | --- | --- | --- | --- |
-| 1 | Why R² isn't enough (Anscombe's quartet, what R² hides) | r-squared | Planned |
+| 1 | Why R² isn't enough (Anscombe's quartet, what R² hides) | r-squared | **Built** (EN) — Fable review pending |
 | 2 | Reading a residual plot (four patterns; curvature and the cooling-curve shape example) | residual-plots | **Built** (EN), reviewed |
-| 3 | Uneven scatter (heteroskedasticity, weighted fits, honest error bars) | uneven-scatter | Planned |
-| 4 | Time-ordered data (autocorrelation, drift, cooling-curve log trap as the worked example) | time-order | Planned |
+| 3 | Uneven scatter (heteroskedasticity, weighted fits, honest error bars) | uneven-scatter | **Built** (EN) — Fable review pending |
+| 4 | Time-ordered data (autocorrelation, drift, cooling-curve log trap as the worked example) | time-order | **Built** (EN) — Fable review pending |
 | 5 | The Invisible Bias (endogeneity: noise in x, unmeasured drift, fixes) | invisible-bias | **Built** (EN) |
-| 6 | Using and reporting a fit (CI vs PI, error in units, checklist, Excel/MATLAB/Python) | reporting | Planned |
+| 6 | Using and reporting a fit (CI vs PI, error in units, checklist, Excel/MATLAB/Python) | reporting | **Built** (EN) — Fable review pending |
 
 Every module ships: interactive page (index.html + strings.js + main.js), Quarto slides
 (slides.html, source in the workshop), companion Python script (<slug>.py, Colab-ready).
@@ -44,7 +44,7 @@ Audience: engineering students with no statistics background, some Excel/MATLAB.
 - [ ] Decide: `vercel.json` with `"trailingSlash": true` (Fable #14) so `/learning` redirects
   before the page loads, instead of the in-page fix that logs a few 404s first. Affects the
   whole site, so it's Gideon's call; the current behavior works.
-- [ ] Gideon: Live Server check → push to a branch → Vercel preview → check `/learning` with
+- [X] Gideon: Live Server check → push to a branch → Vercel preview → check `/learning` with
   and without the trailing slash → Fable review (prompt in learning/README.md) → merge
 - [ ] Gideon: delete the old workshop folder `module3_invisible_bias` (superseded by
   `modules/invisible-bias`)
@@ -58,11 +58,13 @@ Order: 2 → 1 → 3 → 4 → 6.
   LF.influence, LF.expFit)
 - [X] Fable review of Module 2 (2026-09-28): 10 findings, all fixed except #9 (English comments
   inside the "make it yourself" code blocks, same in Module 5), deferred to Phase S
-- [ ] Build 1, 3, 4, 6, then one Fable review for the four
-- [ ] Module 1 — Why R² isn't enough
-- [ ] Module 3 — Uneven scatter
-- [ ] Module 4 — Time-ordered data
-- [ ] Module 6 — Using and reporting a fit
+- [X] Build 1, 3, 4, 6 (2026-09-28). Engine gained LF.solve, polyfit, wls, hc3se, bands, ar1, acf,
+  durbinWatson, and chart options xticks / xfmt. Every deck's embedded frame is now 520 px tall.
+- [ ] One Fable review for Modules 1, 3, 4, 6
+- [X] Module 1 — Why R² isn't enough (Anscombe's quartet, R² vs test range, polynomial degree)
+- [X] Module 3 — Uneven scatter (fan, band/slope coverage incl. "both ends" pattern, weighted fit)
+- [X] Module 4 — Time-ordered data (AR(1) residuals, cooling-curve log trap, runs vs samples)
+- [X] Module 6 — Using and reporting a fit (CI vs PI, zero-crossing delta method, report line)
 
 ## Phase S — Spanish (REQUIRED, after the English set)
 - [ ] ES strings for strings-common.js, the hub and every module (general Latin American
@@ -117,3 +119,9 @@ Order: 2 → 1 → 3 → 4 → 6.
    but noisier) and Trial 4 warns when the correction itself is unreliable (λ < 0.3). The
    Trial 2 note only claims "more data makes you more certain of the wrong answer" when
    coverage is below 85%. The Python script uses the t critical value like the page.
+10. **Modules 1, 3, 4, 6 built** (2026-09-28), one Fable review for the four. Design choices
+   worth knowing: Module 1 uses Anscombe's published quartet (cited on the page); Module 3's
+   Trial 2 has a "both ends" noise pattern because with noise growing at one end the slope's
+   default range happens to hold up, which would have taught the wrong lesson; Module 6's
+   derived-quantity trial moves the data away from x = 0, since that (not the distance to the
+   crossing) is what makes ignoring the slope–intercept covariance go wrong.

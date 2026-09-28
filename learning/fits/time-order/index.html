@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning is unlisted while in progress: remove this line to let search engines index the page. -->
+  <meta name="robots" content="noindex">
+  <title data-i18n-title="pageTitle">Time-Ordered Data · Reading Your Fits</title>
+  <meta name="description" content="Interactive module: autocorrelated residuals from fast logging, the cooling-curve log trap, and why you count runs, not samples.">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/invisible-bias/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Theme: follow the main site's saved choice (About → Viewing settings). Keep in sync with index.html. */
+    (function () {
+      try {
+        var t = localStorage.getItem("viewTheme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { /* storage blocked: the OS setting decides */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+</head>
+<body>
+
+<nav class="series-bar" data-i18n-aria="navSeriesAria" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../" data-i18n="siteHome">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../" data-i18n="learningHome">Learning</a><span aria-hidden="true">/</span>
+    <span data-i18n="seriesName">Reading Your Fits</span>
+  </div>
+  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Toggle language (EN/ES)" hidden>
+    <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
+  </button>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow" data-i18n="eyebrow">Reading Your Fits · Module 4</div>
+    <h1 data-i18n="h1">Time-Ordered Data</h1>
+    <p class="lead" data-i18n="lead">A data logger can record a thousand samples a minute. That doesn't give you a thousand independent pieces of evidence, and your error bars don't know it.</p>
+    <p data-i18n-html="introHtml">When each reading is tied to the one before it (filtering, slow dynamics, drift), the errors are <b>autocorrelated</b>: the leftovers come in runs instead of scattering independently. The fitted line survives. Its error bars, and anything you fit after a log transform, may not. All data here is simulated.</p>
+    <div class="legend-key" data-i18n-aria="keyAria" aria-label="Color key">
+      <span><i class="sw truth"></i><span data-i18n="keyTruth">The truth</span></span>
+      <span><i class="sw fit"></i><span data-i18n="keyFit">The usual method</span></span>
+      <span><i class="sw fix"></i><span data-i18n="keyFix">The better method</span></span>
+      <span><i class="sw dot"></i><span data-i18n="keyPts">Measured points</span></span>
+    </div>
+    <div class="takeaway-links">
+      <span data-i18n="takeLabel">Take it with you:</span>
+      <a href="slides.html" data-i18n="takeSlides">Slides</a>
+      <a href="time-order.py" download data-i18n="takePy">Python script</a>
+    </div>
+  </header>
+
+  <section class="trial" id="trial1">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t1Num">Trial 1 of 3</div>
+      <h2 data-i18n="t1Title">Sampling faster than the noise changes</h2>
+      <p data-i18n="t1Intro">A slow drift fitted with a line, 100 samples. The slider sets how strongly each sample's error carries over into the next one.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t1-rho"><span data-i18n="t1RhoLabel">Carry-over between samples</span> <output id="t1-rho-out">0.80</output></label>
+          <input type="range" id="t1-rho" min="0" max="0.95" step="0.05" value="0.8">
+          <small data-i18n="t1RhoHelp">0 = every sample's error is fresh. 0.9 = each error is 90% the previous one plus a little new noise. Fast logging through a filter lands near the top.</small>
+        </div>
+        <button type="button" class="btn" id="t1-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roLag1">Lag-1 autocorrelation of residuals</dt><dd class="v" id="t1-lag1">–</dd></div>
+          <div><dt data-i18n="roDw">Durbin–Watson (2 = none)</dt><dd class="v" id="t1-dw">–</dd></div>
+          <div><dt data-i18n="roNeff">Samples' worth of evidence, roughly</dt><dd class="v" id="t1-neff">–</dd></div>
+          <div><dt data-i18n="roCover">Slope range catches the truth</dt><dd class="v" id="t1-cov">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t1-resid" role="img" data-i18n-aria="t1ResidAria" aria-label="Residuals in time order"></svg>
+          <figcaption data-i18n-html="t1ResidCapHtml"><b>Residuals in time order.</b> Runs of the same sign mean the errors are linked.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t1-acf" role="img" data-i18n-aria="t1AcfAria" aria-label="Autocorrelation of the residuals at lags 1 to 15"></svg>
+          <figcaption data-i18n-html="t1AcfCapHtml"><b>Autocorrelation at lags 1–15:</b> how alike residuals are 1, 2, … samples apart. Dashed lines: the band chance alone stays inside.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t1-note"></p>
+  </section>
+
+  <section class="trial" id="trial2">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t2Num">Trial 2 of 3</div>
+      <h2 data-i18n="t2Title">The cooling-curve log trap</h2>
+      <p data-i18n="t2Intro">A thermocouple cools from 80 °C toward a 22 °C room with time constant 4 min. The textbook shortcut: plot ln(T − T∞) against time and read −1/τ as the slope. Compare it with fitting the exponential directly.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <span class="lbl" id="t2m-lbl" data-i18n="t2MethodLabel">Method</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t2m-lbl">
+            <input type="radio" name="t2m" id="t2m-log" value="log" checked><label for="t2m-log" data-i18n="mLog">Log, then line</label>
+            <input type="radio" name="t2m" id="t2m-direct" value="direct"><label for="t2m-direct" data-i18n="mDirect">Fit the exponential</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <label for="t2-noise"><span data-i18n="t2NoiseLabel">Sensor noise</span> <output id="t2-noise-out">0.5 °C</output></label>
+          <input type="range" id="t2-noise" min="0" max="2" step="0.1" value="0.5">
+        </div>
+        <div class="ctl">
+          <label for="t2-room"><span data-i18n="t2RoomLabel">Error in the room temperature you assumed</span> <output id="t2-room-out">0.0 °C</output></label>
+          <input type="range" id="t2-room" min="-2" max="2" step="0.1" value="0">
+          <small data-i18n="t2RoomHelp">The log method needs T∞ exactly. The direct fit estimates it.</small>
+        </div>
+        <button type="button" class="btn" id="t2-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roTauLog">τ from the log method</dt><dd class="v" id="t2-tlog">–</dd></div>
+          <div><dt data-i18n="roTauDir">τ from the direct fit</dt><dd class="v" id="t2-tdir">–</dd></div>
+          <div><dt data-i18n="roDropped">Points the log method had to drop</dt><dd class="v" id="t2-drop">–</dd></div>
+          <div><dt data-i18n="roAvgLog">Average τ over 200 runs, log</dt><dd class="v" id="t2-alog">–</dd></div>
+          <div><dt data-i18n="roAvgDir">Average τ over 200 runs, direct</dt><dd class="v" id="t2-adir">–</dd></div>
+          <div><dt data-i18n="roTrueTau">True τ</dt><dd class="v" id="t2-true">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t2-log" role="img" data-i18n-aria="t2LogAria" aria-label="Natural log of temperature minus room temperature against time"></svg>
+          <figcaption data-i18n-html="t2LogCapHtml"><b>ln(T − T∞) against time.</b> Should be a straight line. Hollow points were dropped (T − T∞ ≤ 0).</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t2-curve" role="img" data-i18n-aria="t2CurveAria" aria-label="Temperature against time with the fitted curve"></svg>
+          <figcaption data-i18n-html="t2CurveCapHtml"><b>The cooling curve and the chosen fit.</b></figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t2-note"></p>
+  </section>
+
+  <section class="trial" id="trial3">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t3Num">Trial 3 of 3</div>
+      <h2 data-i18n="t3Title">Every sample, or every run?</h2>
+      <p data-i18n="t3Intro">You log a steady reading for 60 samples, reset the rig, and repeat for 5 runs. Each run settles a little differently. What's the steady value, and how sure are you?</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <span class="lbl" id="t3c-lbl" data-i18n="t3CountLabel">Count as one piece of evidence</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t3c-lbl">
+            <input type="radio" name="t3c" id="t3c-sample" value="sample" checked><label for="t3c-sample" data-i18n="cSample">Each sample (300)</label>
+            <input type="radio" name="t3c" id="t3c-run" value="run"><label for="t3c-run" data-i18n="cRun">Each run (5)</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <label for="t3-run"><span data-i18n="t3RunLabel">Run-to-run variation (SD)</span> <output id="t3-run-out">0.50</output></label>
+          <input type="range" id="t3-run" min="0" max="1.5" step="0.05" value="0.5">
+          <small data-i18n="t3RunHelp">How much each run's steady value differs from the long-run value.</small>
+        </div>
+        <div class="ctl">
+          <label for="t3-rho"><span data-i18n="t3RhoLabel">Carry-over between samples</span> <output id="t3-rho-out">0.80</output></label>
+          <input type="range" id="t3-rho" min="0" max="0.95" step="0.05" value="0.8">
+        </div>
+        <button type="button" class="btn" id="t3-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roEst">Estimated steady value (truth 50)</dt><dd class="v" id="t3-est">–</dd></div>
+          <div><dt data-i18n="roRange">95% range</dt><dd class="v" id="t3-range">–</dd></div>
+          <div><dt data-i18n="roCovSample">Range catches 50, counting samples</dt><dd class="v" id="t3-cs">–</dd></div>
+          <div><dt data-i18n="roCovRun">Range catches 50, counting runs</dt><dd class="v" id="t3-cr">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t3-data" role="img" data-i18n-aria="t3DataAria" aria-label="Samples from five runs with each run's mean"></svg>
+          <figcaption data-i18n-html="t3DataCapHtml"><b>Five runs of 60 samples.</b> Red ticks: each run's mean.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t3-ci" role="img" data-i18n-aria="t3CiAria" aria-label="95% ranges from 20 repeated experiments"></svg>
+          <figcaption data-i18n-html="t3CiCapHtml"><b>The 95% range from 20 repeats of the whole experiment.</b> Red ranges miss the true value (dashed line).</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t3-note"></p>
+  </section>
+
+  <section class="takeaways" id="takeaways">
+    <h2 data-i18n="takeTitle">What to take away</h2>
+    <ol>
+      <li data-i18n-html="take1Html"><b>Always plot residuals in the order you took them.</b> Runs of the same sign mean the errors are linked, and the error bars are too narrow.</li>
+      <li data-i18n-html="take2Html"><b>Fix the model first.</b> Autocorrelated residuals often mean missing dynamics: a drift term, a second time constant, a warm-up. Then use Newey–West (HAC) standard errors for what's left.</li>
+      <li data-i18n-html="take3Html"><b>Don't log-linearize a decay to fit it.</b> Fit the exponential directly (curve_fit, fitnlm, Solver). The same goes for log decrement on noisy ringdowns: use many cycles or fit the damped sine.</li>
+      <li data-i18n-html="take4Html"><b>Count runs, not samples,</b> when runs differ. More samples per run don't shrink run-to-run uncertainty; more runs do.</li>
+    </ol>
+    <h3 data-i18n="checkTitle">Checks in your software</h3>
+    <div class="checklist">
+      <div><h4 data-i18n="check1Title">Excel</h4><p data-i18n="check1Body">Plot residuals against row number. Lag-1 correlation: =CORREL(D3:D101, D2:D100).</p></div>
+      <div><h4 data-i18n="check2Title">MATLAB</h4><p data-i18n="check2Body">dwtest(mdl) for Durbin–Watson, autocorr(res) for the lag plot, fitnlm for the exponential.</p></div>
+      <div><h4 data-i18n="check3Title">Python</h4><p data-i18n="check3Body">statsmodels durbin_watson, plot_acf, fit(cov_type='HAC', cov_kwds={'maxlags': L}); scipy curve_fit for the exponential.</p></div>
+    </div>
+  </section>
+
+  <nav class="series-nav" id="series-nav" data-i18n-aria="navSeriesNavAria" aria-label="Series navigation"></nav>
+  <p class="foot"><span data-i18n="footNote">Simulated data. Trial 1: y = 1 + 0.2t + AR(1) noise, SD 1. Trial 2: T = 22 + 58·e^(−t/4) + noise, every 15 s for 20 min. Trial 3: steady value 50, run offsets and AR(1) noise with SD 1.</span></p>
+</div>
+
+<script src="../../assets/strings-common.js"></script>
+<script src="../../assets/modules.js"></script>
+<script src="strings.js"></script>
+<script src="../../assets/learning-i18n.js"></script>
+<script src="../../assets/learning.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

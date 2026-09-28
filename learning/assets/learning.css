@@ -213,3 +213,27 @@ a.module-row:hover .m-title { color: var(--fix); }
 .chart .truth-curve { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
 .quiz .opts button:disabled { cursor: default; opacity: .55; }
 .quiz .opts button[aria-pressed="true"]:disabled { opacity: 1; }
+.ctl-note { font-size: 14px; color: var(--muted); line-height: 1.4; }
+.chart .band-ci { fill: var(--fit); fill-opacity: .16; }
+.chart .band-pi { fill: var(--pt); fill-opacity: .16; }
+.chart .band-pi-fix { fill: var(--fix); fill-opacity: .14; }
+.chart .shade { fill: var(--grid); fill-opacity: .6; }
+.chart .lbl-muted { fill: var(--muted); font-family: var(--font-display); font-size: 13px; }
+.chart .ln-muted { stroke: var(--pt); stroke-width: 2; fill: none; }
+.chart .pt-hi { fill: var(--fit); }
+.chart .pt-fix { fill: var(--fix); }
+.chart .ci-bar { stroke: var(--fit); stroke-width: 3; }
+.chart .ci-bar-fix { stroke: var(--fix); stroke-width: 3; }
+.report { display: grid; gap: 8px; max-width: 100%; }
+.report-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+.report pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--plot); border: 1px solid var(--rule); font-size: 14px; }
+.copy-status { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-width: 72ch; }
+.checks label { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; cursor: pointer; }
+.checks input { margin-top: 5px; accent-color: var(--fix); width: 16px; height: 16px; flex: none; }
+.table-wrap { overflow-x: auto; max-width: 100%; }
+table.tools { border-collapse: collapse; font-size: 14px; min-width: 720px; }
+table.tools th, table.tools td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+table.tools thead th { font-family: var(--font-display); font-size: 15px; }
+table.tools tbody th { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+table.tools code { font-family: var(--font-mono); font-size: 12.5px; }

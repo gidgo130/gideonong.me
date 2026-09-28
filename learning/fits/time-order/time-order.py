@@ -1,0 +1,156 @@
+"""
+Time-Ordered Data -- companion script (Reading Your Fits, Module 4)
+https://gideonong.me/learning/fits/time-order/
+
+Reproduces the three trials from the interactive page with numpy, scipy and matplotlib,
+and saves each figure as a PNG in ./figures (these are the figures used in the slides).
+
+Run it:
+  * Google Colab: upload this file (or paste it into a cell) and run. Everything needed is preinstalled.
+  * Your own PC:  pip install numpy matplotlib scipy   then   python time-order.py
+
+All data is simulated. Trial 1: y = 1 + 0.2t + AR(1) noise. Trial 2: T = 22 + 58·exp(-t/4) + noise.
+Trial 3: steady value 50 with run-to-run offsets and AR(1) noise.
+"""
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+from scipy.optimize import curve_fit
+
+OUT = Path("figures")
+OUT.mkdir(exist_ok=True)
+
+INK, FIT, FIX, PT, GRID = "#1c2420", "#c93a22", "#1d5ea6", "#6b7b70", "#dde5da"
+plt.rcParams.update({
+    "figure.dpi": 110, "savefig.dpi": 200, "font.size": 12,
+    "axes.edgecolor": "#c5d0c3", "axes.grid": True, "grid.color": GRID,
+    "axes.spines.top": False, "axes.spines.right": False,
+    "axes.titlesize": 13, "axes.titleweight": "bold", "axes.titlelocation": "left",
+})
+
+
+def ar1(rng, n, rho, sd=1.0):
+    """AR(1) noise: each value = rho * previous + fresh noise, scaled to keep SD = sd."""
+    z = rng.standard_normal(n)
+    e = np.empty(n)
+    e[0] = z[0]
+    for i in range(1, n):
+        e[i] = rho * e[i - 1] + np.sqrt(1 - rho ** 2) * z[i]
+    return sd * e
+
+
+def acf(r, lags=15):
+    r = r - r.mean()
+    return np.array([(r[L:] * r[:-L]).sum() / (r * r).sum() for L in range(1, lags + 1)])
+
+
+# ---------------------------------------------------------------- Trial 1
+def trial1(rng, n=100, reps=2000):
+    t = np.arange(n) / 10
+    tc = stats.t.ppf(0.975, n - 2)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
+    for rho, color in [(0.0, PT), (0.9, FIT)]:
+        y = 1 + 0.2 * t + ar1(rng, n, rho)
+        b1, b0 = np.polyfit(t, y, 1)
+        r = y - (b0 + b1 * t)
+        axes[0].plot(np.arange(1, n + 1), r, "-o", ms=3, lw=0.8, color=color, label=f"carry-over {rho}")
+        axes[1].bar(np.arange(1, 16) + (0.2 if rho else -0.2), acf(r), width=0.4, color=color, alpha=0.8)
+        hit = 0
+        for _ in range(reps):
+            yy = 1 + 0.2 * t + ar1(rng, n, rho)
+            X = np.c_[np.ones(n), t]
+            b = np.linalg.lstsq(X, yy, rcond=None)[0]
+            e = yy - X @ b
+            se = np.sqrt(e @ e / (n - 2) / ((t - t.mean()) ** 2).sum())
+            hit += abs(b[1] - 0.2) <= tc * se
+        dw = (np.diff(r) ** 2).sum() / (r ** 2).sum()
+        print(f"Trial 1 | carry-over {rho}: lag-1 {acf(r)[0]:.2f}, Durbin-Watson {dw:.2f}, slope range catches truth {100 * hit / reps:.0f}%")
+    axes[0].axhline(0, color=INK, lw=1)
+    axes[0].set(title="Residuals in time order", xlabel="sample number", ylabel="residual")
+    axes[0].legend(frameon=False, fontsize=10)
+    band = 2 / np.sqrt(n)
+    for v in (band, -band):
+        axes[1].axhline(v, ls="--", color=INK, lw=1)
+    axes[1].set(title="Autocorrelation of the residuals", xlabel="lag (samples)", ylabel="autocorrelation")
+    fig.tight_layout()
+    fig.savefig(OUT / "t1_autocorr.png")
+
+
+# ---------------------------------------------------------------- Trial 2
+def cooling(t, t_inf, a, tau):
+    return t_inf + a * np.exp(-t / tau)
+
+
+def log_tau(t, y, t_inf):
+    keep = y - t_inf > 0
+    slope = np.polyfit(t[keep], np.log(y[keep] - t_inf), 1)[0]
+    return -1 / slope, (~keep).sum()
+
+
+def trial2(rng, reps=500):
+    t = np.arange(0, 20.001, 0.25)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
+    y = cooling(t, 22, 58, 4) + 0.5 * rng.standard_normal(len(t))
+    keep = y - 22 > 0
+    axes[0].scatter(t[keep], np.log(y[keep] - 22), s=12, color=PT)
+    axes[0].plot(t, np.log(58) - t / 4, "--", color=INK, lw=1.6)
+    axes[0].set(title="ln(T − T∞): the tail's noise explodes", xlabel="time (min)", ylabel="ln(T − T∞)", ylim=(-4, 5))
+    results = {}
+    for label, noise, room_err in [("noise 0.5 °C", 0.5, 0.0), ("noise 0.5, T∞ off by +1 °C", 0.5, 1.0), ("noise 2 °C", 2.0, 0.0)]:
+        tl, td = [], []
+        for _ in range(reps):
+            yy = cooling(t, 22, 58, 4) + noise * rng.standard_normal(len(t))
+            tau, _ = log_tau(t, yy, 22 + room_err)
+            tl.append(tau)
+            td.append(curve_fit(cooling, t, yy, p0=[yy[-1], yy[0] - yy[-1], 5])[0][2])
+        results[label] = (np.mean(tl), np.mean(td))
+        print(f"Trial 2 | {label:28s}: average tau, log method {np.mean(tl):.2f} min, direct fit {np.mean(td):.2f} min (true 4.0)")
+    names = list(results)
+    xs = np.arange(len(names))
+    axes[1].bar(xs - 0.18, [results[k][0] for k in names], width=0.36, color=FIT, label="log, then line")
+    axes[1].bar(xs + 0.18, [results[k][1] for k in names], width=0.36, color=FIX, label="fit the exponential")
+    axes[1].axhline(4, ls="--", color=INK, lw=1)
+    axes[1].set_xticks(xs, names, fontsize=9)
+    axes[1].set(title=f"Average fitted τ over {reps} recordings", ylabel="τ (min)")
+    axes[1].legend(frameon=False, fontsize=10)
+    fig.tight_layout()
+    fig.savefig(OUT / "t2_logtrap.png")
+
+
+# ---------------------------------------------------------------- Trial 3
+def trial3(rng, runs=5, per=60, run_sd=0.5, rho=0.8, reps=2000):
+    hs = hr = 0
+    for _ in range(reps):
+        offsets = run_sd * rng.standard_normal(runs)
+        data = np.array([50 + offsets[j] + ar1(rng, per, rho) for j in range(runs)])
+        allv, means = data.ravel(), data.mean(axis=1)
+        h_s = stats.t.ppf(0.975, allv.size - 1) * allv.std(ddof=1) / np.sqrt(allv.size)
+        h_r = stats.t.ppf(0.975, runs - 1) * means.std(ddof=1) / np.sqrt(runs)
+        hs += abs(allv.mean() - 50) <= h_s
+        hr += abs(means.mean() - 50) <= h_r
+    print(f"Trial 3 | 95% range catches 50: counting samples {100 * hs / reps:.0f}%, counting runs {100 * hr / reps:.0f}%")
+    offsets = run_sd * rng.standard_normal(runs)
+    data = np.array([50 + offsets[j] + ar1(rng, per, rho) for j in range(runs)])
+    fig, ax = plt.subplots(figsize=(8, 4.2))
+    for j in range(runs):
+        idx = np.arange(j * per, (j + 1) * per)
+        if j % 2:
+            ax.axvspan(idx[0], idx[-1], color=GRID, alpha=0.6)
+        ax.scatter(idx, data[j], s=6, color=PT)
+        ax.plot([idx[0] + 3, idx[-1] - 3], [data[j].mean()] * 2, color=FIT, lw=2.4)
+    ax.axhline(50, ls="--", color=INK, lw=1)
+    ax.set(title=f"Five runs: ranges catch 50 in {100 * hs / reps:.0f}% (samples) vs {100 * hr / reps:.0f}% (runs)",
+           xlabel="sample number", ylabel="steady value")
+    fig.tight_layout()
+    fig.savefig(OUT / "t3_runs.png")
+
+
+if __name__ == "__main__":
+    rng = np.random.default_rng(3)
+    trial1(rng)
+    trial2(rng)
+    trial3(rng)
+    print(f"Figures saved in {OUT.resolve()}")
+    plt.show()

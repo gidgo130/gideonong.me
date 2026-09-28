@@ -102,6 +102,96 @@
     var fin = at(Math.exp((a + b) / 2));
     return fin.sse <= best.sse ? fin : best;
   }
+  // ----- added with Modules 1, 3, 4, 6 -----
+  // Solve A·c = b (small dense system) by Gaussian elimination with partial pivoting.
+  function solve(A, b) {
+    var n = b.length, M = A.map(function (row, i) { return row.slice().concat([b[i]]); }), i, j, k;
+    for (k = 0; k < n; k++) {
+      var piv = k;
+      for (i = k + 1; i < n; i++) if (Math.abs(M[i][k]) > Math.abs(M[piv][k])) piv = i;
+      var tmp = M[k]; M[k] = M[piv]; M[piv] = tmp;
+      for (i = k + 1; i < n; i++) { var f = M[i][k] / M[k][k]; for (j = k; j <= n; j++) M[i][j] -= f * M[k][j]; }
+    }
+    var c = new Array(n);
+    for (i = n - 1; i >= 0; i--) { var sum = M[i][n]; for (j = i + 1; j < n; j++) sum -= M[i][j] * c[j]; c[i] = sum / M[i][i]; }
+    return c;
+  }
+  // Polynomial least squares of degree `deg`. x is centred and scaled to [-1, 1] internally so
+  // high degrees stay well conditioned. Returns { predict(x), fitted, resid, sse, p }.
+  function polyfit(x, y, deg) {
+    var n = x.length, lo = Infinity, hi = -Infinity, i, j, k;
+    for (i = 0; i < n; i++) { lo = Math.min(lo, x[i]); hi = Math.max(hi, x[i]); }
+    var mid = (lo + hi) / 2, half = (hi - lo) / 2 || 1, p = deg + 1;
+    var z = function (v) { return (v - mid) / half; };
+    var A = [], b = new Array(p).fill(0);
+    for (j = 0; j < p; j++) A.push(new Array(p).fill(0));
+    for (i = 0; i < n; i++) {
+      var pw = [1]; for (k = 1; k < p; k++) pw.push(pw[k - 1] * z(x[i]));
+      for (j = 0; j < p; j++) { b[j] += pw[j] * y[i]; for (k = 0; k < p; k++) A[j][k] += pw[j] * pw[k]; }
+    }
+    var c = solve(A, b);
+    var predict = function (v) { var zz = z(v), s = 0, pw = 1; for (var q = 0; q < p; q++) { s += c[q] * pw; pw *= zz; } return s; };
+    var fitted = new Float64Array(n), resid = new Float64Array(n), sse = 0;
+    for (i = 0; i < n; i++) { fitted[i] = predict(x[i]); resid[i] = y[i] - fitted[i]; sse += resid[i] * resid[i]; }
+    return { predict: predict, fitted: fitted, resid: resid, sse: sse, p: p };
+  }
+  // Weighted least squares for y = b0 + b1 x with weights w (use 1/σ² when σ is known).
+  // s2 = weighted residual variance (≈ 1 when the weights are exact 1/σ²).
+  function wls(x, y, w) {
+    var n = x.length, sw = 0, mx = 0, my = 0, i;
+    for (i = 0; i < n; i++) { sw += w[i]; mx += w[i] * x[i]; my += w[i] * y[i]; }
+    mx /= sw; my /= sw;
+    var sxx = 0, sxy = 0;
+    for (i = 0; i < n; i++) { sxx += w[i] * (x[i] - mx) * (x[i] - mx); sxy += w[i] * (x[i] - mx) * (y[i] - my); }
+    var b1 = sxy / sxx, b0 = my - b1 * mx, chi = 0, resid = new Float64Array(n);
+    for (i = 0; i < n; i++) { resid[i] = y[i] - b0 - b1 * x[i]; chi += w[i] * resid[i] * resid[i]; }
+    var s2 = chi / (n - 2);
+    return { b0: b0, b1: b1, resid: resid, s2: s2, se1: Math.sqrt(s2 / sxx), sw: sw, mx: mx, sxx: sxx };
+  }
+  // HC3 (heteroskedasticity-robust) standard error of the OLS slope.
+  function hc3se(x, f) {
+    var n = x.length, mx = 0, i, sxx = 0, num = 0;
+    for (i = 0; i < n; i++) mx += x[i];
+    mx /= n;
+    for (i = 0; i < n; i++) sxx += (x[i] - mx) * (x[i] - mx);
+    for (i = 0; i < n; i++) {
+      var h = 1 / n + (x[i] - mx) * (x[i] - mx) / sxx, u = f.resid[i] / (1 - h);
+      num += (x[i] - mx) * (x[i] - mx) * u * u;
+    }
+    return Math.sqrt(num) / sxx;
+  }
+  // 95% confidence (mean line) and prediction (next reading) half-widths for an OLS fit at x0.
+  function bands(x, f, x0) {
+    var n = x.length, mx = 0, i, sxx = 0;
+    for (i = 0; i < n; i++) mx += x[i];
+    mx /= n;
+    for (i = 0; i < n; i++) sxx += (x[i] - mx) * (x[i] - mx);
+    var tc = tcrit(n - 2), lev = 1 / n + (x0 - mx) * (x0 - mx) / sxx;
+    return { y: f.b0 + f.b1 * x0, ci: tc * f.s * Math.sqrt(lev), pi: tc * f.s * Math.sqrt(1 + lev) };
+  }
+  // AR(1) noise: each value = rho·previous + fresh noise, scaled so the SD stays `sd`.
+  function ar1(z, rho, sd) {
+    var n = z.length, e = new Float64Array(n), k = Math.sqrt(1 - rho * rho);
+    e[0] = z[0];
+    for (var i = 1; i < n; i++) e[i] = rho * e[i - 1] + k * z[i];
+    for (i = 0; i < n; i++) e[i] *= sd;
+    return e;
+  }
+  // Autocorrelation of a series at lags 1..maxLag.
+  function acf(r, maxLag) {
+    var n = r.length, m = 0, i, c0 = 0, out = [];
+    for (i = 0; i < n; i++) m += r[i];
+    m /= n;
+    for (i = 0; i < n; i++) c0 += (r[i] - m) * (r[i] - m);
+    for (var L = 1; L <= maxLag; L++) { var c = 0; for (i = L; i < n; i++) c += (r[i] - m) * (r[i - L] - m); out.push(c / c0); }
+    return out;
+  }
+  // Durbin–Watson statistic of residuals in time order (≈ 2 when uncorrelated).
+  function durbinWatson(r) {
+    var num = 0, den = r[0] * r[0];
+    for (var i = 1; i < r.length; i++) { num += (r[i] - r[i - 1]) * (r[i] - r[i - 1]); den += r[i] * r[i]; }
+    return num / den;
+  }
   // Two-sided 95% t critical value (Cornish-Fisher expansion; good to 3 decimals for df >= 8).
   function tcrit(df) {
     var z = 1.959964;
@@ -126,7 +216,8 @@
   }
   function tickText(v) { return Math.abs(v) < 1e-9 ? "0" : Number.isInteger(v) ? String(v) : num(v, 1); }
   var clipId = 0;
-  // o: { x:[min,max], y:[min,max], w?, h?, xLabel, yLabel, noY?, xt?, yt?, draw(sx,sy) → svg string,
+  // o: { x:[min,max], y:[min,max], w?, h?, xLabel, yLabel, noY?, xt?, yt?, xticks?: [values], xfmt?(v) → label,
+  //      draw(sx,sy) → svg string,
   //      over?(sx,sy,geom) → svg string drawn unclipped }
   function chart(svg, o) {
     var W = o.w || 560, H = o.h || 360, m = { l: 50, r: 14, t: 14, b: 46 };
@@ -135,9 +226,9 @@
     var sy = function (v) { return m.t + ph - (v - o.y[0]) / (o.y[1] - o.y[0]) * ph; };
     var id = "lfclip" + (++clipId), g = "";
     g += '<defs><clipPath id="' + id + '"><rect x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '"/></clipPath></defs>';
-    niceTicks(o.x[0], o.x[1], o.xt || 6).forEach(function (tk) {
+    (o.xticks || niceTicks(o.x[0], o.x[1], o.xt || 6)).forEach(function (tk) {
       g += '<line class="gridline" x1="' + sx(tk) + '" x2="' + sx(tk) + '" y1="' + m.t + '" y2="' + (m.t + ph) + '"/>' +
-        '<text class="tick" x="' + sx(tk) + '" y="' + (m.t + ph + 16) + '" text-anchor="middle">' + tickText(tk) + '</text>';
+        '<text class="tick" x="' + sx(tk) + '" y="' + (m.t + ph + 16) + '" text-anchor="middle">' + (o.xfmt ? esc(o.xfmt(tk)) : tickText(tk)) + '</text>';
     });
     if (!o.noY) niceTicks(o.y[0], o.y[1], o.yt || 5).forEach(function (tk) {
       g += '<line class="gridline" x1="' + m.l + '" x2="' + (m.l + pw) + '" y1="' + sy(tk) + '" y2="' + sy(tk) + '"/>' +
@@ -211,6 +302,7 @@
   window.LF = {
     mulberry32: mulberry32, normals: normals, uniforms: uniforms, newSeed: newSeed,
     ols: ols, deming: deming, tcrit: tcrit, num: num, r2: r2, influence: influence, expFit: expFit,
+    solve: solve, polyfit: polyfit, wls: wls, hc3se: hc3se, bands: bands, ar1: ar1, acf: acf, durbinWatson: durbinWatson,
     chart: chart, line: line, dots: dots, esc: esc,
     seriesNav: seriesNav, moduleList: moduleList, fixFileLinks: fixFileLinks
   };

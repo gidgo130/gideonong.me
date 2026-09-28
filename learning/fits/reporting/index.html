@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning is unlisted while in progress: remove this line to let search engines index the page. -->
+  <meta name="robots" content="noindex">
+  <title data-i18n-title="pageTitle">Using and Reporting a Fit · Reading Your Fits</title>
+  <meta name="description" content="Interactive module: confidence vs prediction bands, carrying a fit's uncertainty into a computed result, and what to write in a lab report.">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/invisible-bias/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Theme: follow the main site's saved choice (About → Viewing settings). Keep in sync with index.html. */
+    (function () {
+      try {
+        var t = localStorage.getItem("viewTheme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { /* storage blocked: the OS setting decides */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+</head>
+<body>
+
+<nav class="series-bar" data-i18n-aria="navSeriesAria" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../" data-i18n="siteHome">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../" data-i18n="learningHome">Learning</a><span aria-hidden="true">/</span>
+    <span data-i18n="seriesName">Reading Your Fits</span>
+  </div>
+  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Toggle language (EN/ES)" hidden>
+    <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
+  </button>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow" data-i18n="eyebrow">Reading Your Fits · Module 6</div>
+    <h1 data-i18n="h1">Using and Reporting a Fit</h1>
+    <p class="lead" data-i18n="lead">Once the checks pass, the fit is a tool: for predicting a reading, estimating a constant, or computing something from the coefficients. Each use needs its own kind of error bar.</p>
+    <p data-i18n-html="introHtml">This module covers the two bands every fit comes with, how to carry the fit's uncertainty into a number you compute from it, and what to write down. All data is simulated from y = 1 + 2x with sensor noise SD 2 unless a trial says otherwise.</p>
+    <div class="legend-key" data-i18n-aria="keyAria" aria-label="Color key">
+      <span><i class="sw truth"></i><span data-i18n="keyTruth">The truth</span></span>
+      <span><i class="sw fit"></i><span data-i18n="keyFit">The fit, and the band for the line itself</span></span>
+      <span><i class="sw fix"></i><span data-i18n="keyFix">A second method for comparison</span></span>
+      <span><i class="sw dot"></i><span data-i18n="keyPts">Measured points</span></span>
+    </div>
+    <div class="takeaway-links">
+      <span data-i18n="takeLabel">Take it with you:</span>
+      <a href="slides.html" data-i18n="takeSlides">Slides</a>
+      <a href="reporting.py" download data-i18n="takePy">Python script</a>
+    </div>
+  </header>
+
+  <section class="trial" id="trial1">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t1Num">Trial 1 of 3</div>
+      <h2 data-i18n="t1Title">Two bands: the line, and the next reading</h2>
+      <p data-i18n="t1Intro">Fifteen readings over x = 0 to 10. Slide the point where you want an answer, including past the data.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t1-x"><span data-i18n="t1XLabel">Where you want a prediction (x)</span> <output id="t1-x-out">5.0</output></label>
+          <input type="range" id="t1-x" min="-5" max="20" step="0.5" value="5">
+        </div>
+        <button type="button" class="btn" id="t1-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roYhat">Fitted y there</dt><dd class="v" id="t1-y">–</dd></div>
+          <div><dt data-i18n="roCi">Where the true line is (95%)</dt><dd class="v" id="t1-ci">–</dd></div>
+          <div><dt data-i18n="roPi">Where the next reading will land (95%)</dt><dd class="v" id="t1-pi">–</dd></div>
+          <div><dt data-i18n="roInside">Inside the tested range?</dt><dd class="v" id="t1-in">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t1-data" role="img" data-i18n-aria="t1DataAria" aria-label="Data, fitted line, confidence band and prediction band"></svg>
+          <figcaption data-i18n-html="t1DataCapHtml"><b>Red band: where the true line is. Grey band: where a new reading will land.</b> The shaded strips are outside the tested range.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t1-width" role="img" data-i18n-aria="t1WidthAria" aria-label="Half-width of both bands along x"></svg>
+          <figcaption data-i18n-html="t1WidthCapHtml"><b>How wide each band is along x.</b> Both are narrowest in the middle of the data and flare outward.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t1-note"></p>
+  </section>
+
+  <section class="trial" id="trial2">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t2Num">Trial 2 of 3</div>
+      <h2 data-i18n="t2Title">Carrying the uncertainty into a result</h2>
+      <p data-i18n="t2Intro">Often the answer isn't a coefficient but something computed from both: here, the x where the line crosses zero (like the temperature where a sensor's output crosses 0 V). The intercept b0 is the fit's value at x = 0, which may be far from where you took data.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t2-d"><span data-i18n="t2DLabel">How far the data sit from x = 0</span> <output id="t2-d-out">10</output></label>
+          <input type="range" id="t2-d" min="0" max="20" step="1" value="10">
+          <small data-i18n="t2DHelp">The data span 5 units starting here. The true line crosses zero at the left edge of the data.</small>
+        </div>
+        <button type="button" class="btn" id="t2-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roTrueCross">True crossing</dt><dd class="v" id="t2-true">–</dd></div>
+          <div><dt data-i18n="roCross">Estimated crossing</dt><dd class="v" id="t2-x0">–</dd></div>
+          <div><dt data-i18n="roNaive">95% range, ignoring correlation</dt><dd class="v" id="t2-naive">–</dd></div>
+          <div><dt data-i18n="roDelta">95% range, with correlation</dt><dd class="v" id="t2-delta">–</dd></div>
+          <div><dt data-i18n="roBoot">95% range, bootstrap</dt><dd class="v" id="t2-boot">–</dd></div>
+          <div><dt data-i18n="roActual">Actual spread over 400 repeats</dt><dd class="v" id="t2-act">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t2-data" role="img" data-i18n-aria="t2DataAria" aria-label="Data and fitted line extended back to where it crosses zero, with two error bars on the crossing"></svg>
+          <figcaption data-i18n-html="t2DataCapHtml"><b>The fit, extended back to where it crosses zero.</b> Red bar: range ignoring correlation. Blue bar: range with it.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t2-hist" role="img" data-i18n-aria="t2HistAria" aria-label="Crossings from 400 repeated experiments with both ranges marked"></svg>
+          <figcaption data-i18n-html="t2HistCapHtml"><b>Crossings from 400 repeats of the experiment.</b> A good 95% range should span about the middle 95% of this pile.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t2-note"></p>
+  </section>
+
+  <section class="trial" id="trial3">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t3Num">Trial 3 of 3</div>
+      <h2 data-i18n="t3Title">What to write down</h2>
+      <p data-i18n="t3Intro">A report line built from Trial 1's data. Copy it into a lab report and fill in the parts only you can check.</p>
+    </div>
+    <div class="report">
+      <div class="report-head">
+        <span class="lbl" id="t3-rep-lbl" data-i18n="t3ReportLabel">Report text</span>
+        <button type="button" class="btn" id="t3-copy" data-i18n="btnCopy">Copy</button>
+        <span class="copy-status" id="t3-copy-status" aria-live="polite"></span>
+      </div>
+      <pre id="t3-report" aria-labelledby="t3-rep-lbl" tabindex="0"></pre>
+    </div>
+    <h3 data-i18n="checklistTitle">Before you trust a fit</h3>
+    <ul class="checks">
+        <li><label><input type="checkbox" id="ck1"> <span data-i18n="ck1">Plotted the data before fitting.</span></label></li>
+        <li><label><input type="checkbox" id="ck2"> <span data-i18n="ck2">Chose the model's shape from the physics, not from R².</span></label></li>
+        <li><label><input type="checkbox" id="ck3"> <span data-i18n="ck3">Residuals against fitted value: no bend, no fan.</span></label></li>
+        <li><label><input type="checkbox" id="ck4"> <span data-i18n="ck4">Residuals in run order: no runs or trend.</span></label></li>
+        <li><label><input type="checkbox" id="ck5"> <span data-i18n="ck5">No single point steering the fit, or it's explained.</span></label></li>
+        <li><label><input type="checkbox" id="ck6"> <span data-i18n="ck6">Asked whether x is read with noise or tangled with something that drifted (Module 5).</span></label></li>
+        <li><label><input type="checkbox" id="ck7"> <span data-i18n="ck7">Reported the residual SD in units, and ranges on the coefficients.</span></label></li>
+        <li><label><input type="checkbox" id="ck8"> <span data-i18n="ck8">Used the prediction band for claims about single readings, only inside the tested range.</span></label></li>
+    </ul>
+    <h3 data-i18n="toolsTitle">The same steps in Excel, MATLAB and Python</h3>
+    <div class="table-wrap">
+      <table class="tools">
+        <thead><tr><th data-i18n="colTask">Task</th><th>Excel</th><th>MATLAB</th><th>Python</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" data-i18n="rowFit">Fit a line</th><td><code>=SLOPE(y,x), =INTERCEPT(y,x); LINEST</code></td><td><code>mdl = fitlm(x, y)</code></td><td><code>smf.ols("y ~ x", df).fit()</code></td></tr>
+          <tr><th scope="row" data-i18n="rowResid">Residual plots</th><td data-i18n="tExcelResid">Fitted column = slope·x + intercept; residual = y − fitted; scatter plot</td><td><code>plotResiduals(mdl, "fitted")</code></td><td><code>plt.scatter(res.fittedvalues, res.resid)</code></td></tr>
+          <tr><th scope="row" data-i18n="rowRanges">Coefficient ranges</th><td data-i18n-html="tExcelCiHtml"><code>=LINEST(y, x, TRUE, TRUE)</code> gives the standard errors; multiply by <code>=T.INV.2T(0.05, n-2)</code></td><td><code>coefCI(mdl)</code></td><td><code>res.conf_int()</code></td></tr>
+          <tr><th scope="row" data-i18n="rowBands">Confidence and prediction bands</th><td data-i18n="tByHand">By hand from the LINEST outputs</td><td><code>predict(mdl, x0, "Prediction", "observation")</code></td><td><code>res.get_prediction(x0).summary_frame()</code></td></tr>
+          <tr><th scope="row" data-i18n="rowWeighted">Weighted fit (Module 3)</th><td data-i18n="tScaleRows">Multiply x, y and a column of 1s by √w, then LINEST with no constant</td><td><code>fitlm(x, y, "Weights", w)</code></td><td><code>sm.WLS(y, X, weights=w).fit()</code></td></tr>
+          <tr><th scope="row" data-i18n="rowRobust">Robust or HAC errors (Modules 3, 4)</th><td data-i18n="tNotBuiltIn">Not built in</td><td><code>hac(x, y, "type", "HC", "weights", "HC3")</code></td><td><code>.fit(cov_type="HC3") or "HAC"</code></td></tr>
+          <tr><th scope="row" data-i18n="rowNonlin">Nonlinear fit (Modules 2, 4)</th><td data-i18n="tSolver">Solver: minimize the sum of squared residuals</td><td><code>fitnlm(x, y, model, beta0)</code></td><td><code>scipy.optimize.curve_fit</code></td></tr>
+          <tr><th scope="row" data-i18n="rowErrX">Errors in x (Module 5)</th><td data-i18n="tNotBuiltIn">Not built in</td><td data-i18n="tTls">Total least squares via svd</td><td><code>scipy.odr</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <small class="ctl-note" data-i18n="toolsNote">Function names are the common ones; check your version's documentation.</small>
+  </section>
+
+  <section class="takeaways" id="takeaways">
+    <h2 data-i18n="takeTitle">What to take away</h2>
+    <ol>
+      <li data-i18n-html="take1Html"><b>Two bands, two questions.</b> "Where's the true line?" uses the confidence band. "Where will the next reading land?" uses the prediction band, which never shrinks below the sensor's noise.</li>
+      <li data-i18n-html="take2Html"><b>Both bands assume the model still holds.</b> Outside the tested range, they're a best case.</li>
+      <li data-i18n-html="take3Html"><b>Derived results need the full covariance.</b> Slope and intercept are correlated; use the delta method or a bootstrap.</li>
+      <li data-i18n-html="take4Html"><b>Report the residual SD in units, ranges on every number, and what you checked.</b> R² alone isn't a result (Module 1).</li>
+    </ol>
+    <h3 data-i18n="checkTitle">The series in one line each</h3>
+    <div class="checklist">
+      <div><h4 data-i18n="check1Title">Modules 1–2</h4><p data-i18n="check1Body">Look at the data and the residuals; R² can't tell good from bad.</p></div>
+      <div><h4 data-i18n="check2Title">Modules 3–4</h4><p data-i18n="check2Body">Uneven scatter and linked errors leave the line alone but break the error bars.</p></div>
+      <div><h4 data-i18n="check3Title">Module 5</h4><p data-i18n="check3Body">Noise in x and hidden drift bias the line itself, invisibly. Design the experiment to prevent it.</p></div>
+    </div>
+  </section>
+
+  <nav class="series-nav" id="series-nav" data-i18n-aria="navSeriesNavAria" aria-label="Series navigation"></nav>
+  <p class="foot"><span data-i18n="footNote">Simulated data. Trials 1 and 3: y = 1 + 2x, noise SD 2, 15 readings. Trial 2: y = 2(x − c) with c the left edge of the data, noise SD 1, 12 readings.</span></p>
+</div>
+
+<script src="../../assets/strings-common.js"></script>
+<script src="../../assets/modules.js"></script>
+<script src="strings.js"></script>
+<script src="../../assets/learning-i18n.js"></script>
+<script src="../../assets/learning.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
