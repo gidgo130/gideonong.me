@@ -3,7 +3,7 @@
 // the pre-commit hook (.githooks/pre-commit); run the script by hand to preview.
 // null = no file for that slot. js/main.js reads this for [data-doc-link] buttons.
 const DOCS = {
-  cv: { en: null, es: null },
-  resume: { en: "assets/pdfs/resume/en Gideon Ong Resume 20260915.pdf", es: null },
+  cv: { en: "assets/pdfs/cv/en Gideon Ong CV 20260928.pdf", es: "assets/pdfs/cv/es Gideon Ong CV 20260928.pdf" },
+  resume: { en: "assets/pdfs/resume/en Gideon Ong Resume 20260928.pdf", es: "assets/pdfs/resume/es Gideon Ong Resume 20260928.pdf" },
   transcript: { any: null }
 };
