@@ -37,12 +37,11 @@
     return p.split("/").map(encodeURIComponent).join("/");
   }
 
-  // The manifest slot for a type: { en, es } for bilingual types, { any } for
-  // the transcript. Returns the path for `lang`, else the other language, else null.
+  // The manifest slot for a type is { en, es } (resume, CV and transcript alike).
+  // Returns the path for `lang`, else the other language, else null.
   function docPathFor(docType, lang) {
     const slot = DOCS[docType];
     if (!slot) return null;
-    if (slot.any !== undefined) return slot.any || null;
     return slot[lang] || slot[lang === "en" ? "es" : "en"] || null;
   }
 

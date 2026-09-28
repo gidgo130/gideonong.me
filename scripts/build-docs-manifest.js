@@ -9,9 +9,10 @@
 //     node scripts/build-docs-manifest.js
 // The site itself still deploys as plain static files — this is NOT a build step.
 //
-// Filename patterns (anything else is ignored with a warning):
-//   resume, cv:  "<en|es> Gideon Ong <Resume|CV> <YYYYMMDD>.pdf"
-//   transcript:  "Gideon Ong Transcript <YYYYMMDD>.pdf"         (no language prefix)
+// Filename pattern, every type (anything else is ignored with a warning):
+//   "<en|es> Gideon Ong <Resume|CV|Transcript> <YYYYMMDD>.pdf"
+// Transcript PDFs are produced by scripts/transcript/ (Python, dev-only — see its
+// README); resume and CV PDFs are exported by hand.
 //
 // The output is stable (sorted keys, LF line endings) and only rewritten when
 // its content changes, so commits stay clean. Always exits 0.
@@ -24,11 +25,11 @@ const ROOT = path.resolve(__dirname, "..");
 const OUT = path.join(ROOT, "js", "docs-data.js");
 const PDF_DIR = "assets/pdfs";
 
-// type → { dir, label, langs } — `langs: null` means one file for every language ("any").
+// type → { dir, label, langs } — one slot per language for every type.
 const TYPES = {
   resume: { dir: "resume", label: "Resume", langs: ["en", "es"] },
   cv: { dir: "cv", label: "CV", langs: ["en", "es"] },
-  transcript: { dir: "transcript", label: "Transcript", langs: null }
+  transcript: { dir: "transcript", label: "Transcript", langs: ["en", "es"] }
 };
 
 const warnings = [];
@@ -46,9 +47,8 @@ function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 function scanType(typeName, type) {
   const dirRel = PDF_DIR + "/" + type.dir;
   const dirAbs = path.join(ROOT, dirRel);
-  const newest = {}; // lang (or "any") → { date, file }
-  const slots = type.langs || ["any"];
-  slots.forEach((s) => { newest[s] = null; });
+  const newest = {}; // lang → { date, file }
+  type.langs.forEach((s) => { newest[s] = null; });
 
   let files = [];
   try {
@@ -58,16 +58,14 @@ function scanType(typeName, type) {
     return newest;
   }
 
-  const pattern = type.langs
-    ? new RegExp("^(" + type.langs.join("|") + ") Gideon Ong " + escapeRe(type.label) + " (\\d{8})\\.pdf$")
-    : new RegExp("^Gideon Ong " + escapeRe(type.label) + " (\\d{8})\\.pdf$");
+  const pattern = new RegExp("^(" + type.langs.join("|") + ") Gideon Ong " + escapeRe(type.label) + " (\\d{8})\\.pdf$");
 
   files.sort().forEach((name) => {
     if (name.startsWith(".")) return; // .gitkeep and friends
     const m = pattern.exec(name);
     if (!m) { warn(`${dirRel}/${name}: does not match the ${typeName} pattern — ignored`); return; }
-    const lang = type.langs ? m[1] : "any";
-    const date = type.langs ? m[2] : m[1];
+    const lang = m[1];
+    const date = m[2];
     if (!isValidDate(date)) { warn(`${dirRel}/${name}: "${date}" is not a real date — ignored`); return; }
     const entry = { date, file: dirRel + "/" + name };
     if (!newest[lang] || date > newest[lang].date) newest[lang] = entry;

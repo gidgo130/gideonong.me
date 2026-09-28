@@ -274,8 +274,8 @@
   "PHYS 2051": {
     "en": "General Physics I Laboratory",
     "es": "Laboratorio de Física General I",
-    "source": "title assumed from the CHEM 1011 lab naming pattern",
-    "verified": false
+    "source": "confirmed by Gideon",
+    "verified": true
   },
   "PHYS 2053": {
     "en": "General Physics I",
@@ -286,8 +286,8 @@
   "PHYS 2061": {
     "en": "General Physics II Laboratory",
     "es": "Laboratorio de Física General II",
-    "source": "title assumed from the CHEM 1011 lab naming pattern",
-    "verified": false
+    "source": "confirmed by Gideon",
+    "verified": true
   },
   "PHYS 2063": {
     "en": "General Physics II",

@@ -2,3 +2,4 @@ references/
 staging/
 .vercel
 .env*
+scripts/transcript/output/

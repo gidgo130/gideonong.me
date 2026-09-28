@@ -5,5 +5,5 @@
 const DOCS = {
   cv: { en: "assets/pdfs/cv/en Gideon Ong CV 20260928.pdf", es: "assets/pdfs/cv/es Gideon Ong CV 20260928.pdf" },
   resume: { en: "assets/pdfs/resume/en Gideon Ong Resume 20260928.pdf", es: "assets/pdfs/resume/es Gideon Ong Resume 20260928.pdf" },
-  transcript: { any: null }
+  transcript: { en: null, es: null }
 };
