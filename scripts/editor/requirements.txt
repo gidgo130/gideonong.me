@@ -1,0 +1,4 @@
+# Local content editor — Phases 0–1 need only Flask (werkzeug comes with it).
+# Install into the real Python (not Inkscape's), from the repo root:
+#   & "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" -m pip install -r scripts\editor\requirements.txt
+Flask>=3.0,<4

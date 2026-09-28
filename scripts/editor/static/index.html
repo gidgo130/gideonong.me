@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Site editor — gideonong.me</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Site editor <span class="file" id="fileName">js/translations.js</span></div>
+  <div class="counts" id="counts" title="Parity of EN and ES per key"></div>
+  <input id="search" type="search" placeholder="Search keys and text…" autocomplete="off" spellcheck="false">
+  <label class="chk"><input type="checkbox" id="attention"> Needs attention</label>
+  <a id="previewLink" class="ghost" href="#" target="_blank" rel="noopener">Preview ↗</a>
+  <button id="restoreBtn" class="ghost" type="button">Restore…</button>
+  <button id="reviewBtn" class="primary" type="button">Review &amp; save <span class="badge" id="draftCount" hidden>0</span></button>
+</header>
+
+<div id="banners"></div>
+
+<div class="layout">
+  <nav id="sections" aria-label="Sections"></nav>
+  <main id="list" aria-live="polite"></main>
+</div>
+
+<dialog id="reviewDlg" class="dlg">
+  <form method="dialog">
+    <h2>Review &amp; save <span class="muted" id="reviewFile"></span></h2>
+    <div id="reviewBody"></div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost danger" id="discardBtn">Discard all drafts</button>
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Back</button>
+      <button type="button" class="primary" id="saveBtn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="restoreDlg" class="dlg">
+  <form method="dialog">
+    <h2>Restore a backup</h2>
+    <p class="muted">Every save copies the previous file into <code>scripts/editor/.local/backups/&lt;timestamp&gt;/</code>.
+      Restoring writes that copy back (after backing up the current file first). Unsaved drafts are kept.</p>
+    <div id="restoreBody"></div>
+    <div class="dlg-actions"><span class="spacer"></span><button type="submit" class="ghost">Close</button></div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

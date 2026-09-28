@@ -33,6 +33,10 @@ js/about.js         about.html behaviors
 js/docs-data.js     GENERATED documents manifest (see Documents below) — never edit by hand
 scripts/build-docs-manifest.js  Dev-side generator for js/docs-data.js (Node built-ins only)
 scripts/transcript/  Dev-side transcript PDF generator (Python; see its README) — never deployed
+scripts/editor/      Dev-side local content editor (Python/Flask + a vanilla-JS page; see its
+                     README and staging/editor-plan.md) — never deployed. Phase 1 edits
+                     js/translations.js in place, losslessly. Its .local/ (backups, logs,
+                     drafts, Edge profile) is gitignored. It never runs git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit
 assets/images/      Project photos and diagrams
 assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)

@@ -3,3 +3,5 @@ staging/
 .vercel
 .env*
 scripts/transcript/output/
+scripts/editor/.local/
+__pycache__/
