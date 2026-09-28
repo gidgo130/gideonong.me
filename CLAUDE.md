@@ -445,6 +445,8 @@ Rules for /learning (these replace the main-site rules where they conflict):
   the thin series bar (gideonong.me / Learning / series) and prev / all / next links.
 - Color meaning is fixed across every module: dashed ink = the truth, red (--fit) = what an
   ordinary fit reports, blue (--fix) = a corrected estimate, grey dots = measured points.
+  Red may also mark a miss or a flag (a reading outside a band, a range that misses the
+  truth, a readout that fails its check); when it does, the caption says so.
 - Unlisted: NOT in the main nav, sitemap or project list. The only link in is the Learning
   entry in about.html's Interesting sites (js/about.js `interestingSites`, `internal: true` =
   same tab); that block is `hidden` for now, so the link shows once `hidden` is removed.

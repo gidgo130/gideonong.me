@@ -3,10 +3,10 @@
 // Titles and descriptions live in strings-common.js as mod<Key>Title / mod<Key>Desc.
 // A module's page lives at learning/fits/<slug>/index.html.
 window.LEARN_MODULES = [
-  { key: "RSquared",      slug: "r-squared",      ready: false },
-  { key: "Residuals",     slug: "residual-plots", ready: false },
-  { key: "UnevenScatter", slug: "uneven-scatter", ready: false },
-  { key: "TimeOrder",     slug: "time-order",     ready: false },
+  { key: "RSquared",      slug: "r-squared",      ready: true  },
+  { key: "Residuals",     slug: "residual-plots", ready: true  },
+  { key: "UnevenScatter", slug: "uneven-scatter", ready: true  },
+  { key: "TimeOrder",     slug: "time-order",     ready: true  },
   { key: "InvisibleBias", slug: "invisible-bias", ready: true  },
-  { key: "Reporting",     slug: "reporting",      ready: false }
+  { key: "Reporting",     slug: "reporting",      ready: true  }
 ];

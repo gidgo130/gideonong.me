@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning is unlisted while in progress: remove this line to let search engines index the page. -->
+  <meta name="robots" content="noindex">
+  <title data-i18n-title="pageTitle">Why R² Isn't Enough · Reading Your Fits</title>
+  <meta name="description" content="Interactive module: why R² can't tell a good fit from a bad one, grows with your test range, and always rises when you add terms.">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/invisible-bias/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Theme: follow the main site's saved choice (About → Viewing settings). Keep in sync with index.html. */
+    (function () {
+      try {
+        var t = localStorage.getItem("viewTheme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { /* storage blocked: the OS setting decides */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+</head>
+<body>
+
+<nav class="series-bar" data-i18n-aria="navSeriesAria" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../" data-i18n="siteHome">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../" data-i18n="learningHome">Learning</a><span aria-hidden="true">/</span>
+    <span data-i18n="seriesName">Reading Your Fits</span>
+  </div>
+  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Toggle language (EN/ES)" hidden>
+    <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
+  </button>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow" data-i18n="eyebrow">Reading Your Fits · Module 1</div>
+    <h1 data-i18n="h1">Why R² Isn't Enough</h1>
+    <p class="lead" data-i18n="lead">R² is the number everyone reports and almost nobody should trust on its own. It can't tell a good fit from a bad one, it rises when you test a wider range, and it always goes up when you add terms.</p>
+    <p data-i18n-html="introHtml"><b>R²</b> is the share of the scatter in y that the fitted line accounts for: 1 means every point sits on the line, 0 means the line explains nothing. Excel's trendline shows it by default. This module shows three ways it misleads. Trials 2 and 3 use simulated data with a known true line.</p>
+    <div class="legend-key" data-i18n-aria="keyAria" aria-label="Color key">
+      <span><i class="sw truth"></i><span data-i18n="keyTruth">The truth</span></span>
+      <span><i class="sw fit"></i><span data-i18n="keyFit">The fitted line or curve</span></span>
+      <span><i class="sw dot"></i><span data-i18n="keyPts">Measured points</span></span>
+    </div>
+    <div class="takeaway-links">
+      <span data-i18n="takeLabel">Take it with you:</span>
+      <a href="slides.html" data-i18n="takeSlides">Slides</a>
+      <a href="r-squared.py" download data-i18n="takePy">Python script</a>
+    </div>
+  </header>
+
+  <!-- TRIAL 1 -->
+  <section class="trial" id="trial1">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t1Num">Trial 1 of 3</div>
+      <h2 data-i18n="t1Title">Four datasets, one R²</h2>
+      <p data-i18n="t1Intro">These four small datasets were built by the statistician Francis Anscombe in 1973. Each has 11 points. Flip between them and watch the readouts.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <span class="lbl" id="t1-s-lbl" data-i18n="t1SetLabel">Dataset</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t1-s-lbl">
+            <input type="radio" name="t1s" id="t1s-0" value="0" checked><label for="t1s-0">I</label>
+            <input type="radio" name="t1s" id="t1s-1" value="1"><label for="t1s-1">II</label>
+            <input type="radio" name="t1s" id="t1s-2" value="2"><label for="t1s-2">III</label>
+            <input type="radio" name="t1s" id="t1s-3" value="3"><label for="t1s-3">IV</label>
+          </div>
+        </div>
+        <dl class="readout">
+          <div><dt data-i18n="roSlope">Slope</dt><dd class="v" id="t1-b1">–</dd></div>
+          <div><dt data-i18n="roIntercept">Intercept</dt><dd class="v" id="t1-b0">–</dd></div>
+          <div><dt data-i18n="roR2">R²</dt><dd class="v" id="t1-r2">–</dd></div>
+          <div><dt data-i18n="roS">Residual SD</dt><dd class="v" id="t1-s">–</dd></div>
+        </dl>
+        <small class="ctl-note" data-i18n="t1Same">Same slope, same intercept, same R² for all four, to two decimal places.</small>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t1-data" role="img" data-i18n-aria="t1DataAria" aria-label="The selected dataset with its fitted line"></svg>
+          <figcaption data-i18n-html="t1DataCapHtml"><b>The data and the fit.</b></figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t1-resid" role="img" data-i18n-aria="t1ResidAria" aria-label="Residuals against fitted value for the selected dataset"></svg>
+          <figcaption data-i18n-html="t1ResidCapHtml"><b>Residual plot.</b> The leftovers after the fit.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t1-note"></p>
+    <div class="quiz" id="quiz1">
+      <p data-i18n-html="quizPromptHtml"><b>Now that you've seen all four:</b> for which one can you trust the fitted line as it stands?</p>
+      <div class="opts" role="group" data-i18n-aria="quizAria" aria-label="Your answer">
+        <button type="button" class="btn" data-a="0" aria-pressed="false">I</button>
+        <button type="button" class="btn" data-a="1" aria-pressed="false">II</button>
+        <button type="button" class="btn" data-a="2" aria-pressed="false">III</button>
+        <button type="button" class="btn" data-a="3" aria-pressed="false">IV</button>
+      </div>
+      <p class="answer" id="quiz1-answer" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- TRIAL 2 -->
+  <section class="trial" id="trial2">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t2Num">Trial 2 of 3</div>
+      <h2 data-i18n="t2Title">R² measures your test range</h2>
+      <p data-i18n="t2Intro">Same sensor, same noise, same true slope. The only thing you change is how wide a range of x you test over.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t2-span"><span data-i18n="t2SpanLabel">Range of x tested</span> <output id="t2-span-out">0 to 5</output></label>
+          <input type="range" id="t2-span" min="1" max="30" step="1" value="5">
+        </div>
+        <div class="ctl">
+          <label for="t2-sd"><span data-i18n="t2NoiseLabel">Sensor noise (SD)</span> <output id="t2-sd-out">2.0</output></label>
+          <input type="range" id="t2-sd" min="0.5" max="5" step="0.1" value="2">
+          <small data-i18n="t2NoiseHelp">Standard deviation of the y sensor's error, in y units.</small>
+        </div>
+        <button type="button" class="btn" id="t2-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roR2">R²</dt><dd class="v" id="t2-r2">–</dd></div>
+          <div><dt data-i18n="roExpected">R² with unlimited data</dt><dd class="v" id="t2-exp">–</dd></div>
+          <div><dt data-i18n="roS">Residual SD</dt><dd class="v" id="t2-s">–</dd></div>
+          <div><dt data-i18n="roSlopeCi">Slope (95% range)</dt><dd class="v" id="t2-b">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t2-data" role="img" data-i18n-aria="t2DataAria" aria-label="Data and fitted line over the tested range"></svg>
+          <figcaption data-i18n-html="t2DataCapHtml"><b>The data and the fit.</b> 30 readings spread evenly over the tested range.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t2-curve" role="img" data-i18n-aria="t2CurveAria" aria-label="Expected R² against the range of x tested"></svg>
+          <figcaption data-i18n-html="t2CurveCapHtml"><b>R² you'd get with unlimited data at each test range,</b> for this noise level. Small samples scatter around it. The dot is your current setting.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t2-note"></p>
+  </section>
+
+  <!-- TRIAL 3 -->
+  <section class="trial" id="trial3">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t3Num">Trial 3 of 3</div>
+      <h2 data-i18n="t3Title">More terms always raise R²</h2>
+      <p data-i18n="t3Intro">Twelve readings from a straight line plus noise. Add polynomial terms (x², x³, …) one at a time and watch R² and the curve.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t3-deg"><span data-i18n="t3DegLabel">Polynomial degree</span> <output id="t3-deg-out">1</output></label>
+          <input type="range" id="t3-deg" min="1" max="9" step="1" value="1">
+          <small data-i18n="t3DegHelp">1 is a straight line, the true shape here.</small>
+        </div>
+        <button type="button" class="btn" id="t3-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roR2">R²</dt><dd class="v" id="t3-r2">–</dd></div>
+          <div><dt data-i18n="roAdjR2">Adjusted R²</dt><dd class="v" id="t3-adj">–</dd></div>
+          <div><dt data-i18n="roLoo">Error on a point it hasn't seen</dt><dd class="v" id="t3-loo">–</dd></div>
+          <div><dt data-i18n="roPred">Prediction at x = 12 (truth 25)</dt><dd class="v" id="t3-pred">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t3-data" role="img" data-i18n-aria="t3DataAria" aria-label="Twelve readings with the polynomial fit and a prediction beyond the data"></svg>
+          <figcaption data-i18n-html="t3DataCapHtml"><b>The fit, and past the data.</b> The shaded strip is beyond the last reading.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t3-loo-chart" role="img" data-i18n-aria="t3LooAria" aria-label="Error on unseen points for each polynomial degree"></svg>
+          <figcaption data-i18n-html="t3LooCapHtml"><b>Error on a point the fit hasn't seen,</b> for each degree: leave one point out, fit the rest, predict it, repeat. Dashed line: the sensor noise. Values past the top are drawn at the edge.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t3-note"></p>
+  </section>
+
+  <section class="takeaways" id="takeaways">
+    <h2 data-i18n="takeTitle">What to take away</h2>
+    <ol>
+      <li data-i18n-html="take1Html"><b>R² can't tell a good fit from a bad one.</b> Four very different datasets share R² = 0.67. Look at the data and the residuals.</li>
+      <li data-i18n-html="take2Html"><b>R² depends on how wide a range you tested.</b> Report the residual SD in real units alongside it (or instead of it).</li>
+      <li data-i18n-html="take3Html"><b>Adding terms always raises R².</b> Choose the model from the physics, then check it with residual plots and error on unseen points.</li>
+      <li data-i18n-html="take4Html"><b>A high R² is not a pass mark.</b> A calibration with R² = 0.999 can still have curved residuals and a wrong shape (Module 2).</li>
+    </ol>
+    <h3 data-i18n="checkTitle">What to report instead</h3>
+    <div class="checklist">
+      <div><h4 data-i18n="check1Title">The residual SD</h4><p data-i18n="check1Body">In real units: how far a single reading typically sits from the line.</p></div>
+      <div><h4 data-i18n="check2Title">The residual plots</h4><p data-i18n="check2Body">Against the fitted value and in run order. Module 2 shows what to look for.</p></div>
+      <div><h4 data-i18n="check3Title">A range on the slope</h4><p data-i18n="check3Body">The slope with its 95% range, not just the number. Module 6 covers the rest.</p></div>
+    </div>
+  </section>
+
+  <nav class="series-nav" id="series-nav" data-i18n-aria="navSeriesNavAria" aria-label="Series navigation"></nav>
+  <p class="foot"><span data-i18n="footNote">Trial 1: Anscombe (1973), &quot;Graphs in Statistical Analysis&quot;, The American Statistician 27(1). Trials 2 and 3: simulated, y = 1 + 2x + error.</span></p>
+</div>
+
+<script src="../../assets/strings-common.js"></script>
+<script src="../../assets/modules.js"></script>
+<script src="strings.js"></script>
+<script src="../../assets/learning-i18n.js"></script>
+<script src="../../assets/learning.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
