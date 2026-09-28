@@ -11,7 +11,7 @@ window.LEARN_STRINGS = {
     keyAria: "Color key",
     keyTruth: "The truth",
     keyFit: "The fitted line",
-    keyFix: "A better fit (right shape, or without one point)",
+    keyFix: "A better fit (right shape), or the fit without your point",
     keyPts: "Measured points",
     takeLabel: "Take it with you:",
     takeSlides: "Slides",
@@ -94,8 +94,10 @@ window.LEARN_STRINGS = {
     axTime: "time (min)",
     axTemp: "temperature (°C)",
     axResidC: "residual (°C)",
-    t2NoteLineHtml: "<b>R² is {r2}, and yet the residuals form a clear U.</b> The straight line runs above the data in the middle and below it at the ends, every time. A high R² doesn't mean the shape is right. Now slide Stop recording down to 3 min: over a short window the curve looks straight and the U fades into the noise.",
+    t2NoteLineHtml: "<b>R² is {r2}, and yet the residuals form a clear U.</b> The straight line runs above the data in the middle and below it at the ends, every time. A high R² doesn't mean the shape is right. Now shorten the recording to 3 min and raise the noise to 2 °C: the U shrinks until the noise hides it.",
+    t2NoteLineHiddenHtml: "<b>R² is {r2}, and the U is now about the size of the noise.</b> Over a short window with a noisy sensor the curve looks straight, so the residuals look healthy. The model is still the wrong shape; this data just can't show it. The physics, or a longer recording, is what catches it.",
     t2NoteExpHtml: "<b>The exponential leaves a flat, even band.</b> The residual SD ({s} °C) matches the sensor noise, and the time constant comes out at {tau} min against a true 4.0. When the model has the right shape, the leftovers are just noise.",
+    t2NoteExpShortHtml: "<b>The shape is right, but this recording can't pin down the time constant.</b> It came out at {tau} min against a true 4.0. With only {win} min of data and this much noise, a wide range of time constants fit about equally well. Draw a few new samples to see how far it jumps, then record longer, until the curve has flattened out.",
     t2NoteExpNoNoiseHtml: "<b>With no sensor noise the exponential fits exactly.</b> The residuals are zero, and the time constant comes out at {tau} min against a true 4.0.",
 
     // Trial 3
@@ -107,7 +109,7 @@ window.LEARN_STRINGS = {
     t3YHelp: "In y units, above (+) or below (−) the truth.",
     roWith: "Slope with the point",
     roWithout: "Slope without it",
-    roLev: "Leverage (typical {typ})",
+    roLev: "Leverage (flag above {typ})",
     roStud: "Studentized residual",
     roCook: "Cook's distance",
     t3DataAria: "Data with the fit including and excluding the controlled point",
@@ -118,8 +120,8 @@ window.LEARN_STRINGS = {
     axCook: "Cook's distance",
     t3NoteOrdinaryHtml: "<b>An ordinary point.</b> Close to the others in x and near the line, so it barely moves anything.",
     t3NoteLeverHtml: "<b>A lever point on the line.</b> It sits far out in x, so it <i>could</i> move the fit, but it agrees with everything else, so it simply steadies the slope. Far-out points that follow the trend are useful.",
-    t3NoteOutlierHtml: "<b>An outlier in the middle of the data.</b> It's far from the line, but it has little leverage, so the slope moves only {d}% when you remove it. It still inflates the scatter and widens every error bar.",
-    t3NoteInfluentialHtml: "<b>An influential point: far out in x and off the line.</b> It drags the fit toward itself; the slope changes {d}% when you remove it. Notice its residual looks smaller than its real miss, because the line bent toward it. That's why the checks use studentized residuals and Cook's distance, not the raw residual.",
+    t3NoteOutlierHtml: "<b>An outlier within the range of the data.</b> It's far from the line, but plenty of points on either side hold the slope in place, so the slope moves only {d}% when you remove it. It still lifts or lowers the whole line, inflates the scatter and widens every error bar, which is why its Cook's distance can still be flagged.",
+    t3NoteInfluentialHtml: "<b>An influential point: off the line and out toward the edge of the data.</b> It drags the fit toward itself; the slope changes {d}% when you remove it. Notice its residual looks smaller than its real miss, because the line bent toward it. That's why the checks use studentized residuals and Cook's distance, not the raw residual.",
 
     // Make one yourself
     makeSummary: "Make these plots yourself (Excel, MATLAB, Python)",

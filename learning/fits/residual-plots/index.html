@@ -51,7 +51,7 @@
     <div class="legend-key" data-i18n-aria="keyAria" aria-label="Color key">
       <span><i class="sw truth"></i><span data-i18n="keyTruth">The truth</span></span>
       <span><i class="sw fit"></i><span data-i18n="keyFit">The fitted line</span></span>
-      <span><i class="sw fix"></i><span data-i18n="keyFix">A better fit (right shape, or without one point)</span></span>
+      <span><i class="sw fix"></i><span data-i18n="keyFix">A better fit (right shape), or the fit without your point</span></span>
       <span><i class="sw dot"></i><span data-i18n="keyPts">Measured points</span></span>
     </div>
     <div class="takeaway-links">
@@ -132,7 +132,7 @@
         <button type="button" class="btn" data-a="drift" aria-pressed="false" data-i18n="pDrift">Drift</button>
         <button type="button" class="btn" data-a="outlier" aria-pressed="false" data-i18n="pOutlier">Outlier</button>
       </div>
-      <p class="answer" id="quiz-answer" aria-live="polite" hidden></p>
+      <p class="answer" id="quiz-answer" aria-live="polite"></p>
       <div class="quiz-foot">
         <button type="button" class="btn" id="quiz-new" data-i18n="quizNew">New mystery</button>
         <span class="quiz-score" id="quiz-score"></span>
@@ -197,11 +197,11 @@
     <div class="bench">
       <div class="controls">
         <div class="ctl">
-          <label for="t3-x"><span data-i18n="t3XLabel">Its x position</span> <output id="t3-x-out">20</output></label>
+          <label for="t3-x"><span data-i18n="t3XLabel">Its x position</span> <output id="t3-x-out">20.0</output></label>
           <input type="range" id="t3-x" min="0" max="25" step="0.5" value="20">
         </div>
         <div class="ctl">
-          <label for="t3-y"><span data-i18n="t3YLabel">Its distance from the true line</span> <output id="t3-y-out">0</output></label>
+          <label for="t3-y"><span data-i18n="t3YLabel">Its distance from the true line</span> <output id="t3-y-out">−10.0</output></label>
           <input type="range" id="t3-y" min="-15" max="15" step="0.5" value="-10">
           <small data-i18n="t3YHelp">In y units, above (+) or below (−) the truth.</small>
         </div>

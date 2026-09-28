@@ -87,8 +87,8 @@
     var r = LF.mulberry32(LF.newSeed()), p;
     do { p = PATTERNS[Math.floor(r() * PATTERNS.length)]; } while (p === QZ.pattern);
     QZ.pattern = p; QZ.d = makeDraws(40, LF.newSeed()); QZ.answered = false;
-    $("quiz").querySelectorAll(".opts button").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
-    $("quiz-answer").hidden = true;
+    $("quiz").querySelectorAll(".opts button").forEach(function (b) { b.setAttribute("aria-pressed", "false"); b.disabled = false; });
+    $("quiz-answer").innerHTML = "";
     qzDraw();
   }
   function qzDraw() {
@@ -102,14 +102,13 @@
     if (!QZ.answered) return;
     var name = t(PNAME[QZ.pattern]).toLowerCase();
     var why = t("quizWhy" + QZ.pattern.charAt(0).toUpperCase() + QZ.pattern.slice(1));
-    var a = $("quiz-answer");
-    a.hidden = false;
-    a.innerHTML = t(QZ.lastRight ? "quizRightHtml" : "quizWrongHtml", { name: LF.esc(name) }) + LF.esc(why);
+    $("quiz-answer").innerHTML = t(QZ.lastRight ? "quizRightHtml" : "quizWrongHtml", { name: LF.esc(name) }) + LF.esc(why);
   }
   $("quiz").querySelectorAll(".opts button").forEach(function (btn) {
     btn.addEventListener("click", function () {
       if (QZ.answered) return;
-      $("quiz").querySelectorAll(".opts button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
+      // One answer per mystery: lock the choices until "New mystery".
+      $("quiz").querySelectorAll(".opts button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); b.disabled = true; });
       QZ.answered = true; QZ.total++;
       QZ.lastRight = btn.getAttribute("data-a") === QZ.pattern;
       if (QZ.lastRight) QZ.right++;
@@ -154,9 +153,18 @@
     $("t2-s").textContent = t("unitC", { v: num(s, 2) });
     $("t2-tau").textContent = model === "exp" ? t("unitMin", { v: num(f.tau, 2) }) : t("dash");
     $("t2-truetau").textContent = t("unitMin", { v: num(T2.tau, 1) });
-    $("t2-note").innerHTML = model === "exp"
-      ? t(sd === 0 ? "t2NoteExpNoNoiseHtml" : "t2NoteExpHtml", { s: num(s, 2), tau: num(f.tau, 2) })
-      : t("t2NoteLineHtml", { r2: num(r2, 3) });
+    var noteKey;
+    if (model === "exp") {
+      // Short, noisy recordings can't pin τ down even when one draw happens to land close.
+      var loose = Math.abs(f.tau - T2.tau) / T2.tau > 0.25 || (win < 2 * T2.tau && sd >= 1);
+      noteKey = sd === 0 ? "t2NoteExpNoNoiseHtml" : loose ? "t2NoteExpShortHtml" : "t2NoteExpHtml";
+    } else {
+      // How big the U is without noise: the largest miss of a straight line fitted to the true curve.
+      var tc = new Float64Array(n); for (i = 0; i < n; i++) tc[i] = truthT(tm[i]);
+      var amp = 0, lt = LF.ols(tm, tc); for (i = 0; i < n; i++) amp = Math.max(amp, Math.abs(lt.resid[i]));
+      noteKey = sd > 0 && amp < 1.5 * sd ? "t2NoteLineHiddenHtml" : "t2NoteLineHtml";
+    }
+    $("t2-note").innerHTML = t(noteKey, { r2: num(r2, 3), s: num(s, 2), tau: num(f.tau || 0, 2), win: num(win, 1) });
   }
   document.querySelectorAll('input[name="t2m"]').forEach(function (el) { el.addEventListener("change", t2); });
   ["t2-noise", "t2-win"].forEach(function (id) { $(id).addEventListener("input", t2); });
@@ -174,7 +182,8 @@
     x[n - 1] = xp; y[n - 1] = TRUE_B0 + TRUE_B1 * xp + off;
     var inf = LF.influence(x, y), f = inf.fit, g = LF.ols(x.subarray(0, T3.n0), y.subarray(0, T3.n0));
     var P = n - 1, h = inf.h[P], r = inf.r[P], D = inf.D[P], hTyp = 2 * 2 / n, dTyp = 4 / n;
-    LF.chart($("t3-data"), { w: 420, h: 380, x: [-1, 26], y: [-18, 58], xLabel: t("axMeasuredX"), yLabel: t("axMeasuredY"),
+    var yLo = Math.min(-18, Math.floor((y[P] - 8) / 10) * 10), yHi = Math.max(58, Math.ceil((y[P] + 8) / 10) * 10);
+    LF.chart($("t3-data"), { w: 420, h: 380, x: [-1, 26], y: [yLo, yHi], xLabel: t("axMeasuredX"), yLabel: t("axMeasuredY"),
       draw: function (sX, sY) {
         return LF.dots(x.subarray(0, T3.n0), y.subarray(0, T3.n0), sX, sY) +
           LF.line("truth", sX, sY, TRUE_B0, TRUE_B1, -1, 26) + LF.line("fix", sX, sY, g.b0, g.b1, -1, 26) + LF.line("fit", sX, sY, f.b0, f.b1, -1, 26) +
@@ -191,11 +200,14 @@
     $("t3-without").textContent = num(g.b1);
     $("t3-lev-lbl").textContent = t("roLev", { typ: num(hTyp, 2) });
     $("t3-lev").textContent = num(h, 2); flag($("t3-lev"), h > hTyp);
-    $("t3-stud").textContent = (r < 0 ? "−" : "") + num(Math.abs(r), 2); flag($("t3-stud"), Math.abs(r) > 2.5);
+    $("t3-stud").textContent = (r < 0 ? "−" : "") + num(Math.abs(r), 2); flag($("t3-stud"), Math.abs(r) > 2);
     $("t3-cook").textContent = num(D, 2); flag($("t3-cook"), D > dTyp);
-    var d = (Math.abs(f.b1 - g.b1) / Math.abs(g.b1) * 100).toFixed(0), key;
-    if (h > hTyp && Math.abs(r) > 2) key = "t3NoteInfluentialHtml";
-    else if (Math.abs(r) > 2.5) key = "t3NoteOutlierHtml";
+    // Note chosen from what actually happened: Cook's distance flagged AND the slope moved at
+    // least 5% → influential. A flagged point that barely moves the slope (it only shifts the
+    // line up or down) is described as an outlier.
+    var dPct = Math.abs(f.b1 - g.b1) / Math.abs(g.b1) * 100, d = num(dPct, 0), key;
+    if (D > dTyp && dPct >= 5) key = "t3NoteInfluentialHtml";
+    else if (Math.abs(r) > 2) key = "t3NoteOutlierHtml";
     else if (h > hTyp) key = "t3NoteLeverHtml";
     else key = "t3NoteOrdinaryHtml";
     $("t3-note").innerHTML = t(key, { d: d });

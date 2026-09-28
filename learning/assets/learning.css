@@ -211,3 +211,5 @@ a.module-row:hover .m-title { color: var(--fix); }
 .chart .fit-curve { stroke: var(--fit); stroke-width: 2.75; fill: none; }
 .chart .fix-curve { stroke: var(--fix); stroke-width: 2.75; fill: none; }
 .chart .truth-curve { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
+.quiz .opts button:disabled { cursor: default; opacity: .55; }
+.quiz .opts button[aria-pressed="true"]:disabled { opacity: 1; }
