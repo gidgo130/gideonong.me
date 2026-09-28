@@ -51,7 +51,7 @@
     $("t1-dw").textContent = num(dw, 2); $("t1-dw").className = "v" + (dw < 1.5 ? " bad" : "");
     $("t1-neff").textContent = t("neffFmt", { e: neff, n: n });
     $("t1-cov").textContent = pct(cov); flagCov($("t1-cov"), cov);
-    $("t1-note").innerHTML = t(cov >= 91 ? "t1NoteLowHtml" : cov >= 85 ? "t1NoteMildHtml" : "t1NoteHighHtml", { c: num(cov, 0), n: n, e: neff, r1: num(ac[0], 2) });
+    $("t1-note").innerHTML = t(cov >= 91 ? "t1NoteLowHtml" : cov >= 85 ? "t1NoteMildHtml" : "t1NoteHighHtml", { c: num(cov, 0), n: n, e: neff, rho: num(rho, 2) });
   }
   $("t1-rho").addEventListener("input", t1);
   $("t1-new").addEventListener("click", function () { t1Draw(); t1(); });

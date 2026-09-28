@@ -34,13 +34,13 @@ window.LEARN_STRINGS = {
     t1ResidAria: "Residuals in time order",
     t1ResidCapHtml: "<b>Residuals in time order.</b> Runs of the same sign mean the errors are linked.",
     t1AcfAria: "Autocorrelation of the residuals at lags 1 to 15",
-    t1AcfCapHtml: "<b>Autocorrelation at lags 1–15:</b> how alike residuals are 1, 2, … samples apart. Dashed lines: the band chance alone stays inside.",
+    t1AcfCapHtml: "<b>Autocorrelation at lags 1–15:</b> how alike residuals are 1, 2, … samples apart. Dashed lines: the band chance alone stays inside. Red bars fall outside it: linked errors.",
     axSample: "sample number (time order)",
     axResidual: "residual",
     axLag: "lag (samples)",
     axAcf: "autocorrelation",
     t1NoteLowHtml: "<b>Little carry-over:</b> the residuals scatter independently, Durbin–Watson is near 2, and the slope's 95% range catches the truth about 95% of the time ({c}%).",
-    t1NoteMildHtml: "<b>Slightly linked errors.</b> Lag-1 autocorrelation is {r1}, and the slope's 95% range catches the truth {c}% of the time, a little under 95%. Easy to miss in the residual plot, and it gets worse fast as the carry-over rises.",
+    t1NoteMildHtml: "<b>Slightly linked errors.</b> With carry-over {rho}, the slope's 95% range catches the truth {c}% of the time, a little under 95%. Easy to miss in the residual plot, and it gets worse fast as the carry-over rises.",
     t1NoteHighHtml: "<b>The residuals come in long runs, and the error bars are fooled.</b> The software treats all {n} samples as independent, but they carry roughly {e} samples' worth of evidence. So the slope's 95% range is too narrow and catches the truth only {c}% of the time over 400 repeats. Plotting residuals in time order shows it at a glance.",
 
     // Trial 2
