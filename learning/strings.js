@@ -5,7 +5,7 @@ window.LEARN_STRINGS = {
     pageTitle: "Learning · Gideon A. Ong",
     eyebrow: "Gideon A. Ong · Learning",
     h1: "Learning",
-    lead: "Interactive notes I build for engineering students. Each one runs in your browser on simulated data, so you can push the sliders, break things and see what happens.",
+    lead: "Interactive notes I [told Claude to] build for engineering students. Each one runs in your browser on simulated data, so you can push the sliders, break things and see what happens.",
     seriesIntro: "Six short modules on checking a line fit against lab data: what the leftovers tell you, what they can't, and what to do about it. No statistics background needed; some Excel or MATLAB helps.",
     listAria: "Modules in Reading Your Fits",
     howTitle: "Every module comes with",
