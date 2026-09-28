@@ -40,6 +40,7 @@ window.LEARN_STRINGS = {
     axLag: "lag (samples)",
     axAcf: "autocorrelation",
     t1NoteLowHtml: "<b>Little carry-over:</b> the residuals scatter independently, Durbin–Watson is near 2, and the slope's 95% range catches the truth about 95% of the time ({c}%).",
+    t1NoteMildHtml: "<b>Slightly linked errors.</b> Lag-1 autocorrelation is {r1}, and the slope's 95% range catches the truth {c}% of the time, a little under 95%. Easy to miss in the residual plot, and it gets worse fast as the carry-over rises.",
     t1NoteHighHtml: "<b>The residuals come in long runs, and the error bars are fooled.</b> The software treats all {n} samples as independent, but they carry roughly {e} samples' worth of evidence. So the slope's 95% range is too narrow and catches the truth only {c}% of the time over 400 repeats. Plotting residuals in time order shows it at a glance.",
 
     // Trial 2
@@ -88,12 +89,13 @@ window.LEARN_STRINGS = {
     roCovSample: "Range catches 50, counting samples",
     roCovRun: "Range catches 50, counting runs",
     t3DataAria: "Samples from five runs with each run's mean",
-    t3DataCapHtml: "<b>Five runs of 60 samples.</b> Red ticks: each run's mean.",
+    t3DataCapHtml: "<b>Five runs of 60 samples.</b> Dark ticks: each run's mean.",
     t3CiAria: "95% ranges from 20 repeated experiments",
-    t3CiCapHtml: "<b>The 95% range from 20 repeats of the whole experiment.</b> Red ranges miss the true value (dashed line).",
+    t3CiCapHtml: "<b>The 95% range from 20 repeats of the whole experiment.</b> Blue ranges catch the true value (dashed line); red ones miss it.",
     axRepeat: "repeat",
     axValue: "steady value",
     t3NoteSampleHtml: "<b>Counting every sample, the range is ±{h}, and it catches the true value only {c}% of the time.</b> The 60 samples in a run share that run's offset and each other's carry-over, so they aren't 300 independent readings. Switch to Each run.",
+    t3NoteSampleRhoHtml: "<b>Counting every sample, the range is ±{h}, and it catches the true value only {c}% of the time.</b> Each sample carries over part of the previous one's error, so the 300 samples hold far fewer independent readings. Switch to Each run.",
     t3NoteRunHtml: "<b>Counting runs, the range is ±{h}: wider, and honest.</b> It catches the true value {c}% of the time (counting samples: {cs}%). Five runs are five pieces of evidence about the run-to-run spread. To shrink the range, do more runs, not more samples per run.",
     t3NoteSameHtml: "<b>With no run-to-run variation and no carry-over, the samples really are independent,</b> and both ways of counting give honest ranges ({cs}% and {c}%). Turn either slider up.",
 

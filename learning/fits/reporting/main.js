@@ -31,7 +31,9 @@
     var xlo = Math.min.apply(null, T1.x), xhi = Math.max.apply(null, T1.x), inside = x0 >= xlo && x0 <= xhi;
     $("t1-x-out").textContent = num(x0, 1);
     var ci = function (x) { return LF.bands(T1.x, f, x).ci; }, pi = function (x) { return LF.bands(T1.x, f, x).pi; }, yh = function (x) { return f.b0 + f.b1 * x; };
-    var shade = function (sX, sY, a, c) { return '<rect class="shade" x="' + sX(a) + '" y="' + sY(55) + '" width="' + (sX(c) - sX(a)) + '" height="' + (sY(-25) - sY(55)) + '"/>'; };
+    // Shaded strip from x = a to c, spanning y = lo to hi.
+    var shadeY = function (sX, sY, a, c, lo, hi) { return '<rect class="shade" x="' + sX(a) + '" y="' + sY(hi) + '" width="' + (sX(c) - sX(a)) + '" height="' + (sY(lo) - sY(hi)) + '"/>'; };
+    var shade = function (sX, sY, a, c) { return shadeY(sX, sY, a, c, -25, 55); };
     LF.chart($("t1-data"), { w: 420, h: 380, x: [T1.X0, T1.X1], y: [-25, 55], xLabel: t("axX"), yLabel: t("axY"),
       draw: function (sX, sY) {
         return shade(sX, sY, T1.X0, xlo) + shade(sX, sY, xhi, T1.X1) +
@@ -46,8 +48,7 @@
     var top = Math.ceil(pi(T1.X1) * 1.1);
     LF.chart($("t1-width"), { w: 420, h: 380, x: [T1.X0, T1.X1], y: [0, top], xLabel: t("axX"), yLabel: t("axHalf"),
       draw: function (sX, sY) {
-        return shade(sX, sY, T1.X0, xlo).replace(sY(55), sY(top)).replace(/height="[^"]+"/, 'height="' + (sY(0) - sY(top)) + '"') +
-          '<rect class="shade" x="' + sX(xhi) + '" y="' + sY(top) + '" width="' + (sX(T1.X1) - sX(xhi)) + '" height="' + (sY(0) - sY(top)) + '"/>' +
+        return shadeY(sX, sY, T1.X0, xlo, 0, top) + shadeY(sX, sY, xhi, T1.X1, 0, top) +
           curvePath(sX, sY, pi, T1.X0, T1.X1, "ln-muted") + curvePath(sX, sY, ci, T1.X0, T1.X1, "fit-curve") +
           '<line class="thresh" x1="' + sX(x0) + '" x2="' + sX(x0) + '" y1="' + sY(0) + '" y2="' + sY(top) + '"/>';
       },
@@ -144,7 +145,8 @@
     $("t3-report").textContent = t("reportTpl", {
       n: n, xlo: num(Math.min.apply(null, T1.x), 1), xhi: num(Math.max.apply(null, T1.x), 1),
       b1: num(f.b1, 2), b1h: num(tc * f.se1, 2), b0: num(f.b0, 2), b0h: num(tc * se0, 2), s: num(f.s, 2),
-      x0: num(x0, 1), yhat: num(b.y, 1), pih: num(b.pi, 1)
+      x0: num(x0, 1), yhat: num(b.y, 1), pih: num(b.pi, 1),
+      outside: x0 < Math.min.apply(null, T1.x) || x0 > Math.max.apply(null, T1.x) ? t("reportOutside") : ""
     });
   }
   $("t3-copy").addEventListener("click", function () {

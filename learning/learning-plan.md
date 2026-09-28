@@ -60,7 +60,12 @@ Order: 2 → 1 → 3 → 4 → 6.
   inside the "make it yourself" code blocks, same in Module 5), deferred to Phase S
 - [X] Build 1, 3, 4, 6 (2026-09-28). Engine gained LF.solve, polyfit, wls, hc3se, bands, ar1, acf,
   durbinWatson, and chart options xticks / xfmt. Every deck's embedded frame is now 520 px tall.
-- [ ] One Fable review for Modules 1, 3, 4, 6
+- [X] Fable review of Modules 1, 3, 4, 6 (2026-09-28): 11 findings, all fixed. Notes now follow
+  the setting where the sample statistic is too noisy (M3 Trial 1), the Both-ends pattern has
+  its own wording, M4 has a middle note for mild carry-over, the M1 quiz asks which fit you can
+  trust as it stands, M1's curve is "R² with unlimited data", the M6 report flags predictions
+  outside the tested range, expFit is ~3× faster, and decks no longer mark the embedded
+  interactive as an image (see the workshop README's rebuild steps).
 - [X] Module 1 — Why R² isn't enough (Anscombe's quartet, R² vs test range, polynomial degree)
 - [X] Module 3 — Uneven scatter (fan, band/slope coverage incl. "both ends" pattern, weighted fit)
 - [X] Module 4 — Time-ordered data (AR(1) residuals, cooling-curve log trap, runs vs samples)

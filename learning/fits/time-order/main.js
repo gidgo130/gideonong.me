@@ -51,7 +51,7 @@
     $("t1-dw").textContent = num(dw, 2); $("t1-dw").className = "v" + (dw < 1.5 ? " bad" : "");
     $("t1-neff").textContent = t("neffFmt", { e: neff, n: n });
     $("t1-cov").textContent = pct(cov); flagCov($("t1-cov"), cov);
-    $("t1-note").innerHTML = t(cov >= 91 ? "t1NoteLowHtml" : "t1NoteHighHtml", { c: num(cov, 0), n: n, e: neff });
+    $("t1-note").innerHTML = t(cov >= 91 ? "t1NoteLowHtml" : cov >= 85 ? "t1NoteMildHtml" : "t1NoteHighHtml", { c: num(cov, 0), n: n, e: neff, r1: num(ac[0], 2) });
   }
   $("t1-rho").addEventListener("input", t1);
   $("t1-new").addEventListener("click", function () { t1Draw(); t1(); });
@@ -108,7 +108,10 @@
     $("t2-note").innerHTML = t(sd === 0 && dR === 0 ? "t2NoteCleanHtml" : isD ? "t2NoteDirHtml" : "t2NoteLogHtml", v);
   }
   document.querySelectorAll('input[name="t2m"]').forEach(function (el) { el.addEventListener("change", t2); });
-  ["t2-noise", "t2-room"].forEach(function (id) { $(id).addEventListener("input", t2); });
+  // Each redraw refits 400 curves, so coalesce slider events to one redraw per frame.
+  var t2Pending = false;
+  function t2Soon() { if (t2Pending) return; t2Pending = true; requestAnimationFrame(function () { t2Pending = false; t2(); }); }
+  ["t2-noise", "t2-room"].forEach(function (id) { $(id).addEventListener("input", t2Soon); });
   $("t2-new").addEventListener("click", function () { t2Draw(); t2(); });
 
   // ---------- Trial 3: count runs, not samples ----------
@@ -149,7 +152,7 @@
         for (var j = 0; j < T3.runs; j++) {
           if (j % 2) s += '<rect class="shade" x="' + sX(j * T3.per + 0.5) + '" y="' + sY(hi) + '" width="' + (sX(T3.per) - sX(0)) + '" height="' + (sY(lo) - sY(hi)) + '"/>';
           for (var i = 0; i < T3.per; i++) { var q = j * T3.per + i; s += '<circle class="pt" cx="' + sX(q + 1).toFixed(1) + '" cy="' + sY(d.all[q]).toFixed(1) + '" r="2"/>'; }
-          s += '<line class="vline-fit" x1="' + sX(j * T3.per + 4) + '" x2="' + sX((j + 1) * T3.per - 3) + '" y1="' + sY(d.means[j]) + '" y2="' + sY(d.means[j]) + '"/>';
+          s += '<line class="mean-tick" x1="' + sX(j * T3.per + 4) + '" x2="' + sX((j + 1) * T3.per - 3) + '" y1="' + sY(d.means[j]) + '" y2="' + sY(d.means[j]) + '"/>';
         }
         return s;
       } });
@@ -169,7 +172,7 @@
     $("t3-cs").textContent = pct(cs); flagCov($("t3-cs"), cs);
     $("t3-cr").textContent = pct(cr); flagCov($("t3-cr"), cr);
     var v = { h: num(R.h, 2), c: num(c === "run" ? cr : cs, 0), cs: num(cs, 0) };
-    $("t3-note").innerHTML = t(runSd === 0 && rho === 0 ? "t3NoteSameHtml" : c === "run" ? "t3NoteRunHtml" : "t3NoteSampleHtml", runSd === 0 && rho === 0 ? { cs: num(cs, 0), c: num(cr, 0) } : v);
+    $("t3-note").innerHTML = t(runSd === 0 && rho === 0 ? "t3NoteSameHtml" : c === "run" ? "t3NoteRunHtml" : runSd === 0 ? "t3NoteSampleRhoHtml" : "t3NoteSampleHtml", runSd === 0 && rho === 0 ? { cs: num(cs, 0), c: num(cr, 0) } : v);
   }
   document.querySelectorAll('input[name="t3c"]').forEach(function (el) { el.addEventListener("change", t3); });
   ["t3-run", "t3-rho"].forEach(function (id) { $(id).addEventListener("input", t3); });

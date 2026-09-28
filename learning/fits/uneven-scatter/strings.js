@@ -40,8 +40,8 @@ window.LEARN_STRINGS = {
     t1DataCapHtml: "<b>The data and the fit.</b> 40 readings.",
     t1ResidAria: "Residuals against fitted value",
     t1ResidCapHtml: "<b>Residual plot.</b> Spread measured as the SD of the residuals in the lowest and highest third of fitted values.",
-    t1NoteEvenHtml: "<b>The scatter is about even:</b> the high end spreads {r}× as much as the low end. That's within what chance gives with 13 points per third.",
-    t1NoteFanHtml: "<b>A fan: the high end spreads {r}× as much as the low end.</b> The fitted slope ({b}) is still about right; uneven scatter doesn't bias the line. What goes wrong is every statement about how uncertain it is. Trial 2 shows that.",
+    t1NoteEvenHtml: "<b>The scatter is about even at this setting.</b> In this sample the high end spreads {r}× as much as the low end; with only 13 points per third, chance alone can give ratios up to about 1.6. Turn the percentage up.",
+    t1NoteFanHtml: "<b>A fan: the sensor is about {tr}× noisier at x = 9 than at x = 2,</b> and in this sample the high end of the residuals spreads {r}× as much as the low end (chance moves that number around; draw a few samples). The fitted slope ({b}) is still about right; uneven scatter doesn't bias the line. What goes wrong is every statement about how uncertain it is. Trial 2 shows that.",
 
     // Trial 2
     t2Num: "Trial 2 of 3",
@@ -68,6 +68,7 @@ window.LEARN_STRINGS = {
     t2NoteEvenHtml: "<b>With even scatter every promise holds:</b> about 95% everywhere.",
     t2NoteFanHtml: "<b>The band is one width everywhere, but the scatter isn't.</b> At x = 2 it catches {lo}% of new readings and at x = 9 {hi}%, against a promised 95%. Too wide wastes precision where readings are quiet; too narrow promises more than noisy readings can deliver. ",
     t2NoteSlopeBadHtml: "<b>The slope's default range is too narrow as well:</b> it catches 2.00 only {def}% of the time. Robust (HC3) standard errors fix that without changing the line: {rob}%.",
+    t2NoteSlopeEndsMildHtml: "The slope's default range is only slightly narrow at this setting ({def}%); turn the error up and it gets worse. Robust (HC3) standard errors stay honest: {rob}%.",
     t2NoteSlopeOkHtml: "The slope's default range holds up here ({def}%): with the noise piled at one end, its errors happen to cancel. Switch to Both ends and they won't. Robust (HC3) standard errors are right either way: {rob}%.",
 
     // Trial 3

@@ -77,8 +77,10 @@
     $("t1-lo").textContent = num(lo, 2);
     $("t1-hi").textContent = num(hi, 2);
     $("t1-ratio").textContent = t("ratioFmt", { r: num(ratio, 1) });
-    $("t1-ratio").className = "v" + (ratio > 2 ? " bad" : "");
-    $("t1-note").innerHTML = t(ratio > 2 ? "t1NoteFanHtml" : "t1NoteEvenHtml", { r: num(ratio, 1), b: num(f.b1) });
+    // The note follows the setting (the true noise ratio), not the noisy sample ratio.
+    var trueRatio = sigma(9, p, "high") / sigma(2, p, "high");
+    $("t1-ratio").className = "v" + (ratio > 1.6 ? " bad" : "");
+    $("t1-note").innerHTML = t(trueRatio > 1.5 ? "t1NoteFanHtml" : "t1NoteEvenHtml", { r: num(ratio, 1), tr: num(trueRatio, 1), b: num(f.b1) });
   }
   $("t1-p").addEventListener("input", t1);
   $("t1-new").addEventListener("click", function () { t1Draw(); t1(); });
@@ -113,7 +115,7 @@
     [["t2-lo", c.piLo], ["t2-hi", c.piHi], ["t2-def", c.def], ["t2-rob", c.rob]].forEach(function (a) { $(a[0]).textContent = pct(a[1]); flagCov($(a[0]), a[1]); });
     var v = { lo: num(c.piLo, 0), hi: num(c.piHi, 0), def: num(c.def, 0), rob: num(c.rob, 0) };
     var uneven = Math.abs(c.piLo - 95) > 3 || Math.abs(c.piHi - 95) > 3;
-    $("t2-note").innerHTML = uneven ? t("t2NoteFanHtml", v) + t(c.def < 91 ? "t2NoteSlopeBadHtml" : "t2NoteSlopeOkHtml", v) : t("t2NoteEvenHtml", v);
+    $("t2-note").innerHTML = uneven ? t("t2NoteFanHtml", v) + t(c.def < 91 ? "t2NoteSlopeBadHtml" : pat === "ends" ? "t2NoteSlopeEndsMildHtml" : "t2NoteSlopeOkHtml", v) : t("t2NoteEvenHtml", v);
   }
   $("t2-p").addEventListener("input", t2);
   document.querySelectorAll('input[name="t2pat"]').forEach(function (el) { el.addEventListener("change", t2); });

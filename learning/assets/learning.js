@@ -93,11 +93,14 @@
       return { tau: tau, A: f.b1, B: f.b0, sse: sse, fitted: f.fitted, resid: f.resid };
     }
     var span = t[t.length - 1] - t[0], best = null, lo = Math.log(span / 50), hi = Math.log(span * 20);
-    for (var k = 0; k <= 120; k++) { var c = at(Math.exp(lo + (hi - lo) * k / 120)); if (!best || c.sse < best.sse) best = c; }
-    var g = (Math.sqrt(5) - 1) / 2, a = Math.log(best.tau) - (hi - lo) / 120, b = Math.log(best.tau) + (hi - lo) / 120;
-    for (k = 0; k < 40; k++) {
-      var m1 = b - g * (b - a), m2 = a + g * (b - a);
-      if (at(Math.exp(m1)).sse < at(Math.exp(m2)).sse) b = m2; else a = m1;
+    var steps = 40;   // coarse log grid; the golden-section search below recovers full precision
+    for (var k = 0; k <= steps; k++) { var c = at(Math.exp(lo + (hi - lo) * k / steps)); if (!best || c.sse < best.sse) best = c; }
+    // Golden-section search on log τ, reusing one evaluation per step.
+    var g = (Math.sqrt(5) - 1) / 2, a = Math.log(best.tau) - (hi - lo) / steps, b = Math.log(best.tau) + (hi - lo) / steps;
+    var m1 = b - g * (b - a), m2 = a + g * (b - a), f1 = at(Math.exp(m1)).sse, f2 = at(Math.exp(m2)).sse;
+    for (k = 0; k < 28; k++) {
+      if (f1 < f2) { b = m2; m2 = m1; f2 = f1; m1 = b - g * (b - a); f1 = at(Math.exp(m1)).sse; }
+      else { a = m1; m1 = m2; f1 = f2; m2 = a + g * (b - a); f2 = at(Math.exp(m2)).sse; }
     }
     var fin = at(Math.exp((a + b) / 2));
     return fin.sse <= best.sse ? fin : best;

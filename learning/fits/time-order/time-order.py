@@ -12,12 +12,19 @@ Run it:
 All data is simulated. Trial 1: y = 1 + 0.2t + AR(1) noise. Trial 2: T = 22 + 58·exp(-t/4) + noise.
 Trial 3: steady value 50 with run-to-run offsets and AR(1) noise.
 """
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 from scipy.optimize import curve_fit
+
+# Windows consoles default to cp1252; print Greek letters and symbols safely.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except AttributeError:
+    pass
 
 OUT = Path("figures")
 OUT.mkdir(exist_ok=True)
@@ -98,7 +105,7 @@ def trial2(rng, reps=500):
     axes[0].plot(t, np.log(58) - t / 4, "--", color=INK, lw=1.6)
     axes[0].set(title="ln(T − T∞): the tail's noise explodes", xlabel="time (min)", ylabel="ln(T − T∞)", ylim=(-4, 5))
     results = {}
-    for label, noise, room_err in [("noise 0.5 °C", 0.5, 0.0), ("noise 0.5, T∞ off by +1 °C", 0.5, 1.0), ("noise 2 °C", 2.0, 0.0)]:
+    for label, noise, room_err in [("noise 0.5 °C", 0.5, 0.0), ("noise 0.5, T_inf off by +1 °C", 0.5, 1.0), ("noise 2 °C", 2.0, 0.0)]:
         tl, td = [], []
         for _ in range(reps):
             yy = cooling(t, 22, 58, 4) + noise * rng.standard_normal(len(t))

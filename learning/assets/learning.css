@@ -237,3 +237,4 @@ table.tools th, table.tools td { text-align: left; vertical-align: top; padding:
 table.tools thead th { font-family: var(--font-display); font-size: 15px; }
 table.tools tbody th { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
 table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
+.chart .mean-tick { stroke: var(--ink); stroke-width: 3; }

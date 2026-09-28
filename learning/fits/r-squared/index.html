@@ -99,7 +99,7 @@
     </div>
     <p class="note" id="t1-note"></p>
     <div class="quiz" id="quiz1">
-      <p data-i18n-html="quizPromptHtml"><b>Now that you've seen all four:</b> for which one is a straight-line fit the right model?</p>
+      <p data-i18n-html="quizPromptHtml"><b>Now that you've seen all four:</b> for which one can you trust the fitted line as it stands?</p>
       <div class="opts" role="group" data-i18n-aria="quizAria" aria-label="Your answer">
         <button type="button" class="btn" data-a="0" aria-pressed="false">I</button>
         <button type="button" class="btn" data-a="1" aria-pressed="false">II</button>
@@ -131,7 +131,7 @@
         <button type="button" class="btn" id="t2-new" data-i18n="btnNewSample">Draw a new sample</button>
         <dl class="readout">
           <div><dt data-i18n="roR2">R²</dt><dd class="v" id="t2-r2">–</dd></div>
-          <div><dt data-i18n="roExpected">R² expected on average</dt><dd class="v" id="t2-exp">–</dd></div>
+          <div><dt data-i18n="roExpected">R² with unlimited data</dt><dd class="v" id="t2-exp">–</dd></div>
           <div><dt data-i18n="roS">Residual SD</dt><dd class="v" id="t2-s">–</dd></div>
           <div><dt data-i18n="roSlopeCi">Slope (95% range)</dt><dd class="v" id="t2-b">–</dd></div>
         </dl>
@@ -143,7 +143,7 @@
         </figure>
         <figure>
           <svg class="chart" id="t2-curve" role="img" data-i18n-aria="t2CurveAria" aria-label="Expected R² against the range of x tested"></svg>
-          <figcaption data-i18n-html="t2CurveCapHtml"><b>R² you'd expect at each test range,</b> for this noise level. The dot is your current setting.</figcaption>
+          <figcaption data-i18n-html="t2CurveCapHtml"><b>R² you'd get with unlimited data at each test range,</b> for this noise level. Small samples scatter around it. The dot is your current setting.</figcaption>
         </figure>
       </div>
     </div>

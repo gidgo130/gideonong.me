@@ -38,11 +38,11 @@ window.LEARN_STRINGS = {
     t1Note3Html: "<b>Dataset III is a perfect line with one bad point.</b> That single point tilts the fit and drags R² down from nearly 1. One residual stands far from the rest.",
     t1Note4Html: "<b>Dataset IV isn't a trend at all.</b> Ten points share one x value; one point far out sets the whole slope. Remove it and there's no slope left to measure.",
     t1Same: "Same slope, same intercept, same R² for all four, to two decimal places.",
-    quizPromptHtml: "<b>Now that you've seen all four:</b> for which one is a straight-line fit the right model?",
+    quizPromptHtml: "<b>Now that you've seen all four:</b> for which one can you trust the fitted line as it stands?",
     quizAria: "Your answer",
     quizRightHtml: "<b>Right: only dataset I.</b> ",
     quizWrongHtml: "<b>Only dataset I.</b> ",
-    quizExplain: "All four report R² = 0.67, the same line and the same residual SD. The number can't tell them apart; the plots can. Always look at the data and the residuals before you trust R².",
+    quizExplain: "III is a straight line too, but one bad point has tilted the fit, so you'd check or explain that point first. II needs a curve, and IV has no trend to fit. All four report R² = 0.67, the same line and the same residual SD. The number can't tell them apart; the plots can.",
 
     // Trial 2
     t2Num: "Trial 2 of 3",
@@ -55,13 +55,13 @@ window.LEARN_STRINGS = {
     btnNewSample: "Draw a new sample",
     roSlopeCi: "Slope (95% range)",
     ciFmt: "{b} ± {h}",
-    roExpected: "R² expected on average",
+    roExpected: "R² with unlimited data",
     t2DataAria: "Data and fitted line over the tested range",
     t2DataCapHtml: "<b>The data and the fit.</b> 30 readings spread evenly over the tested range.",
     t2CurveAria: "Expected R² against the range of x tested",
-    t2CurveCapHtml: "<b>R² you'd expect at each test range,</b> for this noise level. The dot is your current setting.",
+    t2CurveCapHtml: "<b>R² you'd get with unlimited data at each test range,</b> for this noise level. Small samples scatter around it. The dot is your current setting.",
     axXRange: "range of x tested (0 to …)",
-    axExpectedR2: "expected R²",
+    axExpectedR2: "R² with unlimited data",
     t2NoteHtml: "<b>R² is {r2}, and the residual SD is {s}.</b> Slide the range: R² climbs toward 1 as the range widens and sinks as it narrows, while the residual SD stays near {sd}, the sensor's noise. R² is partly a measure of your test plan. The residual SD, in real units, tells someone how far off a single reading can be.",
 
     // Trial 3

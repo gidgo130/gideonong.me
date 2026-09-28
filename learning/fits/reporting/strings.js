@@ -63,7 +63,7 @@ window.LEARN_STRINGS = {
     axRepeats: "repeats",
     lblNaive: "ignoring correlation",
     lblDelta: "with correlation",
-    t2NoteHtml: "<b>Ignoring how the slope and intercept move together gives ±{n}; accounting for it gives ±{d}.</b> The farther the data sit from x = 0, the worse the first method gets. The repeats actually spread ±{a}, and a bootstrap from this one dataset gives ±{b}, in the same ballpark (with only 12 points it runs a little narrow). The intercept and slope are estimated from the same points, so when one comes out high the other comes out low. Use the full covariance (the <i>delta method</i>) or a bootstrap, never the two standard errors on their own.",
+    t2NoteHtml: "<b>Ignoring how the slope and intercept move together gives ±{n}; accounting for it gives ±{d}.</b> The farther the data sit from x = 0, the worse the first method gets. The repeats actually spread ±{a}, and a bootstrap from this one dataset gives ±{b}, close to it (it varies from sample to sample). The intercept and slope are estimated from the same points, so when one comes out high the other comes out low. Use the full covariance (the <i>delta method</i>) or a bootstrap, never the two standard errors on their own.",
     t2NoteNearHtml: "<b>With the data near x = 0, the two methods nearly agree</b> (±{n} and ±{d}; actual ±{a}). Slide the data away from zero and watch them part.",
 
     // Trial 3
@@ -74,7 +74,8 @@ window.LEARN_STRINGS = {
     btnCopy: "Copy",
     copied: "Copied",
     copyFail: "Select the text and copy it",
-    reportTpl: "Linear least-squares fit, y = b0 + b1·x, n = {n} readings over x = {xlo} to {xhi}.\nSlope b1 = {b1} ± {b1h} (95% range); intercept b0 = {b0} ± {b0h}.\nResidual SD s = {s} (in y's units): a typical reading sits this far from the line.\nPrediction at x = {x0}: {yhat} ± {pih} for a single new reading (95%).\nResidual checks: [against fitted value: ___ ] [in run order: ___ ] [single points: ___ ].\nx measured with: [instrument, its uncertainty ___ ]; run order: [randomized / swept ___ ].",
+    reportTpl: "Linear least-squares fit, y = b0 + b1·x, n = {n} readings over x = {xlo} to {xhi}.\nSlope b1 = {b1} ± {b1h} (95% range); intercept b0 = {b0} ± {b0h}.\nResidual SD s = {s} (in y's units): a typical reading sits this far from the line.\nPrediction at x = {x0}: {yhat} ± {pih} for a single new reading (95%){outside}.\nResidual checks: [against fitted value: ___ ] [in run order: ___ ] [single points: ___ ].\nx measured with: [instrument, its uncertainty ___ ]; run order: [randomized / swept ___ ].",
+    reportOutside: "; outside the tested range, so a best case that assumes the line still holds",
     checklistTitle: "Before you trust a fit",
     ck1: "Plotted the data before fitting.",
     ck2: "Chose the model's shape from the physics, not from R².",
