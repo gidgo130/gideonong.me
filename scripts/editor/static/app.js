@@ -448,6 +448,12 @@
     $("#saveBtn").addEventListener("click", doSave);
     $("#discardBtn").addEventListener("click", discardAll);
     $("#restoreBtn").addEventListener("click", openRestore);
+    // Preview opens in the normal browser (the editor window is a WebView2 app window).
+    $("#previewLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      try { await api("/api/open-preview", { method: "POST", body: {} }); toast("Preview opened in your browser."); }
+      catch (err) { window.open($("#previewLink").href, "_blank", "noopener"); }
+    });
     document.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (!$("#reviewDlg").open) openReview(); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f" && !e.shiftKey) { e.preventDefault(); $("#search").focus(); $("#search").select(); }

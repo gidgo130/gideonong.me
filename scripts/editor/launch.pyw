@@ -1,16 +1,20 @@
 """Launcher for the local content editor (double-click target; no console).
 
-  * lock file: a second launch focuses the existing window (or reopens one)
-    instead of starting a second copy;
+  * lock file: a second launch brings the existing window to the front. If the
+    lock points at a server whose window is gone, that server is ended and a
+    fresh one starts;
   * starts the editor on 127.0.0.1:5510 and the read-only preview on
-    127.0.0.1:5501 in this process;
-  * opens Microsoft Edge in --app mode with its own profile under .local/edge;
-  * primary shutdown signal: that Edge process exits (and no other msedge.exe
-    is left using the profile). Crash fallback: no heartbeat from the page for
-    10 minutes AND no drafts AND no Edge process on the profile;
-  * logs in .local/logs/editor.log.
+    127.0.0.1:5501 in background threads of this process;
+  * opens a pywebview window (WebView2) on the editor URL with the per-launch
+    token. webview.start() blocks; when it returns — window closed normally,
+    destroyed by the watchdog, or killed — both servers stop, the lock is
+    removed and the process exits with os._exit so nothing can linger;
+  * closing with unsaved drafts asks first (they are autosaved anyway);
+  * crash fallback: no heartbeat from the page for 10 minutes AND no drafts →
+    the window is destroyed, which ends the process the same way;
+  * logs in .local/logs/editor.log; WebView2 storage in .local/webview.
 
-Run with `--no-edge` to start the servers without a browser (tests).
+Run with `--no-window` to start the servers without a window (tests).
 """
 
 from __future__ import annotations
@@ -21,12 +25,13 @@ import json
 import logging
 import os
 import secrets
+import signal
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
-import webbrowser
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional
@@ -36,9 +41,10 @@ sys.path.insert(0, str(HERE))
 
 LOCAL = HERE / ".local"
 LOGS = LOCAL / "logs"
-EDGE_PROFILE = LOCAL / "edge"
+WEBVIEW_DIR = LOCAL / "webview"
 LOCK = LOCAL / "editor.lock"
-TITLE_PART = "Site editor"  # part of the page <title>; used to find the window
+WINDOW_TITLE = "Site editor — gideonong.me"
+TITLE_PART = "Site editor"
 APP_NAME = "gideonong-editor"
 CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
@@ -72,7 +78,6 @@ def setup_logging() -> None:
 
 def port_free(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 0)
         try:
             s.bind(("127.0.0.1", port))
             return True
@@ -86,6 +91,21 @@ def ping(port: int, timeout: float = 1.5) -> Optional[dict]:
             j = json.loads(r.read().decode("utf-8"))
             return j if j.get("app") == APP_NAME else None
     except Exception:
+        return None
+
+
+def api_post(port: int, path: str, token: str, timeout: float = 3.0) -> Optional[dict]:
+    req = urllib.request.Request(
+        f"http://127.0.0.1:{port}{path}",
+        data=b"{}",
+        method="POST",
+        headers={"X-Editor-Token": token, "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        log.info("POST %s failed: %s", path, e)
         return None
 
 
@@ -108,59 +128,11 @@ def remove_lock() -> None:
         pass
 
 
-def find_edge() -> Optional[str]:
-    cands = []
-    for env in ("ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA"):
-        base = os.environ.get(env)
-        if base:
-            cands.append(Path(base) / "Microsoft" / "Edge" / "Application" / "msedge.exe")
-    for c in cands:
-        if c.is_file():
-            return str(c)
-    if os.name == "nt":
-        try:
-            import winreg
-
-            for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
-                try:
-                    with winreg.OpenKey(hive, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe") as k:
-                        v, _ = winreg.QueryValueEx(k, None)
-                        if v and Path(v).is_file():
-                            return v
-                except OSError:
-                    continue
-        except ImportError:  # pragma: no cover
-            pass
-    return None
-
-
-def edge_args(edge: str, url: str) -> list[str]:
-    return [
-        edge,
-        f"--app={url}",
-        f"--user-data-dir={EDGE_PROFILE}",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--disable-background-mode",
-        "--disable-features=msEdgeStartupBoost,StartupBoost,msImplicitSignin,msSidebarV2,msHubApps",
-        "--disable-sync",
-        "--disable-extensions",
-        "--disable-component-update",
-        "--no-service-autorun",
-        "--window-size=1440,920",
-    ]
-
-
-def edge_pids_using(profile_dir: Path) -> list[int]:
-    """PIDs of msedge.exe processes whose command line names our profile folder."""
+def process_cmdline(pid: int) -> Optional[str]:
+    """Command line of a process, or None if it does not exist (Windows only)."""
     if os.name != "nt":
-        return []
-    needle = str(profile_dir).replace("'", "''")
-    cmd = (
-        "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
-        f"Where-Object {{ $_.CommandLine -and $_.CommandLine.Contains('{needle}') }} | "
-        "ForEach-Object { $_.ProcessId }"
-    )
+        return None
+    cmd = f"(Get-CimInstance Win32_Process -Filter 'ProcessId={int(pid)}').CommandLine"
     try:
         r = subprocess.run(
             ["powershell", "-NoProfile", "-NonInteractive", "-Command", cmd],
@@ -169,18 +141,31 @@ def edge_pids_using(profile_dir: Path) -> list[int]:
             timeout=30,
             creationflags=CREATE_NO_WINDOW,
         )
-        return [int(x) for x in r.stdout.split() if x.strip().isdigit()]
-    except (OSError, subprocess.SubprocessError) as e:
-        log.warning("process query failed: %s", e)
-        return []
+        return r.stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        return None
 
 
-def kill_pids(pids: list[int]) -> None:
-    for pid in pids:
-        try:
-            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, timeout=15, creationflags=CREATE_NO_WINDOW)
-        except (OSError, subprocess.SubprocessError) as e:
-            log.warning("taskkill %s failed: %s", pid, e)
+def end_stale_server(lock: dict) -> bool:
+    """End a launcher whose window is gone (pid from the lock). True if its ports came free."""
+    pid = int(lock.get("pid") or 0)
+    if pid and pid != os.getpid():
+        cmdline = process_cmdline(pid)
+        if cmdline and "launch.pyw" in cmdline:
+            log.warning("ending stale editor process %d (window gone)", pid)
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError as e:
+                log.warning("could not end pid %d: %s", pid, e)
+        else:
+            log.warning("pid %d from the lock is not the editor (%r); not touching it", pid, cmdline)
+    remove_lock()
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if port_free(int(lock.get("port", 5510))) and port_free(int(lock.get("previewPort", 5501))):
+            return True
+        time.sleep(0.5)
+    return False
 
 
 def find_windows(title_part: str) -> list[int]:
@@ -204,13 +189,18 @@ def find_windows(title_part: str) -> list[int]:
     return found
 
 
-def focus_window(hwnd: int) -> None:
+def bring_to_front(hwnd: int) -> None:
     user32 = ctypes.windll.user32
     user32.ShowWindow(ctypes.c_void_p(hwnd), 9)  # SW_RESTORE
-    # A synthetic Alt press lets a background process call SetForegroundWindow.
-    user32.keybd_event(0x12, 0, 0, 0)
+    user32.keybd_event(0x12, 0, 0, 0)  # a synthetic Alt press lets SetForegroundWindow succeed
     user32.keybd_event(0x12, 0, 2, 0)
     user32.SetForegroundWindow(ctypes.c_void_p(hwnd))
+
+
+def token_from_url(url: str) -> str:
+    from urllib.parse import parse_qs, urlsplit
+
+    return (parse_qs(urlsplit(url).query).get("token") or [""])[0]
 
 
 # -------------------------------------------------------------------- main
@@ -218,7 +208,7 @@ def focus_window(hwnd: int) -> None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--no-edge", action="store_true", help="servers only, no browser (tests)")
+    ap.add_argument("--no-window", "--no-edge", dest="no_window", action="store_true", help="servers only (tests)")
     ap.add_argument("--editor-port", type=int, default=None)
     ap.add_argument("--preview-port", type=int, default=None)
     args = ap.parse_args(argv)
@@ -237,22 +227,21 @@ def main(argv=None) -> int:
     # ---- second launch? ---------------------------------------------------
     lock = read_lock()
     if lock and ping(int(lock.get("port", editor_port))):
-        log.info("editor already running (pid %s); focusing", lock.get("pid"))
-        if args.no_edge:
+        log.info("editor already running (pid %s)", lock.get("pid"))
+        if args.no_window:
             print("already running: " + (lock.get("url") or ""), flush=True)
             return 0
-        hw = find_windows(TITLE_PART)
-        if hw:
-            focus_window(hw[0])
-        else:
-            edge = find_edge()
-            url = lock.get("url") or f"http://127.0.0.1:{editor_port}/"
-            if edge:
-                subprocess.Popen(edge_args(edge, url), close_fds=True)
-            else:
-                webbrowser.open(url)
-        return 0
-    if lock:
+        r = api_post(int(lock.get("port", editor_port)), "/api/focus", token_from_url(lock.get("url", "")))
+        if r and r.get("focused"):
+            for hwnd in find_windows(TITLE_PART):
+                bring_to_front(hwnd)
+            log.info("focused the existing window")
+            return 0
+        log.warning("server answers but has no window; replacing it")
+        if not end_stale_server(lock):
+            msgbox("An earlier editor process is still holding port 5510 or 5501 and could not be ended.\nClose it in Task Manager (pythonw.exe) and try again.")
+            return 1
+    elif lock:
         log.info("stale lock file removed")
         remove_lock()
 
@@ -290,69 +279,101 @@ def main(argv=None) -> int:
     )
     log.info("editor on :%d, preview on :%d (pid %d)", editor_port, preview_port, os.getpid())
 
-    # ---- open Edge --------------------------------------------------------
-    proc: Optional[subprocess.Popen] = None
-    launched_at = time.monotonic()
-    if not args.no_edge:
-        edge = find_edge()
-        if edge:
-            EDGE_PROFILE.mkdir(parents=True, exist_ok=True)
-            proc = subprocess.Popen(edge_args(edge, url), close_fds=True)
-            log.info("edge started (pid %d)", proc.pid)
-        else:
-            log.warning("msedge.exe not found; using the default browser")
-            msgbox(
-                "Microsoft Edge was not found, so the editor opens in your default browser.\n"
-                "It will keep running until about 10 minutes after you close that tab.",
-                flags=0x30,
-            )
-            webbrowser.open(url)
-    else:
-        print(url, flush=True)
+    def shutdown(reason: str) -> None:
+        log.info("shutting down: %s", reason)
+        try:
+            servers.stop()
+        finally:
+            remove_lock()
+            log.info("editor stopped")
+            logging.shutdown()
 
-    # ---- wait for shutdown ------------------------------------------------
-    last_proc_check = 0.0
-    drafts_notice_at = 0.0
+    # ---- servers only (tests) --------------------------------------------
+    if args.no_window:
+        print(url, flush=True)
+        try:
+            while not state.shutdown_requested.is_set():
+                time.sleep(1.0)
+                if state.heartbeat_silence() >= editor_app.HEARTBEAT_TIMEOUT and not state.drafts:
+                    break
+        except KeyboardInterrupt:
+            pass
+        shutdown("no-window mode ended")
+        return 0
+
+    # ---- window -----------------------------------------------------------
+    import webview
+
+    WEBVIEW_DIR.mkdir(parents=True, exist_ok=True)
+    window = webview.create_window(WINDOW_TITLE, url, width=1440, height=920, min_size=(900, 600), text_select=True)
+
+    def on_closing():
+        n = len(state.drafts)
+        if n and not state.shutdown_requested.is_set():
+            return bool(
+                window.create_confirmation_dialog(
+                    "Site editor",
+                    f"{n} unsaved draft{'s' if n > 1 else ''}. They are autosaved and will be offered again "
+                    "next time you open the editor.\n\nClose anyway?",
+                )
+            )
+        return True
+
+    window.events.closing += on_closing
+
+    def focus() -> bool:
+        if window not in webview.windows:
+            return False
+        try:
+            window.restore()
+            window.show()
+            return True
+        except Exception as e:  # pragma: no cover
+            log.warning("focus failed: %s", e)
+            return False
+
+    state.focus_callback = focus
+
+    def watchdog():
+        gone_since = None
+        while True:
+            time.sleep(5)
+            if state.shutdown_requested.is_set():
+                log.info("shutdown requested; destroying window")
+                _destroy(window)
+                return
+            if window not in webview.windows:
+                gone_since = gone_since or time.monotonic()
+                if time.monotonic() - gone_since > 15:
+                    # webview.start() should have returned by now; make sure we leave anyway
+                    shutdown("window gone but start() did not return")
+                    os._exit(0)
+                continue
+            gone_since = None
+            if state.heartbeat_silence() >= editor_app.HEARTBEAT_TIMEOUT and not state.drafts:
+                log.info("no heartbeat for %.0f s and no drafts — destroying window", state.heartbeat_silence())
+                state.shutdown_requested.set()
+                _destroy(window)
+                return
+
+    threading.Thread(target=watchdog, name="watchdog", daemon=True).start()
+
     try:
-        while not state.shutdown_requested.is_set():
-            time.sleep(1.0)
-            now = time.monotonic()
-            if proc is not None and proc.poll() is not None:
-                if now - launched_at < 5:
-                    # Edge handed the URL to an instance already using this profile.
-                    leftovers = edge_pids_using(EDGE_PROFILE)
-                    if leftovers:
-                        log.info("edge handed off to existing process(es) %s; using heartbeat mode", leftovers)
-                        proc = None
-                        continue
-                log.info("edge process exited (rc %s)", proc.returncode)
-                leftovers = edge_pids_using(EDGE_PROFILE)
-                deadline = now + 15
-                while leftovers and time.monotonic() < deadline:
-                    time.sleep(2)
-                    leftovers = edge_pids_using(EDGE_PROFILE)
-                if leftovers:
-                    log.warning("msedge.exe still using the profile after the window closed: %s — ending them", leftovers)
-                    kill_pids(leftovers)
-                break
-            if proc is None and state.heartbeat_silence() >= editor_app.HEARTBEAT_TIMEOUT:
-                if state.drafts:
-                    if now - drafts_notice_at > 600:
-                        log.info("no heartbeat for %.0f s but %d draft(s) exist; staying alive", state.heartbeat_silence(), len(state.drafts))
-                        drafts_notice_at = now
-                    continue
-                if now - last_proc_check >= 60:
-                    last_proc_check = now
-                    if not edge_pids_using(EDGE_PROFILE):
-                        log.info("no heartbeat for %.0f s, no drafts, no edge process — exiting", state.heartbeat_silence())
-                        break
-    except KeyboardInterrupt:
-        pass
-    finally:
-        servers.stop()
-        remove_lock()
-        log.info("editor stopped")
-    return 0
+        webview.start(gui="edgechromium", private_mode=False, storage_path=str(WEBVIEW_DIR))
+    except Exception as e:
+        log.exception("webview failed")
+        shutdown("webview error")
+        msgbox(f"The editor window could not be opened:\n\n{e!r}\n\nIs the WebView2 runtime installed? (It ships with Edge.)")
+        os._exit(1)
+    shutdown("window closed")
+    os._exit(0)
+
+
+def _destroy(window) -> None:
+    try:
+        window.destroy()
+    except Exception as e:  # pragma: no cover
+        logging.getLogger("editor.launch").warning("destroy failed: %s", e)
 
 
 if __name__ == "__main__":
@@ -362,4 +383,5 @@ if __name__ == "__main__":
         logging.getLogger("editor.launch").exception("launcher crashed")
         msgbox(f"The editor crashed:\n\n{e!r}\n\nSee scripts\\editor\\.local\\logs\\editor.log")
         code = 1
-    raise SystemExit(code)
+    remove_lock() if code else None
+    os._exit(code)

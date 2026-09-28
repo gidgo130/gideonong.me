@@ -24,8 +24,7 @@ $lnk.Arguments        = '"' + $launcher + '"'
 $lnk.WorkingDirectory = $editorDir
 $lnk.Description      = "gideonong.me local content editor"
 $lnk.WindowStyle      = 7   # minimized (pythonw has no window anyway)
-$edge = Join-Path ${env:ProgramFiles(x86)} "Microsoft\Edge\Application\msedge.exe"
-if (Test-Path $edge) { $lnk.IconLocation = "$edge,0" } else { $lnk.IconLocation = "$pythonw,0" }
+$lnk.IconLocation = "$env:SystemRoot\System32\shell32.dll,70"   # a generic "document + pen" icon
 $lnk.Save()
 
 Write-Host "Shortcut written: $linkPath"

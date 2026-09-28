@@ -146,12 +146,36 @@ class SaveTests(unittest.TestCase):
             self.assertIn('navAbout: "Borrador"'.encode("utf-8"), state2.preview_overrides()["js/translations.js"])
 
 
+class WindowEndpointTests(unittest.TestCase):
+    def test_focus_reports_whether_a_window_exists(self):
+        with TempRepo() as t:
+            state, c = make(t)
+            r = c.post("/api/focus", headers=hdr(), json={})
+            self.assertEqual((r.status_code, r.get_json()["focused"]), (200, False))
+            calls = []
+            state.focus_callback = lambda: calls.append(1) or True
+            r = c.post("/api/focus", headers=hdr(), json={})
+            self.assertEqual((r.status_code, r.get_json()["focused"]), (200, True))
+            self.assertEqual(calls, [1])
+
+    def test_open_preview_uses_the_opener_with_the_preview_url(self):
+        with TempRepo() as t:
+            state, c = make(t)
+            opened = []
+            state.opener = opened.append
+            r = c.post("/api/open-preview", headers=hdr(), json={})
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(opened, ["http://127.0.0.1:5501/"])
+
+
 class SecurityTests(unittest.TestCase):
     def test_missing_or_wrong_token_is_refused_on_state_changing_endpoints(self):
         with TempRepo() as t:
             before = t.translations.read_bytes()
             state, c = make(t)
-            for path in ("/api/draft", "/api/save", "/api/restore", "/api/drafts/discard", "/api/heartbeat"):
+            state.opener = lambda url: (_ for _ in ()).throw(AssertionError("opener must not run"))
+            state.focus_callback = lambda: (_ for _ in ()).throw(AssertionError("focus must not run"))
+            for path in ("/api/draft", "/api/save", "/api/restore", "/api/drafts/discard", "/api/heartbeat", "/api/focus", "/api/open-preview"):
                 r = c.post(path, headers={"Host": HOST}, json={"lang": "es", "key": "navAbout", "value": "X", "set": "x"})
                 self.assertEqual(r.status_code, 403, path)
                 r = c.post(path, headers={"Host": HOST, "X-Editor-Token": "wrong"}, json={"lang": "es", "key": "navAbout", "value": "X"})

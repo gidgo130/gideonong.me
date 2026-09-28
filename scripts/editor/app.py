@@ -23,9 +23,10 @@ import subprocess
 import sys
 import threading
 import time
+import webbrowser
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from flask import Flask, Response, jsonify, request, send_from_directory
 
@@ -65,6 +66,10 @@ class EditorState:
         self.last_heartbeat = time.monotonic()
         self.heartbeat_seen = False
         self.shutdown_requested = threading.Event()
+        # set by the launcher: bring the window to the front (returns False when no window)
+        self.focus_callback: Optional[Callable[[], bool]] = None
+        # how "Preview" opens the preview URL in the normal browser (tests replace it)
+        self.opener: Callable[[str], object] = webbrowser.open
         self.backups = Backups(self.repo_root, self.local_dir / "backups")
         self.autosave_path = self.local_dir / "drafts" / "translations.json"
         self.pending_autosave: Optional[dict] = self._read_autosave()
@@ -442,6 +447,24 @@ def create_app(state: EditorState) -> Flask:
     @app.get("/api/git")
     def git():
         return jsonify(git=state.git_info())
+
+    @app.post("/api/focus")
+    def focus():
+        """Second launch: bring the existing window to the front. focused=False → no window."""
+        cb = state.focus_callback
+        focused = bool(cb()) if cb else False
+        return jsonify(ok=True, focused=focused)
+
+    @app.post("/api/open-preview")
+    def open_preview():
+        """Open the preview in the normal default browser, not inside the editor window."""
+        url = f"http://127.0.0.1:{state.preview_port}/"
+        try:
+            state.opener(url)
+        except Exception as e:  # pragma: no cover
+            log.warning("could not open the browser: %s", e)
+            return deny(500, "could not open the browser")
+        return jsonify(ok=True, url=url)
 
     return app
 
