@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning is unlisted while in progress: remove this line to let search engines index the page. -->
+  <meta name="robots" content="noindex">
+  <title data-i18n-title="pageTitle">The Invisible Bias · Reading Your Fits</title>
+  <meta name="description" content="Interactive module: how noise in x and unmeasured drift bias a fitted slope without showing up in the residual plot.">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/invisible-bias/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Theme: follow the main site's saved choice (About → Viewing settings). Keep in sync with index.html. */
+    (function () {
+      try {
+        var t = localStorage.getItem("viewTheme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { /* storage blocked: the OS setting decides */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+</head>
+<body>
+
+<nav class="series-bar" data-i18n-aria="navSeriesAria" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../" data-i18n="siteHome">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../" data-i18n="learningHome">Learning</a><span aria-hidden="true">/</span>
+    <span data-i18n="seriesName">Reading Your Fits</span>
+  </div>
+  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Toggle language (EN/ES)" hidden>
+    <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
+  </button>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow" data-i18n="eyebrow">Reading Your Fits · Module 5</div>
+    <h1 data-i18n="h1">The Invisible Bias</h1>
+    <p class="lead" data-i18n="lead">Most fitting problems leave fingerprints in the residual plot. This one doesn't. The fitted line comes out wrong, the leftovers look perfectly healthy, and taking more data makes you more confident in the wrong answer.</p>
+    <p data-i18n-html="introHtml">Think of x as something you read off an instrument (a thermocouple temperature, a displacement sensor, a measured voltage) and y as the response you record. All data here is simulated, so we know the true slope: <b>2.00</b>.</p>
+    <p data-i18n-html="introSetpointHtml"><b>Reading, not setting.</b> If you set x on a dial and write down the setting, the true value wanders around your setting instead. That is a different kind of error, and it does not bias the slope. This module is about x values you <i>read</i>.</p>
+    <div class="legend-key" data-i18n-aria="keyAria" aria-label="Color key">
+      <span><i class="sw truth"></i><span data-i18n="keyTruth">The truth</span></span>
+      <span><i class="sw fit"></i><span data-i18n="keyFit">What an ordinary least-squares fit reports</span></span>
+      <span><i class="sw fix"></i><span data-i18n="keyFix">A corrected estimate</span></span>
+      <span><i class="sw dot"></i><span data-i18n="keyPts">Measured points</span></span>
+    </div>
+    <div class="takeaway-links">
+      <span data-i18n="takeLabel">Take it with you:</span>
+      <a href="slides.html" data-i18n="takeSlides">Slides</a>
+      <a href="invisible-bias.py" download data-i18n="takePy">Python script</a>
+    </div>
+  </header>
+
+  <!-- TRIAL 1 -->
+  <section class="trial" id="trial1">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t1Num">Trial 1 of 4</div>
+      <h2 data-i18n="t1Title">Noise in y versus noise in x</h2>
+      <p data-i18n="t1Intro">Both sliders add random error to a sensor. Only one of them tilts the line.</p>
+    </div>
+    <div class="quiz" id="quiz1">
+      <p data-i18n-html="quizPromptHtml"><b>Predict first.</b> If the sensor that reads x gets noisier, the fitted slope will…</p>
+      <div class="opts" role="group" data-i18n-aria="quizAria" aria-label="Your prediction">
+        <button type="button" class="btn" data-a="steeper" aria-pressed="false" data-i18n="quizSteeper">get steeper</button>
+        <button type="button" class="btn" data-a="flatter" aria-pressed="false" data-i18n="quizFlatter">get flatter</button>
+        <button type="button" class="btn" data-a="same" aria-pressed="false" data-i18n="quizSame">stay the same, just messier</button>
+      </div>
+      <p class="answer" id="quiz1-answer" hidden></p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t1-sy"><span data-i18n="t1SyLabel">Noise in y readings</span> <output id="t1-sy-out">1.0</output></label>
+          <input type="range" id="t1-sy" min="0" max="4" step="0.1" value="1">
+          <small data-i18n="t1SyHelp">Standard deviation of the y sensor's error.</small>
+        </div>
+        <div class="ctl">
+          <label for="t1-sx"><span data-i18n="t1SxLabel">Noise in x readings</span> <output id="t1-sx-out">0.0</output></label>
+          <input type="range" id="t1-sx" min="0" max="3" step="0.1" value="0">
+          <small data-i18n="t1SxHelp">Standard deviation of the x sensor's error. For comparison, the true x values (spread evenly over 0 to 10) have a standard deviation of about 2.9.</small>
+        </div>
+        <button type="button" class="btn" id="t1-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roTrue">True slope</dt><dd class="v" data-num="2">2.00</dd></div>
+          <div><dt data-i18n="roFitted">Fitted slope</dt><dd class="v" id="t1-b">–</dd></div>
+          <div><dt data-i18n="roOff">Off by</dt><dd class="v" id="t1-err">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t1-scatter" role="img" data-i18n-aria="t1ScatterAria" aria-label="Measured y versus measured x with the true line and the fitted line"></svg>
+          <figcaption data-i18n-html="t1ScatterCapHtml"><b>The data and the fit.</b> 50 readings.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t1-resid" role="img" data-i18n-aria="t1ResidAria" aria-label="Residuals versus fitted values"></svg>
+          <figcaption data-i18n-html="t1ResidCapHtml"><b>Residual plot.</b> Leftover error after the fit, against the fitted value.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t1-note"></p>
+  </section>
+
+  <!-- TRIAL 2 -->
+  <section class="trial" id="trial2">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t2Num">Trial 2 of 4</div>
+      <h2 data-i18n="t2Title">Will more data fix it?</h2>
+      <p data-i18n="t2Intro">Here the same experiment is repeated 400 times. Each bar counts how many repeats got a given slope. The software's 95% error bars should contain the true slope in 95% of repeats.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t2-sx"><span data-i18n="t2SxLabel">Noise in x readings</span> <output id="t2-sx-out">1.5</output></label>
+          <input type="range" id="t2-sx" min="0" max="3" step="0.1" value="1.5">
+        </div>
+        <div class="ctl">
+          <span class="lbl" id="t2-n-lbl" data-i18n="t2NLabel">Points per experiment</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t2-n-lbl">
+            <input type="radio" name="t2n" id="t2n10" value="10"><label for="t2n10">10</label>
+            <input type="radio" name="t2n" id="t2n30" value="30" checked><label for="t2n30">30</label>
+            <input type="radio" name="t2n" id="t2n100" value="100"><label for="t2n100">100</label>
+            <input type="radio" name="t2n" id="t2n300" value="300"><label for="t2n300">300</label>
+            <input type="radio" name="t2n" id="t2n1000" value="1000"><label for="t2n1000">1000</label>
+          </div>
+        </div>
+        <button type="button" class="btn" id="t2-new" data-i18n="t2Btn">Repeat all 400 again</button>
+        <dl class="readout">
+          <div><dt data-i18n="roTrue">True slope</dt><dd class="v" data-num="2">2.00</dd></div>
+          <div><dt data-i18n="roAvg">Average fitted slope</dt><dd class="v" id="t2-mean">–</dd></div>
+          <div><dt data-i18n="roMiddle">Middle 95% of fits</dt><dd class="v" id="t2-range">–</dd></div>
+          <div><dt data-i18n="roCaught">Error bars that caught 2.00</dt><dd class="v" id="t2-cover">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t2-hist" role="img" data-i18n-aria="t2HistAria" aria-label="Histogram of fitted slopes from 400 repeated experiments"></svg>
+          <figcaption data-i18n-html="t2HistCapHtml"><b>Fitted slopes from 400 repeats.</b> Dashed line is the truth; red line is the average fit.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t2-note"></p>
+  </section>
+
+  <!-- TRIAL 3 -->
+  <section class="trial" id="trial3">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t3Num">Trial 3 of 4</div>
+      <h2 data-i18n="t3Title">Something you didn't measure</h2>
+      <p data-i18n="t3Intro">During the session, something drifts upward: the room warms, a battery sags, a bearing heats up. It nudges every y reading a little more as time goes on. You never measured it.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t3-d"><span data-i18n="t3DLabel">Drift over the session</span> <output id="t3-d-out">6.0</output></label>
+          <input type="range" id="t3-d" min="0" max="10" step="0.5" value="6">
+          <small data-i18n="t3DHelp">How much the drift has added to y by the last run.</small>
+        </div>
+        <div class="ctl">
+          <span class="lbl" id="t3-o-lbl" data-i18n="t3OrderLabel">Order of the runs</span>
+          <div class="seg" role="radiogroup" aria-labelledby="t3-o-lbl">
+            <input type="radio" name="t3o" id="t3sweep" value="sweep" checked><label for="t3sweep" data-i18n="t3Sweep">Low to high x</label>
+            <input type="radio" name="t3o" id="t3rand" value="random"><label for="t3rand" data-i18n="t3Random">Randomized</label>
+          </div>
+        </div>
+        <button type="button" class="btn" id="t3-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roTrue">True slope</dt><dd class="v" data-num="2">2.00</dd></div>
+          <div><dt data-i18n="roFitted">Fitted slope</dt><dd class="v" id="t3-b">–</dd></div>
+          <div><dt data-i18n="roOff">Off by</dt><dd class="v" id="t3-err">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t3-scatter" role="img" data-i18n-aria="t3ScatterAria" aria-label="y versus x, points shaded by when they were taken"></svg>
+          <figcaption data-i18n-html="t3ScatterCapHtml"><b>The data and the fit.</b> Solid points were taken later; faint ones earlier.</figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="t3-resid" role="img" data-i18n-aria="t3ResidAria" aria-label="Residuals versus run order"></svg>
+          <figcaption data-i18n-html="t3ResidCapHtml"><b>Residuals in run order.</b> The check for anything that changes with time.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t3-note"></p>
+  </section>
+
+  <!-- TRIAL 4 -->
+  <section class="trial" id="trial4">
+    <div class="trial-head">
+      <div class="trial-num" data-i18n="t4Num">Trial 4 of 4</div>
+      <h2 data-i18n="t4Title">What actually fixes noise in x</h2>
+      <p data-i18n="t4Intro">Two remedies. One is a different fitting method that allows for error in both x and y (orthogonal distance or Deming regression). The other is a design choice: test over a wider range of x, so the noise is small compared with how much x varies.</p>
+    </div>
+    <div class="bench">
+      <div class="controls">
+        <div class="ctl">
+          <label for="t4-sx"><span data-i18n="t4SxLabel">Noise in x readings</span> <output id="t4-sx-out">2.0</output></label>
+          <input type="range" id="t4-sx" min="0" max="3" step="0.1" value="2">
+        </div>
+        <div class="ctl">
+          <label for="t4-span"><span data-i18n="t4SpanLabel">Range of x tested</span> <output id="t4-span-out">0 to 10</output></label>
+          <input type="range" id="t4-span" min="4" max="30" step="1" value="10">
+          <small data-i18n="t4SpanHelp">Wider range, same noise.</small>
+        </div>
+        <button type="button" class="btn" id="t4-new" data-i18n="btnNewSample">Draw a new sample</button>
+        <dl class="readout">
+          <div><dt data-i18n="roTrue">True slope</dt><dd class="v" data-num="2">2.00</dd></div>
+          <div><dt data-i18n="roOls">Ordinary fit</dt><dd class="v" id="t4-ols">–</dd></div>
+          <div><dt data-i18n="roDem">Errors-in-x fit</dt><dd class="v" id="t4-dem">–</dd></div>
+          <div><dt data-i18n="roExpected">Ordinary fit expected at</dt><dd class="v" id="t4-lam">–</dd></div>
+        </dl>
+      </div>
+      <div class="plots">
+        <figure>
+          <svg class="chart" id="t4-scatter" role="img" data-i18n-aria="t4ScatterAria" aria-label="Data with the true line, ordinary fit and errors-in-x fit"></svg>
+          <figcaption data-i18n-html="t4ScatterCapHtml"><b>Three lines, one dataset.</b> 60 readings.</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="note" id="t4-note"></p>
+    <details>
+      <summary data-i18n="codeSummary">Show the Python for this fit</summary>
+<pre><code>import numpy as np
+from scipy import odr
+
+rng = np.random.default_rng(0)
+x_true = rng.uniform(0, 10, 60)
+x = x_true + rng.normal(0, 2.0, 60)            # noisy x readings
+y = 1 + 2 * x_true + rng.normal(0, 1.0, 60)    # noisy y readings
+
+# Ordinary least squares: assumes x is exact
+b_ols, a_ols = np.polyfit(x, y, 1)
+
+# Orthogonal distance regression: allows error in x and y
+model = odr.Model(lambda B, x: B[0] + B[1] * x)
+data = odr.RealData(x, y, sx=2.0, sy=1.0)      # your best estimates of each sensor's noise
+fit = odr.ODR(data, model, beta0=[a_ols, b_ols]).run()
+
+print(f"OLS slope: {b_ols:.2f}   ODR slope: {fit.beta[1]:.2f}   true: 2.00")</code></pre>
+    </details>
+  </section>
+
+  <section class="takeaways" id="takeaways">
+    <h2 data-i18n="takeTitle">What to take away</h2>
+    <ol>
+      <li data-i18n-html="take1Html"><b>Noise in y costs precision. Noise in x costs accuracy.</b> An ordinary fit assumes x is exact; when it isn't, the slope is pulled toward zero.</li>
+      <li data-i18n-html="take2Html"><b>The residual plot cannot catch this.</b> The fit adjusts itself so the leftovers look balanced against x. You find this problem by asking how the data was produced.</li>
+      <li data-i18n-html="take3Html"><b>More data makes it worse, in a way.</b> The spread shrinks around the wrong answer, and the error bars grow confident while missing the truth.</li>
+      <li data-i18n-html="take4Html"><b>The cheapest fixes happen before you collect data:</b> randomize run order, log what might drift, read x with a better instrument, and test over a wide range.</li>
+    </ol>
+    <h3 data-i18n="checkTitle">Three questions to ask about any fit</h3>
+    <div class="checklist">
+      <div><h4 data-i18n="check1Title">Is x really exact?</h4><p data-i18n="check1Body">Compare the x sensor's error with the standard deviation of your x values (about 2.9 for x spread evenly over 0 to 10). If the error is more than about a third of that, expect the slope 10% or more too flat.</p></div>
+      <div><h4 data-i18n="check2Title">What changed during the session?</h4><p data-i18n="check2Body">Temperature, supply voltage, warm-up, wear. If it moves with x, it hides inside your slope.</p></div>
+      <div><h4 data-i18n="check3Title">Does y ever push back on x?</h4><p data-i18n="check3Body">In closed-loop tests a controller sets x based on y, so the two are tangled by design.</p></div>
+    </div>
+    <p class="note" data-i18n-html="nameNoteHtml"><b>The name for all of this:</b> statisticians call it <i>endogeneity</i>, meaning the error in y is related to x. Heteroskedasticity is a different problem (uneven scatter) that does show in the residual plot and leaves the slope unbiased. It has its own module, Uneven scatter.</p>
+  </section>
+
+  <nav class="series-nav" id="series-nav" data-i18n-aria="navSeriesNavAria" aria-label="Series navigation"></nav>
+  <p class="foot"><span data-i18n="footNote">Simulated data. True model: y = 1 + 2x + error. Built for engineering students; no statistics background assumed.</span></p>
+</div>
+
+<script src="../../assets/strings-common.js"></script>
+<script src="../../assets/modules.js"></script>
+<script src="strings.js"></script>
+<script src="../../assets/learning-i18n.js"></script>
+<script src="../../assets/learning.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

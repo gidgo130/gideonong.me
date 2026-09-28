@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning is unlisted while in progress: remove this line to let search engines index the page. -->
+  <meta name="robots" content="noindex">
+  <title data-i18n-title="pageTitle">Learning · Gideon A. Ong</title>
+  <meta name="description" content="Interactive notes for engineering students, starting with Reading Your Fits: how to check a line fit against lab data.">
+  <link rel="icon" href="../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (/learning/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Theme: follow the main site's saved choice (About → Viewing settings). Keep in sync with module pages. */
+    (function () {
+      try {
+        var t = localStorage.getItem("viewTheme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) { /* storage blocked: the OS setting decides */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="assets/learning.css">
+</head>
+<body>
+
+<nav class="series-bar" data-i18n-aria="navSiteAria" aria-label="Site">
+  <div class="crumbs">
+    <a href="../" data-i18n="siteHome">gideonong.me</a><span aria-hidden="true">/</span>
+    <span data-i18n="learningHome">Learning</span>
+  </div>
+  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Toggle language (EN/ES)" hidden>
+    <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
+  </button>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow" data-i18n="eyebrow">Gideon A. Ong · Learning</div>
+    <h1 data-i18n="h1">Learning</h1>
+    <p class="lead" data-i18n="lead">Interactive notes I build for engineering students. Each one runs in your browser on simulated data, so you can push the sliders, break things and see what happens.</p>
+  </header>
+
+  <section class="series" id="reading-your-fits">
+    <h2 data-i18n="seriesName">Reading Your Fits</h2>
+    <p data-i18n="seriesIntro">Six short modules on checking a line fit against lab data: what the leftovers tell you, what they can't, and what to do about it. No statistics background needed; some Excel or MATLAB helps.</p>
+    <ol class="module-list" id="module-list" data-i18n-aria="listAria" aria-label="Modules in Reading Your Fits"></ol>
+    <noscript><p class="note" data-i18n="noscript">The module list and the interactive pages need JavaScript turned on.</p></noscript>
+    <h3 data-i18n="howTitle">Every module comes with</h3>
+    <div class="howto">
+      <div><h4 data-i18n="how1Title">An interactive page</h4><p data-i18n="how1Body">Sliders and simulated experiments. Nothing to install.</p></div>
+      <div><h4 data-i18n="how2Title">Slides</h4><p data-i18n="how2Body">A short deck for presenting it or reviewing it quickly.</p></div>
+      <div><h4 data-i18n="how3Title">A Python script</h4><p data-i18n="how3Body">Reproduces every plot. Runs as-is in Google Colab.</p></div>
+    </div>
+  </section>
+
+  <p class="foot">
+    <span data-i18n="footBuilt">Built by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
+    <span data-i18n="footMistake">Found a mistake? gao9819@utulsa.edu</span>
+  </p>
+</div>
+
+<script src="assets/strings-common.js"></script>
+<script src="assets/modules.js"></script>
+<script src="strings.js"></script>
+<script src="assets/learning-i18n.js"></script>
+<script src="assets/learning.js"></script>
+<script>
+  (function () {
+    var list = document.getElementById("module-list");
+    LF.moduleList(list);
+    document.addEventListener("learnlangchange", function () { LF.moduleList(list); });
+  }());
+</script>
+</body>
+</html>

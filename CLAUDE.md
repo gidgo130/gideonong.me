@@ -9,6 +9,8 @@ Domain: gideonong.me. See plan.md for the development roadmap.
 ## Stack
 Plain HTML + CSS + vanilla JavaScript. No frameworks, no build tools, no npm.
 External resources: Google Fonts only (Lora + DM Sans).
+/learning is the one exception: it also loads Barlow Semi Condensed, Source Serif 4 and
+JetBrains Mono (see /learning below).
 
 ## File structure
 index.html          Home page
@@ -41,6 +43,13 @@ scripts/editor/      Dev-side local content editor (Python/Flask + a vanilla-JS 
 assets/images/      Project photos and diagrams
 assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)
 assets/videos/      Project video clips
+learning/           UNLISTED Learning section (own design, noindex) — see /learning below and
+                    learning/README.md. Linked only from About → Interesting sites.
+learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, learning-i18n.js,
+                    strings-common.js, modules.js)
+learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
+learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
+                    slides.html, <slug>.py
 CLAUDE.md           This file
 plan.md             Development roadmap
 
@@ -420,7 +429,50 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
   prefer using CSS vars to avoid this need in future additions.
 - IEL chip: uses rgba(0,0,0,0.06) in light mode; rgba(255,255,255,0.10) in dark.
 
+## /learning — Learning section (EXCEPTION to main-site styling, 2026-09-28)
+gideonong.me/learning/ hosts interactive teaching pages, starting with the series "Reading
+Your Fits" (how to check a line fit against lab data). Build plan, status and decisions:
+learning/learning-plan.md (plan.md only points there). Working manual (structure, strings,
+adding a module, checks, Fable review prompt): learning/README.md. Slide sources and figures live OUTSIDE the repo in
+Gideon's workshop folder ("statistics and error plots for engineers/modules/<slug>/"); only
+rendered slides.html comes in.
+
+Rules for /learning (these replace the main-site rules where they conflict):
+- Own design, deliberately different from the main site: the "lab notebook" look in
+  learning/assets/learning.css. Fonts Barlow Semi Condensed (display), Source Serif 4 (body),
+  JetBrains Mono (numbers). Uppercase eyebrows and "Trial 1 of 4" / module numbers ARE allowed
+  here because they mark a real sequence. No main-site navbar, banner or footer; each page has
+  the thin series bar (gideonong.me / Learning / series) and prev / all / next links.
+- Color meaning is fixed across every module: dashed ink = the truth, red (--fit) = what an
+  ordinary fit reports, blue (--fix) = a corrected estimate, grey dots = measured points.
+- Unlisted: NOT in the main nav, sitemap or project list. The only link in is the Learning
+  entry in about.html's Interesting sites (js/about.js `interestingSites`, `internal: true` =
+  same tab); that block is `hidden` for now, so the link shows once `hidden` is removed.
+- noindex while in progress: every /learning page (and each deck, via `include-in-header` in
+  slides.qmd) has `<meta name="robots" content="noindex">`. Going public = remove it everywhere
+  (learning-plan.md Phase C). Do not use robots.txt for this.
+- Bilingual is REQUIRED; English ships first. All display text lives in strings files
+  (learning/assets/strings-common.js + each page's strings.js), never hard-coded in JS.
+  learning-i18n.js shares the main site's localStorage "lang" key and default rule. The EN/ES
+  toggle is in every page's series bar but stays hidden, and the page renders EN, until that
+  page's `<html>` gets `data-es-ready` (after its `es` strings are complete). Keys ending in
+  "Html" may hold <b>/<i>/<code> (the translations.js no-HTML rule does not apply here).
+  Numbers go through LF.num so ES gets a decimal comma.
+- Theme follows the main site's saved `viewTheme` (About → Viewing settings) via a head
+  snippet, else prefers-color-scheme. No toggle on /learning pages.
+- Module registry: learning/assets/modules.js is the ONE list (order, slug, ready). Titles and
+  descriptions: mod<Key>Title / mod<Key>Desc in strings-common.js. URLs use slugs, never
+  numbers, so reordering never breaks links.
+- Relative links only, so pages work on the site, on previews and from disk (offline app).
+  Each page's head adds the trailing slash to folder URLs; LF.fixFileLinks points folder links
+  at index.html when opened from disk.
+- Simulated data only; each page states its true model.
+- Motion: slider-driven redraws only. No page-load or scroll animation.
+- Files outside learning/ that /learning touches: js/about.js (the Interesting-sites entry)
+  and these docs. Anything else outside learning/ needs Gideon's OK first.
+
 ## What NOT to do
+(Main site. /learning follows its own rules in the section above.)
 - Do not make navbar anything other than white (#FFFFFF) in light mode
   (dark mode overrides --nav-bg to a dark warm background, which is expected)
 - Do not hardcode display text in HTML — use data-i18n attributes

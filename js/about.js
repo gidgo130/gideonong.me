@@ -522,6 +522,8 @@
      §6 — Interesting sites list
      ------------------------------------------------------------------------ */
   var interestingSites = [
+    // /learning (unlisted section, see CLAUDE.md → /learning). internal: same tab.
+    { url: "learning/", internal: true, labelEN: "Learning", labelES: "Aprendizaje", descEN: "Interactive notes I build for engineering students, starting with how to check a line fit against lab data.", descES: "Notas interactivas que preparo para estudiantes de ingeniería, empezando por cómo evaluar un ajuste lineal a datos de laboratorio." },
     { url: "#", labelEN: "[Site 1 — EN]", labelES: "[Sitio 1 — ES]", descEN: "[Site 1 description — EN]", descES: "[Descripción del sitio 1 — ES]" },
     { url: "#", labelEN: "[Site 2 — EN]", labelES: "[Sitio 2 — ES]", descEN: "[Site 2 description — EN]", descES: "[Descripción del sitio 2 — ES]" },
     { url: "#", labelEN: "[Site 3 — EN]", labelES: "[Sitio 3 — ES]", descEN: "[Site 3 description — EN]", descES: "[Descripción del sitio 3 — ES]" }
@@ -539,8 +541,10 @@
         var li = document.createElement("li");
         var a = document.createElement("a");
         a.href = site.url;
-        a.target = "_blank";
-        a.rel = "noopener";
+        if (!site.internal) {
+          a.target = "_blank";
+          a.rel = "noopener";
+        }
         a.textContent = lang === "es" ? site.labelES : site.labelEN;
         var desc = document.createElement("p");
         desc.className = "site-desc";

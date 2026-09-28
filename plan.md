@@ -715,6 +715,15 @@ Goal: site evolves from career tool to broader personal site.
 
 ---
 
+## Learning section — /learning
+
+A separate track, not planned in this file. The unlisted teaching pages at
+gideonong.me/learning/ have their own plan, status and decisions log in
+`learning/learning-plan.md`, their rules in CLAUDE.md → "/learning", and their working manual
+in `learning/README.md`.
+
+---
+
 ## Decisions log
 
 (Add dated entries as design and content decisions are made.)
