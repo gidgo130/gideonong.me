@@ -60,8 +60,10 @@ learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, lear
                     strings-common.js, modules.js) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
-                    slides.html, slides.es.html, <slug>.py (papers are never hosted: chips
-                    link DOIs)
+                    slides.html, slides.es.html, <slug>.py, and two GENERATED files:
+                    <slug>.ipynb (Colab, from the .py by workshop/tools/make-ipynb.py) and
+                    play/index.html (marimo, by workshop/tools/export-play.py). Papers are
+                    never hosted: chips link DOIs
 CLAUDE.md           This file
 plan.md             Development roadmap
 README.md           Public front page of the repo (what it is, layout, licensing)

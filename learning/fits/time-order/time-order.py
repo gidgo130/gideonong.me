@@ -1,17 +1,33 @@
 """
-Time-Ordered Data -- companion script (Reading Your Fits, Module 4)
-https://gideonong.me/learning/fits/time-order/
+# Time-Ordered Data — Reading Your Fits, Module 4
 
-Reproduces the three trials from the interactive page with numpy, scipy and matplotlib,
+The module's Python: https://gideonong.me/learning/fits/time-order/
+
+It rebuilds the three trials from the interactive page with numpy, scipy and matplotlib,
 and saves each figure as a PNG in ./figures (these are the figures used in the slides).
 
 Run it:
-  * Google Colab: upload this file (or paste it into a cell) and run. Everything needed is preinstalled.
+  * Google Colab: use "Open in Colab" on the module page (or upload this file). Everything
+    needed is preinstalled. Run the cells top to bottom; then change a number in any
+    "knobs" cell and run that cell again.
   * Your own PC:  pip install numpy matplotlib scipy   then   python time-order.py
 
 All data is simulated. Trial 1: y = 1 + 0.2t + AR(1) noise. Trial 2: T = 22 + 58·exp(-t/4) + noise.
 Trial 3: steady value 50 with run-to-run offsets and AR(1) noise.
 """
+# %% [markdown]
+# ## Setup
+#
+# Imports, where the figures go, and one color meaning for the whole series: dashed ink is
+# the truth, red is what an ordinary fit reports, blue is a corrected or better fit, grey
+# dots are measured points. The random numbers get a fixed seed, so every run gives the
+# same data; change the seed to draw a new sample.
+#
+# `ar1` makes "carry-over" noise: each sample's error is partly the previous sample's error
+# (the fraction `rho`) plus something fresh. `acf` measures that carry-over in a residual
+# series, lag by lag.
+
+# %%
 import sys
 from pathlib import Path
 
@@ -37,6 +53,9 @@ plt.rcParams.update({
     "axes.titlesize": 13, "axes.titleweight": "bold", "axes.titlelocation": "left",
 })
 
+SEED = 3                 # change it to draw a new sample everywhere
+rng = np.random.default_rng(SEED)
+
 
 def ar1(rng, n, rho, sd=1.0):
     """AR(1) noise: each value = rho * previous + fresh noise, scaled to keep SD = sd."""
@@ -53,12 +72,21 @@ def acf(r, lags=15):
     return np.array([(r[L:] * r[:-L]).sum() / (r * r).sum() for L in range(1, lags + 1)])
 
 
-# ---------------------------------------------------------------- Trial 1
-def trial1(rng, n=100, reps=2000):
+# %% [markdown]
+# ## Trial 1 · Sampling faster than the noise changes
+#
+# A slow drift, y = 1 + 0.2t, fitted with a line from 100 samples. With no carry-over the
+# residuals are a jittery band and the slope's 95% range catches the true slope about 95% of
+# the time. With carry-over 0.9 the residuals wander in slow waves, the autocorrelation bars
+# stick out past the ±2/√n lines, and the same 95% range catches the truth far less often:
+# 100 samples are not 100 independent pieces of evidence, and the error bars don't know it.
+
+# %%
+def trial1(rng, n=100, reps=2000, carryovers=(0.0, 0.9)):
     t = np.arange(n) / 10
     tc = stats.t.ppf(0.975, n - 2)
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
-    for rho, color in [(0.0, PT), (0.9, FIT)]:
+    for rho, color in zip(carryovers, (PT, FIT)):
         y = 1 + 0.2 * t + ar1(rng, n, rho)
         b1, b0 = np.polyfit(t, y, 1)
         r = y - (b0 + b1 * t)
@@ -85,7 +113,24 @@ def trial1(rng, n=100, reps=2000):
     fig.savefig(OUT / "t1_autocorr.png")
 
 
-# ---------------------------------------------------------------- Trial 2
+# %% Trial 1 knobs
+T1_SAMPLES = 100             # samples in the recording
+T1_REPS = 2000               # repeats used to count how often the slope's 95% range holds (the page uses 400)
+T1_CARRYOVERS = (0.0, 0.9)   # the two carry-over strengths to compare (page slider 0 to 0.95)
+
+trial1(rng, n=T1_SAMPLES, reps=T1_REPS, carryovers=T1_CARRYOVERS)
+
+# %% [markdown]
+# ## Trial 2 · The cooling-curve log trap
+#
+# A thermocouple cools from 80 °C toward a 22 °C room with time constant 4 min. The textbook
+# shortcut: plot ln(T − T∞) against time and read −1/τ from the slope. Left: what that plot
+# looks like once the tail is near room temperature; the noise explodes, and readings below
+# T∞ can't even be logged. Right: the average time constant from many recordings, by the log
+# method and by fitting the exponential directly, for three cases: normal noise, room
+# temperature misjudged by 1 °C, and a noisier sensor. The direct fit stays near 4.0.
+
+# %%
 def cooling(t, t_inf, a, tau):
     return t_inf + a * np.exp(-t / tau)
 
@@ -96,7 +141,7 @@ def log_tau(t, y, t_inf):
     return -1 / slope, (~keep).sum()
 
 
-def trial2(rng, reps=500):
+def trial2(rng, reps=500, cases=(("noise 0.5 °C", 0.5, 0.0), ("noise 0.5, T_inf off by +1 °C", 0.5, 1.0), ("noise 2 °C", 2.0, 0.0))):
     t = np.arange(0, 20.001, 0.25)
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
     y = cooling(t, 22, 58, 4) + 0.5 * rng.standard_normal(len(t))
@@ -105,7 +150,7 @@ def trial2(rng, reps=500):
     axes[0].plot(t, np.log(58) - t / 4, "--", color=INK, lw=1.6)
     axes[0].set(title="ln(T − T∞): the tail's noise explodes", xlabel="time (min)", ylabel="ln(T − T∞)", ylim=(-4, 5))
     results = {}
-    for label, noise, room_err in [("noise 0.5 °C", 0.5, 0.0), ("noise 0.5, T_inf off by +1 °C", 0.5, 1.0), ("noise 2 °C", 2.0, 0.0)]:
+    for label, noise, room_err in cases:
         tl, td = [], []
         for _ in range(reps):
             yy = cooling(t, 22, 58, 4) + noise * rng.standard_normal(len(t))
@@ -126,7 +171,27 @@ def trial2(rng, reps=500):
     fig.savefig(OUT / "t2_logtrap.png")
 
 
-# ---------------------------------------------------------------- Trial 3
+# %% Trial 2 knobs
+T2_REPS = 500            # recordings averaged per case (the page shows one at a time)
+# Each case: (label, sensor noise in °C, how far the assumed room temperature is off, in °C)
+T2_CASES = (
+    ("noise 0.5 °C", 0.5, 0.0),
+    ("noise 0.5, T_inf off by +1 °C", 0.5, 1.0),
+    ("noise 2 °C", 2.0, 0.0),
+)
+
+trial2(rng, reps=T2_REPS, cases=T2_CASES)
+
+# %% [markdown]
+# ## Trial 3 · Every sample, or every run?
+#
+# You log a steady reading for 60 samples, reset the rig, and repeat for 5 runs. Each run
+# settles a little differently (a run-to-run offset) and its samples carry over. Counting
+# every sample as independent evidence gives a tiny error bar that misses the true value
+# most of the time; counting the five run averages gives an honest one. The figure shows one
+# set of five runs with each run's mean in red.
+
+# %%
 def trial3(rng, runs=5, per=60, run_sd=0.5, rho=0.8, reps=2000):
     hs = hr = 0
     for _ in range(reps):
@@ -154,10 +219,22 @@ def trial3(rng, runs=5, per=60, run_sd=0.5, rho=0.8, reps=2000):
     fig.savefig(OUT / "t3_runs.png")
 
 
-if __name__ == "__main__":
-    rng = np.random.default_rng(3)
-    trial1(rng)
-    trial2(rng)
-    trial3(rng)
-    print(f"Figures saved in {OUT.resolve()}")
-    plt.show()
+# %% Trial 3 knobs
+T3_RUNS = 5              # runs (rig reset between them)
+T3_SAMPLES_PER_RUN = 60  # samples logged per run
+T3_RUN_SD = 0.5          # run-to-run offset, SD (page slider 0 to 1.5)
+T3_CARRYOVER = 0.8       # carry-over within a run (page slider 0 to 0.95)
+T3_REPS = 2000           # repeats used to count how often each 95% range holds
+
+trial3(rng, runs=T3_RUNS, per=T3_SAMPLES_PER_RUN, run_sd=T3_RUN_SD, rho=T3_CARRYOVER, reps=T3_REPS)
+
+# %% [markdown]
+# ## Done
+#
+# The figures are also saved as PNG files in the `figures` folder (in Colab: the folder
+# icon on the left). Copy `acf` into your own script to check any residual series for
+# carry-over.
+
+# %%
+print(f"Figures saved in {OUT.resolve()}")
+plt.show()

@@ -17,6 +17,7 @@ tools/
   check-es.js                Checks the ES strings against EN
   figures-es.py              Makes figures-es/ from the unchanged public script (see below)
   export-play.py             Exports notebook.py to learning/fits/<slug>/play/ (adds noindex etc.)
+  make-ipynb.py              Turns learning/fits/<slug>/<slug>.py into the Colab notebook <slug>.ipynb
   make-og-cards.py           Makes the link-preview cards in learning/assets/og/ (fonts/ it fetches is git-ignored)
 .gitignore                   Keeps build output out of git (rendered slides.html, installer builds)
 ```
@@ -101,6 +102,29 @@ Packages: only what Pyodide ships as wheels works in the browser. numpy and matp
 used; scipy also works but costs a 14 MB download, so the notebook fits the exponential with
 numpy alone (a plain sweep over τ; same answer as `curve_fit` to three decimals). The export is one
 ~80 KB `index.html`; the ~11 MB of marimo editor a visitor downloads comes from jsDelivr.
+
+## Build a module's Colab notebook
+
+Each module page has an "Open in Colab" link. It opens `learning/fits/<slug>/<slug>.ipynb`
+straight from GitHub (so the repo must be public), and that file is GENERATED from the
+module's companion script by:
+
+```powershell
+& "$env:LOCALAPPDATAPythonpythoncore-3.14-64python.exe" learningworkshop	oolsmake-ipynb.py all --check
+```
+
+The script `<slug>.py` stays an ordinary Python file that runs top to bottom (the slide
+figures still come from running it). Its cells are marked with comments in the "percent"
+format: `# %% [markdown]` starts a markdown cell (every line after it is `# text`, a bare
+`#` for a blank line) and `# %%` starts a code cell (an optional title may follow). The
+module docstring becomes the first markdown cell, so it is written as markdown (its first
+line is the `# Title`). Each trial has a "knobs" cell: UPPER_CASE variables with the page's
+range in a comment, then the call, so a student changes a number and reruns that cell.
+
+`--check` runs the notebook's code cells as one script and the original script, both
+headless in temp folders, and fails if their printed output differs; it also validates the
+JSON against the nbformat schema when that package is installed. Re-running the tool on an
+unchanged script produces no diff (deterministic cell ids). Never edit an `.ipynb` by hand.
 
 ## Check the Spanish strings
 

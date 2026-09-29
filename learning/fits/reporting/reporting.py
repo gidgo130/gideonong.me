@@ -1,16 +1,29 @@
 """
-Using and Reporting a Fit -- companion script (Reading Your Fits, Module 6)
-https://gideonong.me/learning/fits/reporting/
+# Using and Reporting a Fit — Reading Your Fits, Module 6
 
-Reproduces the first two trials from the interactive page with numpy, scipy and matplotlib,
-prints a report line like Trial 3, and saves figures in ./figures (used in the slides).
+The module's Python: https://gideonong.me/learning/fits/reporting/
+
+It rebuilds the first two trials from the interactive page with numpy, scipy and
+matplotlib, prints a report line like Trial 3, and saves figures in ./figures (used in the
+slides).
 
 Run it:
-  * Google Colab: upload this file (or paste it into a cell) and run. Everything needed is preinstalled.
+  * Google Colab: use "Open in Colab" on the module page (or upload this file). Everything
+    needed is preinstalled. Run the cells top to bottom; then change a number in any
+    "knobs" cell and run that cell again.
   * Your own PC:  pip install numpy matplotlib scipy   then   python reporting.py
 
 All data is simulated. Trial 1: y = 1 + 2x, noise SD 2. Trial 2: y = 2(x - c), noise SD 1.
 """
+# %% [markdown]
+# ## Setup
+#
+# Imports, where the figures go, and one color meaning for the whole series: dashed ink is
+# the truth, red is what an ordinary fit reports, blue is a corrected or better fit, grey
+# dots are measured points. The random numbers get a fixed seed, so every run gives the
+# same data; change the seed to draw a new sample.
+
+# %%
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -27,6 +40,9 @@ plt.rcParams.update({
     "axes.spines.top": False, "axes.spines.right": False,
     "axes.titlesize": 13, "axes.titleweight": "bold", "axes.titlelocation": "left",
 })
+
+SEED = 9                 # change it to draw a new sample everywhere
+rng = np.random.default_rng(SEED)
 
 
 def fit(x, y):
@@ -48,8 +64,20 @@ def bands(x0, b, s, XtXi, n):
     return v @ b, tc * s * np.sqrt(lev), tc * s * np.sqrt(1 + lev)
 
 
-# ---------------------------------------------------------------- Trial 1
-def trial1(rng, n=15):
+# %% [markdown]
+# ## Trial 1 · Two bands: the line, and the next reading
+#
+# Fifteen readings over x = 0 to 10. Two 95% bands around the fit: the narrow one is where
+# the true line is (confidence band); the wide one is where the next single reading will
+# land (prediction band). Both widen away from the middle of the data and keep widening past
+# it (the shaded strips), where nothing was tested. The right panel shows each band's
+# half-width along x.
+#
+# Trial 3 of the page is the report line: the cell also prints one, built from this data,
+# with the prediction at `T1_ANSWER_AT`.
+
+# %%
+def trial1(rng, n=15, at=5.0):
     x = np.sort(10 * (np.arange(n) + rng.uniform(0, 1, n)) / n)
     y = 1 + 2 * x + 2 * rng.standard_normal(n)
     b, s, XtXi, V = fit(x, y)
@@ -75,15 +103,31 @@ def trial1(rng, n=15):
     fig.savefig(OUT / "t1_bands.png")
     # The report line (Trial 3)
     tc = stats.t.ppf(0.975, n - 2)
-    y5, _, p5 = bands(np.array([5.0]), b, s, XtXi, n)
+    y5, _, p5 = bands(np.array([at]), b, s, XtXi, n)
     print("Trial 3 | report line:")
     print(f"  Linear least-squares fit, n = {n} readings over x = {x.min():.1f} to {x.max():.1f}.")
     print(f"  Slope b1 = {b[1]:.2f} ± {tc * np.sqrt(V[1, 1]):.2f} (95%); intercept b0 = {b[0]:.2f} ± {tc * np.sqrt(V[0, 0]):.2f}.")
     print(f"  Residual SD s = {s:.2f} (in y's units).")
-    print(f"  Prediction at x = 5.0: {y5[0]:.1f} ± {p5[0]:.1f} for a single new reading (95%).")
+    print(f"  Prediction at x = {at:.1f}: {y5[0]:.1f} ± {p5[0]:.1f} for a single new reading (95%).")
 
 
-# ---------------------------------------------------------------- Trial 2
+# %% Trial 1 knobs
+T1_READINGS = 15        # readings over x = 0 to 10
+T1_ANSWER_AT = 5.0      # the x where the report line predicts a reading (page slider -5 to 20)
+
+trial1(rng, n=T1_READINGS, at=T1_ANSWER_AT)
+
+# %% [markdown]
+# ## Trial 2 · Carrying the uncertainty into a result
+#
+# Often the answer isn't a coefficient but something computed from both: here, the x where
+# the line crosses zero (like the temperature where a sensor's output crosses 0 V). Its
+# error bar can be built two ways: adding the slope's and intercept's errors as if they
+# were independent, or including how they move together (the delta method). The plot
+# compares both with the actual spread over many repeats, as the data sit farther and
+# farther from x = 0. The farther away, the more the "independent" version lies.
+
+# %%
 def crossing(b, V):
     """x where the line crosses zero, with its SE ignoring and including the slope-intercept covariance."""
     x0 = -b[0] / b[1]
@@ -92,9 +136,9 @@ def crossing(b, V):
     return x0, naive, delta
 
 
-def trial2(rng, n=12, reps=2000):
+def trial2(rng, n=12, reps=2000, distances=(0, 5, 10, 20)):
     rows = []
-    for c in [0, 5, 10, 20]:
+    for c in distances:
         tc = stats.t.ppf(0.975, n - 2)
         crosses, naive, delta = [], [], []
         for _ in range(reps):
@@ -116,9 +160,20 @@ def trial2(rng, n=12, reps=2000):
     fig.savefig(OUT / "t2_crossing.png")
 
 
-if __name__ == "__main__":
-    rng = np.random.default_rng(9)
-    trial1(rng)
-    trial2(rng)
-    print(f"Figures saved in {OUT.resolve()}")
-    plt.show()
+# %% Trial 2 knobs
+T2_READINGS = 12                 # readings per experiment
+T2_REPS = 2000                   # how many times the experiment is repeated (the page uses 400)
+T2_DISTANCES = (0, 5, 10, 20)    # how far the data's left edge sits from x = 0 (page slider 0 to 20)
+
+trial2(rng, n=T2_READINGS, reps=T2_REPS, distances=T2_DISTANCES)
+
+# %% [markdown]
+# ## Done
+#
+# The figures are also saved as PNG files in the `figures` folder (in Colab: the folder
+# icon on the left). Copy `fit` and `bands` into your own script to get both bands for any
+# straight-line fit.
+
+# %%
+print(f"Figures saved in {OUT.resolve()}")
+plt.show()

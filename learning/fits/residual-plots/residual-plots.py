@@ -1,16 +1,28 @@
 """
-Reading a Residual Plot -- companion script (Reading Your Fits, Module 2)
-https://gideonong.me/learning/fits/residual-plots/
+# Reading a Residual Plot — Reading Your Fits, Module 2
 
-Reproduces the three trials from the interactive page with numpy, scipy and matplotlib,
+The module's Python: https://gideonong.me/learning/fits/residual-plots/
+
+It rebuilds the three trials from the interactive page with numpy, scipy and matplotlib,
 and saves each figure as a PNG in ./figures (these are the figures used in the slides).
 
 Run it:
-  * Google Colab: upload this file (or paste it into a cell) and run. Everything needed is preinstalled.
+  * Google Colab: use "Open in Colab" on the module page (or upload this file). Everything
+    needed is preinstalled. Run the cells top to bottom; then change a number in any
+    "knobs" cell and run that cell again.
   * Your own PC:  pip install numpy matplotlib scipy   then   python residual-plots.py
 
 All data is simulated. Trials 1 and 3: y = 1 + 2x + error. Trial 2: T = 22 + 58*exp(-t/4) + error.
 """
+# %% [markdown]
+# ## Setup
+#
+# Imports, where the figures go, and one color meaning for the whole series: dashed ink is
+# the truth, red is what an ordinary fit reports, blue is a corrected or better fit, grey
+# dots are measured points. The random numbers get a fixed seed, so every run gives the
+# same data; change the seed to draw a new sample.
+
+# %%
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -29,6 +41,9 @@ plt.rcParams.update({
     "axes.titlesize": 13, "axes.titleweight": "bold", "axes.titlelocation": "left",
 })
 
+SEED = 7                 # change it to draw a new sample everywhere
+rng = np.random.default_rng(SEED)
+
 
 def ols(x, y):
     """Straight-line least squares. Returns intercept, slope, fitted values, residuals."""
@@ -37,6 +52,20 @@ def ols(x, y):
     return b0, b1, fitted, y - fitted
 
 
+# %% [markdown]
+# ## Trial 1 · The pattern gallery
+#
+# Forty readings of y = 1 + 2x + noise, taken in random x order, with one hidden problem
+# mixed in. `make_y` is where each problem is added; the order of the array is the order the
+# readings were taken. The figure shows every problem side by side: top row residuals
+# against the fitted value, bottom row in run order.
+#
+# **How to read it.** Healthy residuals are a flat, even band around zero with no shape. A
+# bend means the line is the wrong shape. A fan means the scatter isn't the same everywhere.
+# Drift looks almost healthy against the fitted value and only shows in run order, which is
+# why you make both plots. One point far from the band is a run to check in your notes.
+
+# %%
 def make_y(x, e, pattern, sev, out_idx):
     """y = 1 + 2x + error, with one hidden problem. Array order = run order."""
     n = len(x)
@@ -54,7 +83,6 @@ def make_y(x, e, pattern, sev, out_idx):
     return y
 
 
-# ---------------------------------------------------------------- Trial 1
 def trial1(rng, n=40, sev=0.8):
     """The pattern gallery: each hidden problem, as residuals vs fitted and vs run order."""
     x = rng.uniform(0, 10, n)            # random x order, so time and x are unrelated
@@ -80,7 +108,25 @@ def trial1(rng, n=40, sev=0.8):
     fig.savefig(OUT / "t1_patterns.png")
 
 
-# ---------------------------------------------------------------- Trial 2
+# %% Trial 1 knobs
+T1_READINGS = 40        # readings per dataset
+T1_STRENGTH = 0.8       # how strong each hidden problem is: 0 = none, 1 = hard to miss (page slider 0 to 1)
+
+trial1(rng, n=T1_READINGS, sev=T1_STRENGTH)
+
+# %% [markdown]
+# ## Trial 2 · When the shape is wrong
+#
+# A thermocouple at 80 °C is dropped into a 22 °C room and logged every 15 seconds. Physics
+# says it cools exponentially toward room temperature, T = 22 + 58·e^(−t/4). Fit a straight
+# line anyway and read the residuals; then fit the exponential (SciPy's `curve_fit`).
+#
+# **How to read it.** The straight line scores a high R² and still leaves a clear U. A high
+# R² doesn't mean the shape is right. The exponential leaves a flat band and gets the time
+# constant right. A short recording (try 3 min) with a noisy sensor hides the U: the model is
+# still wrong, the data just can't show it.
+
+# %%
 def cooling(t, t_inf, a, tau):
     return t_inf + a * np.exp(-t / tau)
 
@@ -120,7 +166,27 @@ def trial2(rng, noise=0.5, window=15.0):
         print(f"Trial 2 | straight line over the first {w:2d} min: R² {rr:.3f}")
 
 
-# ---------------------------------------------------------------- Trial 3
+# %% Trial 2 knobs
+T2_NOISE = 0.5          # sensor noise in °C (page slider 0 to 2)
+T2_WINDOW = 15.0        # stop recording after this many minutes (page slider 3 to 20)
+
+trial2(rng, noise=T2_NOISE, window=T2_WINDOW)
+
+# %% [markdown]
+# ## Trial 3 · One point steering the line
+#
+# Twenty well-behaved readings plus one extra point. Three numbers describe what that point
+# can do: **leverage** (how far out in x it sits; it *could* move the line), the
+# **studentized residual** (how far off the line it sits, measured fairly) and **Cook's
+# distance** (how much the whole fit changes without it). Common flags: leverage above 4/n,
+# studentized residual beyond ±2, Cook's distance above 4/n.
+#
+# The three cases: a lever point on the line only steadies the slope; an outlier in the
+# middle barely moves the slope but lifts the whole line and widens every error bar; a point
+# off the line *and* out at the edge drags the slope toward itself. Change `cases` to put
+# the extra point wherever you like: (title, its x, its distance from the true line).
+
+# %%
 def influence(x, y):
     """Leverage h, studentized residual r and Cook's distance D for each point (straight-line fit)."""
     n = len(x)
@@ -132,13 +198,12 @@ def influence(x, y):
     return h, r, D
 
 
-def trial3(rng, n0=20):
+def trial3(rng, cases, n0=20):
     """One extra point: a lever point on the line, an outlier in the middle, an influential point."""
     x0 = rng.uniform(0, 10, n0)
     y0 = 1 + 2 * x0 + rng.standard_normal(n0)
-    cases = [("Lever point on the line", 20, 0), ("Outlier in the middle", 5, 12), ("Influential point", 20, -10)]
-    fig, axes = plt.subplots(1, 3, figsize=(16, 4.8), sharey=True)
-    for ax, (title, xp, off) in zip(axes, cases):
+    fig, axes = plt.subplots(1, len(cases), figsize=(16, 4.8), sharey=True)
+    for ax, (title, xp, off) in zip(np.atleast_1d(axes), cases):
         x = np.append(x0, xp)
         y = np.append(y0, 1 + 2 * xp + off)
         h, r, D = influence(x, y)
@@ -155,15 +220,28 @@ def trial3(rng, n0=20):
                 transform=ax.transAxes, ha="right", va="bottom", fontsize=10)
         ax.legend(loc="upper left", frameon=False, fontsize=10)
         print(f"Trial 3 | {title:24s} slope {b1:.2f} (without {c1:.2f})  h {h[-1]:.2f}  r {r[-1]:.2f}  D {D[-1]:.2f}")
-    axes[0].set_ylabel("y")
+    np.atleast_1d(axes)[0].set_ylabel("y")
     fig.tight_layout()
     fig.savefig(OUT / "t3_influence.png")
 
 
-if __name__ == "__main__":
-    rng = np.random.default_rng(7)
-    trial1(rng)
-    trial2(rng)
-    trial3(rng)
-    print(f"Figures saved in {OUT.resolve()}")
-    plt.show()
+# %% Trial 3 knobs
+# Each case: (title, the extra point's x, its distance above (+) or below (−) the true line)
+T3_CASES = [
+    ("Lever point on the line", 20, 0),
+    ("Outlier in the middle", 5, 12),
+    ("Influential point", 20, -10),
+]
+
+trial3(rng, T3_CASES)
+
+# %% [markdown]
+# ## Done
+#
+# The figures are also saved as PNG files in the `figures` folder (in Colab: the folder
+# icon on the left). Copy any function above into your own script: `ols` and `influence`
+# work on any pair of NumPy arrays.
+
+# %%
+print(f"Figures saved in {OUT.resolve()}")
+plt.show()

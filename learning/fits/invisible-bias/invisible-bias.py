@@ -1,16 +1,31 @@
 """
-The Invisible Bias -- companion script (Reading Your Fits, Module 5)
-https://gideonong.me/learning/fits/invisible-bias/
+# The Invisible Bias — Reading Your Fits, Module 5
 
-Reproduces the four trials from the interactive page with numpy, matplotlib and scipy,
+The module's Python: https://gideonong.me/learning/fits/invisible-bias/
+
+It rebuilds the four trials from the interactive page with numpy, matplotlib and scipy,
 and saves each figure as a PNG in ./figures (these are the figures used in the slides).
 
 Run it:
-  * Google Colab: upload this file (or paste it into a cell) and run. Everything needed is preinstalled.
+  * Google Colab: use "Open in Colab" on the module page (or upload this file). Everything
+    needed is preinstalled. Run the cells top to bottom; then change a number in any
+    "knobs" cell and run that cell again.
   * Your own PC:  pip install numpy matplotlib scipy   then   python invisible-bias.py
 
 All data is simulated. True model: y = 1 + 2x + error, so the true slope is 2.00.
 """
+# %% [markdown]
+# ## Setup
+#
+# Imports, where the figures go, and one color meaning for the whole series: dashed ink is
+# the truth, red is what an ordinary fit reports, blue is a corrected or better fit, grey
+# dots are measured points. The random numbers get a fixed seed, so every run gives the
+# same data; change the seed to draw a new sample.
+#
+# `ols` is the ordinary straight-line fit. `odr_fit` is orthogonal distance regression: a
+# fit that allows for error in x as well as y, when you know both error sizes.
+
+# %%
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -29,6 +44,9 @@ plt.rcParams.update({
     "axes.spines.top": False, "axes.spines.right": False,
     "axes.titlesize": 13, "axes.titleweight": "bold", "axes.titlelocation": "left",
 })
+
+SEED = 3                 # change it to draw a new sample everywhere
+rng = np.random.default_rng(SEED)
 
 
 def ols(x, y):
@@ -58,13 +76,20 @@ def draw_lines(ax, xlim, fits):
     ax.set_xlim(xlim)
 
 
-# ---------------------------------------------------------------- Trial 1
-def trial1(rng):
+# %% [markdown]
+# ## Trial 1 · Noise in y versus noise in x
+#
+# Two sensors, two kinds of random error. Noise in y (left) scatters the points but the
+# fitted slope stays near 2.00. Noise in x (right) tilts the line: the slope comes out low,
+# and yet the residual plot under it looks perfectly healthy. That's the invisible bias:
+# the leftovers can't show it.
+
+# %%
+def trial1(rng, cases):
     """Noise in y vs noise in x: only x-noise tilts the fitted line, and the residual plot stays healthy."""
     n = 50
     x_true = rng.uniform(0, 10, n)
     zx, zy = rng.standard_normal(n), rng.standard_normal(n)
-    cases = [("Noisy y sensor (σ = 3), exact x", 0.0, 3.0), ("Noisy x sensor (σ = 2.5), good y", 2.5, 1.0)]
 
     fig, axes = plt.subplots(2, 2, figsize=(11, 8.5))
     for col, (title, sx, sy) in enumerate(cases):
@@ -85,7 +110,24 @@ def trial1(rng):
     fig.savefig(OUT / "t1_noise_y_vs_x.png")
 
 
-# ---------------------------------------------------------------- Trial 2
+# %% Trial 1 knobs
+# Each case: (title, noise SD in x, noise SD in y). The page's sliders: x-noise 0 to 3, y-noise 0 to 4.
+T1_CASES = [
+    ("Noisy y sensor (σ = 3), exact x", 0.0, 3.0),
+    ("Noisy x sensor (σ = 2.5), good y", 2.5, 1.0),
+]
+
+trial1(rng, T1_CASES)
+
+# %% [markdown]
+# ## Trial 2 · Will more data fix it?
+#
+# The same experiment repeated many times, with 10, 100 and 1000 points each. Each bar
+# counts how many repeats got a given slope. More data makes the pile narrower, but it
+# narrows around the wrong value, and the software's 95% error bars catch the true slope
+# less and less often. More data makes you more confident in the wrong answer.
+
+# %%
 def trial2(rng, sx=1.5, reps=400):
     """Repeat the experiment many times: x-noise shifts the whole pile, and more data doesn't move it back."""
     fig, axes = plt.subplots(1, 3, figsize=(13, 4.2), sharey=True)
@@ -112,7 +154,22 @@ def trial2(rng, sx=1.5, reps=400):
     fig.savefig(OUT / "t2_more_data.png")
 
 
-# ---------------------------------------------------------------- Trial 3
+# %% Trial 2 knobs
+T2_X_NOISE = 1.5         # noise SD in x (page slider 0 to 3)
+T2_REPS = 400            # repeats of the experiment
+
+trial2(rng, sx=T2_X_NOISE, reps=T2_REPS)
+
+# %% [markdown]
+# ## Trial 3 · Something you didn't measure
+#
+# During the session something drifts upward (the room warms, a battery sags, a bearing
+# heats up) and nudges every y reading a little more as time goes on. Left: the runs were
+# swept from low x to high x, so the drift lines up with x and hides inside the slope; the
+# residuals look fine. Right: the same runs in random order; the drift shows in the residuals
+# plotted in run order, and the slope is right. Randomizing the order is what exposes it.
+
+# %%
 def trial3(rng, drift=6.0, n=40):
     """An unmeasured drift: sweeping x in order hides it in the slope; randomizing exposes it."""
     e = rng.standard_normal(n)
@@ -137,7 +194,26 @@ def trial3(rng, drift=6.0, n=40):
     fig.savefig(OUT / "t3_drift.png")
 
 
-# ---------------------------------------------------------------- Trial 4
+# %% Trial 3 knobs
+T3_DRIFT = 6.0           # total drift in y over the session (page slider 0 to 10)
+T3_RUNS = 40             # runs in the session
+
+trial3(rng, drift=T3_DRIFT, n=T3_RUNS)
+
+# %% [markdown]
+# ## Trial 4 · What actually fixes noise in x
+#
+# Two remedies. One is a fitting method that allows for error in both x and y (orthogonal
+# distance regression, ODR; Deming regression is the same idea for a line), which needs the
+# size of both errors. Left: the ordinary fit and the ODR fit on the same data, plus a
+# summary over many repeats: ODR removes the bias but wobbles more from sample to sample.
+# The other remedy is a design choice: test over a wider range of x, so the noise is small
+# compared with how much x varies. Right: the slope an ordinary fit gives, by test range.
+#
+# The last figure is the general rule: how much the slope shrinks, as a function of the
+# x-noise divided by the spread of x.
+
+# %%
 def trial4(rng, sx=2.0, sy=1.0, n=60):
     """Fixes: an errors-in-x fit (ODR), or a wider test range."""
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
@@ -182,7 +258,6 @@ def trial4(rng, sx=2.0, sy=1.0, n=60):
     fig.savefig(OUT / "t4_fixes.png")
 
 
-# ---------------------------------------------------------------- Attenuation curve
 def attenuation_curve():
     r = np.linspace(0, 1.2, 200)
     lam = 1 / (1 + r ** 2)
@@ -197,12 +272,21 @@ def attenuation_curve():
     fig.savefig(OUT / "attenuation.png")
 
 
-if __name__ == "__main__":
-    rng = np.random.default_rng(3)
-    trial1(rng)
-    trial2(rng)
-    trial3(rng)
-    trial4(rng)
-    attenuation_curve()
-    print(f"Figures saved in {OUT.resolve()}")
-    plt.show()
+# %% Trial 4 knobs
+T4_X_NOISE = 2.0         # noise SD in x (page slider 0 to 3)
+T4_Y_NOISE = 1.0         # noise SD in y
+T4_READINGS = 60         # readings per experiment
+
+trial4(rng, sx=T4_X_NOISE, sy=T4_Y_NOISE, n=T4_READINGS)
+attenuation_curve()
+
+# %% [markdown]
+# ## Done
+#
+# The figures are also saved as PNG files in the `figures` folder (in Colab: the folder
+# icon on the left). Copy `odr_fit` into your own script when both of your sensors are
+# noisy and you know their error sizes.
+
+# %%
+print(f"Figures saved in {OUT.resolve()}")
+plt.show()
