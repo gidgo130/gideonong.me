@@ -1105,6 +1105,30 @@ html[lang="es"] .about-identifiers [data-lang-variant="es"]{ display:block; }
   margin: 0 0 16px;
 }
 
+/* about.html §1/§2/§5 — wide screens (1440px+). Placed after the base rules
+   above (not in the earlier site-wide "wide-screen text scaling" block) since
+   equal-specificity rules resolve by source order — a copy declared before the
+   base .about-intro-grid/.ai-content/.section-about-whoami rules gets silently
+   overridden by them. On large monitors the 1100px box leaves "Who am I?"
+   feeling tight with unused space outside it; widen the box, gap and section
+   height on big screens only. .ai-content must grow by the same max-width so
+   "Statement on AI" keeps left-aligning with "Who am I?". */
+@media (min-width: 1440px) {
+  .about-intro-grid,
+  .ai-content {
+    max-width: 1250px;
+  }
+
+  .about-intro-grid {
+    gap: 110px;
+  }
+
+  .section-about-whoami {
+    min-height: 105vh;
+    padding: clamp(64px, 10vh, 110px) 0;
+  }
+}
+
 /* --------------------------------------------------------------------------
    §6 — Viewing settings + Interesting sites
    -------------------------------------------------------------------------- */

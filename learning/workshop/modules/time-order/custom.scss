@@ -1,0 +1,19 @@
+/*-- scss:defaults --*/
+$body-bg: #f2f5f0;
+$body-color: #1c2420;
+$link-color: #1d5ea6;
+$presentation-heading-color: #1c2420;
+$presentation-heading-font: "Arial Narrow", "Segoe UI", Arial, sans-serif;
+$font-family-sans-serif: Georgia, "Times New Roman", serif;
+$presentation-font-size-root: 34px;
+$presentation-heading-text-transform: none;
+
+/*-- scss:rules --*/
+.reveal h2 { font-weight: 700; letter-spacing: -0.01em; }
+.reveal h3 { font-size: 0.9em; font-weight: 700; }
+.reveal strong { color: #c93a22; }
+.reveal .callout {
+  background: #e7ede4; border: none; border-left: 0; border-radius: 6px;
+  padding: 0.5em 0.8em; margin-top: 0.8em; font-size: 0.9em;
+}
+.reveal .slide-number { color: #56645b; background: transparent; }

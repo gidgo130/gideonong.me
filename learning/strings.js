@@ -25,7 +25,7 @@ window.LEARN_STRINGS = {
     h1: "Aprendizaje",
     lead: "Notas interactivas que [le pedí a Claude que] hiciera para estudiantes de ingeniería. Cada una corre en tu navegador con datos simulados, así que puedes mover los deslizadores, romper cosas y ver qué pasa.",
     seriesIntro: "Seis módulos cortos sobre cómo revisar una recta ajustada a datos de laboratorio: qué te dicen los residuos, qué no te pueden decir y qué hacer al respecto. No necesitas saber estadística; ayuda saber algo de Excel o MATLAB.",
-    listAria: "Módulos de la serie Cómo leer tus ajustes",
+    listAria: "Módulos de la serie Cómo leer tus ajustes de curvas",
     howTitle: "Cada módulo incluye",
     how1Title: "Una página interactiva",
     how1Body: "Deslizadores y experimentos simulados. No hay que instalar nada.",

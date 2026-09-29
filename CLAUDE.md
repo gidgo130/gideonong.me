@@ -433,9 +433,9 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
 gideonong.me/learning/ hosts interactive teaching pages, starting with the series "Reading
 Your Fits" (how to check a line fit against lab data). Build plan, status and decisions:
 learning/learning-plan.md (plan.md only points there). Working manual (structure, strings,
-adding a module, checks, Fable review prompt): learning/README.md. Slide sources and figures live OUTSIDE the repo in
-Gideon's workshop folder ("statistics and error plots for engineers/modules/<slug>/"); only
-rendered slides.html comes in.
+adding a module, checks, Fable review prompt): learning/README.md. Slide sources, figures and dev tools live in
+learning/workshop/ (tracked in git, never deployed: listed in .vercelignore); the site loads only
+the rendered slides.html copied into learning/fits/<slug>/.
 
 Rules for /learning (these replace the main-site rules where they conflict):
 - Own design, deliberately different from the main site: the "lab notebook" look in

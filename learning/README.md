@@ -24,19 +24,20 @@ learning/
     index.html                The module's interactive page
     strings.js                All of that page's display text (EN/ES)
     main.js                   The page's logic (trials)
-    slides.html               Rendered Quarto deck (source lives in the workshop, not here)
+    slides.html               Rendered Quarto deck (source in learning/workshop/)
     <slug>.py                 Companion Python script, offered as a download
 ```
 
 Pages are plain HTML/CSS/JS with relative links, so they work on the site, on a Vercel
 preview and opened straight from disk (the planned offline Windows app).
 
-## The workshop (outside this repo)
+## The workshop (learning/workshop/, never deployed)
 
-`C:\Users\gidgo\Documents\dev\statistics and error plots for engineers\modules\<slug>\` holds
-the slide source (`slides.qmd`, `custom.scss`) and the figures. Only rendered output comes into
-the repo. To rebuild a deck: run the module's `.py` from the workshop folder (writes
-`figures/`), then `quarto render slides.qmd`, then copy `slides.html` into
+`learning/workshop/modules/<slug>/` holds the slide source (`slides.qmd`, `custom.scss`) and the
+figures; `learning/workshop/tools/` holds dev scripts (`check-es.js`). It's tracked in git but
+listed in `.vercelignore`, so none of it reaches the site. Rebuild steps are in
+`learning/workshop/README.md`: run the module's `.py` from the module's workshop folder (writes
+`figures/`), `quarto render slides.qmd`, strip `role="img"`, copy `slides.html` into
 `learning/fits/<slug>/`.
 
 ## Rules of thumb
@@ -75,7 +76,7 @@ the repo. To rebuild a deck: run the module's `.py` from the workshop folder (wr
 
 ## Adding a module
 
-1. Workshop: `modules/<slug>/` with `slides.qmd` (copy an existing one for the YAML) and the
+1. Workshop: `learning/workshop/modules/<slug>/` with `slides.qmd` (copy an existing one for the YAML) and the
    companion script.
 2. Repo: `learning/fits/<slug>/` with `index.html`, `strings.js`, `main.js`, `slides.html`,
    `<slug>.py`. Copy the head block (noindex, trailing-slash fix, theme snippet, fonts) from an

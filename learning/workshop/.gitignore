@@ -1,0 +1,7 @@
+# Build output: rendered decks are copied into learning/fits/<slug>/ (that copy is the tracked one)
+modules/*/slides.html
+modules/*/slides_files/
+.quarto/
+# Offline installer build (Phase D)
+offline/stage/
+offline/dist/

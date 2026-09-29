@@ -58,7 +58,8 @@ a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%
 .series-bar .crumbs a { color: var(--ink); font-weight: 600; text-decoration: none; }
 .series-bar .crumbs a:hover { color: var(--fix); }
 .lang-toggle {
-  display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
+  display: inline-flex; flex: none; /* never squeezed by long crumbs; they wrap instead */
+  border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
   padding: 0; background: transparent; cursor: pointer; font-family: var(--font-mono); font-size: 12px;
 }
 .lang-toggle[hidden] { display: none; }
@@ -91,6 +92,7 @@ p { margin: 0; max-width: 65ch; }
 
 /* ---------- trials ---------- */
 section.trial { padding-block: 48px 8px; display: grid; gap: 18px; border-bottom: 1px solid var(--rule); }
+section.trial > * { min-width: 0; } /* grid items may shrink: a wide <pre> scrolls instead of widening the trial */
 .trial-head { display: grid; gap: 8px; }
 .trial-num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
 .bench { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 28px; align-items: start; }

@@ -32,7 +32,7 @@ window.LEARN_STRINGS_COMMON = {
     modReportingDesc: "Confidence vs prediction intervals, error in real units, and a one-page checklist."
   },
   es: {
-    seriesName: "Cómo leer tus ajustes",
+    seriesName: "Cómo leer tus ajustes de curvas",
     learningHome: "Aprendizaje",
     siteHome: "gideonong.me",
     langToggleAria: "Cambiar idioma (EN/ES)",
