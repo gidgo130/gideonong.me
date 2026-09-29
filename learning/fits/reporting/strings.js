@@ -240,7 +240,7 @@ window.LEARN_STRINGS = {
   },
   // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
   chips: [
-    { phrase: { en: "Guide to the Expression of Uncertainty in Measurement", es: "Guide to the Expression of Uncertainty in Measurement" }, href: "jcgm-100-2008.pdf" },
+    { phrase: { en: "Guide to the Expression of Uncertainty in Measurement", es: "Guide to the Expression of Uncertainty in Measurement" }, href: "https://www.bipm.org/documents/20126/2071204/JCGM_100_2008_E.pdf" },
     { phrase: { en: "NIST/SEMATECH e-Handbook of Statistical Methods", es: "NIST/SEMATECH e-Handbook of Statistical Methods" }, href: "https://www.itl.nist.gov/div898/handbook/index.htm" }
   ]
 };

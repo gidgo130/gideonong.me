@@ -230,10 +230,10 @@ window.LEARN_STRINGS = {
   },
   // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
   chips: [
-    { phrase: { en: "Durbin–Watson", es: "Durbin–Watson" }, href: "durbin-watson-1950.pdf" },
-    { phrase: { en: "Newey–West", es: "Newey–West" }, href: "newey-west-1987.pdf" },
-    { phrase: { en: "part I (1950)", es: "parte I (1950)" }, href: "durbin-watson-1950.pdf" },
-    { phrase: { en: "part II (1951)", es: "parte II (1951)" }, href: "durbin-watson-1951.pdf" },
-    { phrase: { en: "\"A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix\"", es: "\"A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix\"" }, href: "newey-west-1987.pdf" }
+    { phrase: { en: "Durbin–Watson", es: "Durbin–Watson" }, href: "https://doi.org/10.1093/biomet/37.3-4.409" },
+    { phrase: { en: "Newey–West", es: "Newey–West" }, href: "https://doi.org/10.2307/1913610" },
+    { phrase: { en: "part I (1950)", es: "parte I (1950)" }, href: "https://doi.org/10.1093/biomet/37.3-4.409" },
+    { phrase: { en: "part II (1951)", es: "parte II (1951)" }, href: "https://doi.org/10.1093/biomet/38.1-2.159" },
+    { phrase: { en: "\"A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix\"", es: "\"A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix\"" }, href: "https://doi.org/10.2307/1913610" }
   ]
 };

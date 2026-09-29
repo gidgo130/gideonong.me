@@ -224,9 +224,9 @@ window.LEARN_STRINGS = {
   },
   // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
   chips: [
-    { phrase: { en: "HC3", es: "HC3" }, href: "long-ervin-2000.pdf" },
-    { phrase: { en: "\"Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model\"", es: "\"Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model\"" }, href: "long-ervin-2000.pdf" },
-    { phrase: { en: "\"Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties\"", es: "\"Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties\"" }, href: "mackinnon-white-1985.pdf" },
-    { phrase: { en: "\"A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity\"", es: "\"A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity\"" }, href: "white-1980.pdf" }
+    { phrase: { en: "HC3", es: "HC3" }, href: "https://doi.org/10.1080/00031305.2000.10474549" },
+    { phrase: { en: "\"Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model\"", es: "\"Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model\"" }, href: "https://doi.org/10.1080/00031305.2000.10474549" },
+    { phrase: { en: "\"Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties\"", es: "\"Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties\"" }, href: "https://doi.org/10.1016/0304-4076(85)90158-7" },
+    { phrase: { en: "\"A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity\"", es: "\"A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity\"" }, href: "https://doi.org/10.2307/1912934" }
   ]
 };

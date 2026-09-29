@@ -5,3 +5,5 @@ staging/
 scripts/transcript/output/
 scripts/editor/.local/
 __pycache__/
+# Cited papers stay local (gitignored references/ holds the sources); the site links DOIs.
+learning/fits/*/*.pdf

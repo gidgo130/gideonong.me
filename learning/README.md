@@ -96,9 +96,9 @@ every piece of figure text through the module's `figures-es.json`, so the .py st
   strings.js links each phrase ONCE per page, at its first whole-word match in static
   `data-i18n` / `data-i18n-html` text (not in labels, readouts, headings, code, or notes that
   main.js redraws), as a quiet `a.ref-chip` (new tab). Each module's footer carries a
-  `footRead` "Further reading" line whose titles are chips. Hosted papers sit next to their
-  page, scrubbed first (see learning-plan.md decision 11); otherwise link the DOI or catalog
-  page. Paper sources live in the gitignored `references/stats papers/`.
+  `footRead` "Further reading" line whose titles are chips. Never host a paper: link its DOI,
+  the publisher's page, or a catalog page for a book (learning-plan.md decision 11, amended).
+  Paper sources live in the gitignored `references/stats papers/`.
 - Slides carry no `author:` line (see learning-plan.md decision 12).
 - Numbers go through `LF.num(value, decimals)` so Spanish gets a decimal comma.
 

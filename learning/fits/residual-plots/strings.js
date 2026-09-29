@@ -290,9 +290,9 @@ window.LEARN_STRINGS = {
   },
   // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
   chips: [
-    { phrase: { en: "Cook's distance", es: "Distancia de Cook" }, href: "cook-1977.pdf" },
-    { phrase: { en: "\"Detection of Influential Observation in Linear Regression\"", es: "\"Detection of Influential Observation in Linear Regression\"" }, href: "cook-1977.pdf" },
-    { phrase: { en: "Residuals and Influence in Regression", es: "Residuals and Influence in Regression" }, href: "cook-weisberg-1982.pdf" },
+    { phrase: { en: "Cook's distance", es: "Distancia de Cook" }, href: "https://doi.org/10.1080/00401706.1977.10489493" },
+    { phrase: { en: "\"Detection of Influential Observation in Linear Regression\"", es: "\"Detection of Influential Observation in Linear Regression\"" }, href: "https://doi.org/10.1080/00401706.1977.10489493" },
+    { phrase: { en: "Residuals and Influence in Regression", es: "Residuals and Influence in Regression" }, href: "https://openlibrary.org/books/OL3484907M/Residuals_and_influence_in_regression" },
     { phrase: { en: "NIST/SEMATECH e-Handbook of Statistical Methods", es: "NIST/SEMATECH e-Handbook of Statistical Methods" }, href: "https://www.itl.nist.gov/div898/handbook/index.htm" }
   ]
 };

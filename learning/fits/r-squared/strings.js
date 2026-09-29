@@ -200,7 +200,7 @@ window.LEARN_STRINGS = {
   },
   // Reference chips (see learning-i18n.js): the name opens the paper, the cited title its DOI.
   chips: [
-    { phrase: { en: "Francis Anscombe", es: "Francis Anscombe" }, href: "anscombe-1973.pdf" },
+    { phrase: { en: "Francis Anscombe", es: "Francis Anscombe" }, href: "https://doi.org/10.1080/00031305.1973.10478966" },
     { phrase: { en: "\"Graphs in Statistical Analysis\"", es: "\"Graphs in Statistical Analysis\"" }, href: "https://doi.org/10.1080/00031305.1973.10478966" }
   ]
 };

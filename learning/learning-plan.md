@@ -157,6 +157,12 @@ Order: 2 → 1 → 3 → 4 → 6.
    Open Library pages. The NIST/SEMATECH e-Handbook is linked from Modules 2 and 6. A chip
    links once per page; each module's footer has a "Further reading" line (`footRead`).
    White 1980 (HC0) joined Module 3's reading list the same day.
+   **Amended 2026-09-29:** the hosted PDFs left the repo: untracked and gitignored (they stay
+   on disk next to their pages) and, before the repo went public, purged from git history; the
+   repo never hosts a paper again. Chips link the DOI (Anscombe
+   1973, Cook 1977, Long & Ervin 2000, MacKinnon & White 1985, White 1980, Durbin & Watson
+   1950/1951, Newey & West 1987), BIPM's own GUM PDF, or the Open Library page for Cook &
+   Weisberg 1982. The scrubbed copies stay in the gitignored references/ folder.
 12. **No author on the decks** (2026-09-28). The `author:` line is gone from every slides.qmd
    and the rendered title slides. Claude built most of the series; Gideon's name stays on the
    hub and the main site, but the modules don't carry a byline.

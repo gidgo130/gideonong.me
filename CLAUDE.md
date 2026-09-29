@@ -60,8 +60,8 @@ learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, lear
                     strings-common.js, modules.js) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
-                    slides.html, slides.es.html, <slug>.py, and any cited papers
-                    (<author>-<year>.pdf, scrubbed)
+                    slides.html, slides.es.html, <slug>.py (papers are never hosted: chips
+                    link DOIs)
 CLAUDE.md           This file
 plan.md             Development roadmap
 
@@ -499,8 +499,9 @@ Rules for /learning (these replace the main-site rules where they conflict):
   at index.html when opened from disk.
 - Simulated data only; each page states its true model.
 - Cited papers: a quiet `a.ref-chip` via the page's `chips` table in strings.js (see
-  learning/README.md). A hosted paper sits next to its page and is scrubbed of download
-  stamps and metadata first; otherwise link its DOI. No author byline on module decks.
+  learning/README.md). Never host a paper in the repo or on the site: link its DOI, the
+  publisher's page, or a catalog page for a book. Sources stay in the gitignored references/.
+  No author byline on module decks.
 - Motion: slider-driven redraws only. No page-load or scroll animation.
 - Files outside learning/ that /learning touches: js/about.js (the Interesting-sites entry)
   and these docs. Anything else outside learning/ needs Gideon's OK first.
