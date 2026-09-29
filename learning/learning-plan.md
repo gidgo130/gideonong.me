@@ -92,8 +92,8 @@ hidden (by choice).
   The section is shared by link, not searched for: the About link and the OG cards are how
   people find it. Nothing to remove, nothing to re-render.
 - [X] Unhide About → Interesting sites — done 2026-09-29, without a Learning entry (see above)
-- [ ] Repo public (decision 18): papers purged from history, force push, GitHub visibility
-  → public, then the Colab links work
+- [X] Repo public (decision 18): papers purged from history, force push, GitHub visibility
+  → public, then the Colab links work (2026-09-29; all six Colab links load the notebook)
 - [X] Open Graph / Twitter-card tags on the hub, all six modules and their decks, with a
   1200×630 card per page in learning/assets/og/ (2026-09-28; decision 14). Pages stay noindex.
 - [ ] Optional: Google Search Console (only for the main site; /learning stays out of search)
@@ -385,16 +385,27 @@ Gate: decision 18 finished (papers purged from history, force push, repo public)
    save-data, or 4 GB of device memory or less puts Colab first and primary; otherwise marimo.
    Both are always visible. `deviceMemory` is Chromium-only and coarse pointers include touch
    laptops; accepted as a one-shot rule.
-18. **The repo goes public** (2026-09-29, in progress). Needed for the Colab links, and Gideon
+18. **The repo goes public** (2026-09-29, done). Needed for the Colab links, and Gideon
    intended it anyway. Done before the flip: the ten cited-paper PDFs left the tree (2dc3a4b:
    untracked, gitignored, chips link DOIs), LICENSE (MIT, code) and LICENSE-CONTENT (CC BY-SA
    4.0, learning content) with a Licensing section in README.md that excludes personal
-   material (ef7aa1a). Still to do, in order: the other session commits and the tree is clean;
-   `git filter-repo` drops `learning/fits/*/*.pdf` from every commit (after a mirror backup);
-   force push; GitHub → visibility public, secret scanning and push protection on, wiki off;
-   Vercel: delete deployments older than 2dc3a4b (their URLs still serve the PDFs); then open
-   every Colab link and Run all. Kept in history on purpose: scripts/transcript/*.json (the
+   material (ef7aa1a). Kept in history on purpose: scripts/transcript/*.json (the
    transcript PDF is public on the site) and the five `visible: false` experience entries.
+   - **History rewrite** (2026-09-29). Mirror backup and a zip of the working folder in
+     `Documents\Personal Website\` (gideonong.me-backup-20260929.git, -worktree-20260929.zip);
+     `git filter-repo --invert-paths --path-regex '^learning/fits/[^/]+/[^/]+\.pdf$'`; force
+     push. 0 PDF objects left, same 116 commits, HEAD tree unchanged; pack 28.7 MiB. Every
+     hash from 4ad5021 on changed; the hashes in this file are the OLD ones. Old → new:
+     4ad5021 → e48fa05, 2dc3a4b → d093305, ef7aa1a → a89b4b7, d8ec875 → d28a7b8,
+     8259a25 → e9a85ec, 80f3296 → 28eac89, 659e99f → 92179a4, 0cf67ef → 408e87c. Any other
+     clone must be re-cloned, never pulled. `learning-m2` was deleted first (merged).
+   - **Public** (2026-09-29). Visibility public, secret scanning and push protection on, wiki
+     and projects off. Checked: all six .ipynb serve from raw.githubusercontent.com as valid
+     nbformat 4; all six "Open in Colab" links load the notebook (Run all is Gideon's to try);
+     all six /play/ pages draw their figures over HTTP (~20 s); noindex on the hub, every
+     module, every play page and every deck; the ten old PDF URLs 404; the eight DOIs resolve.
+   - **Still Gideon's:** delete Vercel deployments older than 2dc3a4b (their URLs still serve
+     the PDFs); branch protection on `main` (possible now that the repo is public).
 17. **Spanish slides** (2026-09-29). Gideon chose one deck per language per module over a
    bilingual deck.
    - **Files.** `learning/workshop/modules/<slug>/slides.es.qmd` → rendered, `role="img"`
