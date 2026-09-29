@@ -64,6 +64,10 @@ learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, m
                     link DOIs)
 CLAUDE.md           This file
 plan.md             Development roadmap
+README.md           Public front page of the repo (what it is, layout, licensing)
+LICENSE             MIT, for the code
+LICENSE-CONTENT     CC BY-SA 4.0, for the teaching content under learning/ (personal material
+                    is not licensed; README.md lists it)
 
 ================================================================================
 PALETTE LIBRARY
