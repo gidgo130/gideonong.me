@@ -95,6 +95,7 @@ p { margin: 0; max-width: 65ch; }
    coarse pointers, save-data or little memory; then Colab leads. Both links always stay visible. */
 .takeaway-links .take-play { order: 1; }
 .takeaway-links .take-colab { order: 2; }
+.takeaway-links .take-offline { order: 3; }   /* added by learning.js on the live site, Windows only */
 :root[data-lite] .takeaway-links .take-colab { order: 1; }
 :root[data-lite] .takeaway-links .take-play { order: 2; }
 .takeaway-links .take-play,
@@ -194,6 +195,11 @@ a.module-row:hover .m-title { color: var(--fix); }
   .module-row { grid-template-columns: 2.4em minmax(0, 1fr); }
   .m-status { grid-row: auto; grid-column: 2; justify-self: start; }
 }
+/* "Use it offline" line under the module list: filled by learning.js on the live site only. */
+.offline-get { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: -4px 0 0; max-width: none; font-family: var(--font-display); font-size: 15px; color: var(--muted); }
+.offline-get[hidden] { display: none; }
+.offline-get a { font-weight: 600; }
+.offline-get small { flex-basis: 100%; font-size: 14px; }
 .howto { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
 .howto div { border-top: 3px solid var(--ink); padding-top: 10px; display: grid; gap: 4px; font-size: 16px; }
 .howto h4 { font-family: var(--font-display); font-size: 20px; font-weight: 600; line-height: 1.15; margin: 0; }
@@ -284,11 +290,13 @@ table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
 :root[data-readability] .ctl-note,
 :root[data-readability] .quiz .opts button,
 :root[data-readability] .foot,
+:root[data-readability] .offline-get small,
 :root[data-readability] table.tools,
 :root[data-readability] .report pre { font-size: 16px; }
 :root[data-readability] figcaption,
 :root[data-readability] .readout .v,
-:root[data-readability] .takeaway-links { font-size: 17px; }
+:root[data-readability] .takeaway-links,
+:root[data-readability] .offline-get { font-size: 17px; }
 :root[data-readability] .note,
 :root[data-readability] .quiz .answer,
 :root[data-readability] .readout div,

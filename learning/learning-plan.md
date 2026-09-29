@@ -99,7 +99,7 @@ hidden (by choice).
 - [ ] Optional: Google Search Console (only for the main site; /learning stays out of search)
 
 ## Phase D — Offline Windows app
-Status (2026-09-29): v1.0.0 released on GitHub (offline-v1.0.0); site buttons not added yet (Phase D2 §4).
+Status (2026-09-29): v1.0.0 released on GitHub (offline-v1.0.0); install links live on /learning (Phase D2 §4).
 How to build, what ships and the release checks: learning/workshop/offline/README.md.
 - [X] Inno Setup script + build script in learning/workshop/offline/ (`ReadingYourFits.iss`,
   `build.ps1`; stage/ and dist/ gitignored). Per-user install to
@@ -200,23 +200,27 @@ https://github.com/gidgo130/gideonong.me/releases/tag/offline-v1.0.0 (commit 47a
   module .exe through SmartScreen, install one in Spanish, open, uninstall. Ideally on a second
   PC (Windows 11 Home has no Windows Sandbox). Not doable headless.
 
-**4. Install buttons on the online pages (one commit, right after v1.0.0 is published, so no
-link ever points at a missing file)**
-- [ ] Hub: one understated line under the module list, in the takeaway-links style (muted
-  label, plain links, no button chrome): "Use it offline: Windows app, all modules · zip for
-  other systems", plus a small muted note "Not signed yet: Windows may ask you to confirm (More
-  info → Run anyway)" linking to the release page.
-- [ ] Each module page: one more link in the existing "Take it with you:" row, "Offline
-  (Windows)", pointing at that module's installer.
-- [ ] The .exe links show only on Windows (userAgentData.platform, else the UA string); elsewhere
-  the hub shows only the zip and module pages show no offline link. Hidden when opened from
-  disk (data-http-only) and in the installed copy (LEARN_OFFLINE). No sizes in the labels, so
-  nothing drifts between releases. New EN/ES strings; check-es.js passes.
-- [ ] Checks: 375 / 1280, light / dark, readability on; the row still wraps cleanly; Windows vs
-  non-Windows (Playwright can fake the platform); hidden from disk and in the installed copy.
-- [ ] Repo README.md (outside learning/, approved): a small line near the bottom, just above
-  "## Licensing": "An offline copy of the /learning pages for Windows is on the
-  [Releases](https://github.com/gidgo130/gideonong.me/releases) page."
+**4. Install buttons on the online pages** — live 2026-09-29
+- [X] Hub: `<p class="offline-get" id="offline-get" hidden>` under the module list, filled by
+  learning.js (`offlineLinks`): "Use it offline: Windows app, all modules · zip for other
+  systems" and a small note "Not signed yet, so Windows may ask you to confirm: More info → Run
+  anyway. About the offline copy" (→ the release page). Muted label, plain links, no button
+  chrome; the note spans the line (`max-width: none` over the 65ch paragraph cap).
+- [X] Module pages: learning.js appends "Offline (Windows)" (`.take-offline`, order 3, last in
+  the "Take it with you:" row) → `ReadingYourFits-<slug>-Setup.exe`, with the SmartScreen note
+  as its title. The slug comes from the page's own path, so no module HTML changed and a new
+  module gets its link from modules.js.
+- [X] Windows only for the .exe links (`LF.isWindows()`: userAgentData.platform, else the UA);
+  elsewhere the hub shows "zip with all modules" and no note, module pages nothing. Not shown
+  from disk or when LEARN_OFFLINE is set. Links are `releases/latest/download/<name>`; all
+  eight names answer on GitHub. Strings: hub strings.js `offlineGet*`, strings-common.js
+  `takeOffline` / `takeOfflineTitle`; check-es.js passes.
+- [X] Checked with Playwright over HTTP (own server on :5599), Chromium and Edge: Windows (hub
+  links, all six module links, ES switch), faked macOS (zip only, no module link), injected
+  LEARN_OFFLINE and file: (nothing shown); 375 / 1280 × light / dark × readability: no sideways
+  scroll, screenshots read as understated. Console clean. The 282 offline checks still pass.
+- [X] Repo README.md: one line above "## Licensing" pointing at the Releases page.
+- [X] Committed and pushed (deploys to production).
 
 **Each later version**
 - Bump AppVersion → commit → `build.ps1 -Release` → checks → tag → draft release with every

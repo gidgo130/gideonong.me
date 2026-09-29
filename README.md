@@ -21,6 +21,9 @@ repository is exactly what Vercel serves. English and Spanish throughout.
 Dev tools are Python and Node scripts run before committing; see `CLAUDE.md` and
 `learning/README.md`.
 
+An offline copy of the `/learning` pages (Windows installers and a zip) is on the
+[Releases](https://github.com/gidgo130/gideonong.me/releases) page.
+
 ## Licensing
 
 `LICENSE` and `LICENSE-CONTENT` hold only the standard license texts; this section says which

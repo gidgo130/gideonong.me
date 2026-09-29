@@ -53,6 +53,11 @@ every piece of figure text through the module's `figures-es.json`, so the .py st
 
 ## Rules of thumb
 
+- **Offline downloads.** On the live site learning.js adds a "Use it offline" line under the
+  hub's module list and an "Offline (Windows)" link to each module's "Take it with you" row,
+  pointing at the GitHub release (`releases/latest/download/<name>`, names from
+  `workshop/offline/build.ps1 -Release`). Installers for Windows visitors only, the zip for
+  everyone else; nothing from disk or in the offline copy. See `workshop/offline/README.md`.
 - **HTTP-only links.** Anything that needs a server or a CDN (the `play/` notebook) gets
   `data-http-only` on its link; learning.js hides those when the page is opened from disk.
 - **Two ways to run the code.** Every module page links "Play with the code" (the marimo

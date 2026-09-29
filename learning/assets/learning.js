@@ -359,7 +359,48 @@
       (typeof navigator.deviceMemory === "number" && navigator.deviceMemory <= 4);
   }
   if (isLiteDevice()) document.documentElement.setAttribute("data-lite", "");
-  document.addEventListener("DOMContentLoaded", function () { fixFileLinks(); hideHttpOnly(); });
+
+  // ---------- offline downloads (live site only) ----------
+  // The GitHub release assets have version-free names (learning/workshop/offline/build.ps1
+  // -Release), so these links never change between releases. Windows visitors get the hub's
+  // full installer and each module page's own installer; everyone else gets the zip on the
+  // hub. Nothing is shown from disk or in the offline copy itself.
+  var DOWNLOAD = RELEASES + "/download/";
+  function isWindows() {
+    var d = navigator.userAgentData;
+    return d && d.platform ? d.platform === "Windows" : /Windows/.test(navigator.userAgent);
+  }
+  function offlineLinks() {
+    if (location.protocol === "file:" || OFFLINE) return;
+    var win = isWindows();
+    var hub = document.getElementById("offline-get");
+    if (hub) {
+      hub.innerHTML = '<span>' + esc(t("offlineGetLabel")) + '</span>' +
+        (win ? '<a href="' + DOWNLOAD + 'ReadingYourFits-Setup.exe">' + esc(t("offlineGetWin")) + '</a>' : "") +
+        '<a href="' + DOWNLOAD + 'ReadingYourFits.zip">' + esc(t(win ? "offlineGetZip" : "offlineGetZipOnly")) + '</a>' +
+        (win ? '<small>' + esc(t("offlineGetNote")) + ' <a href="' + RELEASES + '" target="_blank" rel="noopener">' +
+          esc(t("offlineGetNotes")) + '</a></small>' : "");
+      hub.hidden = false;
+    }
+    // A module page (learning/fits/<slug>/): its own installer in the "Take it with you" row.
+    var row = document.querySelector(".takeaway-links");
+    var rel = ROOT && location.href.indexOf(ROOT) === 0 ? location.href.slice(ROOT.length) : "";
+    var hit = /^fits\/([a-z0-9-]+)\//.exec(rel);
+    var mod = hit && (window.LEARN_MODULES || []).filter(function (m) { return m.slug === hit[1] && m.ready; })[0];
+    if (row && mod && win) {
+      var a = row.querySelector(".take-offline");
+      if (!a) {
+        a = document.createElement("a");
+        a.className = "take-offline";
+        a.href = DOWNLOAD + "ReadingYourFits-" + mod.slug + "-Setup.exe";
+        row.appendChild(a);
+      }
+      a.textContent = t("takeOffline");
+      a.title = t("takeOfflineTitle");
+    }
+  }
+  document.addEventListener("DOMContentLoaded", function () { fixFileLinks(); hideHttpOnly(); offlineLinks(); });
+  document.addEventListener("learnlangchange", offlineLinks);
 
   window.LF = {
     mulberry32: mulberry32, normals: normals, uniforms: uniforms, newSeed: newSeed,
@@ -367,6 +408,6 @@
     solve: solve, polyfit: polyfit, wls: wls, hc3se: hc3se, bands: bands, ar1: ar1, acf: acf, durbinWatson: durbinWatson,
     chart: chart, line: line, dots: dots, esc: esc,
     seriesNav: seriesNav, moduleList: moduleList, fixFileLinks: fixFileLinks, isLiteDevice: isLiteDevice,
-    offlineNote: offlineNote
+    offlineNote: offlineNote, isWindows: isWindows
   };
 }());

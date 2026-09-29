@@ -17,7 +17,13 @@ window.LEARN_STRINGS = {
     how3Body: "Reproduces every plot. Runs as-is in Google Colab.",
     noscript: "The module list and the interactive pages need JavaScript turned on.",
     footBuilt: "Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.",
-    footMistake: "Found a mistake? gao9819@utulsa.edu"
+    footMistake: "Found a mistake? gao9819@utulsa.edu",
+    offlineGetLabel: "Use it offline:",
+    offlineGetWin: "Windows app, all modules",
+    offlineGetZip: "zip for other systems",
+    offlineGetZipOnly: "zip with all modules",
+    offlineGetNote: "Not signed yet, so Windows may ask you to confirm: More info → Run anyway.",
+    offlineGetNotes: "About the offline copy"
   },
   es: {
     pageTitle: "Aprendizaje · Gideon A. Ong",
@@ -35,6 +41,12 @@ window.LEARN_STRINGS = {
     how3Body: "Reproduce todas las gráficas (el código está en inglés). Corre tal cual en Google Colab.",
     noscript: "La lista de módulos y las páginas interactivas necesitan JavaScript activado.",
     footBuilt: "Hecho con Claude por Gideon A. Ong, estudiante de ingeniería mecánica en la Universidad de Tulsa.",
-    footMistake: "¿Encontraste un error? gao9819@utulsa.edu"
+    footMistake: "¿Encontraste un error? gao9819@utulsa.edu",
+    offlineGetLabel: "Úsalo sin conexión:",
+    offlineGetWin: "App para Windows, todos los módulos",
+    offlineGetZip: "zip para otros sistemas",
+    offlineGetZipOnly: "zip con todos los módulos",
+    offlineGetNote: "Todavía no está firmada, así que Windows puede pedirte que confirmes: Más información → Ejecutar de todas formas.",
+    offlineGetNotes: "Sobre la copia sin conexión"
   }
 };

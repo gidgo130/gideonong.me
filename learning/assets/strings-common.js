@@ -21,6 +21,8 @@ window.LEARN_STRINGS_COMMON = {
     statusMissing: "Not installed",
     offlineCopy: "Offline copy · v{v} ({c})",
     offlineUpdates: "Check for updates",
+    takeOffline: "Offline (Windows)",
+    takeOfflineTitle: "Installs this module on Windows. Not signed yet, so Windows may ask you to confirm: More info → Run anyway.",
 
     modRSquaredTitle: "Why R² isn't enough",
     modRSquaredDesc: "Four datasets, one R². What the number hides and what to look at instead.",
@@ -53,6 +55,8 @@ window.LEARN_STRINGS_COMMON = {
     statusMissing: "No instalado",
     offlineCopy: "Copia sin conexión · v{v} ({c})",
     offlineUpdates: "Buscar actualizaciones",
+    takeOffline: "Sin conexión (Windows)",
+    takeOfflineTitle: "Instala este módulo en Windows. Todavía no está firmado, así que Windows puede pedirte que confirmes: Más información → Ejecutar de todas formas.",
 
     modRSquaredTitle: "Por qué R² no basta",
     modRSquaredDesc: "Cuatro conjuntos de datos, un mismo R². Lo que el número esconde y qué mirar en su lugar.",
