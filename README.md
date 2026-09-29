@@ -23,6 +23,9 @@ Dev tools are Python and Node scripts run before committing; see `CLAUDE.md` and
 
 ## Licensing
 
+`LICENSE` and `LICENSE-CONTENT` hold only the standard license texts; this section says which
+parts of the repository each one covers.
+
 - **Code** (HTML, CSS, JavaScript, Python and other scripts): [MIT](LICENSE).
 - **Teaching content** under `learning/` (module text, strings, slides, figures, the
   companion scripts and notebooks): [CC BY-SA 4.0](LICENSE-CONTENT). Share and adapt it
