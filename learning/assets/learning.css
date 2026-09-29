@@ -90,6 +90,16 @@ p { margin: 0; max-width: 65ch; }
 .takeaway-links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--font-display); font-size: 16px; padding-block: 6px 0; }
 .takeaway-links span { color: var(--muted); }
 .takeaway-links a { font-weight: 600; }
+/* "Play with the code" (in-browser notebook, ~37 MB first load) and "Open in Colab": which one comes
+   first and looks primary depends on the device. learning.js sets data-lite on <html> for phones,
+   coarse pointers, save-data or little memory; then Colab leads. Both links always stay visible. */
+.takeaway-links .take-play { order: 1; }
+.takeaway-links .take-colab { order: 2; }
+:root[data-lite] .takeaway-links .take-colab { order: 1; }
+:root[data-lite] .takeaway-links .take-play { order: 2; }
+.takeaway-links .take-play,
+:root[data-lite] .takeaway-links .take-colab { font-weight: 700; text-decoration-color: var(--fix); text-decoration-thickness: 2px; }
+:root[data-lite] .takeaway-links .take-play { font-weight: 600; text-decoration-color: currentColor; text-decoration-thickness: auto; }
 
 /* ---------- trials ---------- */
 section.trial { padding-block: 48px 8px; display: grid; gap: 18px; border-bottom: 1px solid var(--rule); }

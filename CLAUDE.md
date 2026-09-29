@@ -512,6 +512,11 @@ Rules for /learning (these replace the main-site rules where they conflict):
   publisher's page, or a catalog page for a book. Sources stay in the gitignored references/.
   No author byline on module decks.
 - Motion: slider-driven redraws only. No page-load or scroll animation.
+- Two ways to run each module's code, both linked beside Slides / Python script: "Play with
+  the code" (the marimo notebook at play/, HTTP only, `data-http-only`) and "Open in Colab"
+  (<slug>.ipynb from the public GitHub repo). learning.js sets `data-lite` on <html> for
+  phones / save-data / low-memory devices; learning.css then lists Colab first as the primary
+  link, otherwise marimo. Both always visible; the rule lives only in learning.js.
 - Files outside learning/ that /learning touches: js/about.js (the Interesting-sites entry)
   and these docs. Anything else outside learning/ needs Gideon's OK first.
 

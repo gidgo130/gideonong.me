@@ -17,6 +17,7 @@ window.LEARN_STRINGS = {
     takeSlides: "Slides",
     takePy: "Python script",
     takePlay: "Play with the code",
+    takeColab: "Open in Colab",
 
     // Trial 1
     t1Num: "Trial 1 of 3",
@@ -160,6 +161,7 @@ window.LEARN_STRINGS = {
     takeSlides: "Diapositivas",
     takePy: "Script de Python",
     takePlay: "Juega con el código (en inglés)",
+    takeColab: "Abrir en Colab (en inglés)",
 
     // Trial 1
     t1Num: "Prueba 1 de 3",
@@ -227,7 +229,7 @@ window.LEARN_STRINGS = {
     t2WindowHelp: "Un registro corto esconde la curva.",
     unitC: "{v} °C",
     unitMin: "{v} min",
-    roS: "Desv. estándar de los residuos",
+    roS: "Desv. est. de los residuos",
     roTau: "Constante de tiempo ajustada",
     roTrueTau: "Constante de tiempo verdadera",
     dash: "–",

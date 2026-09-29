@@ -306,6 +306,17 @@
     if (location.protocol !== "file:") return;
     document.querySelectorAll("[data-http-only]").forEach(function (el) { el.hidden = true; });
   }
+  // "Lite" devices (phones, save-data, little memory) get the Colab link as the primary way to
+  // run the code and the in-browser notebook second; everything else the other way round. Both
+  // stay visible; learning.css reads data-lite on <html> to reorder and style the pair. Decided
+  // once, at script load (the script sits at the end of <body>), so the row never visibly reorders.
+  function isLiteDevice() {
+    var c = navigator.connection || {};
+    return (window.matchMedia && window.matchMedia("(max-width: 640px), (pointer: coarse)").matches) ||
+      c.saveData === true ||
+      (typeof navigator.deviceMemory === "number" && navigator.deviceMemory <= 4);
+  }
+  if (isLiteDevice()) document.documentElement.setAttribute("data-lite", "");
   document.addEventListener("DOMContentLoaded", function () { fixFileLinks(); hideHttpOnly(); });
 
   window.LF = {
@@ -313,6 +324,6 @@
     ols: ols, deming: deming, tcrit: tcrit, num: num, r2: r2, influence: influence, expFit: expFit,
     solve: solve, polyfit: polyfit, wls: wls, hc3se: hc3se, bands: bands, ar1: ar1, acf: acf, durbinWatson: durbinWatson,
     chart: chart, line: line, dots: dots, esc: esc,
-    seriesNav: seriesNav, moduleList: moduleList, fixFileLinks: fixFileLinks
+    seriesNav: seriesNav, moduleList: moduleList, fixFileLinks: fixFileLinks, isLiteDevice: isLiteDevice
   };
 }());

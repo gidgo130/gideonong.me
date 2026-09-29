@@ -16,6 +16,8 @@ window.LEARN_STRINGS = {
     takeLabel: "Take it with you:",
     takeSlides: "Slides",
     takePy: "Python script",
+    takePlay: "Play with the code",
+    takeColab: "Open in Colab",
 
     pctLabel: "Sensor error, % of reading",
     pctHelp: "Plus a fixed 0.5 units. Datasheets often say \"±0.5 + 10% of reading\".",
@@ -126,6 +128,8 @@ window.LEARN_STRINGS = {
     takeLabel: "Llévatelo:",
     takeSlides: "Diapositivas",
     takePy: "Script de Python",
+    takePlay: "Juega con el código (en inglés)",
+    takeColab: "Abrir en Colab (en inglés)",
 
     pctLabel: "Error del sensor, % de la lectura",
     pctHelp: "Más 0,5 unidades fijas. Las hojas de datos suelen decir \"±0,5 + 10% de la lectura\".",
@@ -150,7 +154,7 @@ window.LEARN_STRINGS = {
     t1DataCapHtml: "<b>Los datos y el ajuste.</b> 40 lecturas.",
     t1ResidAria: "Residuos contra el valor ajustado",
     t1ResidCapHtml: "<b>Gráfica de residuos.</b> La dispersión se mide como la desviación estándar de los residuos en el tercio más bajo y en el más alto de los valores ajustados.",
-    t1NoteEvenHtml: "<b>Con este valor, la dispersión es más o menos pareja.</b> En esta muestra, el extremo alto se dispersa {r}× lo que el bajo; con solo 13 puntos por tercio, el puro azar puede dar cocientes de hasta 1,6 más o menos. Sube el porcentaje.",
+    t1NoteEvenHtml: "<b>Con este valor, la dispersión es más o menos pareja.</b> En esta muestra, el extremo alto se dispersa {r}× lo que el bajo; con solo 13 puntos por tercio, el puro azar puede dar cocientes de hasta más o menos 1,6. Sube el porcentaje.",
     t1NoteFanHtml: "<b>Un abanico: el sensor tiene unas {tr}× más ruido en x = 9 que en x = 2,</b> y en esta muestra el extremo alto de los residuos se dispersa {r}× lo que el bajo (el azar mueve ese número; genera datos nuevos unas cuantas veces). La pendiente ajustada ({b}) sigue siendo más o menos correcta: la dispersión desigual no sesga la recta. Lo que falla es todo lo que se dice sobre su incertidumbre. La Prueba 2 lo muestra.",
 
     // Trial 2
@@ -201,7 +205,7 @@ window.LEARN_STRINGS = {
     axFittedSlope: "pendiente ajustada",
     axRepeats: "repeticiones",
     t3NoteOlsHtml: "<b>El ajuste ordinario trata todos los puntos como igual de confiables.</b> Su banda tiene un solo ancho, así que falla en el extremo ruidoso. Cambia a Ponderado.",
-    t3NoteWlsHtml: "<b>La banda ponderada se ensancha donde el sensor es peor</b> y ahora contiene alrededor del 95% en los dos extremos ({lo}% y {hi}%). Su pendiente también varía menos de una corrida a otra (desv. est. {w} frente a {o} del ajuste ordinario), porque se apoya en las lecturas precisas. La condición: necesitas una estimación razonable de la σ de cada lectura.",
+    t3NoteWlsHtml: "<b>La banda ponderada se ensancha donde el sensor es peor</b> y ahora contiene alrededor del 95% en los dos extremos ({lo}% y {hi}%). Su pendiente también varía menos de una repetición a otra (desv. est. {w} frente a {o} del ajuste ordinario), porque se apoya en las lecturas precisas. El inconveniente: necesitas una estimación razonable de la σ de cada lectura.",
     t3NoteEvenHtml: "<b>Con dispersión pareja, los dos ajustes coinciden.</b> Ponderar solo ayuda cuando los puntos no son igual de confiables.",
     logSummary: "¿Y si saco el logaritmo?",
     logBodyHtml: "Si el error es <i>solo</i> un porcentaje de la lectura y la física es multiplicativa (y = a·x<sup>b</sup>, o un crecimiento o decaimiento exponencial), ajustar log y empareja la dispersión. También cambia lo que significan los coeficientes, y una parte fija del error (el 0,5 de aquí) vuelve a aparecer como dispersión desigual en las lecturas pequeñas. Cuando conoces la σ de cada punto, ponderar es la solución más directa.",

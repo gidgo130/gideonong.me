@@ -55,6 +55,12 @@ every piece of figure text through the module's `figures-es.json`, so the .py st
 
 - **HTTP-only links.** Anything that needs a server or a CDN (the `play/` notebook) gets
   `data-http-only` on its link; learning.js hides those when the page is opened from disk.
+- **Two ways to run the code.** Every module page links "Play with the code" (the marimo
+  notebook in `play/`, `.take-play`) and "Open in Colab" (`<slug>.ipynb` opened from GitHub,
+  `.take-colab`). learning.js decides once at load whether the device is "lite" (narrow or
+  coarse-pointer screen, save-data, 4 GB of memory or less) and sets `data-lite` on `<html>`;
+  learning.css then puts Colab first and styles it as the primary link, else marimo. Both
+  are always visible. Test in the console with `LF.isLiteDevice()`.
 
 - **Link previews are static.** Every page and deck carries Open Graph + Twitter-card meta
   (`og:title` / `og:description` = the EN page title and lead, absolute `og:url` with a trailing

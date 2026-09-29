@@ -17,6 +17,8 @@ window.LEARN_STRINGS = {
     takeLabel: "Take it with you:",
     takeSlides: "Slides",
     takePy: "Python script",
+    takePlay: "Play with the code",
+    takeColab: "Open in Colab",
 
     // Trial 1
     t1Num: "Trial 1 of 4",
@@ -145,6 +147,8 @@ window.LEARN_STRINGS = {
     takeLabel: "Llévatelo:",
     takeSlides: "Diapositivas",
     takePy: "Script de Python",
+    takePlay: "Juega con el código (en inglés)",
+    takeColab: "Abrir en Colab (en inglés)",
 
     // Trial 1
     t1Num: "Prueba 1 de 4",
@@ -237,13 +241,13 @@ window.LEARN_STRINGS = {
     t4ScatterAria: "Datos con la recta verdadera, el ajuste ordinario y el ajuste con errores en x",
     t4ScatterCapHtml: "<b>Tres rectas, un solo conjunto de datos.</b> 60 lecturas.",
     t4NoteExactHtml: "<b>Si x se lee con exactitud, las tres rectas coinciden.</b> El método corregido solo vale la pena cuando x tiene ruido.",
-    t4NoteNoisyHtml: "<b>El ajuste azul con errores en x cae cerca de 2,00; el ajuste ordinario rojo cae cerca de {exp}.</b> Ahora deja el ruido como está y amplía el rango de x: la recta roja vuelve a subir hacia la verdad, porque el mismo ruido es pequeño al lado de una gran dispersión. El ajuste azul tiene dos condiciones: varía más de una muestra a otra (haz clic en Generar datos nuevos unas cuantas veces), y necesita una estimación razonable del ruido de cada sensor, de una hoja de datos o de lecturas repetidas.",
+    t4NoteNoisyHtml: "<b>El ajuste azul con errores en x cae cerca de 2,00; el ajuste ordinario rojo cae cerca de {exp}.</b> Ahora deja el ruido como está y amplía el rango de x: la recta roja vuelve a subir hacia la verdad, porque el mismo ruido es pequeño al lado de una gran dispersión. El ajuste azul tiene dos inconvenientes: varía más de una muestra a otra (haz clic en Generar datos nuevos unas cuantas veces), y necesita una estimación razonable del ruido de cada sensor, de una hoja de datos o de lecturas repetidas.",
     t4NoteUnreliableHtml: " <b>Con este valor, la corrección misma no es confiable:</b> el ruido tapa la dispersión de x, así que la pendiente azul puede caer lejos de 2, incluso en negativo. Amplía el rango antes de confiar en cualquier ajuste.",
     codeSummary: "Ver el código en Python de este ajuste (en inglés)",
 
     // Takeaways
     takeTitle: "Para recordar",
-    take1Html: "<b>El ruido en y cuesta precisión. El ruido en x cuesta exactitud.</b> Un ajuste ordinario supone que x es exacta; cuando no lo es, la pendiente se jala hacia cero.",
+    take1Html: "<b>El ruido en y cuesta precisión. El ruido en x cuesta exactitud.</b> Un ajuste ordinario supone que x es exacta; cuando no lo es, la pendiente se va hacia cero.",
     take2Html: "<b>La gráfica de residuos no puede detectar esto.</b> El ajuste se acomoda solo para que los residuos se vean equilibrados respecto de x. Este problema se descubre preguntándose cómo se produjeron los datos.",
     take3Html: "<b>En cierto sentido, más datos lo empeoran.</b> La dispersión se achica alrededor de la respuesta equivocada, y las barras de error se vuelven más seguras mientras se les escapa la verdad.",
     take4Html: "<b>Las soluciones más baratas ocurren antes de tomar los datos:</b> aleatoriza el orden de medición, registra lo que pueda derivar, lee x con un instrumento mejor y prueba en un rango amplio.",

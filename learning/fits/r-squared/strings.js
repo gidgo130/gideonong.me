@@ -15,6 +15,8 @@ window.LEARN_STRINGS = {
     takeLabel: "Take it with you:",
     takeSlides: "Slides",
     takePy: "Python script",
+    takePlay: "Play with the code",
+    takeColab: "Open in Colab",
 
     // Trial 1
     t1Num: "Trial 1 of 3",
@@ -113,6 +115,8 @@ window.LEARN_STRINGS = {
     takeLabel: "Llévatelo:",
     takeSlides: "Diapositivas",
     takePy: "Script de Python",
+    takePlay: "Juega con el código (en inglés)",
+    takeColab: "Abrir en Colab (en inglés)",
 
     // Trial 1
     t1Num: "Prueba 1 de 3",
@@ -122,7 +126,7 @@ window.LEARN_STRINGS = {
     roSlope: "Pendiente",
     roIntercept: "Ordenada al origen",
     roR2: "R²",
-    roS: "Desv. estándar de los residuos",
+    roS: "Desv. est. de los residuos",
     t1DataAria: "El conjunto de datos elegido con su recta ajustada",
     t1DataCapHtml: "<b>Los datos y el ajuste.</b>",
     t1ResidAria: "Residuos contra el valor ajustado del conjunto elegido",

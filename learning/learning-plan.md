@@ -88,6 +88,8 @@ Order: 2 → 1 → 3 → 4 → 6.
   The section is shared by link, not searched for: the About link and the OG cards are how
   people find it. Nothing to remove, nothing to re-render.
 - [ ] Unhide About → Interesting sites (replace or remove the placeholder sites first)
+- [ ] Repo public (decision 18): papers purged from history, force push, GitHub visibility
+  → public, then the Colab links work
 - [X] Open Graph / Twitter-card tags on the hub, all six modules and their decks, with a
   1200×630 card per page in learning/assets/og/ (2026-09-28; decision 14). Pages stay noindex.
 - [ ] Optional: Google Search Console (only for the main site; /learning stays out of search)
@@ -199,7 +201,9 @@ Order: 2 → 1 → 3 → 4 → 6.
      medición", never "corrida" (in Module 4 a corrida is a whole repeat). Same-sign streaks of
      residuals = "rachas". "Draw a new sample" = "Generar datos nuevos", so "muestra" always
      means one reading. Takeaways heading = "Para recordar". Quiz answers use a colon
-     ("Correcto: curva." / "La respuesta era: atípico.") to avoid gender agreement.
+     ("Correcto: curva." / "La respuesta era: atípico.") to avoid gender agreement. A piece of
+     evidence = "dato" (never "prueba", which is Trial). A catch / drawback = "inconveniente".
+     Reviewed 2026-09-29.
    - **Chips.** Every page's `chips` has `es` phrases: paper and book titles stay in English;
      "Distancia de Cook", "regresión de Deming", "parte I (1950)" / "parte II (1951)".
    - **Small fixes made on the way.** learning-i18n.js runs its markup-vs-EN dev check only on
@@ -295,6 +299,28 @@ Order: 2 → 1 → 3 → 4 → 6.
    - **Verify after deploy.** Open /learning/fits/residual-plots/play/ on the Vercel preview: the
      editor appears within ~5 s and four figures within ~15 s; try /play without the slash; view
      source for noindex. Vercel serves .wasm as application/wasm and needs no headers for this.
+17. **Both ways to run the code, on every module** (2026-09-29). Gideon's call after the pilot:
+   marimo for everyone who can afford the ~37 MB first load, Colab as the light option, and
+   both links on every page. The five remaining marimo notebooks follow the pilot's style
+   (decision 16); all six export as one small index.html (`--single-file`). The Colab
+   notebooks are GENERATED from the companion scripts by learning/workshop/tools/make-ipynb.py
+   (the scripts carry "# %%" cell markers and a knobs cell per trial; `--check` proves the
+   cells print what the script prints) and live at learning/fits/<slug>/<slug>.ipynb, opened
+   from GitHub, so the repo goes public (decision 18). Which link leads is decided by
+   learning.js once at load: `data-lite` on <html> for a narrow or coarse-pointer screen,
+   save-data, or 4 GB of device memory or less puts Colab first and primary; otherwise marimo.
+   Both are always visible. `deviceMemory` is Chromium-only and coarse pointers include touch
+   laptops; accepted as a one-shot rule.
+18. **The repo goes public** (2026-09-29, in progress). Needed for the Colab links, and Gideon
+   intended it anyway. Done before the flip: the ten cited-paper PDFs left the tree (2dc3a4b:
+   untracked, gitignored, chips link DOIs), LICENSE (MIT, code) and LICENSE-CONTENT (CC BY-SA
+   4.0, learning content) with a Licensing section in README.md that excludes personal
+   material (ef7aa1a). Still to do, in order: the other session commits and the tree is clean;
+   `git filter-repo` drops `learning/fits/*/*.pdf` from every commit (after a mirror backup);
+   force push; GitHub → visibility public, secret scanning and push protection on, wiki off;
+   Vercel: delete deployments older than 2dc3a4b (their URLs still serve the PDFs); then open
+   every Colab link and Run all. Kept in history on purpose: scripts/transcript/*.json (the
+   transcript PDF is public on the site) and the five `visible: false` experience entries.
 17. **Spanish slides** (2026-09-29). Gideon chose one deck per language per module over a
    bilingual deck.
    - **Files.** `learning/workshop/modules/<slug>/slides.es.qmd` → rendered, `role="img"`
