@@ -1,5 +1,9 @@
-"""Preview server: Vercel-like 404s for ignored paths, draft overlay, read-only."""
+"""Preview server: Vercel-like 404s for ignored paths, draft overlay, read-only,
+Host/Origin allow-list, and no way around the ignore rules by letter case, 8.3
+short names or traversal."""
 
+import http.client
+import os
 import threading
 import unittest
 import urllib.error
@@ -7,6 +11,17 @@ import urllib.request
 
 from _helpers import TempRepo
 from core.preview import IgnoreRules, make_server
+
+
+def short_path(path: str):
+    """The 8.3 short form of an existing path on Windows, or None."""
+    if os.name != "nt":
+        return None
+    import ctypes
+
+    buf = ctypes.create_unicode_buffer(1024)
+    n = ctypes.windll.kernel32.GetShortPathNameW(path, buf, 1024)
+    return buf.value if 0 < n < 1024 else None
 
 
 class IgnoreRuleTests(unittest.TestCase):
@@ -31,6 +46,12 @@ class IgnoreRuleTests(unittest.TestCase):
         self.assertTrue(r.ignored("docs/private/x.txt"))
         self.assertFalse(r.ignored("keep.md"))
 
+    def test_matching_ignores_letter_case(self):
+        r = IgnoreRules(["*.md", "staging/", ".env.*", "Docs/Private"])
+        for p in ("NOTES.MD", "notes.Md", "STAGING/x.txt", "Staging/Sub/y", ".ENV.local", ".env.LOCAL", "docs/private/z"):
+            self.assertTrue(r.ignored(p), p)
+        self.assertFalse(r.ignored("index.html"))
+
 
 class PreviewServerTests(unittest.TestCase):
     def setUp(self):
@@ -54,6 +75,19 @@ class PreviewServerTests(unittest.TestCase):
         except urllib.error.HTTPError as e:
             return e.code, e.read(), e.headers
 
+    def raw(self, path, host=None, origin=None):
+        """GET with an explicit Host (and optional Origin) header; returns (status, body)."""
+        headers = {"Host": host if host is not None else f"127.0.0.1:{self.port}"}
+        if origin is not None:
+            headers["Origin"] = origin
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        try:
+            conn.request("GET", path, headers=headers)
+            r = conn.getresponse()
+            return r.status, r.read()
+        finally:
+            conn.close()
+
     def test_serves_site_files_and_root_index(self):
         self.assertEqual(self.get("/")[0], 200)
         code, body, headers = self.get("/js/translations.js")
@@ -63,8 +97,41 @@ class PreviewServerTests(unittest.TestCase):
         self.assertEqual(headers.get("Cache-Control"), "no-store")
 
     def test_ignored_paths_404_like_vercel(self):
-        for p in ("/scripts/x.js", "/staging/secret.txt", "/README.md", "/.vercelignore", "/scripts/", "/staging"):
+        for p in ("/scripts/x.js", "/staging/secret.txt", "/README.md", "/.vercelignore", "/scripts/", "/staging",
+                  "/scripts/editor/.local/editor.lock", "/.env.local", "/notes.md"):
             self.assertEqual(self.get(p)[0], 404, p)
+
+    def test_letter_case_cannot_reach_an_ignored_file(self):
+        # On Windows the file system would open these; the rules must still hide them.
+        for p in ("/STAGING/secret.txt", "/Staging/Secret.txt", "/.ENV.local", "/.env.LOCAL", "/notes.MD", "/NOTES.md",
+                  "/SCRIPTS/editor/.local/editor.lock", "/scripts/EDITOR/.LOCAL/editor.lock", "/README.MD"):
+            code, body, _ = self.get(p)
+            self.assertEqual(code, 404, p)
+            self.assertNotIn(b"secret", body.lower(), p)
+            self.assertNotIn(b"TOKEN", body, p)
+        # a public file is still served whatever the case (the OS decides if it exists)
+        self.assertEqual(self.get("/index.html")[0], 200)
+
+    def test_short_names_cannot_reach_an_ignored_file(self):
+        short = short_path(str(self.t.root / "staging"))
+        if not short or os.path.basename(short).lower() == "staging":
+            self.skipTest("8.3 short names not available here")
+        p = "/" + os.path.basename(short) + "/secret.txt"
+        code, body, _ = self.get(p)
+        self.assertEqual(code, 404, p)
+        self.assertNotIn(b"private", body)
+
+    def test_foreign_host_or_origin_is_refused(self):
+        for host in ("evil.example", f"127.0.0.1.nip.io:{self.port}", "127.0.0.1:5500", "localhost", ""):
+            code, body = self.raw("/index.html", host=host)
+            self.assertEqual(code, 403, host)
+            self.assertNotIn(b"<title>t</title>", body)
+        for origin in ("http://evil.example", "null", f"https://127.0.0.1:{self.port}", "http://localhost:5500"):
+            self.assertEqual(self.raw("/index.html", origin=origin)[0], 403, origin)
+        # the two allowed spellings, with and without a matching Origin
+        self.assertEqual(self.raw("/index.html", host=f"localhost:{self.port}")[0], 200)
+        self.assertEqual(self.raw("/index.html", host=f"127.0.0.1:{self.port}", origin=f"http://127.0.0.1:{self.port}")[0], 200)
+        self.assertEqual(self.raw("/index.html", host=f"LOCALHOST:{self.port}")[0], 200)  # host names are case-insensitive
 
     def test_no_directory_listing_and_no_traversal(self):
         self.assertEqual(self.get("/js/")[0], 404)

@@ -234,7 +234,20 @@ class EditorState:
                 self._write_autosave()
                 return {"ok": True, "noop": True, "message": "Nothing to save — the file is unchanged."}
             bset = self.backups.create([SiteText.REL_PATH], "before saving site text")
-            atomic_write(self.site.path, new)
+            try:
+                atomic_write(self.site.path, new)
+            except OSError as e:
+                # Windows: os.replace fails while another program holds the file
+                # open. Nothing was written; drafts and the autosave stay as they are.
+                log.warning("write failed for %s: %s", SiteText.REL_PATH, e)
+                return {
+                    "ok": False,
+                    "error": "write-failed",
+                    "message": "js/translations.js could not be written — it is probably open in another program. "
+                    "Close it and retry. Nothing was changed and your drafts are kept.",
+                    "detail": str(e),
+                    "backup": bset.id,
+                }
             written_sha = sha256_bytes(new)
             self.drafts.clear()
             self._write_autosave()
@@ -431,6 +444,9 @@ def create_app(state: EditorState) -> Flask:
             result = state.backups.restore(set_id)
         except FileNotFoundError as e:
             return deny(404, str(e))
+        except OSError as e:
+            log.warning("restore of %s failed: %s", set_id, e)
+            return deny(409, "js/translations.js could not be written — it is probably open in another program. Close it and retry.")
         state.load()
         log.info("restored %s (backup %s)", set_id, result["backup"])
         return jsonify(ok=True, **result)

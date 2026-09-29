@@ -42,8 +42,10 @@ window to the front. Closing the window stops the editor; with unsaved drafts it
   and re-applied.
 - **Preview ↗** opens `http://127.0.0.1:5501/` in your normal browser: a read-only copy of
   the site that serves your drafts in place of the saved file, and answers 404 for
-  everything `.vercelignore` excludes, as the live site would. Live Server on :5500 keeps
-  showing saved files only.
+  everything `.vercelignore` excludes, as the live site would. Each request is resolved on
+  disk before that check, so a different letter case or an 8.3 short name cannot reach an
+  excluded file, and only requests addressed to `127.0.0.1:5501`/`localhost:5501` are
+  answered (403 otherwise). Live Server on :5500 keeps showing saved files only.
 
 ### Validation
 Errors block a save; warnings don't. Only errors the draft **introduces**, or errors on
@@ -54,7 +56,8 @@ keys the draft **touches**, block — anything pre-existing elsewhere is shown i
 | Key missing in EN or ES | ES identical to EN (allow-list: Python, CAD, MATLAB, emails, templates…) |
 | `TODO` in visible text | `TODO` on hidden entries (`visible: false`, `listing: "hidden"`) |
 | HTML in a string | Voice words (leveraged, spearheaded, passionate, showcasing, moreover…) |
-| File outside the supported JS subset (the file becomes read-only; the message names the line) | |
+| File outside the supported JS subset, or a key that appears twice in one object (the file becomes read-only; the message names the line) | |
+| The file could not be written (open in another program): the save answers "close it and retry", nothing changes, drafts are kept | |
 
 ## How it stays lossless
 `core/jsdata.py` tokenizes the file with exact character spans and re-emits it. On every
@@ -92,10 +95,14 @@ a window and prints the tokenized URL (it exits ~10 min after the last page hear
 drafts exist, or on Ctrl+C).
 
 Covers: round-trip of every data file, one edit = one changed line, no-edit save = identical
-file, changed-on-disk → refused, unsupported syntax → refused with line number, save gating,
-backups/restore, autosave, the token/Host/Origin checks (including `/api/focus` and
-`/api/open-preview`), the preview's Vercel-style 404s and draft overlay, and a scan that fails
-if the editor's code contains a git write command.
+file, changed-on-disk → refused (including a same-size rewrite), unsupported syntax or a
+duplicate key → refused with line number, save gating, a write that fails because the file is
+open elsewhere → 409 with file and drafts untouched, backups/restore (and that a backup path
+cannot reach a sibling set), autosave, the token/Host/Origin checks (including `/api/focus`
+and `/api/open-preview`), the preview's Vercel-style 404s, draft overlay, Host/Origin
+allow-list, letter-case and 8.3 short-name variants of excluded paths (the short-name test
+skips where the volume has no 8.3 names), hidden-key prefixes from both data files, and a scan
+that fails if the editor's code contains a git write command.
 
 ## Files
 | File | What it is |

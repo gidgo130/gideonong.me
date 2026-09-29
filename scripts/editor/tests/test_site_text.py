@@ -54,11 +54,35 @@ class SiteTextTests(unittest.TestCase):
             self.assertNotIn("expBakerHughes", p)
         self.assertEqual(slug_camel("senior-patrol-leader"), "SeniorPatrolLeader")
 
+    def test_hidden_prefixes_from_projects_data(self):
+        with TempRepo() as t:
+            (t.root / "js" / "projects-data.js").write_text(
+                "const projectsData = [\n"
+                '  { slug: "secret-thing", listing: "hidden" },\n'
+                '  { slug: "shown-thing", listing: "index" },\n'
+                '  { slug: "quiet-thing", listing: "unlisted" },\n'
+                "];\n",
+                encoding="utf-8",
+            )
+            p = hidden_key_prefixes(t.root)
+            self.assertIn("projSecretThing", p)
+            self.assertNotIn("projShownThing", p)
+            self.assertNotIn("projQuietThing", p)
+            self.assertIn("expEslTutor", p)  # the experience side still contributes
+
     def test_disk_changed(self):
         with TempRepo() as t:
             st = SiteText(t.root)
             self.assertFalse(st.disk_changed())
+            self.assertFalse(st.disk_changed())  # the cheap mtime+size path
             t.translations.write_bytes(st.raw + b"\r\n// touched\r\n")
+            self.assertTrue(st.disk_changed())
+        with TempRepo() as t:
+            # a same-size rewrite must be caught too (mtime differs → hash path)
+            st = SiteText(t.root)
+            same_size = st.raw.replace(b'navAbout: "Sobre', b'navAbout: "SOBRE', 1)
+            self.assertEqual(len(same_size), len(st.raw))
+            t.translations.write_bytes(same_size)
             self.assertTrue(st.disk_changed())
 
 
@@ -73,9 +97,11 @@ class ValidateTests(unittest.TestCase):
             self.assertTrue(any(i.code == "todo-hidden" for i in issues))
 
     def test_rules(self):
-        en = {"a": "Hi", "b": "TODO later", "c": "<b>bold</b>", "d": "We leveraged synergy", "e": "Same", "only": "x", "h": "TODO"}
-        es = {"a": "Hola", "b": "Luego", "c": "negrita", "d": "Aprovechamos", "e": "Same", "esonly": "y", "h": "z"}
-        issues = validate.validate(en, es, hidden_prefixes=["h"])
+        en = {"a": "Hi", "b": "TODO later", "c": "<b>bold</b>", "d": "We leveraged synergy", "e": "Same", "only": "x",
+              "expHidRole": "TODO", "expHidBullet1": "TODO", "expHiddenRole": "TODO x"}
+        es = {"a": "Hola", "b": "Luego", "c": "negrita", "d": "Aprovechamos", "e": "Same", "esonly": "y",
+              "expHidRole": "z", "expHidBullet1": "z", "expHiddenRole": "z"}
+        issues = validate.validate(en, es, hidden_prefixes=["expHid"])
         codes = {(i.code, i.key, i.lang) for i in issues}
         self.assertIn(("todo", "b", "en"), codes)
         self.assertIn(("html", "c", "en"), codes)
@@ -83,8 +109,13 @@ class ValidateTests(unittest.TestCase):
         self.assertIn(("same", "e", ""), codes)
         self.assertIn(("missing-key", "only", "es"), codes)
         self.assertIn(("missing-key", "esonly", "en"), codes)
-        self.assertIn(("todo-hidden", "h", "en"), codes)
-        self.assertNotIn(("todo", "h", "en"), codes)
+        # the hidden prefix softens its own keys (next char uppercase or digit) …
+        self.assertIn(("todo-hidden", "expHidRole", "en"), codes)
+        self.assertIn(("todo-hidden", "expHidBullet1", "en"), codes)
+        self.assertNotIn(("todo", "expHidRole", "en"), codes)
+        # … but never a longer, visible slug that merely starts the same way
+        self.assertIn(("todo", "expHiddenRole", "en"), codes)
+        self.assertNotIn(("todo-hidden", "expHiddenRole", "en"), codes)
         levels = {i.code: i.level for i in issues}
         self.assertEqual(levels["missing-key"], "error")
         self.assertEqual(levels["todo"], "error")

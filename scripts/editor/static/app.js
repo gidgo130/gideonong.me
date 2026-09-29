@@ -30,7 +30,8 @@
 
   const state = {
     data: null,           // /api/state payload
-    drafts: {},           // "en.key" -> value
+    drafts: {},           // "en.key" -> value (local, optimistic)
+    serverDrafts: {},     // "en.key" -> value as the server last confirmed it
     issuesByKey: {},      // key -> [issue]
     statusByKey: {},      // key -> status (live, with drafts)
     query: "",
@@ -252,15 +253,33 @@
     pending[k] = setTimeout(() => sendDraft(lang, key, value), 300);
   }
   async function sendDraft(lang, key, value) {
+    const k = lang + "." + key;
     try {
       const r = await api("/api/draft", { method: "POST", body: { lang, key, value } });
-      if (!r || r.ok === false) { toast("Draft rejected: " + (r && r.error)); return; }
+      if (!r || r.ok === false) { toast("Draft rejected: " + (r && r.error)); revertDraft(lang, key, value); return; }
+      // the server drops a draft equal to the disk value; mirror that
+      if (value === state.data.file.entries[key][lang]) delete state.serverDrafts[k]; else state.serverDrafts[k] = value;
       state.issuesByKey[key] = r.issues || [];
       applyGate(r.gate);
       refreshRowUI(key);
     } catch (e) {
       toast("Could not send draft: " + e.message);
+      revertDraft(lang, key, value);
     }
+  }
+  // The POST failed, so the server never got `value`: put the row back to what
+  // the server last confirmed, unless the user has typed again since (then the
+  // newer value is already queued and will be sent on its own).
+  function revertDraft(lang, key, value) {
+    const k = lang + "." + key;
+    if (state.drafts[k] !== value) return;
+    if (k in state.serverDrafts) state.drafts[k] = state.serverDrafts[k]; else delete state.drafts[k];
+    const row = document.getElementById("key-" + key);
+    const ta = row && row.querySelector('textarea[data-lang="' + lang + '"]');
+    if (ta) { ta.value = liveValue(lang, key); autosize(ta); }
+    computeStatuses();
+    renderCounts();
+    refreshRowUI(key);
   }
   function applyGate(gate) {
     if (!gate) return;
@@ -280,6 +299,7 @@
     const d = via || (await api("/api/state"));
     state.data = d;
     state.drafts = Object.assign({}, d.drafts || {});
+    state.serverDrafts = Object.assign({}, d.drafts || {});
     state.issuesByKey = {};
     for (const i of d.issues || []) (state.issuesByKey[i.key] = state.issuesByKey[i.key] || []).push(i);
     $("#previewLink").href = d.previewUrl;

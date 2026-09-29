@@ -64,6 +64,17 @@ class Subset(unittest.TestCase):
         self.assertEqual(e.line, 1)
         self.assertIn("identifier", str(e))
 
+    def test_duplicate_property_refused_with_both_lines(self):
+        e = self._err('const x = {\n  a: "1",\n  b: "2",\n  a: "3",\n};\n')
+        self.assertEqual(e.line, 4)
+        self.assertIn("duplicate property 'a'", str(e))
+        self.assertIn("line 2", str(e))
+        # quoted and bare spellings of the same name count as one
+        e = self._err('const x = {\n  a: "1",\n  "a": "3",\n};\n')
+        self.assertEqual(e.line, 3)
+        # the same name in two different objects is fine
+        Document('const x = { a: { k: "1" }, b: { k: "2" } };\n')
+
     def test_non_declaration_statement_refused(self):
         e = self._err('const x = {};\nconsole.log("hi");\n')
         self.assertEqual(e.line, 2)

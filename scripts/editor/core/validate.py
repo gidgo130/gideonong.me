@@ -131,7 +131,16 @@ def identical_allowed(key: str, value: str) -> bool:
 
 
 def _hidden(key: str, prefixes: Iterable[str]) -> bool:
-    return any(key.startswith(p) for p in prefixes)
+    """True if key belongs to a hidden entry's prefix (proj<SlugCamel> / exp<SlugCamel>).
+
+    The character after the prefix must be uppercase or a digit — the start of
+    the next key part (…Role, …Bullet1) — so "expEslTutor" never claims a
+    visible "expEslTutoringRole".
+    """
+    for p in prefixes:
+        if len(key) > len(p) and key.startswith(p) and (key[len(p)].isupper() or key[len(p)].isdigit()):
+            return True
+    return False
 
 
 def validate(en: dict, es: dict, hidden_prefixes: Iterable[str] = ()) -> list[Issue]:

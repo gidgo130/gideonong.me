@@ -84,9 +84,13 @@ class SiteText:
     def __init__(self, repo_root: Path):
         self.repo_root = Path(repo_root)
         self.path = self.repo_root / self.REL_PATH
+        # stat BEFORE the read: a write that lands between the two then shows up
+        # as a changed mtime on the next disk_changed() and forces the hash path.
+        st = os.stat(self.path)
         self.raw = self.path.read_bytes()
         self.sha256 = sha256_bytes(self.raw)
-        self.mtime = os.stat(self.path).st_mtime
+        self.mtime_ns = st.st_mtime_ns
+        self.size = st.st_size
         self.doc = Document.from_bytes(self.raw, source=str(self.path))
         root = self.doc.const("translations")
         if not isinstance(root, ObjectNode):
@@ -176,7 +180,17 @@ class SiteText:
         return en, es
 
     def disk_changed(self) -> bool:
+        """True if the file on disk no longer matches what was loaded.
+
+        Cheap path first (the heartbeat calls this every few seconds): an
+        unchanged mtime and size means unchanged. Otherwise compare hashes, so a
+        same-size rewrite or a touched-but-identical file are both answered
+        correctly.
+        """
         try:
+            st = os.stat(self.path)
+            if st.st_mtime_ns == self.mtime_ns and st.st_size == self.size == len(self.raw):
+                return False
             return sha256_bytes(self.path.read_bytes()) != self.sha256
         except OSError:
             return True

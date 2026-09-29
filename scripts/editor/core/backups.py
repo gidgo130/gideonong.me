@@ -126,8 +126,10 @@ class Backups:
     def read_file(self, set_id: str, rel: str) -> Optional[bytes]:
         if not _SET_ID_RE.match(set_id or ""):
             return None
-        p = (self.dir / set_id / Path(rel)).resolve()
-        if not str(p).startswith(str((self.dir / set_id).resolve())) or not p.is_file():
+        base = (self.dir / set_id).resolve()
+        p = (base / Path(rel)).resolve()
+        # is_relative_to, not a string prefix: "<set>-2/…" must not pass as "<set>".
+        if not p.is_relative_to(base) or not p.is_file():
             return None
         return p.read_bytes()
 

@@ -42,8 +42,14 @@ class TempRepo:
         (self.root / "staging").mkdir()
         (self.root / "staging" / "secret.txt").write_text("private", encoding="utf-8")
         (self.root / "README.md").write_text("# dev only", encoding="utf-8")
+        (self.root / "notes.md").write_text("# dev only", encoding="utf-8")
         (self.root / "scripts").mkdir()
         (self.root / "scripts" / "x.js").write_text("// dev", encoding="utf-8")
+        # the two files that matter most if the preview ever leaked: the editor's
+        # own lock (holds the tokenized URL) and Vercel's pulled env file
+        (self.root / "scripts" / "editor" / ".local").mkdir(parents=True)
+        (self.root / "scripts" / "editor" / ".local" / "editor.lock").write_text('{"url": "TOKEN"}', encoding="utf-8")
+        (self.root / ".env.local").write_text("VERCEL_OIDC_TOKEN=secret", encoding="utf-8")
         self.local.mkdir()
         return self
 

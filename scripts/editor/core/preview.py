@@ -8,7 +8,13 @@ Behaves like the deployed site:
     non-deployed file fails as it would live;
   * no directory listings, GET and HEAD only;
   * while drafts exist, edited data files are served from memory in place of
-    the disk version so drafts can be previewed before saving.
+    the disk version so drafts can be previewed before saving;
+  * only requests whose Host (and Origin, when sent) is 127.0.0.1:<port> or
+    localhost:<port> are answered — anything else gets 403, so a page on
+    another site cannot read the preview through DNS rebinding;
+  * every request is resolved on disk before the ignore rules run, so on a
+    case-insensitive file system (Windows) `/STAGING/x` or an 8.3 short name
+    cannot reach a file the rules hide, and nothing outside the root is served.
 """
 
 from __future__ import annotations
@@ -43,7 +49,13 @@ VERCEL_DEFAULT_IGNORES = [
 
 
 class IgnoreRules:
-    """Minimal gitignore-style matcher (enough for this repo's .vercelignore)."""
+    """Minimal gitignore-style matcher (enough for this repo's .vercelignore).
+
+    Matching is case-insensitive on purpose: the preview runs on Windows, where
+    the file system is too, so `STAGING/x` must hide exactly what `staging/x`
+    hides. (Vercel builds on Linux; a path that differs only by case would be a
+    404 there, so being stricter here never shows something the live site hides.)
+    """
 
     def __init__(self, patterns):
         self.rules: list[tuple[bool, str, bool, bool]] = []  # (negate, pattern, dir_only, anchored)
@@ -60,7 +72,7 @@ class IgnoreRules:
             p = p.lstrip("/")
             if "/" in p:
                 anchored = True
-            self.rules.append((neg, p, dir_only, anchored))
+            self.rules.append((neg, p.lower(), dir_only, anchored))
 
     @classmethod
     def from_repo(cls, repo_root: Path) -> "IgnoreRules":
@@ -72,7 +84,7 @@ class IgnoreRules:
 
     def ignored(self, rel_posix: str) -> bool:
         """True if the file at rel_posix (no leading slash) is excluded from the deploy."""
-        parts = [p for p in rel_posix.split("/") if p]
+        parts = [p.lower() for p in rel_posix.split("/") if p]
         if not parts:
             return False
         result = False
@@ -102,7 +114,7 @@ class PreviewHandler(http.server.SimpleHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     # set on the class by make_server()
-    repo_root: Path = Path(".")
+    repo_root: Path = Path(".")  # already resolved (make_server does it once)
     rules: IgnoreRules = IgnoreRules([])
     overrides: Callable[[], dict] = staticmethod(lambda: {})
 
@@ -117,6 +129,33 @@ class PreviewHandler(http.server.SimpleHTTPRequestHandler):
         path = posixpath.normpath(urllib.parse.unquote(path))
         return path.lstrip("/")
 
+    def _allowed_host(self) -> bool:
+        """Host must be this server's own 127.0.0.1/localhost:<port>; Origin, if sent, the same."""
+        port = self.server.server_address[1]
+        hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+        host = (self.headers.get("Host") or "").strip().lower()
+        if host not in hosts:
+            return False
+        origin = (self.headers.get("Origin") or "").strip().lower()
+        if origin and origin not in {"http://" + h for h in hosts}:
+            return False
+        return True
+
+    def _resolve(self, rel: str) -> Optional[Path]:
+        """The on-disk path for rel, or None if it would leave the root.
+
+        Resolving canonicalises letter case and expands 8.3 short names on
+        Windows and follows symlinks everywhere, so the ignore check and the
+        file the OS actually opens always agree.
+        """
+        try:
+            target = (self.repo_root / rel).resolve() if rel else self.repo_root
+        except (OSError, RuntimeError, ValueError):
+            return None
+        if not target.is_relative_to(self.repo_root):
+            return None
+        return target
+
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
@@ -126,14 +165,26 @@ class PreviewHandler(http.server.SimpleHTTPRequestHandler):
         return None
 
     def send_head(self):
+        if not self._allowed_host():
+            log.warning("preview: rejected Host %r / Origin %r", self.headers.get("Host"), self.headers.get("Origin"))
+            self.send_error(403, "Forbidden")
+            return None
         rel = self._rel()
-        if rel.startswith("..") or "\\" in rel:
+        if rel.startswith("..") or "\\" in rel or "\0" in rel:
             self.send_error(404, "Not Found")
             return None
+        target = self._resolve(rel)
+        if target is None:
+            self.send_error(404, "Not Found")
+            return None
+        # The ignore check runs on the path as it really is on disk, not as typed.
+        real_rel = target.relative_to(self.repo_root).as_posix()
+        if real_rel == ".":
+            real_rel = ""
         # a directory URL maps to its index.html for the ignore check
-        check = rel
-        if not rel or (self.repo_root / rel).is_dir():
-            check = (rel + "/" if rel else "") + "index.html"
+        check = real_rel
+        if not real_rel or target.is_dir():
+            check = (real_rel + "/" if real_rel else "") + "index.html"
         if self.rules.ignored(check):
             self.send_error(404, "Not Found")
             return None
@@ -168,7 +219,7 @@ def make_server(repo_root: Path, port: int, overrides: Optional[Callable[[], dic
         "BoundPreviewHandler",
         (PreviewHandler,),
         {
-            "repo_root": Path(repo_root),
+            "repo_root": Path(repo_root).resolve(),
             "rules": IgnoreRules.from_repo(repo_root),
             "overrides": staticmethod(overrides or (lambda: {})),
         },

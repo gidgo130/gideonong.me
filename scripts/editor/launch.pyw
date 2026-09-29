@@ -268,6 +268,10 @@ def main(argv=None) -> int:
         msgbox("The editor server did not answer on 127.0.0.1:%d. See .local\\logs\\editor.log." % editor_port)
         return 1
     url = f"http://127.0.0.1:{editor_port}/?token={token}"
+    # The lock holds this tokenized URL in plain text so a second launch can ask
+    # the running editor to focus its window. Any local process that can read
+    # .local/ could therefore drive the editor — acceptable on a single-user
+    # machine (the folder is gitignored and the token dies with the process).
     write_lock(
         {
             "pid": os.getpid(),

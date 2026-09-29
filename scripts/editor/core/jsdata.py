@@ -9,8 +9,10 @@ value and everything else (comments, blank lines, key order, indentation,
 line endings, quote style) is copied byte for byte.
 
 Anything outside the subset (template literals, spreads, function calls,
-identifiers used as values, ...) raises JsDataError naming the line. Callers
-must then refuse to write the file.
+identifiers used as values, ...) raises JsDataError naming the line, and so
+does a property name that appears twice in one object (JavaScript keeps the
+last one, so an edit to the first would change a value the site never shows).
+Callers must then refuse to write the file.
 """
 
 from __future__ import annotations
@@ -385,6 +387,7 @@ class _Parser:
 
     def object(self, first: int, line: int) -> ObjectNode:
         node = ObjectNode(first, first, line)
+        seen: dict[str, int] = {}  # key → line of its first occurrence
         while True:
             nxt = self._peek()
             if nxt is None:
@@ -402,6 +405,13 @@ class _Parser:
                 key = kt.text
             else:
                 raise JsDataError(f"unexpected {kt.text!r} where a property name should be", kt.line)
+            if key in seen:
+                raise JsDataError(
+                    f"duplicate property {key!r} (first on line {seen[key]}) — JavaScript keeps the last one, "
+                    "so an edit could change a value the site never shows; remove one",
+                    kt.line,
+                )
+            seen[key] = kt.line
             self._expect(":")
             val = self.value()
             node.props.append(Property(key, ki, val, ki, val.last, kt.line))

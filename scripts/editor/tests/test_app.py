@@ -126,6 +126,55 @@ class SaveTests(unittest.TestCase):
             self.assertEqual(t.translations.read_bytes(), before)
             self.assertEqual(len(state.backups.list()), 2)
             self.assertEqual(c.post("/api/restore", headers=hdr(), json={"set": "../../etc"}).status_code, 404)
+            # a backup file path cannot wander into a sibling set or out of the backups folder
+            newer, older = [s.id for s in state.backups.list()]
+            self.assertIsNotNone(state.backups.read_file(older, "js/translations.js"))
+            self.assertIsNone(state.backups.read_file(older, f"../{newer}/js/translations.js"))
+            self.assertIsNone(state.backups.read_file(older, "../../../js/translations.js"))
+            self.assertIsNone(state.backups.read_file(older, str(t.translations)))
+            r = c.get(f"/api/backups/{older}/file?path=../{newer}/js/translations.js", headers=hdr())
+            self.assertEqual(r.status_code, 404)
+
+    def test_write_failure_returns_409_and_leaves_file_and_drafts_alone(self):
+        import app as app_mod
+        import core.backups as backups_mod
+
+        def boom(path, data):
+            raise PermissionError(13, "The process cannot access the file because it is being used by another process")
+
+        with TempRepo() as t:
+            before = t.translations.read_bytes()
+            state, c = make(t)
+            c.post("/api/draft", headers=hdr(), json={"lang": "es", "key": "navAbout", "value": "X"})
+            orig = app_mod.atomic_write
+            app_mod.atomic_write = boom
+            try:
+                r = c.post("/api/save", headers=hdr(), json={})
+            finally:
+                app_mod.atomic_write = orig
+            self.assertEqual(r.status_code, 409)
+            j = r.get_json()
+            self.assertEqual(j["error"], "write-failed")
+            self.assertIn("open in another program", j["message"])
+            self.assertEqual(t.translations.read_bytes(), before)
+            self.assertEqual(state.drafts, {"es.navAbout": "X"})
+            self.assertTrue(state.autosave_path.is_file())
+            self.assertEqual([p.name for p in t.translations.parent.glob("*.tmp-*")], [])
+            # the same save works once the file is free
+            self.assertEqual(c.post("/api/save", headers=hdr(), json={}).status_code, 200)
+            after = t.translations.read_bytes()
+            self.assertIn(b'navAbout: "X"', after)
+            # restore: same failure, same answer, file untouched
+            set_id = state.backups.list()[0].id
+            orig = backups_mod.atomic_write
+            backups_mod.atomic_write = boom
+            try:
+                r = c.post("/api/restore", headers=hdr(), json={"set": set_id})
+            finally:
+                backups_mod.atomic_write = orig
+            self.assertEqual(r.status_code, 409)
+            self.assertIn("open in another program", r.get_json()["error"])
+            self.assertEqual(t.translations.read_bytes(), after)
 
     def test_autosave_written_and_offered_on_next_start(self):
         with TempRepo() as t:
