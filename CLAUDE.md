@@ -443,8 +443,11 @@ Rules for /learning (these replace the main-site rules where they conflict):
   JetBrains Mono (numbers). Uppercase eyebrows and "Trial 1 of 4" / module numbers ARE allowed
   here because they mark a real sequence. No main-site navbar, banner or footer; each page has
   the thin series bar (gideonong.me / Learning / series) and prev / all / next links.
-- Color meaning is fixed across every module: dashed ink = the truth, red (--fit) = what an
-  ordinary fit reports, blue (--fix) = a corrected estimate, grey dots = measured points.
+- Color meaning is fixed across every module: dashed ink = the truth, solid red (--fit) = what
+  an ordinary fit reports, dotted blue (--fix) = a corrected estimate, grey dots = measured
+  points. The dots on --fix (.fix, .fix-curve, .ci-bar-fix, the .sw.fix legend swatch, the
+  dotted underline on a .lbl-fix label) are a permanent second cue, so the two fits tell apart
+  in grayscale (decided 2026-09-28).
   Red may also mark a miss or a flag (a reading outside a band, a range that misses the
   truth, a readout that fails its check); when it does, the caption says so.
 - Unlisted: NOT in the main nav, sitemap or project list. The only link in is the Learning
@@ -453,6 +456,11 @@ Rules for /learning (these replace the main-site rules where they conflict):
 - noindex while in progress: every /learning page (and each deck, via `include-in-header` in
   slides.qmd) has `<meta name="robots" content="noindex">`. Going public = remove it everywhere
   (learning-plan.md Phase C). Do not use robots.txt for this.
+  Colorblind mode (`data-colorblind` on <html>, see the viewing-settings bullet) swaps the pair
+  for orange / blue (--fit #b85000, --fix #0072b2; dark #ff9a4a / #63b3f0) and learning.css adds
+  a non-color cue to the red/grey distinctions: highlighted or missed points (.pt-hi) and
+  flagged bars (.bar-hi) wear an ink ring; .v.bad readouts are marked ✕ and .v.good ✓ besides
+  bold. New charts must reuse those class names so the cues apply without touching JS.
 - Bilingual is REQUIRED; English ships first. All display text lives in strings files
   (learning/assets/strings-common.js + each page's strings.js), never hard-coded in JS.
   learning-i18n.js shares the main site's localStorage "lang" key and default rule. The EN/ES
@@ -460,8 +468,12 @@ Rules for /learning (these replace the main-site rules where they conflict):
   page's `<html>` gets `data-es-ready` (after its `es` strings are complete). Keys ending in
   "Html" may hold <b>/<i>/<code> (the translations.js no-HTML rule does not apply here).
   Numbers go through LF.num so ES gets a decimal comma.
-- Theme follows the main site's saved `viewTheme` (About → Viewing settings) via a head
-  snippet, else prefers-color-scheme. No toggle on /learning pages.
+- Viewing settings follow the main site's saved choices (About → Viewing settings) through the
+  head snippet on every page, with the same localStorage keys and <html> attributes as
+  js/about.js §6: `viewTheme` → data-theme (else prefers-color-scheme), `viewReadability` → data-
+  readability, `viewColorblind` → data-colorblind. learning.css styles all three (section
+  "Viewing settings" at the end). Readability enlarges page text only; SVG charts scale with
+  their viewBox and are left alone. No settings UI or toggle on /learning pages.
 - Module registry: learning/assets/modules.js is the ONE list (order, slug, ready). Titles and
   descriptions: mod<Key>Title / mod<Key>Desc in strings-common.js. URLs use slugs, never
   numbers, so reordering never breaks links.

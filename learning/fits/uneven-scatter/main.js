@@ -151,7 +151,7 @@
       },
       over: function (sX, sY, g) {
         return '<text class="lbl-fit" x="' + (g.m.l + 8) + '" y="' + (g.m.t + 16) + '">' + LF.esc(t("lblOls")) + " " + num(sd(c.bo), 3) + '</text>' +
-          '<text class="lbl-truth" x="' + (g.m.l + 8) + '" y="' + (g.m.t + 34) + '" style="fill: var(--fix)">' + LF.esc(t("lblWls")) + " " + num(sd(c.bw), 3) + '</text>';
+          '<text class="lbl-fix" x="' + (g.m.l + 8) + '" y="' + (g.m.t + 34) + '">' + LF.esc(t("lblWls")) + " " + num(sd(c.bw), 3) + '</text>';
       } });
     $("t3-b").textContent = num(isW ? w.b1 : f.b1);
     var cl = isW ? c.wLo : c.piLo, ch = isW ? c.wHi : c.piHi;

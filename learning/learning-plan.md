@@ -98,7 +98,7 @@ Order: 2 → 1 → 3 → 4 → 6.
 
 ## Optional later
 - [ ] marimo "play with the code" notebooks per module (served from the site over HTTP)
-- [ ] Honor About's readability / colorblind settings on /learning pages
+- [X] Honor About's readability / colorblind settings on /learning pages (2026-09-28, decision 15)
 
 ---
 
@@ -215,3 +215,36 @@ Order: 2 → 1 → 3 → 4 → 6.
    description does). Verified locally: every og:image answers HEAD 200 and is under 60 KB;
    noindex still on every page. After a deploy, check with LinkedIn Post Inspector and
    opengraph.xyz (both fetch the live URL; the Post Inspector also clears LinkedIn's cache).
+15. **About's viewing settings on /learning** (2026-09-28). The head snippet on every page (hub
+   and six modules) now reads all three main-site keys before first paint and sets the same
+   <html> attributes the main site uses: `viewTheme` → data-theme (as before), `viewReadability`
+   = "1" → data-readability, `viewColorblind` = "1" → data-colorblind. No UI on /learning; the
+   switches stay on About. Styles: learning.css → "Viewing settings" (last section).
+   - **Readability.** Body 17 → 19 px, line-height 1.55 → 1.8, letter-spacing .01em, darker
+     --muted (#44524a light / #b4c2b9 dark), and every fixed-size text element one step up
+     (readouts, labels, notes, captions, code, nav). Readout rows may wrap. Charts are untouched
+     on purpose: SVG text scales with the viewBox, so nothing inside a plot changes.
+   - **Colorblind.** Red/blue → orange/blue: --fit #b85000 / --fix #0072b2 (light), #ff9a4a /
+     #63b3f0 (dark). Chosen with a Machado (2009) simulation: fit/fix stay ΔE ≥ 87 apart under
+     protan, deutan and tritan vision, and the orange readout text keeps 4.6:1 on the paper
+     background. Every red/blue distinction has a second cue from CSS alone: --fix lines and
+     bars dotted (legend swatch too), .pt-hi points and .bar-hi bars with an ink ring, ✕ / ✓
+     before .v.bad / .v.good, and a dotted underline on the two corner labels that name the
+     corrected estimate (new class .lbl-fix: Module 3 "weighted", Module 6 "with correlation";
+     they used to be .lbl-truth with an inline fill). The two colors share a luminance, so
+     under achromatopsia the cues do all the work; that's intended.
+   - **Dotted corrected line, always on** (same day, Gideon's call after seeing the mode). The
+     dotted --fix treatment (lines, bars, legend swatch, .lbl-fix underline) moved out of the
+     colorblind block into the base rules, so the two fits tell apart in grayscale for everyone;
+     colorblind mode now adds only the tokens, the rings and the ✕ / ✓ marks. Also fixed on the
+     way: `input[type=range] { margin-inline: 0 }` removes Chromium's default 2 px side margin
+     that let every slider overhang its control column.
+   - **Checked** with Playwright against Live Server: 7 pages × light / dark × readability /
+     colorblind / both × 375 / 1280 px (84 loads): attributes and tokens applied, no console
+     messages, no horizontal scroll, no readout label/value collision, sliders full width,
+     charts in place. Chrome's vision-deficiency emulation (protanopia, deuteranopia,
+     tritanopia, achromatopsia) over CDP on Module 3 (band misses, coverage bars, slope
+     histograms), 4 (ACF bars, CI bars), 5 (OLS vs Deming lines, slope histogram), 6 (crossing
+     bars, readout marks), 2 (with / without point, Cook bars) and 1 (LOO chart), with the
+     mode off and on.
+   - **Not covered.** The slide decks (Quarto) keep their own colors and ignore the settings.

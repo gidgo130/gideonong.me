@@ -28,7 +28,9 @@
         location.replace(p + "/" + location.search + location.hash);
       }
     })();
-    /* Theme: follow the main site's saved choice (About → Viewing settings). Keep in sync with module pages. */
+    /* Viewing settings: follow the main site's saved choices (About → Viewing settings) before first
+       paint. Same keys and <html> attributes as the main site's head snippet (see js/about.js §6);
+       learning.css styles data-theme, data-readability and data-colorblind. No settings UI here. */
     (function () {
       try {
         var t = localStorage.getItem("viewTheme");

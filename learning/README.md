@@ -61,9 +61,16 @@ listed in `.vercelignore`, so none of it reaches the site. Rebuild steps are in
 - **English first, Spanish required.** Every visible word goes through a strings file. A page
   turns Spanish on by adding `data-es-ready` to its `<html>` once its `es` strings are complete;
   that also un-hides its EN/ES toggle. The toggle shares the main site's `lang` key.
-- **Colors mean the same thing everywhere:** dashed ink = the truth, red = what an ordinary fit
-  reports, blue = a corrected estimate, grey dots = measured points.
-- **Theme** follows the main site's saved choice (`viewTheme`), else the OS setting.
+- **Colors mean the same thing everywhere:** dashed ink = the truth, solid red = what an ordinary fit
+  reports, dotted blue = a corrected estimate, grey dots = measured points. The dots are a
+  permanent second cue (legend swatch and `.lbl-fix` label underline follow).
+- **Viewing settings** follow the main site's saved choices through the head snippet on every
+  page: `viewTheme` (theme; else the OS setting), `viewReadability` (bigger, looser text; charts
+  unchanged) and `viewColorblind` (orange/blue tokens, ringed highlighted points and
+  outlined flagged bars, ✕ / ✓ on flagged readouts). Styled in learning.css → "Viewing
+  settings". No switches on /learning: change them on About. Charts must use the shared class
+  names (fit / fix / fix-curve / ci-bar-fix / pt-hi / bar-hi / lbl-fix / v bad / v good) so the
+  cues apply.
 - **Simulated data only**, with the true model stated on the page.
 
 ## Strings
@@ -110,6 +117,10 @@ listed in `.vercelignore`, so none of it reaches the site. Rebuild steps are in
 - On the Vercel preview: repeat the `/learning` no-slash check, and view source for `noindex`.
 
 ## Fable review prompt (Claude Code, in this repo)
+- The same at 375 and 1280 with About's readability on, colorblind on, and both: readouts and
+  sliders still fit, charts keep their shape, the dotted --fix line and ✕ / ✓ marks show under
+  colorblind. Chrome DevTools → Rendering → Emulate vision deficiencies on a Module 3, 4 or 6
+  chart: every red/blue pair still tells apart without color.
 
 Paste this into Claude Code with the Fable model, on the branch you're about to merge:
 

@@ -121,7 +121,7 @@
       },
       over: function (sX, sY, g) {
         return '<text class="lbl-fit" x="' + (g.m.l + 6) + '" y="' + (g.m.t + 14) + '">' + LF.esc(t("lblNaive")) + '</text>' +
-          '<text class="lbl-truth" x="' + (g.m.l + g.pw - 6) + '" y="' + (g.m.t + 14) + '" text-anchor="end" style="fill: var(--fix)">' + LF.esc(t("lblDelta")) + '</text>';
+          '<text class="lbl-fix" x="' + (g.m.l + g.pw - 6) + '" y="' + (g.m.t + 14) + '" text-anchor="end">' + LF.esc(t("lblDelta")) + '</text>';
       } });
     $("t2-x0").textContent = num(c.x0, 2);
     $("t2-true").textContent = num(d, 2);

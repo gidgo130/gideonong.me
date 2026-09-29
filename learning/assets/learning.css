@@ -1,8 +1,9 @@
 /* learning.css — shared look for every /learning page ("lab notebook").
    This section is a deliberate exception to the main site's styling (see CLAUDE.md → /learning).
    Layout: one notebook column; each trial = controls beside plots, stacking on phones.
-   Color meaning is fixed across the series: dashed ink = the truth, red pencil = what an
-   ordinary fit reports, blue pen = a corrected estimate. */
+   Color meaning is fixed across the series: dashed ink = the truth, red pencil (solid) = what
+   an ordinary fit reports, blue pen (dotted) = a corrected estimate. The dots are a second cue,
+   so the two fits tell apart in grayscale and under any color-vision deficiency. */
 
 :root {
   --paper: #f2f5f0;
@@ -83,7 +84,7 @@ p { margin: 0; max-width: 65ch; }
 .sw { width: 28px; height: 0; border-top: 3px solid; display: inline-block; }
 .sw.truth { border-top: 2px dashed var(--ink); }
 .sw.fit { border-color: var(--fit); }
-.sw.fix { border-color: var(--fix); }
+.sw.fix { border-color: var(--fix); border-top-style: dotted; }
 .sw.dot { width: 9px; height: 9px; border: 0; border-radius: 50%; background: var(--pt); }
 
 .takeaway-links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--font-display); font-size: 16px; padding-block: 6px 0; }
@@ -108,7 +109,7 @@ svg.chart { width: 100%; height: auto; display: block; background: var(--plot); 
 .ctl label, .ctl .lbl { font-family: var(--font-display); font-weight: 600; font-size: 16px; display: flex; justify-content: space-between; gap: 8px; }
 .ctl output { font-family: var(--font-mono); font-weight: 400; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ctl small { font-size: 14px; color: var(--muted); line-height: 1.4; }
-input[type=range] { width: 100%; accent-color: var(--fit); height: 28px; }
+input[type=range] { width: 100%; margin-inline: 0; accent-color: var(--fit); height: 28px; } /* no default 2px side margin: the track lines up with its label */
 .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .seg label { flex: 1 1 auto; text-align: center; padding: 7px 10px; font-family: var(--font-mono); font-size: 13px; cursor: pointer; border-left: 1px solid var(--rule); color: var(--muted); display: block; font-weight: 400; }
@@ -196,13 +197,14 @@ a.module-row:hover .m-title { color: var(--fix); }
 .chart .pt-time { fill: var(--ink); }
 .chart .truth { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
 .chart .fit { stroke: var(--fit); stroke-width: 2.75; fill: none; }
-.chart .fix { stroke: var(--fix); stroke-width: 2.75; fill: none; }
+.chart .fix { stroke: var(--fix); stroke-width: 2.75; fill: none; stroke-dasharray: 0.1 5.5; stroke-linecap: round; } /* dotted: see the note at the top */
 .chart .zero { stroke: var(--muted); stroke-width: 1.25; }
 .chart .bar { fill: var(--pt); fill-opacity: .55; }
 .chart .vline-truth { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; }
 .chart .vline-fit { stroke: var(--fit); stroke-width: 2.5; }
 .chart .lbl-fit { fill: var(--fit); font-family: var(--font-display); font-weight: 600; font-size: 13px; }
 .chart .lbl-truth { fill: var(--ink); font-family: var(--font-display); font-weight: 600; font-size: 13px; }
+.chart .lbl-fix { fill: var(--fix); font-family: var(--font-display); font-weight: 600; font-size: 13px; text-decoration: underline dotted; text-underline-offset: 3px; }
 
 /* ---------- added with Module 2 ---------- */
 .quiz h3 { font-size: 22px; }
@@ -214,7 +216,7 @@ a.module-row:hover .m-title { color: var(--fix); }
 .chart .bar-hi { fill: var(--fit); fill-opacity: .85; }
 .chart .thresh { stroke: var(--muted); stroke-width: 1.25; stroke-dasharray: 5 4; }
 .chart .fit-curve { stroke: var(--fit); stroke-width: 2.75; fill: none; }
-.chart .fix-curve { stroke: var(--fix); stroke-width: 2.75; fill: none; }
+.chart .fix-curve { stroke: var(--fix); stroke-width: 2.75; fill: none; stroke-dasharray: 0.1 5.5; stroke-linecap: round; }
 .chart .truth-curve { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
 .quiz .opts button:disabled { cursor: default; opacity: .55; }
 .quiz .opts button[aria-pressed="true"]:disabled { opacity: 1; }
@@ -228,7 +230,7 @@ a.module-row:hover .m-title { color: var(--fix); }
 .chart .pt-hi { fill: var(--fit); }
 .chart .pt-fix { fill: var(--fix); }
 .chart .ci-bar { stroke: var(--fit); stroke-width: 3; }
-.chart .ci-bar-fix { stroke: var(--fix); stroke-width: 3; }
+.chart .ci-bar-fix { stroke: var(--fix); stroke-width: 3; stroke-dasharray: 0.1 5.5; stroke-linecap: round; }
 .report { display: grid; gap: 8px; max-width: 100%; }
 .report-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--font-display); font-weight: 600; font-size: 16px; }
 .report pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--plot); border: 1px solid var(--rule); font-size: 14px; }
@@ -243,3 +245,80 @@ table.tools thead th { font-family: var(--font-display); font-size: 15px; }
 table.tools tbody th { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
 table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
 .chart .mean-tick { stroke: var(--ink); stroke-width: 3; }
+
+/* ==========================================================================
+   Viewing settings shared with the main site (About → Viewing settings)
+   Every /learning page's head snippet copies the saved choices onto <html> before first
+   paint, with the same attributes the main site uses (css/style.css §6):
+     data-theme="dark"|"light"   viewTheme        (palette blocks at the top of this file)
+     data-readability="1"        viewReadability
+     data-colorblind="1"         viewColorblind
+   There is no settings UI on /learning; the switches live on the About page.
+   ========================================================================== */
+
+/* ---- Readability: larger, looser body type, darker muted text, and every fixed-size text
+   element one step up. Charts are unaffected on purpose: SVG text scales with its viewBox,
+   not with the page font, so axes and labels keep their proportions at every size. -------- */
+:root[data-readability] body { font-size: 19px; line-height: 1.8; letter-spacing: .01em; }
+:root[data-readability] { --muted: #44524a; }
+@media (prefers-color-scheme: dark) {
+  :root[data-readability]:not([data-theme="light"]) { --muted: #b4c2b9; }
+}
+:root[data-readability][data-theme="dark"] { --muted: #b4c2b9; }
+:root[data-readability] .lead { font-size: 22px; }
+:root[data-readability] .eyebrow,
+:root[data-readability] .trial-num { font-size: 15px; }
+:root[data-readability] .series-bar,
+:root[data-readability] .legend-key,
+:root[data-readability] .ctl small,
+:root[data-readability] .ctl-note,
+:root[data-readability] .quiz .opts button,
+:root[data-readability] .foot,
+:root[data-readability] table.tools,
+:root[data-readability] .report pre { font-size: 16px; }
+:root[data-readability] figcaption,
+:root[data-readability] .readout .v,
+:root[data-readability] .takeaway-links { font-size: 17px; }
+:root[data-readability] .note,
+:root[data-readability] .quiz .answer,
+:root[data-readability] .readout div,
+:root[data-readability] .ctl label,
+:root[data-readability] .ctl .lbl,
+:root[data-readability] summary,
+:root[data-readability] .checklist div,
+:root[data-readability] .howto div,
+:root[data-readability] .checks label,
+:root[data-readability] .m-desc,
+:root[data-readability] .series-nav a,
+:root[data-readability] .series-nav .soon { font-size: 18px; }
+:root[data-readability] .ctl output { font-size: 15px; }
+:root[data-readability] .seg label,
+:root[data-readability] pre { font-size: 14px; }
+:root[data-readability] .note,
+:root[data-readability] figcaption,
+:root[data-readability] .ctl small,
+:root[data-readability] .ctl-note,
+:root[data-readability] .quiz .answer { line-height: 1.6; }
+/* Readout rows may wrap at phone width instead of squeezing the number. */
+:root[data-readability] .readout div { flex-wrap: wrap; }
+:root[data-readability] .readout dd { margin-left: auto; }
+/* Reference chips get their underline back so a link never depends on tint alone. */
+:root[data-readability] a.ref-chip { text-decoration: underline; }
+
+/* ---- Colorblind: orange/blue in place of red/blue (the pair that stays apart under protan,
+   deutan and tritan vision), plus a non-color cue on the remaining red/grey distinctions:
+     points   a miss / highlighted point (.pt-hi) wears an ink ring; plain points don't
+     bars     a flagged bar (.bar-hi) wears an ink outline
+     readouts a failed check (.v.bad) is marked ✕, a passed one (.v.good) ✓, besides bold
+   The corrected estimate is dotted in every mode (base rules above), as is its legend swatch
+   and its label underline. Meaning is unchanged: orange = what an ordinary fit reports or a
+   miss, blue = corrected. */
+:root[data-colorblind] { --fit: #b85000; --fix: #0072b2; }
+@media (prefers-color-scheme: dark) {
+  :root[data-colorblind]:not([data-theme="light"]) { --fit: #ff9a4a; --fix: #63b3f0; }
+}
+:root[data-colorblind][data-theme="dark"] { --fit: #ff9a4a; --fix: #63b3f0; }
+:root[data-colorblind] .chart .pt-hi,
+:root[data-colorblind] .chart .bar-hi { stroke: var(--ink); stroke-width: 1.25; }
+:root[data-colorblind] .v.bad::before { content: "✕\00a0" / ""; }
+:root[data-colorblind] .v.good::before { content: "✓\00a0" / ""; }
