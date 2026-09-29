@@ -74,8 +74,8 @@ Order: 2 → 1 → 3 → 4 → 6.
 ## Phase S — Spanish (REQUIRED, after the English set)
 - [X] ES strings for strings-common.js, the hub and every module (general Latin American
   Spanish; decimal comma through LF.num). Done 2026-09-28; see decision 13.
-- [ ] Spanish slides (slides.es.html per module, or one deck with both — decide at the time).
-  Not in the 2026-09-28 pass: the ES pages label the link "Diapositivas (en inglés)".
+- [X] Spanish slides: one `slides.es.html` per module (2026-09-29; decision 17). The ES pages'
+  Slides link opens it; the "(en inglés)" labels are gone.
 - [X] Add `data-es-ready` to each page as its ES is complete (un-hides the toggle): the hub
   and all six modules, 2026-09-28
 - [X] Spanish Python comments? Decided no: the .py scripts stay English (decision 13)
@@ -290,3 +290,39 @@ Order: 2 → 1 → 3 → 4 → 6.
    - **Verify after deploy.** Open /learning/fits/residual-plots/play/ on the Vercel preview: the
      editor appears within ~5 s and four figures within ~15 s; try /play without the slash; view
      source for noindex. Vercel serves .wasm as application/wasm and needs no headers for this.
+17. **Spanish slides** (2026-09-29). Gideon chose one deck per language per module over a
+   bilingual deck.
+   - **Files.** `learning/workshop/modules/<slug>/slides.es.qmd` → rendered, `role="img"`
+     stripped, copied to `learning/fits/<slug>/slides.es.html`. Same YAML as slides.qmd plus
+     `lang: es` (Quarto's own UI words in Spanish); OG tags point at slides.es.html with the ES
+     page lead and `og:locale` es_LA. The OG card image stays the English one, and its alt text says
+     so. noindex as everywhere.
+   - **Content.** Slide text and speaker notes follow decision 13 (tú, glossary, decimal commas,
+     "orden de medición", "corrida" only for a whole repeat). Code stays English: the Module 2
+     "make them yourself" block keeps English code and says so in its heading, with the Spanish
+     Excel names (PENDIENTE, INTERSECCION.EJE) under it. Module 6's "what to write down" block
+     is a report template, not code, so it's Spanish, matching the page's report text.
+   - **Figures without touching the public scripts.** `workshop/tools/figures-es.py <slug>` runs
+     `learning/fits/<slug>/<slug>.py` unchanged (same seeds, same data) and translates every
+     drawn text through `modules/<slug>/figures-es.json`, keyed by the English text with numbers
+     as `#`, with decimal commas. It sets the Spanish before tight_layout and saving, so the
+     layout fits the Spanish, and it fails on any text missing from the table. Output goes to
+     `figures-es/` (tracked, like figures/). This keeps decision 13's "the .py scripts stay
+     English" while the decks get Spanish figures. Long Spanish was shortened in the table
+     where it hit an edge (five labels/titles and one note).
+   - **Link.** learning-i18n.js: on a `data-i18n` link, a `<key>Href` string also sets the href.
+     `takeSlidesHref` (strings-common.js) is slides.html / slides.es.html, so the Slides link
+     follows the language, live on a switch; the HTML keeps slides.html as the no-JS fallback.
+     No index.html changed. Supersedes decision 13's "Diapositivas (en inglés)" label and the
+     hub's "Por ahora, solo en inglés".
+   - **The embedded interactive** in a Spanish deck follows the visitor's saved language, like
+     the page itself: Spanish for anyone who chose ES (or whose browser is Spanish), English for a
+     visitor whose saved choice is EN.
+   - **Quarto 1.10.18** (installed 2026-09-28, with TinyTeX and Jupyter; QUARTO_PYTHON points at
+     the pythoncore-3.14 Python). The English decks were re-rendered with it in the same pass so
+     both languages come from one version: every English slide is pixel-identical to its 1.7.32
+     render (a ~38-line diff per deck, Quarto's own CSS and generator tag).
+   - **Checked.** Every slide of all 12 decks at 1280×720: nothing overflows the slide, every
+     figure loads, console clean, the embedded interactive renders in the deck's language when
+     that language is saved. The Slides link was checked on all six pages, EN and ES, before and
+     after a language switch.

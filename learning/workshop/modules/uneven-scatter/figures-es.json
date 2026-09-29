@@ -1,0 +1,18 @@
+{
+  "measured y": "y medida",
+  "Sensor error # + #% of reading": "Error del sensor: # + #% de la lectura",
+  "fitted y": "y ajustada",
+  "residual": "residuo",
+  "Residuals fan out": "Los residuos se abren en abanico",
+  "fitted slope": "pendiente ajustada",
+  "repeats": "repeticiones",
+  "Weighted fit: tighter slopes": "Ajuste ponderado: pendientes más agrupadas",
+  "ordinary, SD #": "ordinario, desv. est. #",
+  "weighted, SD #": "ponderado, desv. est. #",
+  "x=# band": "banda x=#",
+  "slope": "pendiente",
+  "robust slope": "robusta",
+  "how often the #% promise held (%)": "se cumplió la promesa del #% (%)",
+  "Noise worst at high readings": "Más ruido en las lecturas altas",
+  "Noise worst at both ends": "Más ruido en ambos extremos"
+}

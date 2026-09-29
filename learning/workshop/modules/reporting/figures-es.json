@@ -1,0 +1,15 @@
+{
+  "Two #% bands": "Dos bandas del #%",
+  "next reading (prediction)": "siguiente lectura (predicción)",
+  "true line (confidence)": "recta verdadera (confianza)",
+  "half-width": "semiancho",
+  "Band half-width along x": "Semiancho de la banda a lo largo de x",
+  "next reading": "siguiente lectura",
+  "true line": "recta verdadera",
+  "how far the data sit from x = #": "qué tan lejos de x = # están los datos",
+  "± half-width": "± semiancho",
+  "#% range on the zero crossing": "intervalo del #% para el cruce por cero",
+  "ignoring correlation": "sin la correlación",
+  "with correlation (delta method)": "con la correlación (método delta)",
+  "actual spread over repeats": "dispersión real en las repeticiones"
+}

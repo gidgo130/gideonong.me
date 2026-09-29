@@ -157,7 +157,7 @@ window.LEARN_STRINGS = {
     keyFix: "Un ajuste mejor (con la forma correcta), o el ajuste sin tu punto",
     keyPts: "Puntos medidos",
     takeLabel: "Llévatelo:",
-    takeSlides: "Diapositivas (en inglés)",
+    takeSlides: "Diapositivas",
     takePy: "Script de Python",
     takePlay: "Juega con el código (en inglés)",
 

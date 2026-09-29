@@ -8,10 +8,14 @@ the section works is in `learning/README.md`.
 ```
 modules/<slug>/
   slides.qmd, custom.scss    Slide source (Quarto revealjs)
+  slides.es.qmd              The Spanish deck (same YAML plus lang: es; uses figures-es/)
   figures/                   PNGs made by the module's Python script (tracked)
+  figures-es/                The same PNGs with Spanish text (tracked; made by tools/figures-es.py)
+  figures-es.json            EN → ES table for every piece of text in the module's figures
   notebook.py                marimo notebook behind the module's "Play with the code" page
 tools/
   check-es.js                Checks the ES strings against EN
+  figures-es.py              Makes figures-es/ from the unchanged public script (see below)
   export-play.py             Exports notebook.py to learning/fits/<slug>/play/ (adds noindex etc.)
   make-og-cards.py           Makes the link-preview cards in learning/assets/og/ (fonts/ it fetches is git-ignored)
 .gitignore                   Keeps build output out of git (rendered slides.html, installer builds)
@@ -25,15 +29,43 @@ From `learning\workshop\modules\<slug>\` in PowerShell:
    `python ..\..\..\fits\<slug>\<slug>.py`
 2. `quarto render slides.qmd`
 3. Quarto marks the embedded interactive as an image (`role="img"`), which hides its controls
-   from screen readers. Remove it:
-   `(Get-Content slides.html -Raw) -replace '<iframe role="img" ', '<iframe ' | Set-Content slides.html -Encoding utf8`
-4. Copy it to the page folder (the tracked copy):
-   `Copy-Item slides.html ..\..\..\fits\<slug>\slides.html`
+   from screen readers. Remove it and copy the deck to the page folder (the tracked copy) in one
+   step. This writes UTF-8 without a byte-order mark; `Set-Content -Encoding utf8` in Windows
+   PowerShell 5.1 would add one:
+   `$h = [IO.File]::ReadAllText("$PWD\slides.html") -replace '<iframe role="img" ', '<iframe '; [IO.File]::WriteAllText("$PWD\..\..\..\fits\<slug>\slides.html", $h, (New-Object Text.UTF8Encoding $false))`
 
 The `slides.html` left here is ignored by git. Its "Try it yourself" slide is blank here,
-because it loads the `index.html` next to it, which only exists in the page folder.
+because it loads the `index.html` next to it, which only exists in the page folder. Quarto
+warns "Could not fetch resource index.html" for the same reason; that warning is expected.
 
-Quarto: install from https://quarto.org/docs/get-started/ and the Quarto extension for VS Code.
+Quarto: 1.10.18 on Gideon's machine (winget `Posit.Quarto`; every deck was re-rendered with it
+on 2026-09-29, pixel-identical to the 1.7.32 renders). Optional: the Quarto extension for VS Code.
+
+## Rebuild a module's Spanish deck
+
+Same steps, with two differences: the figures come from `tools/figures-es.py`, and the deck is
+`slides.es.qmd` → `slides.es.html`.
+
+1. Make the Spanish figures (from the repo root; they land in `modules\<slug>\figures-es\`):
+   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\figures-es.py <slug>`
+2. From `learning\workshop\modules\<slug>\`: `quarto render slides.es.qmd`
+3. Step 3 above with `slides.es.html` in both places.
+
+`figures-es.py` runs the module's public script (`learning/fits/<slug>/<slug>.py`) unchanged,
+so the data and seeds match the English figures exactly and the script stays English. It
+translates every piece of text matplotlib draws (titles, axis labels, legends, notes, ticks)
+through `figures-es.json` and turns decimal points into commas. The table's keys are the
+English text with each number written as `#` (`"without it: #"` → `"sin él: #"`); the numbers
+come back in the same order. Text that is only numbers, symbols or one letter needs no entry.
+The Spanish goes in before `tight_layout` and before saving, so the layout fits the Spanish.
+
+- `figures-es.py <slug> --list` prints every key the script draws, as a JSON skeleton for a new
+  module's table (it writes nothing).
+- A run fails (exit 1) and lists the text if any key is missing from the table, and warns about
+  table entries the script never drew, so no English slips into a Spanish figure.
+- When the script's figure text changes, re-run it: the missing keys show up there.
+- Look at the result: Spanish runs longer, so a title or note can hit the edge or another mark.
+  Shorten the Spanish in the table; never change the public script for it.
 
 ## Export a module's "Play with the code" page (marimo)
 

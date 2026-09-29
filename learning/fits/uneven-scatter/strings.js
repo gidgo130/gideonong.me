@@ -124,7 +124,7 @@ window.LEARN_STRINGS = {
     keyFix: "Ajuste ponderado y su banda",
     keyPts: "Puntos medidos",
     takeLabel: "Llévatelo:",
-    takeSlides: "Diapositivas (en inglés)",
+    takeSlides: "Diapositivas",
     takePy: "Script de Python",
 
     pctLabel: "Error del sensor, % de la lectura",

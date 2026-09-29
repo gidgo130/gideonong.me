@@ -1,0 +1,22 @@
+{
+  "fitted y": "y ajustada",
+  "residual\n(vs fitted value)": "residuo\n(contra el valor ajustado)",
+  "None": "Ninguno",
+  "Curve": "Curva",
+  "Fan": "Abanico",
+  "Drift": "Deriva",
+  "Outlier": "Atípico",
+  "run number": "número de medición",
+  "residual\n(in run order)": "residuo\n(en orden de medición)",
+  "temperature (°C)": "temperatura (°C)",
+  "Straight line: R² = #": "Recta: R² = #",
+  "Exponential (the physics): R² = #": "Exponencial (la física): R² = #",
+  "time (min)": "tiempo (min)",
+  "residual (°C)": "residuo (°C)",
+  "leverage #\nstudentized r #\nCook's D #": "apalancamiento #\nr estudentizado #\nD de Cook #",
+  "Lever point on the line": "Alto apalancamiento, sobre la recta",
+  "without it: #": "sin él: #",
+  "with it: #": "con él: #",
+  "Outlier in the middle": "Atípico en el medio",
+  "Influential point": "Punto influyente"
+}

@@ -132,7 +132,7 @@ window.LEARN_STRINGS = {
     keyFix: "Un segundo método para comparar",
     keyPts: "Puntos medidos",
     takeLabel: "Llévatelo:",
-    takeSlides: "Diapositivas (en inglés)",
+    takeSlides: "Diapositivas",
     takePy: "Script de Python",
     btnNewSample: "Generar datos nuevos",
     pmFmt: "± {h}",

@@ -30,7 +30,7 @@ window.LEARN_STRINGS = {
     how1Title: "Una página interactiva",
     how1Body: "Deslizadores y experimentos simulados. No hay que instalar nada.",
     how2Title: "Diapositivas",
-    how2Body: "Una presentación corta para exponer el tema o repasarlo rápido. Por ahora, solo en inglés.",
+    how2Body: "Una presentación corta para exponer el tema o repasarlo rápido.",
     how3Title: "Un script de Python",
     how3Body: "Reproduce todas las gráficas. Corre tal cual en Google Colab.",
     noscript: "La lista de módulos y las páginas interactivas necesitan JavaScript activado.",

@@ -111,7 +111,7 @@ window.LEARN_STRINGS = {
     keyFit: "La recta o curva ajustada",
     keyPts: "Puntos medidos",
     takeLabel: "Llévatelo:",
-    takeSlides: "Diapositivas (en inglés)",
+    takeSlides: "Diapositivas",
     takePy: "Script de Python",
 
     // Trial 1

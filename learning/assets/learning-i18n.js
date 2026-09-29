@@ -4,7 +4,7 @@
 //
 // Strings: LEARN_STRINGS_COMMON (assets/strings-common.js) merged with the page's LEARN_STRINGS
 // (its own strings.js). A missing ES string falls back to EN.
-// Markup:  data-i18n="key"        → textContent
+// Markup:  data-i18n="key"        → textContent (on a link, a "<key>Href" string also sets href)
 //          data-i18n-html="key"   → innerHTML (our own authored strings only; keys end in "Html")
 //          data-i18n-aria="key"   → aria-label
 //          data-i18n-title="key"  → document.title (put it on <title>)
@@ -105,6 +105,9 @@
         console.warn("[learning i18n] markup differs from EN string:", k);
       }
       el.textContent = t(k);
+      // A link whose key has a "<key>Href" string takes that address too (the slides link opens
+      // slides.es.html in Spanish). The HTML keeps the English href as the no-JS fallback.
+      if (el.tagName === "A" && S.en[k + "Href"] !== undefined) el.setAttribute("href", t(k + "Href"));
     });
     document.querySelectorAll("[data-i18n-html]").forEach(function (el) { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
     linkChips();

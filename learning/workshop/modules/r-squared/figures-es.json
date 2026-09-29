@@ -1,0 +1,18 @@
+{
+  "I:  R² = #": "I:  R² = #",
+  "II:  R² = #": "II:  R² = #",
+  "III:  R² = #": "III:  R² = #",
+  "IV:  R² = #": "IV:  R² = #",
+  "fitted y": "y ajustada",
+  "residual": "residuo",
+  "Same sensor, two test ranges": "El mismo sensor, dos rangos de prueba",
+  "# to #: R² #, residual SD #": "# a #: R² #, desv. est. de los residuos #",
+  "range of x tested (# to …)": "rango de x probado (# a …)",
+  "expected R²": "R² esperado",
+  "R² you'd expect, by test range (noise SD #)": "R² esperado según el rango (desv. est. #)",
+  "Twelve readings, two fits": "Doce lecturas, dos ajustes",
+  "degree #: R² #": "grado #: R² #",
+  "polynomial degree": "grado del polinomio",
+  "RMS error (capped at #)": "error RMS (tope en #)",
+  "Error on a point the fit hasn't seen": "Error en un punto que el ajuste no vio"
+}

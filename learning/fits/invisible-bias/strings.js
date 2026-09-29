@@ -143,7 +143,7 @@ window.LEARN_STRINGS = {
     keyFix: "Una estimación corregida",
     keyPts: "Puntos medidos",
     takeLabel: "Llévatelo:",
-    takeSlides: "Diapositivas (en inglés)",
+    takeSlides: "Diapositivas",
     takePy: "Script de Python",
 
     // Trial 1

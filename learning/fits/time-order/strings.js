@@ -127,7 +127,7 @@ window.LEARN_STRINGS = {
     keyFix: "El mejor método",
     keyPts: "Puntos medidos",
     takeLabel: "Llévatelo:",
-    takeSlides: "Diapositivas (en inglés)",
+    takeSlides: "Diapositivas",
     takePy: "Script de Python",
     btnNewSample: "Generar datos nuevos",
     pctOf: "{p}%",

@@ -1,0 +1,20 @@
+{
+  "sample number": "número de muestra",
+  "residual": "residuo",
+  "Residuals in time order": "Residuos en orden temporal",
+  "carry-over #": "arrastre #",
+  "lag (samples)": "retardo (muestras)",
+  "autocorrelation": "autocorrelación",
+  "Autocorrelation of the residuals": "Autocorrelación de los residuos",
+  "time (min)": "tiempo (min)",
+  "ln(T − T∞)": "ln(T − T∞)",
+  "ln(T − T∞): the tail's noise explodes": "ln(T − T∞): el ruido de la cola se dispara",
+  "noise # °C": "ruido # °C",
+  "noise #, T_inf off by +# °C": "ruido #, T∞ con +# °C de error",
+  "τ (min)": "τ (min)",
+  "Average fitted τ over # recordings": "τ ajustada promedio en # registros",
+  "log, then line": "log y luego recta",
+  "fit the exponential": "ajustar la exponencial",
+  "steady value": "valor estable",
+  "Five runs: ranges catch # in #% (samples) vs #% (runs)": "Contienen #: #% contando muestras, #% contando corridas"
+}
