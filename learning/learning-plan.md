@@ -97,12 +97,11 @@ Order: 2 → 1 → 3 → 4 → 6.
   Start Menu shortcut. Pages already work from disk; fonts fall back to system fonts offline.
 
 ## Optional later
-- [ ] marimo "Play with the code" notebooks per module (served from the site over HTTP).
-  **Pilot built for residual-plots (2026-09-28), awaiting Gideon's review before the rest:**
-  see decision 16 for the cost numbers and the Colab comparison. Source
-  learning/workshop/modules/residual-plots/notebook.py, export
-  learning/workshop/tools/export-play.py → learning/fits/residual-plots/play/, link
-  "Play with the code" beside Slides / Python script (`takePlay`, hidden from file:).
+- [X] marimo "Play with the code" notebooks per module (served from the site over HTTP).
+  Pilot for residual-plots 2026-09-28 (decision 16: cost numbers, Colab comparison); the
+  other five 2026-09-29, same style, NumPy + Matplotlib only, repeat-the-experiment loops
+  vectorized for Pyodide. Source learning/workshop/modules/<slug>/notebook.py, export
+  learning/workshop/tools/export-play.py → learning/fits/<slug>/play/index.html.
 - [X] Honor About's readability / colorblind settings on /learning pages (2026-09-28, decision 15)
 
 ---

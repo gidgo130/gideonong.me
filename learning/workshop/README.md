@@ -73,7 +73,7 @@ The Spanish goes in before `tight_layout` and before saving, so the layout fits 
 `modules/<slug>/notebook.py` is a marimo notebook: the module's Python with short markdown
 cells and marimo sliders for the page's knobs. The site serves it as an editable, in-browser
 notebook at `learning/fits/<slug>/play/` (Python runs through Pyodide, fetched from a CDN on
-first load, so the page only works over HTTP, never from disk). Pilot: residual-plots.
+first load, so the page only works over HTTP, never from disk). Every module has one.
 
 Rebuild it from the repo root (the marimo Python, not `python`):
 
