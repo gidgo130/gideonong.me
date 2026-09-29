@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Content — Site editor</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Site editor</div>
+  <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/content">Content</a><a href="/cv">CV &amp; résumé</a><a href="/transcript">Transcript</a></nav>
+  <nav class="tabs subtabs" id="subtabs" aria-label="Content"><a href="#projects" data-tab="projects">Projects</a><a href="#experience" data-tab="experience">Experience</a><a href="#tags" data-tab="tags">Tags</a></nav>
+  <span class="spacer"></span>
+  <a id="previewLink" class="ghost" href="#" target="_blank" rel="noopener">Preview ↗</a>
+  <button id="reviewBtn" class="primary" type="button">Review &amp; save <span class="badge" id="draftCount" hidden>0</span></button>
+</header>
+
+<div id="banners"></div>
+
+<div class="layout content-layout">
+  <aside id="list" aria-label="Entries"></aside>
+  <main id="form" aria-live="polite"></main>
+</div>
+
+<dialog id="addDlg" class="dlg narrow">
+  <form method="dialog">
+    <h2 id="addTitle">Add</h2>
+    <div class="form-grid">
+      <label class="field"><span>Slug (URL name, lowercase-with-hyphens)</span><input id="addSlug" type="text" autocomplete="off" spellcheck="false"></label>
+      <label class="field"><span id="addEnLabel">Title (EN)</span><input id="addEn" type="text"></label>
+      <label class="field"><span id="addEsLabel">Title (ES)</span><input id="addEs" type="text"></label>
+    </div>
+    <p class="muted small" id="addNote"></p>
+    <div class="dlg-actions"><span class="spacer"></span><button type="submit" class="ghost">Cancel</button><button type="button" class="primary" id="addGo">Add</button></div>
+  </form>
+</dialog>
+
+<dialog id="reviewDlg" class="dlg">
+  <form method="dialog">
+    <h2>Review &amp; save <span class="muted">content</span></h2>
+    <div id="reviewBody"></div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost danger" id="discardBtn">Discard all drafts</button>
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Back</button>
+      <button type="button" class="primary" id="saveBtn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/static/common.js"></script>
+<script src="/static/content.js"></script>
+</body>
+</html>

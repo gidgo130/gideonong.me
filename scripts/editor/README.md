@@ -1,10 +1,10 @@
 # Local content editor (dev-side tool, never deployed)
 
 Edits the site's content files in place from a local web page shown in its own window. Phase 1
-edits the EN/ES strings in `js/translations.js` (**Site text** tab); Phase 1b checks and
-publishes the CV / résumé PDFs (**CV & résumé** tab); Phase 3 runs the transcript scripts and
-edits their inputs (**Transcript** tab); later phases add projects, experience, tags and
-images (see `staging/editor-plan.md`). `scripts/` is in
+edits the EN/ES strings in `js/translations.js` (**Site text** tab); Phase 2 edits projects,
+experience and tags as entries (**Content** tab); Phase 1b checks and publishes the CV /
+résumé PDFs (**CV & résumé** tab); Phase 3 runs the transcript scripts and edits their inputs
+(**Transcript** tab); images come later (see `staging/editor-plan.md`). `scripts/` is in
 `.vercelignore`, so nothing here is published. The tool never runs a git write command — you
 commit.
 
@@ -61,6 +61,44 @@ keys the draft **touches**, block — anything pre-existing elsewhere is shown i
 | HTML in a string | Voice words (leveraged, spearheaded, passionate, showcasing, moreover…) |
 | File outside the supported JS subset, or a key that appears twice in one object (the file becomes read-only; the message names the line) | |
 | The file could not be written (open in another program): the save answers "close it and retry", nothing changes, drafts are kept | |
+
+## Content tab (Phase 2: projects, experience, tags)
+Entries, not keys. The left list shows projects in the order the site renders them (featured,
+then the index with pinned first, then unlisted / hidden), roles by date, and the tag
+vocabulary with how often each tag is used. The form on the right edits one entry:
+- every text field is EN | ES side by side (title, description, long description, search
+  text, alt texts, sub-page sections / facts / photos / credit; role, organization, bullets);
+  the key (`proj<SlugCamel>Title`, `expBakerHughesBullet3`, …) is named by the CLAUDE.md
+  conventions and never shown. Text of keys that already exist is a Site text draft (the two
+  tabs share one translations.js review); new keys are inserted after the entry's block;
+- context, listing, "Part of" role, tags, dates (season / month / year, optional end, with the
+  sortDate the dev check wants suggested), featured / order / pinned, image and thumbnail
+  pickers (files under `assets/images/`), home layout and collage gallery, sub-page content
+  (sections, quick facts, photos, report PDF, credit) and **Create sub-page** (copies the
+  `projects/g-view.html` shell with the slug, title and description); layout, current-role
+  flag, band colors and visibility for roles;
+- **Add project / role** (slug + EN/ES title; new entries start hidden with today's season),
+  **Hide** (listing → hidden / visible → false), **Delete…** (confirmed; the entry, the keys
+  nothing else references, and the sub-page — moved to the backup set); **Add tag** and delete
+  (only when no entry uses it). The slug never changes here (a rename wizard comes later).
+
+Saving writes the data files with span edits that touch only the changed lines (comments,
+blank lines and every untouched entry stay byte for byte), translations.js with the new /
+removed keys, and the shells; every file is backed up first and re-parsed by the tokenizer
+before it is written. The :5501 preview serves all drafts (data files, keys, shells), so a
+hidden test entry can be checked on `/projects/<slug>.html` before it is saved or listed.
+
+The dev check (`siteData.checkData`, js/data-helpers.js) is ported to Python
+(`core/site/datacheck.py`) and gates every save — errors block, warnings do not, only errors
+the draft introduces or touches count (as on the Site text tab):
+
+| Errors | Warnings |
+|---|---|
+| Missing or empty EN/ES text on a visible entry; TODO or HTML in it; a blocklist hit | Empty text on a hidden entry; ES = EN; voice words |
+| Unknown tag id; duplicate slug; "Part of" role missing or hidden | Unused `proj…` / `exp…` / `tag…` keys |
+| Image, thumbnail, gallery, photo, PDF or sub-page file that does not exist | Two visible roles marked current |
+| Malformed `dates`; sortDate that disagrees; unknown listing / context / layout / homeLayout | ES tag label much longer than EN |
+| More than 3 featured; featured on a non-index entry; gallery / sub-page shape problems | |
 
 ## CV & résumé tab (Phase 1b: check & publish, no editing)
 You keep editing the six masters in Word (`staging/cv-masters/`, gitignored). The tab only
@@ -192,7 +230,14 @@ validation rules, drafts → review → save → changed-on-disk refusal and aut
 restricted to `references/transcripts/` and backing up first (stand-in parser), the real
 builder run docx-only (plus `--strict` stopping), publish plan / apply / gates (not built,
 stale, mixed dates, blocklist), the job runner and subprocess streaming, and the
-`/api/transcript/*` token checks.
+`/api/transcript/*` token checks. Phase 2 (`test_spans.py`, `test_content.py`, on temp copies
+of the data files with stand-in assets): every span edit changes only its lines and re-parses,
+comments between entries survive a delete, the emitter reproduces the files' own blocks,
+key add / delete lands in the right translations blocks, key naming and referenced-key
+rules, rendered order, the dev-check port (no errors on today's files, every seeded problem
+caught), and the service: add → sub-page → index → save → delete → save leaves both data files
+and translations.js byte-identical, bullets reorder, current-role flag, tag add / refuse /
+delete, blocked saves, changed-on-disk refusal, autosave.
 
 ## Files
 | File | What it is |
@@ -213,11 +258,18 @@ stale, mixed dates, blocklist), the job runner and subprocess streaming, and the
 | `core/cv/scans.py` | Blocklist, voice words, EN/ES parity |
 | `core/cv/publish.py` | Publish plan + apply into assets/pdfs/, manifest regeneration |
 | `core/cv/service.py` | Cached checks, the background export job, publish — what the CV page talks to |
+| `core/spans.py` | Span edits on the token tree: replace any value, insert / delete properties and array items, re-parse check |
+| `core/emit.py` | JS values in the data files' own style (inline vs one-per-line by property name) |
+| `core/site/datafiles.py` | The three data files as entry dicts; minimal span edits on save |
+| `core/site/keys.py` | Key naming by the conventions; which fields hold keys; slug rules |
+| `core/site/order.py` | Rendered order (featured / index / roles), date rendering, suggested sortDate |
+| `core/site/datacheck.py` | Python port of `siteData.checkData` as errors / warnings |
+| `core/site/service.py` | Content drafts, text-field resolution, add / delete / shells / tags, review, save, preview overlay |
 | `core/jsonfile.py` | JSON file that re-emits byte-for-byte (layout detected and proven on load), path edits, change lists |
 | `core/jobs.py` | One background job at a time with a live log; subprocess runner that streams output |
 | `core/transcript/titles.py` | course-titles.json rows joined with transcript-data.json; edits; validation |
 | `core/transcript/profile.py` | Validation for profile.json and adjustments.json |
 | `core/transcript/service.py` | Drafts / review / save of the inputs, parse and build jobs, publish — what the Transcript page talks to |
-| `static/` | The pages: index.html + app.js (site text), cv.html + cv.js, transcript.html + transcript.js, common.js, app.css |
+| `static/` | The pages: index.html + app.js (site text), content.html + content.js, cv.html + cv.js, transcript.html + transcript.js, common.js, app.css |
 | `tests/` | unittest suite |
 | `make-shortcut.ps1` | Desktop shortcut with the full pythonw.exe path |

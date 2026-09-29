@@ -42,7 +42,12 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      (export through a private Word instance; one-line fit, one-page résumé,
                      blocklist scans; never edits a master). Phase 3 (core/transcript/) runs
                      scripts/transcript/ as subprocesses, edits its JSON inputs losslessly,
-                     builds PDFs into staging/transcript-out/ and publishes them. Its .local/
+                     builds PDFs into staging/transcript-out/ and publishes them. Phase 2
+                     (core/site/, core/spans.py) edits projects-data.js, experience-data.js,
+                     tags-data.js and the matching translations keys in place with span edits
+                     (keys named by the conventions below, never shown), creates/deletes
+                     projects/<slug>.html shells, and gates saves with a Python port of
+                     siteData.checkData (core/site/datacheck.py — keep the two in step). Its .local/
                      (backups, logs, drafts, WebView2 storage) is gitignored. It never runs
                      git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit
@@ -55,7 +60,8 @@ learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, lear
                     strings-common.js, modules.js) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
-                    slides.html, <slug>.py, and any cited papers (<author>-<year>.pdf, scrubbed)
+                    slides.html, slides.es.html, <slug>.py, and any cited papers
+                    (<author>-<year>.pdf, scrubbed)
 CLAUDE.md           This file
 plan.md             Development roadmap
 
@@ -387,7 +393,9 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
   EN/ES string), `page` problems (bad shape, missing keys, page set with subpageUrl ""),
   one HEAD per js/docs-data.js path and one HEAD per non-empty subpageUrl that returns
   non-2xx. Keep the console clean. (Live Server answers HEAD with a body; Chromium logs
-  those as aborted network requests, not console messages — ignore them.)
+  those as aborted network requests, not console messages — ignore them.) The local editor
+  (scripts/editor/core/site/datacheck.py) ports this list to Python and blocks a save on the
+  error-level items; when a rule is added here, add it there too (and vice versa).
 
 ## Animation and scroll behavior
 - NO page-load animations — no rising text, no fading on arrival

@@ -40,6 +40,7 @@ from core.backups import Backups, atomic_write  # noqa: E402
 from core.cv.service import CvService  # noqa: E402
 from core.jobs import JobRunner  # noqa: E402
 from core.jsdata import JsDataError, sha256_bytes  # noqa: E402
+from core.site.service import ContentService  # noqa: E402
 from core.site_text import SiteText, hidden_key_prefixes  # noqa: E402
 from core.transcript.service import TranscriptService  # noqa: E402
 
@@ -83,6 +84,8 @@ class EditorState:
         # Phase 3: transcript inputs, parse / build jobs, publish
         self.transcript = TranscriptService(self.repo_root, self.local_dir, self.backups, self.jobs)
         self.load()
+        # Phase 2: projects / experience / tags (needs self.site loaded first)
+        self.content = ContentService(self)
 
     def busy(self) -> bool:
         """True while a background job (a Word export, a transcript parse or build) is running."""
@@ -90,7 +93,7 @@ class EditorState:
 
     def draft_count(self) -> int:
         """Unsaved edits across the tools (the close prompt)."""
-        return len(self.drafts) + self.transcript.draft_count()
+        return len(self.drafts) + self.transcript.draft_count() + self.content.draft_count()
 
     # ------------------------------------------------------------- loading
     def load(self) -> None:
@@ -140,9 +143,15 @@ class EditorState:
 
     def preview_overrides(self) -> dict:
         with self.lock:
-            if self.site is None or not self.drafts:
+            if self.site is None:
                 return {}
-            return {SiteText.REL_PATH: self.site.render(self.drafts)}
+            out = {}
+            if self.drafts:
+                out[SiteText.REL_PATH] = self.site.render(self.drafts)
+            content = getattr(self, "content", None)
+            if content is not None:
+                out.update(content.preview_overrides())  # data files, new keys, shells
+            return out
 
     # ------------------------------------------------------------- autosave
     def _read_autosave(self) -> Optional[dict]:
@@ -429,6 +438,115 @@ def create_app(state: EditorState) -> Flask:
             return deny(500, f"could not open the folder: {e}")
         return jsonify(ok=True, path=path)
 
+    # ---------------------------------------------------------- content (projects / experience / tags)
+    @app.get("/content")
+    def content_page():
+        return send_from_directory(HERE / "static", "content.html")
+
+    @app.get("/api/content/state")
+    def content_state():
+        with state.lock:
+            return jsonify(state.content.state_json())
+
+    @app.post("/api/content/reload")
+    def content_reload():
+        with state.lock:
+            state.load()
+            state.content.load()
+            return jsonify(state.content.state_json())
+
+    def _content_call(fn, *args, **kw):
+        try:
+            with state.lock:
+                result = fn(*args, **kw)
+                return jsonify(ok=True, result=result, **state.content.state_json())
+        except KeyError as e:
+            return deny(404, f"unknown entry {e}")
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+
+    @app.post("/api/content/field")
+    def content_field():
+        b = request.get_json(silent=True) or {}
+        path = b.get("path")
+        if not isinstance(b.get("file"), str) or not isinstance(b.get("slug"), str) or not isinstance(path, list) or not path:
+            return deny(400, "file, slug and a path list are required")
+        if not all(isinstance(p, (str, int)) and not isinstance(p, bool) for p in path):
+            return deny(400, "path parts must be strings or integers")
+        return _content_call(state.content.set_field, b["file"], b["slug"], path, b.get("value"), bool(b.get("delete")))
+
+    @app.post("/api/content/text")
+    def content_text():
+        b = request.get_json(silent=True) or {}
+        if not all(isinstance(b.get(k), str) for k in ("file", "slug", "field", "lang", "value")):
+            return deny(400, "file, slug, field, lang and value (strings) are required")
+        return _content_call(state.content.set_text, b["file"], b["slug"], b["field"], b["lang"], b["value"])
+
+    @app.post("/api/content/add")
+    def content_add():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("file"), str) or not isinstance(b.get("slug"), str):
+            return deny(400, "file and slug are required")
+        return _content_call(state.content.add_entry, b["file"], b["slug"].strip(), str(b.get("titleEn") or ""), str(b.get("titleEs") or ""))
+
+    @app.post("/api/content/delete")
+    def content_delete():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("file"), str) or not isinstance(b.get("slug"), str):
+            return deny(400, "file and slug are required")
+        return _content_call(state.content.delete_entry, b["file"], b["slug"])
+
+    @app.post("/api/content/shell")
+    def content_shell():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("slug"), str):
+            return deny(400, "slug is required")
+        return _content_call(state.content.create_shell, b["slug"])
+
+    @app.post("/api/content/tag")
+    def content_tag():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("id"), str):
+            return deny(400, "id is required")
+        return _content_call(state.content.add_tag, b["id"].strip(), str(b.get("en") or ""), str(b.get("es") or ""))
+
+    @app.post("/api/content/tag/delete")
+    def content_tag_delete():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("id"), str):
+            return deny(400, "id is required")
+        return _content_call(state.content.delete_tag, b["id"])
+
+    @app.post("/api/content/drafts/discard")
+    def content_discard():
+        with state.lock:
+            state.content.discard_drafts()
+        return jsonify(ok=True, draftCount=0)
+
+    @app.get("/api/content/review")
+    def content_review():
+        with state.lock:
+            return jsonify(state.content.review())
+
+    @app.post("/api/content/save")
+    def content_save():
+        with state.lock:
+            result = state.content.save()
+        return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.post("/api/content/autosave/restore")
+    def content_autosave_restore():
+        with state.lock:
+            return jsonify(ok=True, **state.content.restore_autosave())
+
+    @app.post("/api/content/autosave/discard")
+    def content_autosave_discard():
+        with state.lock:
+            state.content.discard_autosave()
+        return jsonify(ok=True)
+
     # ---------------------------------------------------------- transcript
     @app.get("/transcript")
     def transcript_page():
@@ -568,6 +686,7 @@ def create_app(state: EditorState) -> Flask:
     @app.post("/api/reload")
     def reload():
         state.load()
+        state.content.load()
         return jsonify(state.state_json())
 
     @app.post("/api/draft")
@@ -639,6 +758,7 @@ def create_app(state: EditorState) -> Flask:
             return deny(409, "js/translations.js could not be written — it is probably open in another program. Close it and retry.")
         state.load()
         state.transcript.load()  # a set may hold transcript inputs; drafts there are re-applied
+        state.content.load()
         log.info("restored %s (backup %s)", set_id, result["backup"])
         return jsonify(ok=True, **result)
 

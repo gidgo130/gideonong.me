@@ -18,7 +18,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 
 from . import validate
 from .jsdata import Document, JsDataError, ObjectNode, StringNode, Property, comment_text, sha256_bytes
@@ -219,15 +219,80 @@ class SiteText:
             out[k] = v
         return out
 
-    def render(self, edits: dict[str, str]) -> bytes:
-        """The file bytes with the given edits applied and nothing else changed."""
-        tok_edits: dict[int, str] = {}
+    def render(self, edits: dict[str, str], adds: Optional[dict] = None, removes: Optional[Iterable[str]] = None) -> bytes:
+        """The file bytes with the given edits applied and nothing else changed.
+
+        `adds`: {key: {"en": str, "es": str}} — new keys, inserted in both language
+        objects after the last key of the same entry (same proj<SlugCamel> / exp<SlugCamel>
+        prefix) or, for a new entry, after the last key of the same family (proj / exp /
+        tag) with a blank line before it. `removes`: keys deleted from both objects.
+        """
+        if not adds and not removes:
+            tok_edits: dict[int, str] = {}
+            for k, v in self.normalize_edits(edits).items():
+                lang, _, key = k.partition(".")
+                p = self.objs[lang].get(key)
+                assert p is not None and isinstance(p.value, StringNode)
+                tok_edits[p.value.tok] = v
+            return self.doc.to_bytes(tok_edits)
+        from . import spans
+        from .emit import scalar
+
+        removes = set(removes or ())
+        span_edits: list[spans.Edit] = []
         for k, v in self.normalize_edits(edits).items():
             lang, _, key = k.partition(".")
+            if key in removes:
+                continue
             p = self.objs[lang].get(key)
             assert p is not None and isinstance(p.value, StringNode)
-            tok_edits[p.value.tok] = v
-        return self.doc.to_bytes(tok_edits)
+            span_edits.append(spans.replace_string(self.doc, p.value, v))
+        for lang, obj in self.objs.items():
+            for key in removes:
+                if obj.get(key) is not None:
+                    span_edits.append(spans.delete_prop(self.doc, obj, key))
+            # new keys: group per anchor so several keys for one entry chain in order
+            planned: dict[Optional[str], list[tuple[str, str, bool]]] = {}
+            existing = [p.key for p in obj.props if p.key not in removes]
+            for key, vals in (adds or {}).items():
+                if obj.get(key) is not None:
+                    continue  # already there: treat as an edit of that key instead
+                after, blank = self._anchor(existing, key)
+                planned.setdefault(after, []).append((key, scalar(vals.get(lang, "")), blank))
+            for after, items in planned.items():
+                # insert in reverse so the first planned key ends up right after the anchor
+                text = "".join(_line(key, val, i == 0 and blank) for i, (key, val, blank) in enumerate(items))
+                span_edits.append(self._insert_block(obj, after, text))
+        new_doc = spans.apply(self.doc, span_edits)
+        return new_doc.to_bytes({})
+
+    def _anchor(self, existing: list[str], key: str) -> tuple[Optional[str], bool]:
+        """(key to insert after, blank line before?) for a new key."""
+        prefix = entry_prefix(key)
+        same_entry = [k for k in existing if prefix and k.startswith(prefix) and (len(k) == len(prefix) or k[len(prefix)].isupper() or k[len(prefix)].isdigit())]
+        if same_entry:
+            return same_entry[-1], False
+        fam = family(key)
+        same_family = [k for k in existing if family(k) == fam] if fam else []
+        if same_family:
+            return same_family[-1], True
+        return existing[-1] if existing else None, True
+
+    def _insert_block(self, obj: ObjectNode, after: Optional[str], text: str):
+        """Insert already-formatted lines (each starting with a newline) after `after`."""
+        from . import spans
+
+        if after is None:
+            pos = self.doc.tokens[obj.first].end
+            return (pos, pos, text + ("," if obj.props else ""))
+        prop = obj.get(after)
+        comma = spans._comma_after(self.doc, prop.last)
+        if comma is not None:
+            pos = spans._end_with_trailing(self.doc, prop.last)
+            return (pos, pos, text.rstrip(",") + ",")
+        pos = self.doc.tokens[prop.last].end
+        return (pos, pos, "," + text.rstrip(","))
+
 
     def to_json(self) -> dict:
         entries = {}
@@ -298,3 +363,29 @@ def _str(obj: ObjectNode, key: str) -> Optional[str]:
 def _bool(obj: ObjectNode, key: str):
     v = obj.value(key)
     return getattr(v, "value", None) if v is not None and v.__class__.__name__ == "BoolNode" else None
+
+
+# ------------------------------------------------------------- key families (Phase 2)
+
+
+def _line(key: str, value_text: str, blank_before: bool) -> str:
+    return ("\n\n" if blank_before else "\n") + "    " + key + ": " + value_text + ","
+
+
+_FAMILY_RE = re.compile(r"^(proj|exp|tag)(?=[A-Z0-9])")
+_ENTRY_RE = re.compile(r"^((?:proj|exp)[A-Z][A-Za-z0-9]*?)(Title|Desc|LongDesc|Alt|Search|Gallery\d+Alt|Section\d+(?:Heading|Body)|Fact\d+(?:Label|Value)|Photo\d+Alt|Credit|Role|Org|OrgShort|Bullet\d+|ImageAlt)$")
+
+
+def family(key: str) -> Optional[str]:
+    m = _FAMILY_RE.match(key)
+    return m.group(1) if m else None
+
+
+def entry_prefix(key: str) -> Optional[str]:
+    """proj<SlugCamel> / exp<SlugCamel> for a per-entry key, tag<IdCamel> for a tag label, else None."""
+    m = _ENTRY_RE.match(key)
+    if m:
+        return m.group(1)
+    if key.startswith("tag") and len(key) > 3 and key[3].isupper():
+        return key
+    return None

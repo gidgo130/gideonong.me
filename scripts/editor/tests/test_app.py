@@ -229,7 +229,9 @@ class SecurityTests(unittest.TestCase):
             for path in ("/api/draft", "/api/save", "/api/restore", "/api/drafts/discard", "/api/heartbeat", "/api/focus", "/api/open-preview",
                          "/api/cv/check", "/api/cv/export", "/api/cv/publish", "/api/cv/open-out",
                          "/api/transcript/draft", "/api/transcript/title", "/api/transcript/save", "/api/transcript/parse", "/api/transcript/build",
-                         "/api/transcript/publish", "/api/transcript/open-folder", "/api/transcript/drafts/discard", "/api/transcript/reload"):
+                         "/api/transcript/publish", "/api/transcript/open-folder", "/api/transcript/drafts/discard", "/api/transcript/reload",
+                         "/api/content/field", "/api/content/text", "/api/content/add", "/api/content/delete", "/api/content/shell",
+                         "/api/content/tag", "/api/content/tag/delete", "/api/content/save", "/api/content/drafts/discard", "/api/content/reload"):
                 r = c.post(path, headers={"Host": HOST}, json={"lang": "es", "key": "navAbout", "value": "X", "set": "x"})
                 self.assertEqual(r.status_code, 403, path)
                 r = c.post(path, headers={"Host": HOST, "X-Editor-Token": "wrong"}, json={"lang": "es", "key": "navAbout", "value": "X"})
@@ -245,9 +247,11 @@ class SecurityTests(unittest.TestCase):
             self.assertEqual(c.get("/api/cv/job", headers={"Host": HOST}).status_code, 403)
             self.assertEqual(c.get("/api/cv/publish-plan", headers={"Host": HOST}).status_code, 403)
             self.assertEqual(c.get("/cv", headers={"Host": HOST}).status_code, 200)
-            for path in ("/api/transcript/state", "/api/transcript/review", "/api/transcript/job", "/api/transcript/publish-plan"):
+            for path in ("/api/transcript/state", "/api/transcript/review", "/api/transcript/job", "/api/transcript/publish-plan",
+                         "/api/content/state", "/api/content/review"):
                 self.assertEqual(c.get(path, headers={"Host": HOST}).status_code, 403, path)
             self.assertEqual(c.get("/transcript", headers={"Host": HOST}).status_code, 200)
+            self.assertEqual(c.get("/content", headers={"Host": HOST}).status_code, 200)
             self.assertEqual(c.get("/api/ping", headers={"Host": HOST}).status_code, 200)
             self.assertEqual(c.get("/", headers={"Host": HOST}).status_code, 200)
 

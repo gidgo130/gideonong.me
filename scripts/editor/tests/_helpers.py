@@ -50,6 +50,21 @@ class TempRepo:
         (self.root / "scripts" / "editor" / ".local").mkdir(parents=True)
         (self.root / "scripts" / "editor" / ".local" / "editor.lock").write_text('{"url": "TOKEN"}', encoding="utf-8")
         (self.root / ".env.local").write_text("VERCEL_OIDC_TOKEN=secret", encoding="utf-8")
+        # Phase 2: the sub-page shells and empty stand-ins for every asset the data
+        # files reference, so the dev-check port sees the files it looks for.
+        import re
+
+        (self.root / "projects").mkdir(exist_ok=True)
+        for p in (REPO_ROOT / "projects").glob("*.html"):
+            shutil.copy2(p, self.root / "projects" / p.name)
+        for rel in ("js/projects-data.js", "js/experience-data.js"):
+            src = self.root / rel
+            if src.is_file():
+                for m in re.findall(r'"(assets/[\w./-]+\.(?:jpg|jpeg|png|webp|pdf))"', src.read_text(encoding="utf-8")):
+                    f = self.root / m
+                    f.parent.mkdir(parents=True, exist_ok=True)
+                    if not f.exists():
+                        f.write_bytes(b"")
         # Phase 1b: the manifest generator (publish runs it) and the PDF folders
         gen = REPO_ROOT / "scripts" / "build-docs-manifest.js"
         if gen.is_file():

@@ -203,6 +203,40 @@ table.titles tr:not(.issuerow):has(+ tr.issuerow) td { border-bottom: none; }
 #buildDate { width: 110px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); font-family: ui-monospace, Consolas, monospace; }
 details summary { cursor: pointer; margin: 8px 0 4px; }
 
+/* Content page */
+.tabs.subtabs { margin-left: 8px; }
+.content-layout { grid-template-columns: 320px 1fr; }
+#list { position: sticky; top: var(--topbar-h); align-self: start; max-height: calc(100vh - var(--topbar-h)); overflow: auto; padding: 12px 10px; border-right: 1px solid var(--border); }
+#list h3 { font-size: 11.5px; text-transform: none; color: var(--muted); margin: 14px 4px 4px; font-weight: 500; }
+#list .wide { width: 100%; margin-bottom: 6px; }
+#list .entry { display: block; padding: 6px 8px; border-radius: 5px; color: inherit; text-decoration: none; border-left: 3px solid transparent; }
+#list .entry:hover { background: var(--code-bg); }
+#list .entry.active { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
+#list .entry.has-draft { border-left-color: var(--draft); }
+#list .entry.has-error .entry-title { color: var(--err); }
+#list .entry.deleted { opacity: 0.6; text-decoration: line-through; }
+#list .entry-title { font-size: 13.5px; }
+#list .entry-meta { font-size: 11.5px; color: var(--muted); }
+#list .entry-pills { display: flex; gap: 4px; margin-top: 2px; flex-wrap: wrap; }
+#form { padding: 12px 24px 80px; max-width: 1300px; }
+#form h2 { font-size: 18px; margin: 6px 0 10px; }
+#form h3 { font-size: 14px; margin: 18px 0 6px; }
+.pair { margin: 0 0 10px; }
+.pair-label { font-size: 12.5px; color: var(--muted); margin: 8px 0 3px; }
+.pair .cols textarea { width: 100%; min-height: 30px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); font: inherit; color: inherit; resize: vertical; overflow: hidden; line-height: 1.4; }
+.pair .cols label { font-size: 11px; color: var(--muted); }
+.tagbox { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.dates .point { display: flex; gap: 6px; align-items: center; margin: 3px 0; }
+.dates select, .dates input { padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); font: inherit; color: inherit; }
+.dates input[type="number"] { width: 80px; }
+.listbox { margin: 6px 0 12px; }
+.listbox .card { padding: 8px 10px; }
+button.small { padding: 2px 8px; font-size: 12px; }
+.danger-zone { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--border); }
+.dlg.narrow { width: min(640px, 94vw); }
+.pill.draft { color: var(--draft); border-color: var(--draft); }
+.field .ghost.small { align-self: flex-start; margin-top: 3px; }
+
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 6px; z-index: 20; max-width: 80vw; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); }
 
 @media (max-width: 900px) {
