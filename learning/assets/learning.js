@@ -256,6 +256,24 @@
     return s;
   }
 
+  // ---------- offline app (the installed copy) ----------
+  // The Windows installer (learning/workshop/offline/) appends window.LEARN_OFFLINE to the
+  // installed copy of modules.js: { version, missing: ["fits/<slug>/", "fits/<slug>/slides.html", …] },
+  // the paths (relative to learning/) the reader chose not to install; a trailing "/" means the
+  // whole folder. It never exists on the site or in the repo, so none of this runs there.
+  var OFFLINE = window.LEARN_OFFLINE || null;
+  // learning/ as an absolute URL, from this script's own address (…/learning/assets/learning.js).
+  var ROOT = (function () {
+    var s = document.currentScript && document.currentScript.src;
+    return s ? s.replace(/assets\/learning\.js(?:[?#].*)?$/, "") : "";
+  }());
+  function isMissing(path) {
+    return !!OFFLINE && (OFFLINE.missing || []).some(function (p) {
+      return p.slice(-1) === "/" ? path.indexOf(p) === 0 : path === p;
+    });
+  }
+  function moduleMissing(m) { return isMissing("fits/" + m.slug + "/"); }
+
   // ---------- series navigation ----------
   // Paths are relative so pages work on the site AND opened from disk (offline app).
   // From a module page (learning/fits/<slug>/): hub = "../../", sibling = "../<slug>/".
@@ -267,7 +285,9 @@
     function cell(m, n, cls, labelKey) {
       if (!m) return '<span></span>';
       var head = '<small>' + esc(t(labelKey)) + " · " + esc(t("moduleN", { n: n })) + '</small>';
-      if (!m.ready) return '<span class="soon ' + cls + '">' + head + esc(moduleTitle(m)) + ' <small>' + esc(t("statusSoon")) + '</small></span>';
+      if (!m.ready || moduleMissing(m)) {
+        return '<span class="soon ' + cls + '">' + head + esc(moduleTitle(m)) + ' <small>' + esc(t(m.ready ? "statusMissing" : "statusSoon")) + '</small></span>';
+      }
       return '<a class="' + cls + '" href="../' + m.slug + '/">' + head + esc(moduleTitle(m)) + '</a>';
     }
     el.innerHTML = cell(mods[i - 1], i, "prev", "navPrev") +
@@ -279,11 +299,12 @@
   function moduleList(el) {
     var mods = window.LEARN_MODULES || [];
     el.innerHTML = mods.map(function (m, i) {
+      var open = m.ready && !moduleMissing(m);
       var inner = '<span class="m-num">' + String(i + 1).padStart(2, "0") + '</span>' +
         '<span class="m-title">' + esc(moduleTitle(m)) + '</span>' +
-        '<span class="m-status' + (m.ready ? " ready" : "") + '">' + esc(t(m.ready ? "statusReady" : "statusSoon")) + '</span>' +
+        '<span class="m-status' + (open ? " ready" : "") + '">' + esc(t(open ? "statusReady" : m.ready ? "statusMissing" : "statusSoon")) + '</span>' +
         '<span class="m-desc">' + esc(t("mod" + m.key + "Desc")) + '</span>';
-      return '<li>' + (m.ready
+      return '<li>' + (open
         ? '<a class="module-row" href="fits/' + m.slug + '/">' + inner + '</a>'
         : '<div class="module-row is-soon">' + inner + '</div>') + '</li>';
     }).join("");
@@ -292,11 +313,22 @@
 
   // Opened from disk (offline app), a folder link like "../../" shows a directory listing
   // instead of the page, so point relative folder links at their index.html.
+  // In the installed copy (LEARN_OFFLINE) two more fixes: a link that leaves learning/ (the
+  // "gideonong.me" crumb) goes to the live site, and a link to a file the reader chose not to
+  // install (a module's slides or script) is hidden.
   function fixFileLinks(scope) {
     if (location.protocol !== "file:") return;
     (scope || document).querySelectorAll("a[href]").forEach(function (a) {
       var h = a.getAttribute("href");
       if (/^[a-z]+:/i.test(h) || h.charAt(0) === "#" || h.charAt(0) === "/") return;
+      if (OFFLINE && ROOT) {
+        var abs = a.href.replace(/[?#].*$/, ""), up = ROOT.replace(/[^\/]+\/$/, "");
+        if (abs.indexOf(ROOT) !== 0) {
+          if (abs.indexOf(up) === 0) a.setAttribute("href", "https://gideonong.me/" + abs.slice(up.length));
+          return;
+        }
+        if (isMissing(abs.slice(ROOT.length))) { a.hidden = true; return; }
+      }
       if (/\/$/.test(h) || h === "." || h === "..") a.setAttribute("href", h.replace(/\/?$/, "/") + "index.html");
     });
   }

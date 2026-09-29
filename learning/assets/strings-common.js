@@ -18,6 +18,7 @@ window.LEARN_STRINGS_COMMON = {
     moduleN: "Module {n}",
     statusReady: "Ready",
     statusSoon: "In progress",
+    statusMissing: "Not installed",
 
     modRSquaredTitle: "Why R² isn't enough",
     modRSquaredDesc: "Four datasets, one R². What the number hides and what to look at instead.",
@@ -47,6 +48,7 @@ window.LEARN_STRINGS_COMMON = {
     moduleN: "Módulo {n}",
     statusReady: "Listo",
     statusSoon: "En preparación",
+    statusMissing: "No instalado",
 
     modRSquaredTitle: "Por qué R² no basta",
     modRSquaredDesc: "Cuatro conjuntos de datos, un mismo R². Lo que el número esconde y qué mirar en su lugar.",
