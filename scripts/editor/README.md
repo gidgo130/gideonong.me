@@ -82,6 +82,18 @@ vocabulary with how often each tag is used. The form on the right edits one entr
   nothing else references, and the sub-page — moved to the backup set); **Add tag** and delete
   (only when no entry uses it). The slug never changes here (a rename wizard comes later).
 
+**About (the About page's lists).** The **About** sub-tab edits `js/about-data.js` — the
+books strip, the interview FAQ and the interesting-sites list, each with inline EN | ES text
+(no translations keys), a `visible` flag per entry, ↑ ↓, add (id + the two texts; new
+entries start hidden) and delete — and, per list, a **Shown on the site** checkbox that sets
+or removes the `hidden` attribute of that block in `about.html` (the whole block; one
+attribute in the review's diff). Sites carry a URL (`https://…` or a site-relative path) and
+an "opens in the same tab" flag; books take a cover through the image import (preset
+portrait, into `assets/images/about/books/`, no alt text — the strip is decorative). Rules:
+empty EN or ES, TODO, HTML, a missing cover or a bad URL are errors on a visible entry
+(warnings on a hidden one); voice words and ES = EN are warnings. A reordered list is
+re-emitted whole, one entry per line, in the file's own style.
+
 **Images (Phase 5).** **Import…** beside every image field (main image, thumbnail, collage
 cell, sub-page photo, band image) takes a JPG or PNG from anywhere (up to 25 MB), applies the
 phone's orientation, converts the colour profile to sRGB, drops every camera tag, GPS position
@@ -225,8 +237,12 @@ one thing:
 - a **section**: its heading EN | ES (a section is in a document when one of its items is);
 - the **header**: the name, the title line per variant (the résumé masters have none), and
   the contact line — the +1 (918) phone lives there and nowhere else (decision 9).
-Items and bullets are shared: an edit changes every document the item is in. ↑ ↓ on an
-item moves it within its section in the current document only; ticking a document puts the
+Items and bullets are shared: an edit changes every document the item is in. When one
+document should say something different, **Duplicate into <Document>** (on the item form or
+a bullet card, shown while the item is in two or more documents including the current one)
+puts a copy with the same text in its place in the current document only and takes the
+original out of it; edit the copy afterwards. An entry's copy takes the bullets it showed in
+that document. ↑ ↓ on an item moves it within its section in the current document only; ticking a document puts the
 item after its nearest neighbour from the current view (taking an entry out of a document
 takes its bullets out too). **+ Add item…** under a section asks for the kind (entry or line)
 and the English text, which names the item; the item starts in the current document only. A
@@ -379,7 +395,10 @@ key add / delete lands in the right translations blocks, key naming and referenc
 rules, rendered order, the dev-check port (no errors on today's files, every seeded problem
 caught), and the service: add → sub-page → index → save → delete → save leaves both data files
 and translations.js byte-identical, bullets reorder, current-role flag, tag add / refuse /
-delete, blocked saves, changed-on-disk refusal, autosave. Phase 5 (`test_images.py`): a
+delete, blocked saves, changed-on-disk refusal, autosave; the About lists: the data file
+round-trips, one edit = one line, add / delete / a reorder that comes back byte-identical, the
+`hidden` toggle changes one attribute, every rule, and the service flow (drafts, gate, review
+with both files, save, and the reverse edits restoring both files byte for byte). Phase 5 (`test_images.py`): a
 synthetic phone JPEG (EXIF camera fields, GPS IFD, orientation 6, ICC profile) comes out with
 no metadata at all, upright and at the preset size; every preset; PNG stays PNG without text
 chunks; refusals (GIF, non-image, 25 MB, unknown preset) and names; the repo's own images
@@ -423,7 +442,10 @@ backup set; the relaxed self-check lets Word's re-saved parts differ but not sty
 export & check through the app with the fake export. With `EDITOR_WORD_TESTS=1`: the Word
 route renders the edit set, passes the relaxed self-check, matches the python route's layout
 (kinds, texts, run formatting, the appended bullet's paragraph properties), a full Word apply
-cross-checks against python and a python apply cross-checks against Word.
+cross-checks against python and a python apply cross-checks against Word. Duplicate: a shared
+bullet and a shared entry (with its shown bullets) split into a copy for one document, the
+original keeps the others, the order position is kept, refusals, the render of that document
+adds one paragraph and removes one with the same text, and the change line names it.
 
 ## Files
 | File | What it is |
@@ -458,6 +480,7 @@ cross-checks against python and a python apply cross-checks against Word.
 | `core/site/datacheck.py` | Python port of `siteData.checkData` as errors / warnings |
 | `core/site/service.py` | Content drafts, text-field resolution, add / delete / shells / tags / images, review, save, preview overlay |
 | `core/site/images.py` | Image import: orientation, sRGB, metadata strip, presets; inspect / scan for the Images panel |
+| `core/site/about.py` | The About page's three lists as one data file (js/about-data.js), the `hidden` attribute of their blocks in about.html, and their checks |
 | `core/jsonfile.py` | JSON file that re-emits byte-for-byte (layout detected and proven on load), path edits, change lists |
 | `core/jobs.py` | One background job at a time with a live log; subprocess runner that streams output |
 | `core/transcript/titles.py` | course-titles.json rows joined with transcript-data.json; edits; validation |

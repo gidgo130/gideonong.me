@@ -126,13 +126,17 @@
     wrap.append(cols);
     return wrap;
   }
-  function includeBoxes(id, node) {
+  function includeBoxes(id, node, isChild) {
     const box = el("div", { class: "tagbox" });
     for (const v of variants()) {
       const cb = el("input", { type: "checkbox" });
       cb.checked = !!node.include[v.id];
       cb.addEventListener("change", () => op({ op: "include", id, variant: v.id, on: cb.checked, current: state.variant }, true));
       box.append(el("label", { class: "chk" }, cb, " " + v.label));
+    }
+    const shared = Object.values(node.include).filter(Boolean).length >= 2 && node.include[state.variant];
+    if (shared) {
+      box.append(el("button", { type: "button", class: "ghost small", title: "A copy with the same text takes its place in " + vlabel(state.variant) + " only; the original stays in the other documents. Then edit the copy.", onclick: () => op({ op: "duplicate", id, variant: state.variant }, true).then((r) => { if (r && !isChild) select(r.result.id); }) }, "Duplicate into " + vlabel(state.variant)));
     }
     return el("div", { class: "field" }, el("span", null, "In these documents"), box);
   }
@@ -252,7 +256,7 @@
         issueBox(cib, issuesFor(cid));
         k.append(cib);
         k.append(textPair(["items", iid, "children", cid, "text"], "", ch.text));
-        k.append(includeBoxes(cid, ch));
+        k.append(includeBoxes(cid, ch, true));
         return k;
       };
       for (const cid of corder) { const k = card(cid, false); if (k) box.append(k); }

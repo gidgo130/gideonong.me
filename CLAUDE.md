@@ -32,6 +32,9 @@ js/project-page.js  projects/<slug>.html renderer (one renderer for every sub-pa
 js/experience.js    experience.html renderer: bands + related projects
 js/home.js          index.html featured block renderer
 js/about.js         about.html behaviors
+js/about-data.js    The About page's three lists (books, FAQ, interesting sites) with inline
+                    EN/ES text and a `visible` flag per entry; read by about.js, edited by the
+                    local editor (Content › About)
 js/docs-data.js     GENERATED documents manifest (see Documents below) — never edit by hand
 scripts/build-docs-manifest.js  Dev-side generator for js/docs-data.js (Node built-ins only)
 scripts/transcript/  Dev-side transcript PDF generator (Python; see its README) — never deployed
@@ -73,7 +76,8 @@ assets/images/      Project photos and diagrams
 assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)
 assets/videos/      Project video clips
 learning/           UNLISTED Learning section (own design, noindex) — see /learning below and
-                    learning/README.md. Linked only from About → Interesting sites.
+                    learning/README.md. No link from the site since 2026-09-29 (its About →
+                    Interesting sites entry was replaced); reached by URL and shared cards.
 learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, learning-i18n.js,
                     strings-common.js, modules.js) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
@@ -223,14 +227,19 @@ stacked, 4px gap; captions in a dark translucent bar along each tile's bottom
 (`expHeroTile<N>Cap`), alts `expHeroTile<N>Alt`. Under 768px: text first, tiles stacked
 below at 4:3, captions still shown. Images live in assets/images/experience/hero/.
 
-### About page — hidden sections (career fair, 2026-09-27)
+### About page — the three lists and their hidden blocks (2026-09-29)
 §3 books (`#about-reading`), §4 FAQ (`#about-faq`) and the interesting-sites block of §6
-(`#about-sites`) carry the `hidden` attribute in about.html. That attribute is the ONE
-flag: remove it to show the block again. js/about.js skips each block's setup while it is
-hidden (no scroll runway, no FAQ items), and .section-settings uses an auto-fit grid so
-the settings panel takes the full row on its own. The AI statement and viewing settings
-stay. The headshot is a plain `<img src="assets/images/about/headshot.jpg"
-data-i18n-alt="headshotAlt">` in about.html — swap the file or the src there.
+(`#about-sites`) render from js/about-data.js (ABOUT_BOOKS / ABOUT_FAQ / ABOUT_SITES: inline
+EN/ES text, `visible` per entry, an `id` that never changes). Each block is shown or hidden as
+a whole by the `hidden` attribute on its element in about.html — that attribute is the ONE
+flag; the local editor's Content › About sub-tab toggles it ("Shown on the site") and edits
+the entries. Since 2026-09-29 the sites block is shown (one entry, Atomic Rockets); books and
+FAQ stay hidden until their placeholder content is replaced. js/about.js skips each block's
+setup while it is hidden (no scroll runway, no FAQ items), and .section-settings uses an
+auto-fit grid so the settings panel takes the full row on its own when the sites block is
+hidden. The AI statement and viewing settings stay. The headshot is a plain
+`<img src="assets/images/about/headshot.jpg" data-i18n-alt="headshotAlt">` in about.html —
+swap the file or the src there.
 
 ## Home page (index.html) structure
 1. Sticky white navbar
@@ -493,9 +502,11 @@ Rules for /learning (these replace the main-site rules where they conflict):
   a non-color cue to the red/grey distinctions: highlighted or missed points (.pt-hi) and
   flagged bars (.bar-hi) wear an ink ring; .v.bad readouts are marked ✕ and .v.good ✓ besides
   bold. New charts must reuse those class names so the cues apply without touching JS.
-- Unlisted: NOT in the main nav, sitemap or project list. The only link in is the Learning
-  entry in about.html's Interesting sites (js/about.js `interestingSites`, `internal: true` =
-  same tab); that block is `hidden` for now, so the link shows once `hidden` is removed.
+- Unlisted: NOT in the main nav, sitemap or project list. Since 2026-09-29 there is no link
+  from the site at all: the Learning entry in about.html's Interesting sites was replaced when
+  that block was unhidden. /learning is reached by URL and by its shared link-preview cards.
+  To link it again, add an entry to ABOUT_SITES in js/about-data.js (`url: "learning/",
+  internal: true` = same tab) through the editor's Content › About sub-tab.
 - noindex, permanently: every /learning page (and each deck, via `include-in-header` in
   slides.qmd) has `<meta name="robots" content="noindex">`. Do not remove it: /learning is
   reached by link, not by search (learning-plan.md Phase C, 2026-09-28). Do not use robots.txt.
@@ -532,8 +543,9 @@ Rules for /learning (these replace the main-site rules where they conflict):
   (<slug>.ipynb from the public GitHub repo). learning.js sets `data-lite` on <html> for
   phones / save-data / low-memory devices; learning.css then lists Colab first as the primary
   link, otherwise marimo. Both always visible; the rule lives only in learning.js.
-- Files outside learning/ that /learning touches: js/about.js (the Interesting-sites entry)
-  and these docs. Anything else outside learning/ needs Gideon's OK first.
+- Files outside learning/ that /learning touches: js/about-data.js (a Learning entry in
+  ABOUT_SITES, when one exists) and these docs. Anything else outside learning/ needs
+  Gideon's OK first.
 
 ## What NOT to do
 (Main site. /learning follows its own rules in the section above.)

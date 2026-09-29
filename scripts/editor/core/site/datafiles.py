@@ -115,7 +115,8 @@ class DataFile:
             return self.raw
         return spans.apply(self.doc, edits).to_bytes({})
 
-    def _entry_edits(self, node: ObjectNode, cur: dict, new: dict) -> list[spans.Edit]:
+    def _entry_edits(self, node: ObjectNode, cur: dict, new: dict, field_order: Optional[list] = None) -> list[spans.Edit]:
+        order = field_order if field_order is not None else FIELD_ORDER[self.name]
         edits: list[spans.Edit] = []
         for prop in node.props:
             k = prop.key
@@ -130,9 +131,9 @@ class DataFile:
                 indent = spans.indent_of(self.doc, prop.key_tok)
                 edits.append(spans.replace_value(self.doc, prop.value, emit.value(new[k], k, indent)))
         existing = [p.key for p in node.props if p.key in new]
-        added = [k for k in ordered(self.name, new) if node.get(k) is None]
+        known = [k for k in order if k in new]
+        added = [k for k in known + [k for k in new if k not in order] if node.get(k) is None]
         if added:
-            order = FIELD_ORDER[self.name]
             groups: dict[Optional[str], list[tuple[str, str]]] = {}
             indent = spans.prop_indent(self.doc, node)
             placed = list(existing)

@@ -227,6 +227,12 @@ class CvTextService:
         C.delete(d, id)
         self._commit(d)
 
+    def duplicate(self, id: str, variant: str) -> str:
+        d = self._working()
+        new_id = C.duplicate(d, id, variant)
+        self._commit(d)
+        return new_id
+
     def add_section(self, en: str, es: str, variant: str) -> str:
         d = self._working()
         sid = C.add_section(d, en, es, variant)
@@ -871,9 +877,27 @@ def change_lines(base: dict, draft: dict) -> list[dict]:
         n = list(item.get("children", {})).index(cid) + 1 if cid in item.get("children", {}) else "?"
         return f"{'bullet' if child.get('kind') == 'bullet' else 'line'} {n}"
 
+    def duplicated_from(container_base: dict, container_draft: dict, new_id: str) -> Optional[tuple[str, str]]:
+        """(original id, variant) when `new_id` is a copy made by duplicate(): named <orig>-<variant>[-n],
+        the original exists and has left that variant in the draft."""
+        for v in C.VARIANTS:
+            for suffix in (f"-{v}",) + tuple(f"-{v}-{n}" for n in range(2, 10)):
+                if new_id.endswith(suffix):
+                    orig = new_id[: -len(suffix)]
+                    if orig in container_base and orig in container_draft and container_base[orig]["include"].get(v) and not container_draft[orig]["include"].get(v):
+                        return orig, v
+        return None
+
     for iid, item in draft_items.items():
         if iid not in base_items:
             seen_ids.add(iid)
+            dup = duplicated_from(base_items, draft_items, iid)
+            if dup:
+                orig, v = dup
+                seen_ids.add(orig)
+                others = ", ".join(C.VARIANT_LABELS[x] for x, on in draft_items[orig]["include"].items() if on) or "no other document"
+                out.append({"path": ["items", iid], "kind": "added", "text": f"{where(draft, iid)}{_q(C.label_of(draft, orig))}: duplicated into {C.VARIANT_LABELS[v]} (the original stays in {others})"})
+                continue
             vs = ", ".join(C.VARIANT_LABELS[v] for v, on in item["include"].items() if on) or "no variant"
             out.append({"path": ["items", iid], "kind": "added", "text": f"{where(draft, iid)}added {item['kind']} {_q(C.label_of(draft, iid))} in {vs}"})
     for iid, item in base_items.items():
@@ -885,6 +909,13 @@ def change_lines(base: dict, draft: dict) -> list[dict]:
             if cid not in item.get("children", {}):
                 seen_ids.add(cid)
                 child = draft_items[iid]["children"][cid]
+                dup = duplicated_from(item.get("children", {}), draft_items[iid]["children"], cid)
+                if dup:
+                    orig, v = dup
+                    seen_ids.add(orig)
+                    others = ", ".join(C.VARIANT_LABELS[x] for x, on in draft_items[iid]["children"][orig]["include"].items() if on) or "no other document"
+                    out.append({"path": ["items", iid, "children", cid], "kind": "added", "text": f"{where(draft, iid)}{C.label_of(draft, iid)} › {child_label(item, orig)}: duplicated into {C.VARIANT_LABELS[v]} (the original stays in {others})"})
+                    continue
                 vs = ", ".join(C.VARIANT_LABELS[v] for v, on in child["include"].items() if on) or "no variant"
                 out.append({"path": ["items", iid, "children", cid], "kind": "added", "text": f"{where(draft, iid)}{C.label_of(draft, iid)} › added {child_label(draft_items[iid], cid)} in {vs}"})
         for cid in item.get("children", {}):

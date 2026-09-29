@@ -25,8 +25,11 @@ from ..backups import atomic_write
 from ..jsdata import JsDataError
 from ..review import unified_diff
 from ..site_text import SiteText
+from . import about as aboutmod
 from . import datacheck, keys as keymod, order
-from .datafiles import FILES, DataFile
+from .datafiles import FILES as DATA_FILES, DataFile
+
+FILES = dict(DATA_FILES, about=(aboutmod.REL_PATH, "ABOUT_*", "id"))  # the About lists edit like a fourth data file
 
 log = logging.getLogger("editor.content")
 
@@ -53,7 +56,8 @@ class ContentService:
 
     @staticmethod
     def _empty() -> dict:
-        return {"entries": {"projects": {}, "experience": {}, "tags": {}}, "newKeys": {}, "removedKeys": [], "shells": {}, "images": {}, "removedImages": []}
+        return {"entries": {"projects": {}, "experience": {}, "tags": {}, "about": {}}, "newKeys": {}, "removedKeys": [], "shells": {}, "images": {}, "removedImages": [],
+                "aboutOrder": {}, "aboutShown": {}}
 
     @property
     def image_staging(self) -> Path:
@@ -63,12 +67,19 @@ class ContentService:
     def load(self) -> None:
         for name in FILES:
             try:
-                self.files[name] = DataFile(self.repo_root, name)
+                self.files[name] = aboutmod.AboutFile(self.repo_root) if name == "about" else DataFile(self.repo_root, name)
                 self.load_errors.pop(name, None)
             except (OSError, JsDataError) as e:
                 self.files[name] = None
                 self.load_errors[name] = f"{FILES[name][0]}: {e}"
                 log.error("cannot load %s: %s", name, e)
+        try:
+            self.page_raw: Optional[bytes] = (self.repo_root / aboutmod.PAGE).read_bytes()
+        except OSError:
+            self.page_raw = None
+        for k in list(self.drafts.get("aboutShown", {})):  # a flag that equals the page again is no draft
+            if self.page_raw is not None and aboutmod.read_shown(self.page_raw.decode("utf-8", "replace")).get(k) == self.drafts["aboutShown"][k]:
+                self.drafts["aboutShown"].pop(k)
         # drop drafts that equal the disk state, keys that now exist on disk
         for name, d in self.drafts["entries"].items():
             f = self.files.get(name)
@@ -120,6 +131,13 @@ class ContentService:
         for ident, e in d.items():
             if ident not in seen and e is not None:
                 out.append(copy.deepcopy(e))
+        if name == "about" and self.drafts.get("aboutOrder"):
+            for lst, ids in self.drafts["aboutOrder"].items():
+                mine = [e for e in out if e.get("_list") == lst]
+                by = {e["id"]: e for e in mine}
+                wanted = [by[i] for i in ids if i in by] + [e for e in mine if e["id"] not in ids]
+                it = iter(wanted)
+                out = [next(it) if e.get("_list") == lst else e for e in out]
         return out
 
     def entry(self, name: str, ident: str) -> Optional[dict]:
@@ -252,6 +270,68 @@ class ContentService:
         self._write_autosave()
         return self.entry(name, ident)
 
+    # ------------------------------------------------------------- the About lists
+    def add_about_entry(self, list_name: str, ident: str, en: str = "", es: str = "") -> dict:
+        if self.read_only:
+            raise RuntimeError(self.read_only)
+        if list_name not in aboutmod.LISTS:
+            raise ValueError("list must be books, faq or sites")
+        problem = keymod.valid_slug(ident)
+        if problem:
+            raise ValueError(problem)
+        if any(e.get("id") == ident for e in self.live_entries("about")):
+            raise ValueError(f"“{ident}” already exists")
+        self.drafts["entries"]["about"][ident] = aboutmod.new_entry(list_name, ident, en.strip(), es.strip())
+        self._write_autosave()
+        return self.entry("about", ident)
+
+    def set_about_order(self, list_name: str, ids: list) -> None:
+        if self.read_only:
+            raise RuntimeError(self.read_only)
+        if list_name not in aboutmod.LISTS:
+            raise ValueError("list must be books, faq or sites")
+        current = [e["id"] for e in self.live_entries("about") if e.get("_list") == list_name]
+        if sorted(ids) != sorted(current) or len(set(ids)) != len(ids):
+            raise ValueError("the order must name every entry of the list exactly once")
+        f = self.files["about"]
+        disk = [e["id"] for e in f.list_entries(list_name)] if f else []
+        new_ids = [i for i in ids if i not in disk]
+        if list(ids) == disk + new_ids:  # the file's own order (new entries after it): no draft
+            self.drafts["aboutOrder"].pop(list_name, None)
+        else:
+            self.drafts["aboutOrder"][list_name] = list(ids)
+        self._write_autosave()
+
+    def set_about_shown(self, section_id: str, shown: bool) -> None:
+        if self.read_only:
+            raise RuntimeError(self.read_only)
+        if section_id not in aboutmod.SECTIONS.values():
+            raise ValueError("unknown About block")
+        if self.page_raw is None:
+            raise RuntimeError(f"{aboutmod.PAGE} could not be read")
+        on_disk = aboutmod.read_shown(self.page_raw.decode("utf-8", "replace")).get(section_id)
+        if on_disk == bool(shown):
+            self.drafts["aboutShown"].pop(section_id, None)
+        else:
+            self.drafts["aboutShown"][section_id] = bool(shown)
+        self._write_autosave()
+
+    def about_shown(self) -> dict:
+        """block id → shown, drafts applied."""
+        cur = aboutmod.read_shown(self.page_raw.decode("utf-8", "replace")) if self.page_raw is not None else {}
+        cur.update(self.drafts.get("aboutShown", {}))
+        return cur
+
+    def render_page(self) -> bytes:
+        html = self.page_raw.decode("utf-8") if self.page_raw is not None else ""
+        return aboutmod.render_shown(html, self.drafts.get("aboutShown", {})).encode("utf-8")
+
+    def page_disk_changed(self) -> bool:
+        try:
+            return (self.repo_root / aboutmod.PAGE).read_bytes() != self.page_raw
+        except OSError:
+            return True
+
     def delete_entry(self, name: str, ident: str) -> dict:
         """Mark an entry for deletion; its keys that nothing else references go too."""
         if self.read_only:
@@ -345,15 +425,18 @@ class ContentService:
     def draft_count(self) -> int:
         d = self.drafts
         return (sum(len(v) for v in d["entries"].values()) + len(d["newKeys"]) + len(d["removedKeys"]) + len(d["shells"])
-                + len(d.get("images", {})) + len(d.get("removedImages", [])))
+                + len(d.get("images", {})) + len(d.get("removedImages", [])) + len(d.get("aboutOrder", {})) + len(d.get("aboutShown", {})))
 
     # ------------------------------------------------------------- images (Phase 5)
     IMAGE_FIELDS = {  # alt text field → the property path that holds the file
         "projects": {"imageAlt": ["imageSrc"], "thumbAlt": ["thumbSrc"], "gallery.N.alt": ["gallery", "N", "src"], "page.photos.N.alt": ["page", "photos", "N", "src"]},
         "experience": {"imageAlt": ["imageSrc"]},
+        "about": {"cover": ["coverSrc"]},  # book covers: decorative (the strip is aria-hidden), no alt text
     }
 
     def image_folder(self, name: str, ident: str) -> str:
+        if name == "about":
+            return aboutmod.COVER_DIR
         kind = {"projects": "projects", "experience": "experience"}.get(name)
         if kind is None:
             raise ValueError("images belong to a project or a role")
@@ -365,7 +448,7 @@ class ContentService:
 
         if self.read_only:
             raise RuntimeError(self.read_only)
-        if not alt_en.strip() or not alt_es.strip():
+        if name != "about" and (not alt_en.strip() or not alt_es.strip()):
             raise ValueError("alt text is required in both EN and ES")
         if self.entry(name, ident) is None:
             raise KeyError(f"{name}/{ident}")
@@ -414,8 +497,10 @@ class ContentService:
                 raise ValueError("add the previous gallery / photo items first")
         keymod.set_path(e, path, rel)
         self._settle(name, ident)
-        key = self.set_text(name, ident, field, "en", alt_en.strip())
-        self.set_text(name, ident, field, "es", alt_es.strip())
+        key = None
+        if name != "about":
+            key = self.set_text(name, ident, field, "en", alt_en.strip())
+            self.set_text(name, ident, field, "es", alt_es.strip())
         self._write_autosave()
         return {"path": rel, "key": key, **{k: v for k, v in self.drafts["images"][rel].items() if k != "file"}}
 
@@ -439,6 +524,9 @@ class ContentService:
                     add(ph.get("src"), f"project {s}: photo {i}")
         for e in self.live_entries("experience"):
             add(e.get("imageSrc"), f"role {e.get('slug')}: band image")
+        for e in self.live_entries("about"):
+            if e.get("_list") == "books":
+                add(e.get("coverSrc"), f"book {e.get('id')}: cover")
         for html in self.repo_root.glob("*.html"):
             try:
                 text = html.read_text(encoding="utf-8", errors="replace")
@@ -531,19 +619,22 @@ class ContentService:
                 pass
 
     # ------------------------------------------------------------- checks
-    def _check(self, en: dict, es: dict, projects, experience, tags, shells_exist, pending_files=()) -> list[validate.Issue]:
+    def _check(self, en: dict, es: dict, projects, experience, tags, shells_exist, pending_files=(), about=None, about_shown=None) -> list[validate.Issue]:
         from ..cv import scans
         from ..cv.masters import BLOCKLIST_PATH
 
         terms, _ = scans.load_blocklist(self.repo_root / BLOCKLIST_PATH)
-        return datacheck.check(self.repo_root, en, es, projects, experience, tags, blocklist_terms=terms, shells_exist=shells_exist, pending_files=pending_files)
+        return datacheck.check(self.repo_root, en, es, projects, experience, tags, blocklist_terms=terms, shells_exist=shells_exist, pending_files=pending_files,
+                               about=about, about_shown=about_shown)
 
     def baseline_issues(self) -> list[validate.Issue]:
         site = self.state.site
         if site is None or any(f is None for f in self.files.values()):
             return []
         en, es = site.as_dicts()
-        return self._check(en, es, self.files["projects"].entries(), self.files["experience"].entries(), self.files["tags"].entries(), None)
+        disk_shown = aboutmod.read_shown(self.page_raw.decode("utf-8", "replace")) if self.page_raw is not None else {}
+        return self._check(en, es, self.files["projects"].entries(), self.files["experience"].entries(), self.files["tags"].entries(), None,
+                           about=self.files["about"].entries(), about_shown=disk_shown)
 
     def draft_issues(self) -> list[validate.Issue]:
         if self.read_only:
@@ -555,7 +646,7 @@ class ContentService:
             action = self.drafts["shells"].get(slug)
             shells[slug] = action == "create" or (action != "delete" and (self.repo_root / "projects" / f"{slug}.html").is_file())
         return self._check(en, es, self.live_entries("projects"), self.live_entries("experience"), self.live_entries("tags"), shells,
-                           pending_files=set(self.drafts.get("images", {})))
+                           pending_files=set(self.drafts.get("images", {})), about=self.live_entries("about"), about_shown=self.about_shown())
 
     def touched(self) -> set[str]:
         t = {f"{n}:{ident}" for n, d in self.drafts["entries"].items() for ident in d}
@@ -567,7 +658,7 @@ class ContentService:
 
     # ------------------------------------------------------------- render / review / save
     def _touched_files(self) -> list[str]:
-        return [n for n, d in self.drafts["entries"].items() if d]
+        return [n for n, d in self.drafts["entries"].items() if d or (n == "about" and self.drafts.get("aboutOrder"))]
 
     def image_checks(self) -> list[validate.Issue]:
         """Warnings for pending imports that still carried camera data (already stripped) — informational."""
@@ -579,6 +670,8 @@ class ContentService:
         on_disk = set(f.ids())
         existing = {k: v for k, v in d.items() if k in on_disk}
         new = [v for k, v in d.items() if k not in on_disk and v is not None]
+        if name == "about":
+            return f.render(existing, new, self.drafts.get("aboutOrder", {}))
         return f.render(existing, new)
 
     def render_translations(self) -> bytes:
@@ -593,6 +686,8 @@ class ContentService:
             out[self.files[n].rel_path] = self.render_file(n)
         if self.drafts["newKeys"] or self.drafts["removedKeys"]:
             out[SiteText.REL_PATH] = self.render_translations()
+        if self.drafts.get("aboutShown"):
+            out[aboutmod.PAGE] = self.render_page()
         for slug, action in self.drafts["shells"].items():
             if action == "create":
                 out[f"projects/{slug}.html"] = self.shell_html(slug)
@@ -630,6 +725,16 @@ class ContentService:
             changes.append({"text": f"Text › new: {k} — EN “{v.get('en', '')[:60]}”, ES “{v.get('es', '')[:60]}”"})
         for k in self.drafts["removedKeys"]:
             changes.append({"text": f"Text › removed: {k}"})
+        for lst in self.drafts.get("aboutOrder", {}):
+            changes.append({"text": f"About › {aboutmod.LABELS[lst]}: order changed"})
+        if self.drafts.get("aboutShown"):
+            new = self.render_page()
+            dc = self.page_disk_changed()
+            disk_changed = disk_changed or dc
+            files.append({"path": aboutmod.PAGE, "diff": unified_diff(self.page_raw or b"", new, aboutmod.PAGE), "diskChanged": dc})
+            names = {v: k for k, v in aboutmod.SECTIONS.items()}
+            for sec, shown in self.drafts["aboutShown"].items():
+                changes.append({"text": f"About › {aboutmod.LABELS[names[sec]]}: {'shown on the site' if shown else 'hidden on the site'}"})
         shells = [{"slug": s, "action": a, "path": f"projects/{s}.html"} for s, a in self.drafts["shells"].items()]
         assets = [{"path": rel, "action": "replace" if i.get("replace") else "add", "kb": i["kb"], "size": f"{i['width']} × {i['height']}"} for rel, i in self.drafts.get("images", {}).items()]
         assets += [{"path": rel, "action": "remove"} for rel in self.drafts.get("removedImages", [])]
@@ -654,7 +759,7 @@ class ContentService:
         f = self.files[name]
         disk = {e[f.id_field]: e for e in f.entries()}
         out = []
-        label = {"projects": "Projects", "experience": "Experience", "tags": "Tags"}[name]
+        label = {"projects": "Projects", "experience": "Experience", "tags": "Tags", "about": "About"}[name]
         for ident, new in self.drafts["entries"][name].items():
             if new is None:
                 out.append({"text": f"{label} › {ident}: deleted"})
@@ -684,6 +789,9 @@ class ContentService:
         write_site = bool(self.drafts["newKeys"] or self.drafts["removedKeys"] or self.state.drafts)
         if write_site and site.disk_changed():
             return {"ok": False, "error": "changed-on-disk", "message": "js/translations.js changed on disk since it was loaded. Reload and re-apply your edits."}
+        write_page = bool(self.drafts.get("aboutShown"))
+        if write_page and self.page_disk_changed():
+            return {"ok": False, "error": "changed-on-disk", "message": f"{aboutmod.PAGE} changed on disk since it was loaded. Reload and re-apply your edits."}
         gate = self.gate()
         if not gate.ok():
             return {"ok": False, "error": "blocked", "message": "Fix the blocking errors first.", "gate": gate.to_json()}
@@ -691,7 +799,7 @@ class ContentService:
             return {"ok": False, "error": "blocked", "message": "Fix the blocking errors in the site text first.", "gate": self.state.gate().to_json()}
         rendered = {n: self.render_file(n) for n in touched}
         site_bytes = self.render_translations() if write_site else None
-        paths = [self.files[n].rel_path for n in touched] + ([SiteText.REL_PATH] if write_site else [])
+        paths = [self.files[n].rel_path for n in touched] + ([SiteText.REL_PATH] if write_site else []) + ([aboutmod.PAGE] if write_page else [])
         paths += [f"projects/{s}.html" for s, a in self.drafts["shells"].items() if a == "delete"]
         paths += [rel for rel, i in self.drafts.get("images", {}).items() if i.get("replace")]
         paths += list(self.drafts.get("removedImages", []))
@@ -720,6 +828,9 @@ class ContentService:
             if write_site:
                 atomic_write(site.path, site_bytes)
                 written.append(SiteText.REL_PATH)
+            if write_page:
+                atomic_write(self.repo_root / aboutmod.PAGE, self.render_page())
+                written.append(aboutmod.PAGE)
             for slug, action in self.drafts["shells"].items():
                 p = self.repo_root / "projects" / f"{slug}.html"
                 if action == "create":
@@ -782,6 +893,15 @@ class ContentService:
             "projects": [dict(e, _draft=e["slug"] in drafted["projects"], _meta=self._meta(e, en, es)) for e in projects],
             "experience": [dict(e, _draft=e["slug"] in drafted["experience"], _meta=self._meta(e, en, es)) for e in experience],
             "tags": [dict(t, _draft=t["id"] in drafted["tags"], uses=uses.get(t["id"], 0)) for t in tags],
+            "about": {
+                "lists": {lst: [dict(e, _draft=e["id"] in drafted["about"]) for e in self.live_entries("about") if e.get("_list") == lst] for lst in aboutmod.LISTS} if not self.read_only else {},
+                "labels": aboutmod.LABELS,
+                "sections": aboutmod.SECTIONS,
+                "shown": self.about_shown(),
+                "shownDrafts": dict(self.drafts.get("aboutShown", {})),
+                "orderDrafts": list(self.drafts.get("aboutOrder", {})),
+                "coverDir": aboutmod.COVER_DIR,
+            },
             "deleted": {n: [k for k, v in d.items() if v is None] for n, d in self.drafts["entries"].items()},
             "texts": {"en": {k: en.get(k) for k in self._all_keys()}, "es": {k: es.get(k) for k in self._all_keys()}},
             "issues": by_owner,

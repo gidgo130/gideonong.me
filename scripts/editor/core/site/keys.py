@@ -108,6 +108,8 @@ def set_path(obj, path: list, value) -> None:
 def referenced_keys(file: str, entry: dict) -> set[str]:
     """Every i18n key an entry references (any field that holds a key)."""
     keys: set[str] = set()
+    if file == "about":  # inline EN/ES text, no translations keys
+        return keys
     if file == "tags":
         if entry.get("key"):
             keys.add(entry["key"])

@@ -4,12 +4,18 @@
 //   - §3 velocity-threshold book stepper
 //   - §4 FAQ accordion (rendered from a data array)
 //   - §6 viewing-settings toggles + interesting-sites list (rendered from a data array)
-// Content arrays here hold EN/ES text directly (not translations.js keys) per plan.md's
-// Page Spec — about.html, so they re-render on the "langchange" event main.js dispatches.
+// The three content arrays live in js/about-data.js (ABOUT_BOOKS, ABOUT_FAQ, ABOUT_SITES) and
+// hold EN/ES text directly (not translations.js keys) per plan.md's Page Spec — about.html, so
+// they re-render on the "langchange" event main.js dispatches. The local editor edits that file.
 
 (function () {
   function currentLang() {
     return document.documentElement.getAttribute("lang") === "es" ? "es" : "en";
+  }
+  function listData(name) {
+    var v = window[name];
+    if (v === undefined) { try { v = eval(name); } catch (e) { v = undefined; } }
+    return Array.isArray(v) ? v : [];
   }
 
   /* ------------------------------------------------------------------------
@@ -279,13 +285,7 @@
      rest showing two covers at once. A little dead scroll after the last book
      before the section unpins. Desktop only; mobile = a stack of cover cards.
      ------------------------------------------------------------------------ */
-  var books = [
-    { coverSrc:"assets/images/book-placeholder-1.jpg", titleEN:"[Book title 1 — EN]", titleES:"[Título del libro 1 — ES]", descEN:"[Book description 1 — EN]", descES:"[Descripción del libro 1 — ES]", visible:true },
-    { coverSrc:"assets/images/book-placeholder-2.jpg", titleEN:"[Book title 2 — EN]", titleES:"[Título del libro 2 — ES]", descEN:"[Book description 2 — EN]", descES:"[Descripción del libro 2 — ES]", visible:true },
-    { coverSrc:"assets/images/book-placeholder-3.jpg", titleEN:"[Book title 3 — EN]", titleES:"[Título del libro 3 — ES]", descEN:"[Book description 3 — EN]", descES:"[Descripción del libro 3 — ES]", visible:true },
-    { coverSrc:"assets/images/book-placeholder-4.jpg", titleEN:"[Book title 4 — EN]", titleES:"[Título del libro 4 — ES]", descEN:"[Book description 4 — EN]", descES:"[Descripción del libro 4 — ES]", visible:true },
-    { coverSrc:"assets/images/book-placeholder-5.jpg", titleEN:"[Book title 5 — EN]", titleES:"[Título del libro 5 — ES]", descEN:"[Book description 5 — EN]", descES:"[Descripción del libro 5 — ES]", visible:true }
-  ];
+  var books = listData("ABOUT_BOOKS");   // js/about-data.js
 
   (function () {
     var section = document.getElementById('about-reading');
@@ -402,12 +402,7 @@
   /* ------------------------------------------------------------------------
      §4 — Interview FAQ accordion
      ------------------------------------------------------------------------ */
-  var faqItems = [
-    { questionEN: "[FAQ question 1 — EN]", questionES: "[Pregunta 1 — ES]", answerEN: "[FAQ answer 1 — EN]", answerES: "[Respuesta 1 — ES]", visible: true },
-    { questionEN: "[FAQ question 2 — EN]", questionES: "[Pregunta 2 — ES]", answerEN: "[FAQ answer 2 — EN]", answerES: "[Respuesta 2 — ES]", visible: true },
-    { questionEN: "[FAQ question 3 — EN]", questionES: "[Pregunta 3 — ES]", answerEN: "[FAQ answer 3 — EN]", answerES: "[Respuesta 3 — ES]", visible: true },
-    { questionEN: "[FAQ question 4 — EN]", questionES: "[Pregunta 4 — ES]", answerEN: "[FAQ answer 4 — EN]", answerES: "[Respuesta 4 — ES]", visible: true }
-  ];
+  var faqItems = listData("ABOUT_FAQ");   // js/about-data.js
 
   (function () {
     var container = document.getElementById("faq-accordion");
@@ -521,13 +516,7 @@
   /* ------------------------------------------------------------------------
      §6 — Interesting sites list
      ------------------------------------------------------------------------ */
-  var interestingSites = [
-    // /learning (unlisted section, see CLAUDE.md → /learning). internal: same tab.
-    { url: "learning/", internal: true, labelEN: "Learning", labelES: "Aprendizaje", descEN: "Interactive notes I [told Claude to] build for engineering students, starting with how to check a line fit against lab data.", descES: "Notas interactivas que preparo para estudiantes de ingeniería, empezando por cómo evaluar un ajuste lineal a datos de laboratorio." },
-    { url: "#", labelEN: "[Site 1 — EN]", labelES: "[Sitio 1 — ES]", descEN: "[Site 1 description — EN]", descES: "[Descripción del sitio 1 — ES]" },
-    { url: "#", labelEN: "[Site 2 — EN]", labelES: "[Sitio 2 — ES]", descEN: "[Site 2 description — EN]", descES: "[Descripción del sitio 2 — ES]" },
-    { url: "#", labelEN: "[Site 3 — EN]", labelES: "[Sitio 3 — ES]", descEN: "[Site 3 description — EN]", descES: "[Descripción del sitio 3 — ES]" }
-  ];
+  var interestingSites = listData("ABOUT_SITES");   // js/about-data.js; internal: true = same tab
 
   (function () {
     var list = document.getElementById("interesting-sites-list");
@@ -537,7 +526,7 @@
     function render() {
       var lang = currentLang();
       list.innerHTML = "";
-      interestingSites.forEach(function (site) {
+      interestingSites.filter(function (site) { return site.visible !== false; }).forEach(function (site) {
         var li = document.createElement("li");
         var a = document.createElement("a");
         a.href = site.url;

@@ -356,10 +356,10 @@ and the inline-string question below is still open for after the fair.**
   (2026-09-27); "IEL" in bio 1 gets the chip automatically.
 
 **Known-placeholder, hidden for the fair:**
-- §3 books — 5 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on `#about-reading`)
-- §4 FAQ — 4 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on `#about-faq`)
-- §6 interesting sites — 3 entries in `js/about.js` — **HIDDEN for the fair** (`hidden` on
-  `#about-sites`)
+- §3 books — 5 placeholder entries in `js/about-data.js` — **HIDDEN** (`hidden` on `#about-reading`)
+- §4 FAQ — 4 placeholder entries in `js/about-data.js` — **HIDDEN** (`hidden` on `#about-faq`)
+- §6 interesting sites — 1 entry (Atomic Rockets) in `js/about-data.js` — **SHOWN since
+  2026-09-29**; the editor's Content › About sub-tab edits all three lists and the flags
 - Headshot — `<img src="assets/images/about/headshot.jpg">` in about.html, alt from
   `headshotAlt` (EN/ES written). Swap the file in place.
 

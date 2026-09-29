@@ -21,6 +21,8 @@ REAL_FILES = [
     "js/projects-data.js",
     "js/experience-data.js",
     "js/tags-data.js",
+    "js/about-data.js",
+    "about.html",
     ".vercelignore",
 ]
 
@@ -57,7 +59,7 @@ class TempRepo:
         (self.root / "projects").mkdir(exist_ok=True)
         for p in (REPO_ROOT / "projects").glob("*.html"):
             shutil.copy2(p, self.root / "projects" / p.name)
-        for rel in ("js/projects-data.js", "js/experience-data.js"):
+        for rel in ("js/projects-data.js", "js/experience-data.js", "js/about-data.js"):
             src = self.root / rel
             if src.is_file():
                 for m in re.findall(r'"(assets/[\w./-]+\.(?:jpg|jpeg|png|webp|pdf))"', src.read_text(encoding="utf-8")):

@@ -5,8 +5,14 @@
   "use strict";
   const { token, $, el, api, toast, setBanner, clearBanner, banners, renderDiff } = window.Editor;
 
-  const state = { data: null, tab: "projects", selected: { projects: null, experience: null, tags: null }, unsaved: false };
-  const FILE_LABEL = { projects: "project", experience: "role", tags: "tag" };
+  const state = { data: null, tab: "projects", selected: { projects: null, experience: null, tags: null, about: "sites" }, unsaved: false };
+  const FILE_LABEL = { projects: "project", experience: "role", tags: "tag", about: "entry" };
+  // the About lists (js/about-data.js): inline EN/ES fields, no translations keys
+  const ABOUT_PAIRS = {
+    books: [["titleEN", "titleES", "Title"], ["descEN", "descES", "Description"]],
+    faq: [["questionEN", "questionES", "Question"], ["answerEN", "answerES", "Answer"]],
+    sites: [["labelEN", "labelES", "Label"], ["descEN", "descES", "Description"]],
+  };
   // text field → where the entry stores its key (mirrors core/site/keys.py)
   const TEXT_PATH = {
     projects: { title: ["titleKey"], desc: ["descKey"], longDesc: ["longDescKey"], search: ["searchTextKey"], imageAlt: ["imageAlt"], thumbAlt: ["thumbAltKey"], "page.credit": ["page", "creditKey"] },
@@ -62,6 +68,22 @@
     box.replaceChildren();
     const file = state.tab;
     for (const a of document.querySelectorAll("#subtabs a")) a.classList.toggle("active", a.dataset.tab === file);
+    if (file === "about") {
+      const a = state.data.about;
+      for (const lst of Object.keys(a.labels)) {
+        const entries = a.lists[lst] || [];
+        const shown = a.shown[a.sections[lst]];
+        const errs = entries.reduce((n, e) => n + issuesFor("about", e.id).filter((i) => i.level === "error").length, 0);
+        const row = el("a", { href: "#about/" + lst, class: "entry" + (state.selected.about === lst ? " active" : "") + (entries.some((e) => e._draft) || a.shownDrafts[a.sections[lst]] !== undefined || a.orderDrafts.includes(lst) ? " has-draft" : "") + (errs ? " has-error" : ""), onclick: (ev) => { ev.preventDefault(); select("about", lst); } });
+        row.append(el("div", { class: "entry-title" }, a.labels[lst]), el("div", { class: "entry-meta" }, `${entries.length} entr${entries.length === 1 ? "y" : "ies"} · ${shown ? "shown on the site" : "hidden on the site"}`));
+        const pills = el("div", { class: "entry-pills" });
+        if (errs) pills.append(pill("st-todo", errs + " error" + (errs > 1 ? "s" : "")));
+        row.append(pills);
+        box.append(row);
+      }
+      box.append(el("p", { class: "muted small" }, "js/about-data.js and the hidden attribute of each block in about.html."));
+      return;
+    }
     if (file === "images") {
       box.append(el("p", { class: "muted small" }, "Every file under assets/images/ with what uses it."));
       const pending = Object.keys(state.data.pendingImages || {});
@@ -159,7 +181,9 @@
   const importCtx = {};
   function openImport(file, slug, altField, preset) {
     Object.assign(importCtx, { file, slug, altField });
-    $("#importNote").textContent = `For ${FILE_LABEL[file]} “${slug}” → ${altField.replace(/\.(\d+)\.alt$/, " $1").replace("imageAlt", "main image").replace("thumbAlt", "thumbnail")} — saved under assets/images/${file}/${slug}/`;
+    const about = file === "about";
+    $("#importAltEnField").hidden = about; $("#importAltEsField").hidden = about;
+    $("#importNote").textContent = about ? `Cover for book “${slug}” — saved under ${state.data.about.coverDir}/ (covers are decorative; no alt text)` : `For ${FILE_LABEL[file]} “${slug}” → ${altField.replace(/\.(\d+)\.alt$/, " $1").replace("imageAlt", "main image").replace("thumbAlt", "thumbnail")} — saved under assets/images/${file}/${slug}/`;
     const sel = $("#importPreset");
     sel.replaceChildren(...Object.entries(state.data.presets || {}).map(([k, v]) => el("option", { value: k }, v)));
     sel.value = preset;
@@ -314,6 +338,7 @@
     const file = state.tab, slug = state.selected[file];
     if (state.data.readOnly) { box.append(el("div", { class: "gate err" }, "Read-only: " + state.data.readOnly)); return; }
     if (file === "tags") { renderTagsForm(box); return; }
+    if (file === "about") { renderAboutForm(box); requestAnimationFrame(() => box.querySelectorAll("textarea").forEach(autosize)); return; }
     if (file === "images") { renderImagesPanel(box); return; }
     const entry = slug && entryOf(file, slug);
     if (!entry) { box.append(el("p", { class: "muted" }, "Pick a " + FILE_LABEL[file] + " on the left, or add one.")); return; }
@@ -410,6 +435,61 @@
     }
   }
 
+  // ---------------------------------------------------------------- About lists
+  const pendingField = {};
+  function queueField(file, slug, path, value) {
+    const k = [file, slug, path.join(".")].join("|");
+    clearTimeout(pendingField[k]);
+    pendingField[k] = setTimeout(() => call("/api/content/field", { file, slug, path, value }, false), 350);
+  }
+  function inlinePair(entry, enField, esField, label) {
+    const wrap = el("div", { class: "pair" }, el("div", { class: "pair-label" }, label));
+    const cols = el("div", { class: "cols" });
+    for (const [lang, field] of [["en", enField], ["es", esField]]) {
+      const ta = el("textarea", { rows: 1, lang, spellcheck: "true" });
+      ta.value = entry[field] || "";
+      ta.placeholder = lang.toUpperCase();
+      ta.addEventListener("input", () => { autosize(ta); queueField("about", entry.id, [field], ta.value); });
+      cols.append(el("div", null, el("label", null, lang.toUpperCase()), ta));
+    }
+    wrap.append(cols);
+    return wrap;
+  }
+  function renderAboutForm(box) {
+    const a = state.data.about;
+    const lst = state.selected.about || "sites";
+    const entries = a.lists[lst] || [];
+    const section = a.sections[lst];
+    box.append(el("h2", null, a.labels[lst], " ", el("span", { class: "muted small" }, "about.html — js/about-data.js")));
+    const shownCb = el("input", { type: "checkbox" });
+    shownCb.checked = !!a.shown[section];
+    shownCb.addEventListener("change", () => call("/api/content/about/shown", { section, shown: shownCb.checked }, true));
+    box.append(el("div", { class: "rowline" }, el("label", { class: "chk" }, shownCb, " Shown on the site"), el("span", { class: "muted small" }, "(the hidden attribute on #" + section + " in about.html; the whole block)"),
+      el("span", { class: "spacer" }), el("button", { type: "button", class: "primary", onclick: openAdd }, "Add " + (lst === "faq" ? "question" : lst === "books" ? "book" : "site") + "…")));
+    const ids = entries.map((e) => e.id);
+    entries.forEach((e, i) => {
+      const card = el("div", { class: "card" + (e.visible ? "" : " excluded") });
+      const iss = issuesFor("about", e.id);
+      const bar = el("div", { class: "rowline" }, el("code", null, e.id), e._draft ? pill("draft", "draft") : null, el("span", { class: "spacer" }),
+        el("button", { type: "button", class: "ghost small", disabled: i === 0 ? "" : null, onclick: () => { const n = ids.slice(); [n[i - 1], n[i]] = [n[i], n[i - 1]]; call("/api/content/about/order", { list: lst, ids: n }, true); } }, "↑"),
+        el("button", { type: "button", class: "ghost small", disabled: i === entries.length - 1 ? "" : null, onclick: () => { const n = ids.slice(); [n[i + 1], n[i]] = [n[i], n[i + 1]]; call("/api/content/about/order", { list: lst, ids: n }, true); } }, "↓"),
+        el("button", { type: "button", class: "ghost small danger", onclick: () => { if (confirm("Delete “" + e.id + "”?\n\nNothing happens until you Review & save.")) call("/api/content/delete", { file: "about", slug: e.id }, true); } }, "Delete"));
+      card.append(bar);
+      const ib = el("div", { class: "child-issues" });
+      renderIssueBox(ib, iss);
+      card.append(ib);
+      const flags = el("div", { class: "form-grid" }, checkField("about", e.id, e, ["visible"], "visible on the page"));
+      if (lst === "sites") {
+        flags.append(inputField("about", e.id, e, ["url"], "URL (https://… or a site-relative path)"), checkField("about", e.id, e, ["internal"], "opens in the same tab (internal link)"));
+      }
+      if (lst === "books") flags.append(imageField("about", e.id, e, ["coverSrc"], "Cover", "cover", "portrait"));
+      card.append(flags);
+      for (const [enF, esF, label] of ABOUT_PAIRS[lst]) card.append(inlinePair(e, enF, esF, label));
+      box.append(card);
+    });
+    if (!entries.length) box.append(el("p", { class: "muted" }, "No entries yet."));
+  }
+
   function renderTagsForm(box) {
     box.append(el("h2", null, "Tags ", el("span", { class: "muted small" }, "js/tags-data.js — ids never change; labels are text")));
     const t = el("table", { class: "docs" }, el("tr", null, el("th", null, "id"), el("th", null, "EN"), el("th", null, "ES"), el("th", null, "Used"), el("th")));
@@ -433,18 +513,21 @@
   // ---------------------------------------------------------------- add / delete
   function openAdd() {
     const file = state.tab;
-    $("#addTitle").textContent = "Add " + FILE_LABEL[file];
-    $("#addEnLabel").textContent = file === "tags" ? "Label (EN)" : file === "projects" ? "Title (EN)" : "Role (EN)";
-    $("#addEsLabel").textContent = file === "tags" ? "Label (ES)" : file === "projects" ? "Title (ES)" : "Role (ES)";
-    $("#addNote").textContent = file === "projects" ? "New projects start hidden with today's season; fill the rest in the form, then set the listing." : file === "experience" ? "New roles start hidden (visible: false)." : "One line in js/tags-data.js plus the two labels.";
+    const lst = state.selected.about;
+    $("#addTitle").textContent = file === "about" ? "Add to " + state.data.about.labels[lst] : "Add " + FILE_LABEL[file];
+    $("#addEnLabel").textContent = file === "tags" ? "Label (EN)" : file === "projects" ? "Title (EN)" : file === "about" ? (lst === "faq" ? "Question (EN)" : lst === "books" ? "Title (EN)" : "Label (EN)") : "Role (EN)";
+    $("#addEsLabel").textContent = file === "tags" ? "Label (ES)" : file === "projects" ? "Title (ES)" : file === "about" ? (lst === "faq" ? "Question (ES)" : lst === "books" ? "Title (ES)" : "Label (ES)") : "Role (ES)";
+    $("#addNote").textContent = file === "projects" ? "New projects start hidden with today's season; fill the rest in the form, then set the listing." : file === "experience" ? "New roles start hidden (visible: false)." : file === "about" ? "The id names the entry in js/about-data.js and never changes; the entry starts hidden (visible: false)." : "One line in js/tags-data.js plus the two labels.";
     $("#addSlug").value = ""; $("#addEn").value = ""; $("#addEs").value = "";
     $("#addDlg").showModal();
     $("#addSlug").focus();
   }
   async function doAdd() {
     const file = state.tab, slug = $("#addSlug").value.trim(), en = $("#addEn").value.trim(), es = $("#addEs").value.trim();
-    const ok = file === "tags" ? await call("/api/content/tag", { id: slug, en, es }, true) : await call("/api/content/add", { file, slug, titleEn: en, titleEs: es }, true);
-    if (ok) { $("#addDlg").close(); if (file !== "tags") select(file, slug); }
+    const ok = file === "tags" ? await call("/api/content/tag", { id: slug, en, es }, true)
+      : file === "about" ? await call("/api/content/about/add", { list: state.selected.about, id: slug, en, es }, true)
+      : await call("/api/content/add", { file, slug, titleEn: en, titleEs: es }, true);
+    if (ok) { $("#addDlg").close(); if (file !== "tags" && file !== "about") select(file, slug); }
   }
   async function deleteEntry(file, slug) {
     if (!confirm("Delete " + FILE_LABEL[file] + " “" + slug + "”?\n\nIts text that nothing else uses is removed too" + (file === "projects" ? ", and its sub-page (if any) moves to the backup set" : "") + ". Nothing happens until you Review & save.")) return;
@@ -475,6 +558,7 @@
     if (r.assets && r.assets.length) body.append(el("ul", { class: "changes" }, ...r.assets.map((a) => el("li", null, el("strong", null, { add: "Add ", replace: "Replace ", remove: "Remove " }[a.action]), el("code", null, a.path), a.size ? ` (${a.size}, ${a.kb} KB)` : ""))));
     if (r.diskChanged) body.append(el("div", { class: "gate err" }, "A file changed on disk since it was loaded. Close this, click Reload in the banner, then review again."));
     for (const g of [r.gate, r.siteTextGate]) {
+      if (!g) continue;
       if (g.blocking.length) body.append(el("div", { class: "gate err" }, el("strong", null, "Blocking errors (fix before saving):"), issueList(g.blocking)));
       if (g.warnings.length) body.append(el("div", { class: "gate warn" }, el("strong", null, "Warnings (saving is allowed):"), issueList(g.warnings.slice(0, 15)), g.warnings.length > 15 ? el("p", { class: "muted" }, "… and " + (g.warnings.length - 15) + " more") : null));
     }
@@ -517,7 +601,7 @@
     if (d.autosave) setBanner("autosave", "warn", "Unsaved content edits from " + d.autosave.saved + " were found.", [
       { label: "Restore drafts", primary: true, onclick: async () => { const r = await api("/api/content/autosave/restore", { method: "POST", body: {} }); clearBanner("autosave"); toast("Restored " + r.applied + " draft item(s)"); await loadState(); } },
       { label: "Discard", onclick: async () => { await api("/api/content/autosave/discard", { method: "POST", body: {} }); clearBanner("autosave"); } }]);
-    const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags|images)(?:\/(.+))?$/);
+    const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags|about|images)(?:\/(.+))?$/);
     if (m) { state.tab = m[1]; if (m[2]) state.selected[m[1]] = decodeURIComponent(m[2]); }
     renderCounts();
     renderList();
@@ -543,7 +627,7 @@
     $("#previewLink").addEventListener("click", async (e) => { e.preventDefault(); try { await api("/api/open-preview", { method: "POST", body: {} }); toast("Preview opened in your browser."); } catch (err) { toast("Could not open the preview: " + err.message); } });
     document.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (!$("#reviewDlg").open) openReview(); } });
     window.addEventListener("beforeunload", (e) => { if (state.unsaved && !window.__navigating) { e.preventDefault(); e.returnValue = ""; } });
-    window.addEventListener("hashchange", () => { const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags|images)(?:\/(.+))?$/); if (m) { state.tab = m[1]; if (m[2]) state.selected[m[1]] = decodeURIComponent(m[2]); renderList(); renderForm(); } });
+    window.addEventListener("hashchange", () => { const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags|about|images)(?:\/(.+))?$/); if (m) { state.tab = m[1]; if (m[2]) state.selected[m[1]] = decodeURIComponent(m[2]); renderList(); renderForm(); } });
     loadState().catch((e) => setBanner("load", "err", "Could not load the content state: " + e.message));
     heartbeat();
     setInterval(heartbeat, 5000);

@@ -342,6 +342,60 @@ class ContentOpsTests(unittest.TestCase):
             self.assertIn("engineer", svc.obj()["items"])
 
 
+class DuplicateTests(unittest.TestCase):
+    def test_duplicate_entry_and_child_into_one_document(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            c = svc.obj()
+            self.assertEqual(c["items"]["engineer"]["include"], {"full": True, "professional": True, "resume": True})
+            # a shared bullet: the copy takes its place in the résumé only
+            nid = svc.duplicate("engineer-1", "resume")
+            self.assertEqual(nid, "engineer-1-resume")
+            c = svc.obj()
+            eng = c["items"]["engineer"]
+            self.assertEqual(eng["children"][nid], {"kind": "bullet", "text": {"en": "Did a thing.", "es": "Did a thing."}, "include": {"full": False, "professional": False, "resume": True}})
+            self.assertEqual(eng["children"]["engineer-1"]["include"], {"full": True, "professional": True, "resume": False})
+            self.assertEqual(eng["order"]["resume"], [nid, "engineer-2"])
+            self.assertEqual(eng["order"]["full"], ["engineer-1", "engineer-2"])
+            texts = [x["text"] for x in svc.review()["changes"]]
+            self.assertTrue(any("bullet 1: duplicated into Résumé (the original stays in Full, Professional)" in x for x in texts), texts)
+            self.assertEqual(len(texts), 1, texts)
+            # the résumé EN master: one paragraph added, one removed, same text back
+            res_en = masters.BY_ID["resume-en"]
+            path = t.root / masters.MASTERS_DIR / res_en.file
+            r = renderer.render_master(c, svc.slots[res_en.file], path)
+            self.assertEqual((r.report["added"], r.report["removed"]), ([nid], ["engineer-1"]))
+            self.assertEqual(renderer.self_check(c, res_en.file, r.data, path), [])
+            out = Path(tempfile.mkdtemp()) / "r.docx"
+            out.write_bytes(r.data)
+            self.assertEqual([importer.norm(p.text) for p in importer.read_master(out).paragraphs], [importer.norm(p.text) for p in importer.read_master(path).paragraphs])
+            # refusals: not in that document, or in it alone
+            with self.assertRaises(ValueError):
+                svc.duplicate(nid, "full")
+            with self.assertRaises(ValueError):
+                svc.duplicate(nid, "resume")
+            # a shared entry: the copy takes its place with the children it shows there
+            svc.discard_drafts()
+            svc.include("engineer-2", "resume", False)
+            eid = svc.duplicate("engineer", "resume")
+            c = svc.obj()
+            self.assertEqual(eid, "engineer-resume")
+            copy_ = c["items"][eid]
+            self.assertEqual((copy_["role"], copy_["org"], copy_["include"]), (c["items"]["engineer"]["role"], c["items"]["engineer"]["org"], {"full": False, "professional": False, "resume": True}))
+            self.assertEqual(list(copy_["children"]), ["engineer-resume-1"])
+            self.assertEqual(copy_["children"]["engineer-resume-1"]["text"], {"en": "Did a thing.", "es": "Did a thing."})
+            self.assertEqual(copy_["order"], {"resume": ["engineer-resume-1"]})
+            self.assertEqual(c["items"]["engineer"]["include"]["resume"], False)
+            self.assertEqual(c["items"]["engineer"]["order"]["resume"], [])
+            sec = next(s for s in c["sections"] if s["id"] == "experience")
+            self.assertEqual(sec["order"]["resume"], [eid])
+            self.assertEqual(sec["order"]["full"], ["engineer"])
+            texts = [x["text"] for x in svc.review()["changes"]]
+            self.assertTrue(any("“Engineer”: duplicated into Résumé (the original stays in Full, Professional)" in x for x in texts), texts)
+            r = renderer.render_master(c, svc.slots[res_en.file], path)
+            self.assertEqual(renderer.self_check(c, res_en.file, r.data, path), [])
+
+
 class CvCheckTests(unittest.TestCase):
     def test_rules(self):
         c = mini_content()

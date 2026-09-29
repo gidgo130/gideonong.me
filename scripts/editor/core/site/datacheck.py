@@ -31,9 +31,11 @@ SORT_DATE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 class Checker:
     def __init__(self, repo_root: Path, en: dict, es: dict, projects: list[dict], experience: list[dict], tags: list[dict],
                  hidden_prefixes: Iterable[str] = (), blocklist_terms: Optional[list] = None, shells_exist: Optional[dict] = None,
-                 pending_files: Iterable[str] = ()):
+                 pending_files: Iterable[str] = (), about: Optional[list[dict]] = None, about_shown: Optional[dict] = None):
         self.root = Path(repo_root)
         self.pending_files = set(pending_files)  # files a draft will add on save (imported images)
+        self.about = about  # the About page's lists (core/site/about.py), or None to skip them
+        self.about_shown = about_shown  # block id → shown (the `hidden` attribute in about.html)
         self.en, self.es = en, es
         self.projects, self.experience, self.tags = projects, experience, tags
         self.hidden = list(hidden_prefixes)
@@ -311,8 +313,22 @@ class Checker:
                     self.err(owner, "missing-file", f"sub-page {p['subpageUrl']} does not exist — create it or clear subpageUrl")
         if featured > FEATURED_MAX:
             self.err("projects:", "featured", f"{featured} featured projects (max {FEATURED_MAX}) — the site shows the first three")
+        self._about()
         self._unused_keys()
         return self.issues
+
+    def _about(self) -> None:
+        if self.about is None:
+            return
+        from . import about as aboutmod
+
+        shown = self.about_shown
+        if shown is None:
+            try:
+                shown = aboutmod.read_shown((self.root / aboutmod.PAGE).read_text(encoding="utf-8", errors="replace"))
+            except OSError:
+                shown = {}
+        self.issues += aboutmod.check(self.about, self.root, self.pending_files, self.terms, shown)
 
     def _unused_keys(self) -> None:
         referenced: set[str] = set()

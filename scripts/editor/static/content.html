@@ -10,7 +10,7 @@
 <header class="topbar">
   <div class="brand">Site editor</div>
   <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/content">Content</a><a href="/cv">CV &amp; résumé</a><a href="/cvtext">CV text</a><a href="/transcript">Transcript</a></nav>
-  <nav class="tabs subtabs" id="subtabs" aria-label="Content"><a href="#projects" data-tab="projects">Projects</a><a href="#experience" data-tab="experience">Experience</a><a href="#tags" data-tab="tags">Tags</a><a href="#images" data-tab="images">Images</a></nav>
+  <nav class="tabs subtabs" id="subtabs" aria-label="Content"><a href="#projects" data-tab="projects">Projects</a><a href="#experience" data-tab="experience">Experience</a><a href="#tags" data-tab="tags">Tags</a><a href="#about" data-tab="about">About</a><a href="#images" data-tab="images">Images</a></nav>
   <span class="spacer"></span>
   <a id="previewLink" class="ghost" href="#" target="_blank" rel="noopener">Preview ↗</a>
   <button id="reviewBtn" class="primary" type="button">Review &amp; save <span class="badge" id="draftCount" hidden>0</span></button>
@@ -45,8 +45,8 @@
       <label class="field"><span>Size</span><select id="importPreset"></select></label>
       <label class="field"><span>File name (letters, digits, hyphens; extension is added)</span><input id="importName" type="text" spellcheck="false"></label>
       <label class="chk"><input id="importReplace" type="checkbox"> Replace if a file with that name exists (the old one is backed up)</label>
-      <label class="field"><span>Alt text (EN)</span><input id="importAltEn" type="text"></label>
-      <label class="field"><span>Alt text (ES)</span><input id="importAltEs" type="text"></label>
+      <label class="field" id="importAltEnField"><span>Alt text (EN)</span><input id="importAltEn" type="text"></label>
+      <label class="field" id="importAltEsField"><span>Alt text (ES)</span><input id="importAltEs" type="text"></label>
     </div>
     <p class="muted small">Orientation is applied, the colour profile converted to sRGB, and every camera tag, GPS position and profile is dropped. The image shows in the preview at once; it is written to <code>assets/images/…</code> on Review &amp; save.</p>
     <div class="dlg-actions"><span class="spacer"></span><button type="submit" class="ghost">Cancel</button><button type="button" class="primary" id="importGo">Import</button></div>

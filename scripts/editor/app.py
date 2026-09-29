@@ -509,6 +509,27 @@ def create_app(state: EditorState) -> Flask:
             return deny(400, "slug is required")
         return _content_call(state.content.create_shell, b["slug"])
 
+    @app.post("/api/content/about/add")
+    def content_about_add():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("list"), str) or not isinstance(b.get("id"), str):
+            return deny(400, "list and id are required")
+        return _content_call(state.content.add_about_entry, b["list"], b["id"].strip(), str(b.get("en") or ""), str(b.get("es") or ""))
+
+    @app.post("/api/content/about/order")
+    def content_about_order():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("list"), str) or not isinstance(b.get("ids"), list) or not all(isinstance(x, str) for x in b["ids"]):
+            return deny(400, "list and an ids list are required")
+        return _content_call(state.content.set_about_order, b["list"], b["ids"])
+
+    @app.post("/api/content/about/shown")
+    def content_about_shown():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("section"), str):
+            return deny(400, "section is required")
+        return _content_call(state.content.set_about_shown, b["section"], bool(b.get("shown")))
+
     @app.post("/api/content/tag")
     def content_tag():
         b = request.get_json(silent=True) or {}
@@ -649,6 +670,8 @@ def create_app(state: EditorState) -> Flask:
                 elif op == "delete":
                     svc.delete(s("id"))
                     result = None
+                elif op == "duplicate":
+                    result = {"id": svc.duplicate(s("id"), s("variant"))}
                 elif op == "add-section":
                     result = {"id": svc.add_section(s("en"), s("es", False) or "", s("variant"))}
                 elif op == "delete-section":

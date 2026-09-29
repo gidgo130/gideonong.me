@@ -37,6 +37,8 @@ Audience: engineering students with no statistics background, some Excel/MATLAB.
   (file:) link fix
 - [X] EN/ES toggle scaffold in every page, hidden until `data-es-ready`
 - [X] About → Interesting sites: "Learning" entry (js/about.js). Block still `hidden`.
+      2026-09-29: the block was unhidden with Atomic Rockets in place of the Learning entry
+      (js/about-data.js); /learning has no link from the site until an entry is added back.
 - [X] Docs: CLAUDE.md /learning section, this file (learning/learning-plan.md), learning/README.md;
   plan.md keeps only a pointer section
 - [X] Fable review (2026-09-28): 15 findings; wording, readouts, script t-value, favicon,
@@ -87,7 +89,7 @@ Order: 2 → 1 → 3 → 4 → 6.
 - [X] Keep `noindex` on every /learning page and deck, even once public (Gideon, 2026-09-28).
   The section is shared by link, not searched for: the About link and the OG cards are how
   people find it. Nothing to remove, nothing to re-render.
-- [ ] Unhide About → Interesting sites (replace or remove the placeholder sites first)
+- [X] Unhide About → Interesting sites — done 2026-09-29, without a Learning entry (see above)
 - [ ] Repo public (decision 18): papers purged from history, force push, GitHub visibility
   → public, then the Colab links work
 - [X] Open Graph / Twitter-card tags on the hub, all six modules and their decks, with a
@@ -112,8 +114,9 @@ Order: 2 → 1 → 3 → 4 → 6.
 
 [2026-09-28] Learning section (/learning) — "Reading Your Fits". Built in a Cowork session.
 1. **Unlisted, own design.** gideonong.me/learning/ hosts interactive teaching pages in their
-   own "lab notebook" look (not the main-site palette or fonts). Not in the nav; the only link
-   in is About → Interesting sites (currently hidden). CLAUDE.md → /learning holds the rules.
+   own "lab notebook" look (not the main-site palette or fonts). Not in the nav; since
+   2026-09-29 no link from the site either (reached by URL and shared cards). CLAUDE.md →
+   /learning holds the rules.
 2. **noindex, permanently.** Every page and deck carries robots noindex. Originally "until the
    series is finished and reviewed"; on 2026-09-28 Gideon decided it stays for good (Phase C):
    /learning is reached by link, not by search. robots.txt deliberately not used.

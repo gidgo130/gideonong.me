@@ -32,6 +32,7 @@ IDENTICAL_ALLOWED = {
     "Gideon A. Ong",
     "Personal",
     "Machine Learning",
+    "Atomic Rockets",
 }
 # Keys whose EN and ES values are expected to match (names, addresses, ids).
 IDENTICAL_ALLOWED_KEY_RE = re.compile(

@@ -149,6 +149,108 @@ class DataCheckTests(unittest.TestCase):
             self.assertIn(("keys:projGhostTitle", "unused-key"), {(i.key, i.code) for i in datacheck.check(t.root, en3, es3, P, X, T) if i.level == "warning"})
 
 
+class AboutTests(unittest.TestCase):
+    def test_about_file_round_trip_edits_reorder_and_shown(self):
+        from core.site import about
+
+        with TempRepo() as t:
+            f = about.AboutFile(t.root)
+            self.assertEqual(f.render({}, []), f.raw)
+            self.assertEqual([e["_list"] for e in f.entries()][:6], ["books"] * 5 + ["faq"])
+            site = next(e for e in f.entries() if e["_list"] == "sites")
+            edited = dict(site, descEN="Edited.")
+            out = f.render({site["id"]: edited}, [])
+            self.assertEqual(len(changed_lines(f.raw.decode("utf-8"), out.decode("utf-8"))), 2)  # one line out, one in
+            out = f.render({"book-3": None}, [about.new_entry("faq", "faq-new", "Q?", "¿P?")])
+            text = out.decode("utf-8")
+            self.assertNotIn('"book-3"', text)
+            self.assertIn('{ id: "faq-new", questionEN: "Q?", questionES: "¿P?", answerEN: "", answerES: "", visible: false }', text)
+            out = f.render({}, [], {"books": ["book-5", "book-4", "book-3", "book-2", "book-1"]})
+            f2 = about.AboutFile.__new__(about.AboutFile)
+            (t.root / "js/about-data.js").write_bytes(out)
+            f2 = about.AboutFile(t.root)
+            self.assertEqual([e["id"] for e in f2.list_entries("books")], ["book-5", "book-4", "book-3", "book-2", "book-1"])
+            self.assertEqual(f2.render({}, [], {"books": ["book-1", "book-2", "book-3", "book-4", "book-5"]}), f.raw)  # a reorder back is byte-identical
+            html = (t.root / "about.html").read_text(encoding="utf-8")
+            self.assertEqual(about.read_shown(html), {"about-reading": False, "about-faq": False, "about-sites": True})
+            h2 = about.render_shown(html, {"about-faq": True, "about-sites": False})
+            self.assertEqual(about.read_shown(h2), {"about-reading": False, "about-faq": True, "about-sites": False})
+            self.assertEqual(len(changed_lines(html, h2)), 4)
+            self.assertEqual(about.render_shown(h2, about.read_shown(html)), html)
+            # the checks
+            issues = about.check(f.entries(), t.root)
+            self.assertEqual([i.level for i in issues if i.key == "about:atomic-rockets"], [])
+            bad = [dict(site, url="#", visible=True), dict(about.new_entry("books", "b", "Some Title", "Some Title"), visible=True), dict(about.new_entry("sites", "s", "<b>x</b>", "TODO"), url="https://x.example", visible=False)]
+            codes = sorted((i.level, i.code, i.key) for i in about.check(bad, t.root, shown={"about-reading": True, "about-sites": True}))
+            self.assertEqual([c for c in sorted((i.level, i.code, i.key) for i in about.check(bad, t.root, shown={"about-reading": False, "about-sites": True})) if c[2] == "about:b" and c[0] == "error"], [])  # a hidden block: warnings only
+            self.assertIn(("error", "url", "about:atomic-rockets"), codes)
+            self.assertIn(("error", "missing-file", "about:b"), codes)  # no cover on a visible book
+            self.assertIn(("error", "missing-key", "about:b"), codes)  # empty description
+            self.assertIn(("warning", "same", "about:b"), codes)
+            self.assertIn(("error", "html", "about:s"), codes)
+            self.assertIn(("warning", "todo", "about:s"), codes)  # hidden entry
+
+    def test_about_service_flow(self):
+        with TempRepo() as t:
+            state = make(t)
+            svc = state.content
+            self.assertIsNone(svc.read_only)
+            before_data = (t.root / "js/about-data.js").read_bytes()
+            before_page = (t.root / "about.html").read_bytes()
+            svc.set_field("about", "atomic-rockets", ["descEN"], "Edited.")
+            st = svc.state_json()
+            self.assertEqual(st["about"]["lists"]["sites"][0]["descEN"], "Edited.")
+            self.assertTrue(st["about"]["lists"]["sites"][0]["_draft"])
+            e = svc.add_about_entry("sites", "new-site", "New", "Nuevo")
+            self.assertEqual((e["_list"], e["visible"]), ("sites", False))
+            with self.assertRaises(ValueError):
+                svc.add_about_entry("sites", "new-site", "x", "y")
+            with self.assertRaises(ValueError):
+                svc.add_about_entry("nope", "x", "x", "y")
+            self.assertTrue(svc.gate().ok())  # a hidden entry with no url is a warning
+            svc.set_field("about", "new-site", ["visible"], True)
+            self.assertFalse(svc.gate().ok())  # visible: the url and the empty description block
+            svc.set_field("about", "new-site", ["url"], "https://example.com/")
+            svc.set_field("about", "new-site", ["descEN"], "An example.")
+            svc.set_field("about", "new-site", ["descES"], "Un ejemplo.")
+            self.assertTrue(svc.gate().ok(), svc.gate().to_json())
+            svc.set_about_order("books", ["book-2", "book-1", "book-3", "book-4", "book-5"])
+            self.assertEqual([e["id"] for e in svc.live_entries("about") if e["_list"] == "books"][:2], ["book-2", "book-1"])
+            with self.assertRaises(ValueError):
+                svc.set_about_order("books", ["book-1"])
+            svc.set_about_shown("about-faq", True)
+            svc.set_about_shown("about-sites", True)  # already shown on disk → no draft
+            self.assertEqual(svc.drafts["aboutShown"], {"about-faq": True})
+            self.assertEqual(svc.about_shown()["about-faq"], True)
+            r = svc.review()
+            texts = [c["text"] for c in r["changes"]]
+            self.assertTrue(any("About › Books: order changed" in x for x in texts), texts)
+            self.assertTrue(any("About › FAQ: shown on the site" in x for x in texts), texts)
+            self.assertTrue(any("About › new-site: added" in x for x in texts), texts)
+            self.assertEqual({f["path"] for f in r["files"]}, {"js/about-data.js", "about.html"})
+            self.assertIn("about.html", svc.preview_overrides())
+            self.assertIn("js/about-data.js", svc.preview_overrides())
+            self.assertGreaterEqual(svc.draft_count(), 4)
+            s = svc.save()
+            self.assertTrue(s["ok"], s)
+            self.assertEqual(svc.draft_count(), 0)
+            page = (t.root / "about.html").read_bytes()
+            self.assertEqual(len(changed_lines(before_page.decode("utf-8"), page.decode("utf-8"))), 2)
+            self.assertIn(b'<section class="section-faq" id="about-faq">', page)
+            data = (t.root / "js/about-data.js").read_text(encoding="utf-8")
+            self.assertIn('descEN: "Edited."', data)
+            self.assertIn('id: "new-site", url: "https://example.com/"', data)
+            self.assertLess(data.index('"book-2"'), data.index('"book-1"'))
+            # delete, then everything back: the data file is byte-identical again
+            svc.delete_entry("about", "new-site")
+            svc.set_field("about", "atomic-rockets", ["descEN"], "Winchell Chung's encyclopedic guide to the physics and engineering of spaceflight, written for science-fiction authors who want to get it right.")
+            svc.set_about_order("books", ["book-1", "book-2", "book-3", "book-4", "book-5"])
+            svc.set_about_shown("about-faq", False)
+            self.assertTrue(svc.save()["ok"])
+            self.assertEqual((t.root / "js/about-data.js").read_bytes(), before_data)
+            self.assertEqual((t.root / "about.html").read_bytes(), before_page)
+
+
 class ContentServiceTests(unittest.TestCase):
     def test_add_edit_hide_delete_round_trip(self):
         with TempRepo() as t:

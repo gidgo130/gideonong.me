@@ -280,6 +280,58 @@ def delete(content: dict, id: str) -> None:
                 order.remove(id)
 
 
+def duplicate(content: dict, id: str, variant: str) -> str:
+    """Separate a shared item or child for one document: a copy with the same texts takes its
+    place in `variant` (only there), and the original leaves `variant` but stays in the others.
+    An entry's copy takes the children it shows in that document. Refused when the item is in
+    `variant` alone (nothing to separate)."""
+    _check_variant(variant)
+    kind, *rest = find(content, id)
+    node = rest[-1]
+    if not node["include"].get(variant):
+        raise ValueError(f"{id} is not in {VARIANT_LABELS[variant]}")
+    if sum(1 for on in node["include"].values() if on) < 2:
+        raise ValueError(f"it is only in {VARIANT_LABELS[variant]} — there is nothing to separate it from")
+    used = all_ids(content)
+    new_id = unique_id(f"{id}-{variant}", used)
+    only_here = {v: v == variant for v in VARIANTS}
+    if kind == "item":
+        sec = section_of(content, id)
+        if sec is None:
+            raise ValueError(f"{id} is in no section")
+        new_item: dict = {"kind": node["kind"], "include": dict(only_here)}
+        if node["kind"] == "entry":
+            for k in ("role", "org", "date"):
+                new_item[k] = dict(node[k])
+            new_item["sep"] = node.get("sep", SEP)
+            children, order = {}, []
+            used.add(new_id)
+            for cid in node.get("order", {}).get(variant, []):
+                ch = node.get("children", {}).get(cid)
+                if not ch or not ch["include"].get(variant):
+                    continue
+                ncid = unique_id(f"{new_id}-{len(children) + 1}", used)
+                used.add(ncid)
+                children[ncid] = {"kind": ch["kind"], "text": dict(ch["text"]), "include": dict(only_here)}
+                order.append(ncid)
+            new_item["order"] = {variant: order}
+            new_item["children"] = children
+        else:
+            new_item["text"] = dict(node["text"])
+        content["items"][new_id] = new_item
+        sec_order = sec["order"].get(variant) or []
+        sec_order[sec_order.index(id)] = new_id
+        set_include(content, id, variant, False)
+    else:
+        pid = rest[0]
+        parent = content["items"][pid]
+        parent["children"][new_id] = {"kind": node["kind"], "text": dict(node["text"]), "include": dict(only_here)}
+        porder = parent.get("order", {}).get(variant) or []
+        porder[porder.index(id)] = new_id
+        node["include"][variant] = False
+    return new_id
+
+
 def add_section(content: dict, en: str, es: str, variant: str) -> str:
     """A new, empty section at the end (it appears in a document once an item is added there)."""
     _check_variant(variant)

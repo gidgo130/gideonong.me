@@ -73,9 +73,10 @@ every piece of figure text through the module's `figures-es.json`, so the .py st
 - **Unlisted, and it stays that way.** Every page carries `<meta name="robots" content="noindex">`
   (slides get it through `include-in-header` in `slides.qmd`), and that is permanent (Phase C,
   2026-09-28): /learning is found by link (About, shared cards), not by search. Don't remove it.
-- **Linked only from About.** The About page's "Interesting sites" list (js/about.js) has the
-  Learning entry. That block is `hidden` in about.html right now, so the link shows only once
-  that attribute is removed.
+- **No link from the site (since 2026-09-29).** The About page's "Interesting sites" list
+  (js/about-data.js, ABOUT_SITES) was unhidden with a different entry in place of the Learning
+  one. /learning is reached by URL and by its shared link-preview cards. A Learning entry can
+  be added back there through the editor (Content › About).
 - **English first, Spanish required.** Every visible word goes through a strings file. A page
   turns Spanish on by adding `data-es-ready` to its `<html>` once its `es` strings are complete;
   that also un-hides its EN/ES toggle. The toggle shares the main site's `lang` key.
@@ -160,7 +161,7 @@ Then check, and report findings ranked by severity with file and line:
 2. Code: run the pages mentally or in a browser; look for JS errors, controls that don't
    update, edge cases at slider extremes (zero noise, max noise), and the offline (file:)
    link fix.
-3. Scope: outside learning/, only js/about.js (the Interesting-sites "Learning" entry),
+3. Scope: outside learning/, only js/about-data.js (an Interesting-sites "Learning" entry, when one exists),
    CLAUDE.md (the /learning section and file-structure lines) and plan.md (the pointer
    section) changed. Nothing else outside learning/ changed.
 4. Rules: the /learning rules in CLAUDE.md are followed (noindex, unlisted, own design,
