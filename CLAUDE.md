@@ -52,10 +52,14 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      all EXIF/GPS/profile data dropped, resized by preset, EN/ES alt required;
                      existing files under assets/images/ are never re-encoded. Phase 4a
                      (core/cv/importer.py, renderer.py, textservice.py) imports the CV masters
-                     into staging/cv-content/ (gitignored) behind a losslessness proof; the
-                     editor / write-back / Word route (4b–4d) are not built yet. Its .local/
-                     (backups, logs, drafts, WebView2 storage) is gitignored. It never runs
-                     git write commands.
+                     into staging/cv-content/ (gitignored) behind a losslessness proof. Phase
+                     4b (core/cv/content.py, cvcheck.py, the CV text tab) edits that content
+                     set: drafts, include flags and order per variant, validation (empty /
+                     TODO / HTML / blocklist / degree-vs-profile.json / fit), a live one-line
+                     fit meter per variant, review with what a render would change per master;
+                     saving writes content.json only. The write-back / drift check / Word
+                     route (4c–4d) are not built yet. Its .local/ (backups, logs, drafts,
+                     WebView2 storage) is gitignored. It never runs git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit
 assets/images/      Project photos and diagrams
 assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)

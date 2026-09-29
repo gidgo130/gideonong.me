@@ -239,6 +239,25 @@ button.small { padding: 2px 8px; font-size: 12px; }
 .warn-text { color: var(--warn); font-size: 12px; }
 #importFile { font-size: 12.5px; }
 
+/* CV text page (Phase 4b) */
+.variant-switch a.active { font-weight: 600; }
+#list .entry.excluded { opacity: 0.5; }
+#list h3.excluded { opacity: 0.6; }
+#list h3 .linkish { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+#list h3 .linkish.active { color: var(--accent); }
+#list .addlink { margin: 2px 4px 6px; padding: 1px 8px; }
+.vflag { display: inline-block; width: 16px; text-align: center; font-size: 10.5px; line-height: 16px; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); opacity: 0.45; }
+.vflag.on { opacity: 1; color: var(--accent); border-color: var(--accent); }
+.moves button { margin-left: 4px; }
+table.fits { width: auto; min-width: 520px; margin: 6px 0 10px; }
+table.fits td { width: 220px; }
+table.fits td:first-child { width: 110px; }
+.fitcell .meter { width: 200px; margin-bottom: 2px; }
+.err-text { color: var(--err); }
+.card.excluded { opacity: 0.6; }
+.card .pair { margin: 0 0 6px; }
+.child-issues .gate { margin: 4px 0; padding: 4px 10px; }
+
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 6px; z-index: 20; max-width: 80vw; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); }
 
 @media (max-width: 900px) {

@@ -281,6 +281,15 @@ class ServiceTests(unittest.TestCase):
     def test_real_build_docx_only(self):
         with TempRepo() as t:
             r = TranscriptRepo(t)
+            # one unverified title on the temp copy, so the test does not depend on the real
+            # file having any (all titles were verified on 2026-09-29)
+            titles = json.loads(r.path("titles").read_text(encoding="utf-8"))
+            data = json.loads(r.path("data").read_text(encoding="utf-8"))
+            on_transcript = [c["code"] for b in data["blocks"] for c in b.get("courses", [])]
+            first = next(k for k in on_transcript if isinstance(titles.get(k), dict) and "verified" in titles[k])
+            titles[first]["verified"] = False
+            r.path("titles").write_text(json.dumps(titles, indent=2, ensure_ascii=False), encoding="utf-8")
+            r.svc.load()
             r.svc.start_build(strict=False, stamp=None, pdf=False)
             j = wait(r.svc, 180)
             self.assertFalse(j["running"])

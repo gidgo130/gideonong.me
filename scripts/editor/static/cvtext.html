@@ -10,21 +10,67 @@
 <header class="topbar">
   <div class="brand">Site editor</div>
   <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/content">Content</a><a href="/cv">CV &amp; résumé</a><a href="/cvtext">CV text</a><a href="/transcript">Transcript</a></nav>
+  <nav class="tabs subtabs variant-switch" id="variants" aria-label="Variant"></nav>
   <span class="file">staging/cv-content/</span>
   <span class="spacer"></span>
-  <button id="importBtn" class="primary" type="button">Import masters…</button>
+  <button id="importBtn" class="ghost" type="button" title="Re-read the six Word masters into the content set (proof of losslessness first)">Import masters…</button>
+  <button id="reviewBtn" class="primary" type="button">Review &amp; save <span class="badge" id="draftCount" hidden>0</span></button>
 </header>
 
 <div id="banners"></div>
 
-<main class="cvpage" id="cvtext">
-  <p class="muted intro">Phase 4a. <strong>Import masters</strong> reads the six Word masters in <code>staging/cv-masters/</code> into one
+<div class="layout content-layout" id="editor" hidden>
+  <aside id="list" aria-label="Sections and items"></aside>
+  <main id="form" aria-live="polite"></main>
+</div>
+
+<main class="cvpage" id="noContent" hidden>
+  <p class="muted intro">No content set yet. <strong>Import masters</strong> reads the six Word masters in <code>staging/cv-masters/</code> into one
     content set (<code>staging/cv-content/content.json</code>, private) and proves the round trip first: every master is
     re-rendered from the imported text into a copy and compared paragraph by paragraph (text and run formatting) and
     part by part. Nothing is written unless all six come back identical. The masters themselves are never changed here.</p>
-  <section id="status"></section>
-  <section id="report"></section>
+  <section id="statusOnly"></section>
 </main>
+
+<dialog id="importDlg" class="dlg">
+  <form method="dialog">
+    <h2>Import masters</h2>
+    <div id="importBody">
+      <section id="status"></section>
+      <section id="report"></section>
+    </div>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Close</button>
+      <button type="button" class="primary" id="importGo">Import masters</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="addDlg" class="dlg narrow">
+  <form method="dialog">
+    <h2 id="addTitle">Add item</h2>
+    <div class="form-grid">
+      <label class="field"><span>Kind</span><select id="addKind"><option value="entry">Entry (role · organization ⇥ date, with bullets)</option><option value="line">Line (one paragraph of text)</option></select></label>
+      <label class="field"><span id="addEnLabel">Role (EN)</span><input id="addEn" type="text" autocomplete="off"></label>
+    </div>
+    <p class="muted small" id="addNote"></p>
+    <div class="dlg-actions"><span class="spacer"></span><button type="submit" class="ghost">Cancel</button><button type="button" class="primary" id="addGo">Add</button></div>
+  </form>
+</dialog>
+
+<dialog id="reviewDlg" class="dlg">
+  <form method="dialog">
+    <h2>Review &amp; save <span class="muted">CV content</span></h2>
+    <div id="reviewBody"></div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost danger" id="discardBtn">Discard all drafts</button>
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Back</button>
+      <button type="button" class="primary" id="saveBtn">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
 <script src="/static/common.js"></script>

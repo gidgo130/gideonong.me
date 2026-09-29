@@ -87,8 +87,8 @@ class EditorState:
         self.load()
         # Phase 2: projects / experience / tags (needs self.site loaded first)
         self.content = ContentService(self)
-        # Phase 4: CV text (import of the masters into staging/cv-content/)
-        self.cvtext = CvTextService(self.repo_root, self.backups)
+        # Phase 4: CV text (import of the masters into staging/cv-content/, then the editor over it)
+        self.cvtext = CvTextService(self.repo_root, self.backups, self.local_dir, gpa=self.transcript.computed_gpa)
 
     def busy(self) -> bool:
         """True while a background job (a Word export, a transcript parse or build) is running."""
@@ -96,7 +96,7 @@ class EditorState:
 
     def draft_count(self) -> int:
         """Unsaved edits across the tools (the close prompt)."""
-        return len(self.drafts) + self.transcript.draft_count() + self.content.draft_count()
+        return len(self.drafts) + self.transcript.draft_count() + self.content.draft_count() + self.cvtext.draft_count()
 
     # ------------------------------------------------------------- loading
     def load(self) -> None:
@@ -594,7 +594,8 @@ def create_app(state: EditorState) -> Flask:
 
     @app.get("/api/cvtext/state")
     def cvtext_state():
-        return jsonify(state.cvtext.state())
+        with state.lock:
+            return jsonify(state.cvtext.state())
 
     @app.post("/api/cvtext/import")
     def cvtext_import():
@@ -603,6 +604,88 @@ def create_app(state: EditorState) -> Flask:
         with state.lock:
             result = state.cvtext.run_import()
         return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.post("/api/cvtext/reload")
+    def cvtext_reload():
+        with state.lock:
+            state.cvtext.load()
+            return jsonify(state.cvtext.state())
+
+    @app.post("/api/cvtext/op")
+    def cvtext_op():
+        b = request.get_json(silent=True) or {}
+        op = b.get("op")
+        svc = state.cvtext
+
+        def s(key, required=True):
+            v = b.get(key)
+            if v is None and not required:
+                return None
+            if not isinstance(v, str):
+                raise ValueError(f"{key} must be a string")
+            return v
+
+        try:
+            with state.lock:
+                if op == "set":
+                    path = b.get("path")
+                    if not isinstance(path, list) or not path or not all(isinstance(p, (str, int)) and not isinstance(p, bool) for p in path):
+                        return deny(400, "path must be a non-empty list of strings and integers")
+                    svc.set_text(path, b.get("value"))
+                    result = None
+                elif op == "include":
+                    svc.include(s("id"), s("variant"), bool(b.get("on")), s("current", False))
+                    result = None
+                elif op == "move":
+                    delta = b.get("delta")
+                    if not isinstance(delta, int) or isinstance(delta, bool):
+                        return deny(400, "delta must be an integer")
+                    svc.move(s("id"), s("variant"), delta)
+                    result = None
+                elif op == "add-item":
+                    result = {"id": svc.add_item(s("section"), s("kind"), s("en"), s("variant"))}
+                elif op == "add-child":
+                    result = {"id": svc.add_child(s("item"), s("kind"), s("variant"))}
+                elif op == "delete":
+                    svc.delete(s("id"))
+                    result = None
+                else:
+                    return deny(400, "unknown op")
+                return jsonify(ok=True, result=result, **svc.state())
+        except KeyError as e:
+            return deny(404, f"unknown id {e}")
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+
+    @app.post("/api/cvtext/drafts/discard")
+    def cvtext_discard():
+        with state.lock:
+            state.cvtext.discard_drafts()
+        return jsonify(ok=True, draftCount=0)
+
+    @app.get("/api/cvtext/review")
+    def cvtext_review():
+        with state.lock:
+            return jsonify(state.cvtext.review())
+
+    @app.post("/api/cvtext/save")
+    def cvtext_save():
+        with state.lock:
+            result = state.cvtext.save()
+        return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.post("/api/cvtext/autosave/restore")
+    def cvtext_autosave_restore():
+        with state.lock:
+            return jsonify(ok=True, **state.cvtext.restore_autosave())
+
+    @app.post("/api/cvtext/autosave/discard")
+    def cvtext_autosave_discard():
+        with state.lock:
+            state.cvtext.discard_autosave()
+        return jsonify(ok=True)
 
     # ---------------------------------------------------------- transcript
     @app.get("/transcript")
@@ -816,6 +899,7 @@ def create_app(state: EditorState) -> Flask:
         state.load()
         state.transcript.load()  # a set may hold transcript inputs; drafts there are re-applied
         state.content.load()
+        state.cvtext.load()  # or the CV content set
         log.info("restored %s (backup %s)", set_id, result["backup"])
         return jsonify(ok=True, **result)
 

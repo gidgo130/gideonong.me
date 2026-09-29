@@ -232,7 +232,8 @@ class SecurityTests(unittest.TestCase):
                          "/api/transcript/publish", "/api/transcript/open-folder", "/api/transcript/drafts/discard", "/api/transcript/reload",
                          "/api/content/field", "/api/content/text", "/api/content/add", "/api/content/delete", "/api/content/shell",
                          "/api/content/tag", "/api/content/tag/delete", "/api/content/save", "/api/content/drafts/discard", "/api/content/reload",
-                         "/api/content/images/delete", "/api/cvtext/import"):
+                         "/api/content/images/delete", "/api/cvtext/import", "/api/cvtext/op", "/api/cvtext/save", "/api/cvtext/drafts/discard",
+                         "/api/cvtext/reload", "/api/cvtext/autosave/restore", "/api/cvtext/autosave/discard"):
                 r = c.post(path, headers={"Host": HOST}, json={"lang": "es", "key": "navAbout", "value": "X", "set": "x"})
                 self.assertEqual(r.status_code, 403, path)
                 r = c.post(path, headers={"Host": HOST, "X-Editor-Token": "wrong"}, json={"lang": "es", "key": "navAbout", "value": "X"})
@@ -249,7 +250,7 @@ class SecurityTests(unittest.TestCase):
             self.assertEqual(c.get("/api/cv/publish-plan", headers={"Host": HOST}).status_code, 403)
             self.assertEqual(c.get("/cv", headers={"Host": HOST}).status_code, 200)
             for path in ("/api/transcript/state", "/api/transcript/review", "/api/transcript/job", "/api/transcript/publish-plan",
-                         "/api/content/state", "/api/content/review", "/api/cvtext/state"):
+                         "/api/content/state", "/api/content/review", "/api/cvtext/state", "/api/cvtext/review"):
                 self.assertEqual(c.get(path, headers={"Host": HOST}).status_code, 403, path)
             self.assertEqual(c.get("/transcript", headers={"Host": HOST}).status_code, 200)
             self.assertEqual(c.get("/content", headers={"Host": HOST}).status_code, 200)

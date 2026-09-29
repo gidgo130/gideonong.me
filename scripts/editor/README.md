@@ -184,18 +184,18 @@ files are written back in their own layout (`indent=2`, LF, no trailing newline 
 every load; a file in another layout is read-only here). Backups, changed-on-disk refusal,
 autosave and Restore work as on the Site text tab.
 
-## CV text tab (Phase 4 — 4a built: import + proof of losslessness)
-The full CV editor comes in four steps; only the first is built so far. **Import masters…**
-reads the six Word masters into one private content set, `staging/cv-content/content.json`
-(gitignored, like the masters): header (name, title words per variant, contact), sections,
-and items — entry lines as role · organization · date, bullets and plain lines under them —
-each with EN + ES text and include flags per variant (Full / Professional / Résumé), with the
-item order kept per variant. Items are shared across variants only when both languages match
-word for word; the report lists near-duplicates (same English, different Spanish), paragraphs
-with no twin in the other language (imported with empty text there), and formatting notes
-(a role that is not bold, a separator that is not " · "). Slot maps in
-`staging/cv-content/slots/` record, per master, which paragraph each item lives in and the
-exact run formatting.
+## CV text tab (Phase 4 — 4a import + proof, 4b editor built; 4c render and 4d export to come)
+The full CV editor comes in four steps. **Import masters…** (4a) reads the six Word masters
+into one private content set, `staging/cv-content/content.json` (gitignored, like the
+masters): header (name, title words per variant, contact), sections, and items — entry lines
+as role · organization · date, bullets and plain lines under them — each with EN + ES text
+and include flags per variant (Full / Professional / Résumé), with the item order kept per
+variant. Items are shared across variants only when both languages match word for word; the
+report lists near-duplicates (same English, different Spanish), paragraphs with no twin in
+the other language (imported with empty text there), and formatting notes (a role that is not
+bold, a separator that is not " · "). Slot maps in `staging/cv-content/slots/` record, per
+master, which paragraph each item lives in and the exact run formatting. The import is
+refused while the tab holds unsaved edits.
 
 **The proof.** Before anything is written, every master is re-rendered from the imported text
 into a temporary copy and compared with the original: paragraph count, paragraph properties,
@@ -206,8 +206,53 @@ your own check is Word › Review › Compare against a backup.
 
 Masters are read with python-docx and must be paragraphs only (no tables, fields, hyperlinks,
 content controls or tracked changes) — anything else refuses the import naming the paragraph.
-Next steps (not built): 4b the editor with fit meters, 4c writing text back with a drift
-check, 4d export / publish with a python route and a Word route side by side.
+
+**The editor (4b).** The variant switch (Full | Professional | Résumé) picks which document
+you are looking at; the left list shows the header, then every section with its items in that
+document's order, and after them, greyed, the section's items that are only in other
+documents. The `F P R` marks on each row say where it appears. The form on the right edits
+one thing:
+- an **entry**: role, organization and date, EN | ES side by side (the role is written bold,
+  the organization after " · ", the date at the right tab); "In these documents" checkboxes
+  per variant; the **one-line fit** table — one row per document the entry is in, an EN and
+  an ES meter each — measured exactly as the CV & résumé tab measures the file (Georgia via
+  Pillow, the master's own tab stop and indents, the text as it would be written), live while
+  you type: green fits, amber within 3 %, red overflows (that is an error for that document);
+  its bullets and lines in this document's order as cards (EN | ES, their own checkboxes,
+  ↑ ↓ within this document, Delete), then the ones not in this document greyed, and
+  **Add bullet / Add line** (into this document; tick the others in the card);
+- a **line** (a skills line, an honour): its text EN | ES and its checkboxes;
+- a **section**: its heading EN | ES (a section is in a document when one of its items is);
+- the **header**: the name, the title line per variant (the résumé masters have none), and
+  the contact line — the +1 (918) phone lives there and nowhere else (decision 9).
+Items and bullets are shared: an edit changes every document the item is in. ↑ ↓ on an
+item moves it within its section in the current document only; ticking a document puts the
+item after its nearest neighbour from the current view (taking an entry out of a document
+takes its bullets out too). **+ Add item…** under a section asks for the kind (entry or line)
+and the English text, which names the item; the item starts in the current document only. A
+new bullet or line needs both languages before saving. **Delete…** is confirmed and lists
+the documents the item leaves. Nothing touches disk until **Review & save** (Ctrl+S): the
+change list in words, a table of what Apply (4c) would do to each master (paragraphs
+rewritten / added / removed — the Résumé (ES) shows "1 added" until the IEL line gets its
+Spanish text), the gate, and the exact content.json diff. Saving writes
+`staging/cv-content/content.json` only (backed up first, atomic); the Word masters are
+rewritten by Apply, which comes with 4c. Drafts autosave to `.local/drafts/cvtext.json`;
+changed-on-disk refusal, Reload, Discard and the restore banner work as on the other tabs.
+
+Validation (errors block a save, warnings do not; only errors the draft introduces or on
+items it touches block — the résumé's IEL line, imported with no Spanish, stays a
+pre-existing error until you type it or untick Résumé on it):
+
+| Errors | Warnings |
+|---|---|
+| Empty EN or ES on an item that is in any document (entries: role and date; the organization may be empty) | Voice words (same list as the site text; "leveraged" is allowed in the Spinelli item) |
+| `TODO` or HTML in a text | A GPA line that disagrees with the transcript's cumulative GPA (Transcript tab) |
+| A blocklist term (`staging/editor-private/blocklist.txt`; the (918) phone is allowed — this text only becomes the CV / résumé PDFs) | An entry line within 3 % of its width in a document it is in |
+| A degree line (under the Education entry) naming a degree or minor that `scripts/transcript/profile.json` does not list in that language (decision 4) | Degree lines unchecked because profile.json is not readable |
+| An entry line that overflows its width in a document it is in (that document only) | |
+
+Next steps (not built): 4c writing text back into the masters with a drift check (and, with
+it, adding a section), 4d export / publish with a python route and a Word route side by side.
 
 ## How it stays lossless
 `core/jsdata.py` tokenizes the file with exact character spans and re-emits it. On every
@@ -290,6 +335,16 @@ match and keeps per-variant order; a pairing gap imports with empty text; the pr
 the synthetic set and, when present, on all six real masters; an edited render changes only
 its paragraph and re-imports to the new text; the service writes the content set only when
 every master is lossless, backs up a previous set, and refuses unsupported or missing masters.
+Phase 4b (same file): every operation (text edit, include on / off with its order placement,
+move in one variant only, add item / child, delete) and every refused one; each validation
+rule on a hand-built content set, the Spinelli exemption, the phone allowance, the degree rule
+against a profile, the GPA cross-check, fit results per variant, and the gate (pre-existing
+errors block only once touched); the fit meter equals `fit.check_doc` on the synthetic masters
+and, when present, on every entry of all six real masters, goes red when a role is lengthened
+and amber within 3 %, and borrows a sibling's geometry for a new entry; review (change list,
+which masters would change, the diff), save (backup, reload, lossless), no-edit save, blocked
+save, changed-on-disk refusal with the draft re-applied, import refused with a draft, autosave
+offered and restored, and the `/api/cvtext/op` endpoint with its token check.
 
 ## Files
 | File | What it is |
@@ -311,8 +366,10 @@ every master is lossless, backs up a previous set, and refuses unsupported or mi
 | `core/cv/publish.py` | Publish plan + apply into assets/pdfs/, manifest regeneration |
 | `core/cv/service.py` | Cached checks, the background export job, publish — what the CV page talks to |
 | `core/cv/importer.py` | Masters → spans, structure, EN/ES pairing, merge into the content set, the losslessness comparison |
-| `core/cv/renderer.py` | Paragraph writer (one run per formatting span) and the forced re-render the proof uses |
-| `core/cv/textservice.py` | Import with the proof gate; content-set state — what the CV text page talks to |
+| `core/cv/renderer.py` | Paragraph writer (one run per formatting span), the forced re-render the proof uses, and `plan_master` (what a render would change / add / remove) |
+| `core/cv/content.py` | Pure operations on the content set: text edits, include per variant, move, add item / child, delete, the per-variant listing |
+| `core/cv/cvcheck.py` | Validation of the content set (empty / TODO / HTML / blocklist / voice / degree / GPA / fit) and the fit meter on synthetic paragraphs |
+| `core/cv/textservice.py` | Import with the proof gate; the draft, autosave, review, save — what the CV text page talks to |
 | `core/spans.py` | Span edits on the token tree: replace any value, insert / delete properties and array items, re-parse check |
 | `core/emit.py` | JS values in the data files' own style (inline vs one-per-line by property name) |
 | `core/site/datafiles.py` | The three data files as entry dicts; minimal span edits on save |
