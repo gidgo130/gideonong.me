@@ -96,9 +96,9 @@ const translations = {
 
     // about.html — §2 "Who am I?"
     whoamiHeading: "Who am I?",
-    whoamiBio1: "I'm an IEL student at the University of Tulsa, studying mechanical engineering and Spanish, and minoring in math and economics. I'm very interested in how better engineering can improve people's quality of life, and how public policy can help support that. My current plan is an engineering career right out of school, and to work on the policy side later on.",
+    whoamiBio1: "I'm an IEL student at the University of Tulsa, studying mechanical engineering and Spanish, and minoring in math and economics.  I'm also learning more about modern statistics and data analytics. I'm very interested in how better engineering can improve people's quality of life, and how public policy can help support that. My current plan is an engineering career right out of school, and to work on the policy side later on.",
     whoamiBio2: "I grew up in College Station, Texas, learning Spanish in a dual-language program and, most Sundays, having lunch with the international students my family hosted. Between those conversations and competing in geography in high school, I spent a lot of time learning about other countries, the world, and what problems other people and places face, and that's a big part of why I care about peace and good governance.",
-    whoamiBio3: "Next, I'm looking for internships, hopefully in the Spanish-speaking world, and planning my year abroad (2027-28). Right now I'm deciding between the Universidad de Cantabria in Spain, the Universidad del Norte in Colombia, and UASLP in Mexico. I'm also learning more about modern statistics and data analytics.",
+    whoamiBio3: "Next, I'm looking for internships, hopefully in the Spanish-speaking world, and planning my year abroad (2027-28). Right now I'm deciding between the Universidad de Cantabria in Spain, the Universidad del Norte in Colombia, and UASLP in Mexico.",
     cvBtn: "Download Full CV",
     transcriptBtn: "Download Transcript",
 
@@ -432,9 +432,9 @@ const translations = {
 
     // about.html — §2 "¿Quién soy?"
     whoamiHeading: "¿Quién soy?",
-    whoamiBio1: "Soy estudiante del programa IEL en la Universidad de Tulsa: estudio ingeniería mecánica y español, con especializaciones menores en matemáticas y economía. Me interesa mucho cómo una mejor ingeniería puede mejorar la calidad de vida de las personas, y cómo las políticas públicas pueden ayudar a lograrlo. Por ahora, mi plan es trabajar en ingeniería al terminar la carrera y, más adelante, involucrarme en políticas públicas.",
+    whoamiBio1: "Soy estudiante del programa IEL en la Universidad de Tulsa: estudio ingeniería mecánica y español, con especializaciones menores en matemáticas y economía. También estoy aprendiendo más sobre estadística moderna y análisis de datos. Me interesa mucho cómo una mejor ingeniería puede mejorar la calidad de vida de las personas, y cómo las políticas públicas pueden ayudar a lograrlo. Por ahora, mi plan es trabajar en ingeniería al terminar la carrera y, más adelante, involucrarme en políticas públicas.",
     whoamiBio2: "Crecí en College Station, Texas, aprendiendo español en un programa de lenguaje dual y, casi todos los domingos, almorzando con los estudiantes internacionales que recibía mi familia. Entre esas conversaciones y los concursos de geografía en la secundaria, pasé mucho tiempo aprendiendo sobre otros países, el mundo y los problemas que enfrentan otras personas y lugares, y en buena parte por eso me importan la paz y el buen gobierno.",
-    whoamiBio3: "Ahora estoy buscando pasantías, ojalá en el mundo hispanohablante, y planeando mi año en el extranjero (2027-28). Todavía estoy decidiendo entre la Universidad de Cantabria en España, la Universidad del Norte en Colombia y la UASLP en México. También estoy aprendiendo más sobre estadística moderna y análisis de datos.",
+    whoamiBio3: "Ahora estoy buscando pasantías, ojalá en el mundo hispanohablante, y planeando mi año en el extranjero (2027-28). Todavía estoy decidiendo entre la Universidad de Cantabria en España, la Universidad del Norte en Colombia y la UASLP en México.",
     cvBtn: "Descargar CV Completo",
     transcriptBtn: "Descargar Historial Académico",
 
