@@ -18,7 +18,7 @@ from app import EditorState, create_app
 from core import validate
 from core.backups import Backups
 from core.cv import content as C
-from core.cv import cvcheck, docxread, fit, importer, masters, renderer, scans
+from core.cv import cvcheck, docxread, fit, importer, masters, renderer, scans, wordroute
 from core.cv.textservice import CvTextService, change_lines
 from core.jsonfile import JsonFile
 
@@ -546,8 +546,529 @@ class ReviewSaveTests(unittest.TestCase):
             self.assertEqual(state.cvtext.obj()["items"]["engineer"]["role"]["es"], "Ingeniera")
 
 
+# ----------------------------------------------------------------- Phase 4c
+
+
+def word_edit(path: Path, startswith: str, new_first_run: str) -> None:
+    """Stand-in for an edit in Word: change the first run of the paragraph that starts with `startswith`."""
+    from docx import Document
+
+    doc = Document(str(path))
+    para = next(p for p in doc.paragraphs if p.text.startswith(startswith))
+    para.runs[0].text = new_first_run
+    doc.save(str(path))
+
+
+def texts_of(path: Path) -> list[str]:
+    return [importer.norm(p.text) for p in importer.read_master(path).paragraphs]
+
+
+class RenderTests(unittest.TestCase):
+    def test_render_paths_and_self_check(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            content = svc.obj()
+            tmp = Path(tempfile.mkdtemp())
+            full_en = masters.BY_ID["full-en"]
+            path = t.root / masters.MASTERS_DIR / full_en.file
+            # no edit: lossless on every master, nothing reported
+            for m in masters.MASTERS:
+                p = t.root / masters.MASTERS_DIR / m.file
+                r = renderer.render_master(content, svc.slots[m.file], p)
+                self.assertFalse(r.changed, (m.file, r.report))
+                out = tmp / m.file
+                out.write_bytes(r.data)
+                self.assertEqual(importer.compare(p, out), [], m.file)
+                self.assertEqual(renderer.self_check(content, m.file, r.data, p), [], m.file)
+            before = texts_of(path)
+            # one bullet edit: exactly that paragraph's text differs, formatting untouched
+            svc.set_text(["items", "engineer", "children", "engineer-1", "text", "en"], "Did a thing, edited.")
+            r = renderer.render_master(svc.obj(), svc.slots[full_en.file], path)
+            self.assertEqual(r.report, {"rewritten": ["engineer-1"], "added": [], "removed": [], "moved": []})
+            out = tmp / "edit.docx"
+            out.write_bytes(r.data)
+            problems = importer.compare(path, out)
+            self.assertEqual(len(problems), 1, problems)
+            self.assertIn("text differs", problems[0])
+            self.assertEqual(renderer.self_check(svc.obj(), full_en.file, r.data, path), [])
+            # a new bullet clones its sibling (same paragraph properties) and lands after it
+            cid = svc.add_child("engineer", "bullet", "full")
+            svc.set_text(["items", "engineer", "children", cid, "text", "en"], "A third thing.")
+            svc.set_text(["items", "engineer", "children", cid, "text", "es"], "Una tercera cosa.")
+            r = renderer.render_master(svc.obj(), svc.slots[full_en.file], path)
+            self.assertEqual(r.report["added"], [cid])
+            out.write_bytes(r.data)
+            d = importer.read_master(out)
+            self.assertEqual(len(d.paragraphs), len(before) + 1)
+            i = [importer.norm(p.text) for p in d.paragraphs].index("A third thing.")
+            self.assertEqual(importer.norm(d.paragraphs[i - 1].text), "Did another.")
+            self.assertEqual((d.paragraphs[i].kind, d.paragraphs[i].ppr_key), ("bullet", d.paragraphs[i - 1].ppr_key))
+            self.assertEqual(renderer.self_check(svc.obj(), full_en.file, r.data, path), [])
+            # a new entry clones the nearest entry (tab stop and all), a new section clones a heading
+            iid = svc.add_item("experience", "entry", "Brand New Role", "full")
+            for k, en, es in (("role", None, "Puesto nuevo"), ("org", "Somewhere", "En algún lugar"), ("date", "Fall 2026", "Otoño 2026")):
+                if en:
+                    svc.set_text(["items", iid, k, "en"], en)
+                svc.set_text(["items", iid, k, "es"], es)
+            sid = svc.add_section("Volunteering", "Voluntariado", "full")
+            lid = svc.add_item(sid, "line", "Helped at the food bank.", "full")
+            svc.set_text(["items", lid, "text", "es"], "Ayudé en el banco de alimentos.")
+            r = renderer.render_master(svc.obj(), svc.slots[full_en.file], path)
+            self.assertEqual(r.report["added"], [cid, iid, f"section.{sid}", lid])
+            out.write_bytes(r.data)
+            d = importer.read_master(out)
+            names = [importer.norm(p.text) for p in d.paragraphs]
+            j = names.index("Brand New Role · Somewhere Fall 2026")
+            self.assertEqual(d.paragraphs[j].kind, "entry")
+            self.assertEqual(d.paragraphs[j].ppr_key, next(p.ppr_key for p in d.paragraphs if p.kind == "entry" and importer.norm(p.text).startswith("Engineer ·")))
+            h = names.index("Volunteering")
+            self.assertEqual((d.paragraphs[h].kind, names[h + 1]), ("heading", "Helped at the food bank."))
+            self.assertEqual(d.paragraphs[h].ppr_key, next(p.ppr_key for p in d.paragraphs if importer.norm(p.text) == "Experience"))
+            self.assertEqual(renderer.self_check(svc.obj(), full_en.file, r.data, path), [])
+            svc.discard_drafts()
+            # removed child and excluded entry (its children go with it), and a move
+            svc.delete("engineer-2")
+            svc.include("test-university", "full", False)
+            svc.move("engineer-1", "full", 1)  # after the deleted one it is alone — no-op; move the entry instead
+            r = renderer.render_master(svc.obj(), svc.slots[full_en.file], path)
+            # the Education section loses its only item, so its heading goes too
+            self.assertEqual(sorted(r.report["removed"]), ["engineer-2", "section.education", "test-university", "test-university-1"])
+            out.write_bytes(r.data)
+            self.assertEqual(len(importer.read_master(out).paragraphs), len(before) - 4)
+            self.assertEqual(renderer.self_check(svc.obj(), full_en.file, r.data, path), [])
+            svc.discard_drafts()
+            # a pure move keeps the element (its runs) and reports it
+            iid2 = svc.add_item("experience", "entry", "Second Role", "full")
+            for k, en, es in (("role", None, "Segundo puesto"), ("org", "Org2", "Org2"), ("date", "2024", "2024")):
+                if en:
+                    svc.set_text(["items", iid2, k, "en"], en)
+                svc.set_text(["items", iid2, k, "es"], es)
+            svc.save()
+            svc.apply()
+            svc.move(iid2, "full", -1)
+            r = renderer.render_master(svc.obj(), svc.slots[full_en.file], path)
+            self.assertEqual((r.report["rewritten"], r.report["added"], r.report["removed"]), ([], [], []))
+            self.assertTrue(r.report["moved"])
+            out.write_bytes(r.data)
+            names = [importer.norm(p.text) for p in importer.read_master(out).paragraphs]
+            self.assertLess(names.index("Second Role · Org2 2024"), names.index("Engineer · Org, Town Summer 2026"))
+            self.assertEqual(renderer.self_check(svc.obj(), full_en.file, r.data, path), [])
+            # an empty text never becomes a paragraph
+            svc.discard_drafts()
+            svc.set_text(["items", "engineer", "children", "engineer-1", "text", "es"], "")
+            with self.assertRaises(renderer.RenderError):
+                renderer.render_master(svc.obj(), svc.slots[masters.BY_ID["full-es"].file], t.root / masters.MASTERS_DIR / masters.BY_ID["full-es"].file)
+
+
+class DriftAndApplyTests(unittest.TestCase):
+    def test_drift_pull_discard_structure_and_formatting(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            res_en = t.root / masters.MASTERS_DIR / masters.BY_ID["resume-en"].file
+            self.assertEqual(svc.drift()["blocked"], [])
+            word_edit(res_en, "Did a thing.", "Did a big")
+            d = svc.drift()
+            m = next(x for x in d["masters"] if x["file"] == res_en.name)
+            self.assertEqual([(p["id"], p["wordText"], p["contentText"], p["resolved"]) for p in m["paragraphs"]], [("engineer-1", "Did a big thing.", "Did a thing.", None)])
+            self.assertEqual(d["unresolved"], 1)
+            self.assertTrue(any("edited in Word" in b for b in d["blocked"]))
+            r = svc.apply()
+            self.assertEqual((r["ok"], r["error"]), (False, "blocked"))
+            # pull: the content takes Word's text and the row disappears; the other masters holding the bullet get rewritten
+            svc.pull_drift(res_en.name, "engineer-1")
+            self.assertEqual(svc.obj()["items"]["engineer"]["children"]["engineer-1"]["text"]["en"], "Did a big thing.")
+            self.assertEqual(svc.drift()["unresolved"], 0)
+            r = svc.apply()
+            self.assertTrue(r["ok"], r)
+            self.assertEqual(sorted(r["written"]), sorted([masters.BY_ID["full-en"].file, masters.BY_ID["professional-en"].file]))
+            self.assertEqual(svc.drift()["blocked"], [])
+            # discard: apply overwrites the Word edit
+            word_edit(res_en, "Did a big thing.", "SECOND EDIT")
+            self.assertEqual(svc.drift()["unresolved"], 1)
+            svc.discard_drift(res_en.name, "engineer-1")
+            d = svc.drift()
+            self.assertEqual(d["unresolved"], 0)
+            self.assertEqual(next(x for x in d["masters"] if x["file"] == res_en.name)["paragraphs"][0]["resolved"], "discard")
+            r = svc.apply()
+            self.assertTrue(r["ok"], r)
+            self.assertEqual(r["written"], [res_en.name])
+            self.assertIn("Did a big thing.", texts_of(res_en))
+            self.assertNotIn("SECOND EDIT thing.", " ".join(texts_of(res_en)))
+            # an entry edited in Word shows role · org ⇥ date; resolve_all pulls it
+            word_edit(res_en, "Engineer", "Chief Engineer")
+            m = next(x for x in svc.drift()["masters"] if x["file"] == res_en.name)
+            self.assertEqual(m["paragraphs"][0]["wordText"], "Chief Engineer ⇥ Org, Town ⇥ Summer 2026")
+            self.assertEqual(svc.resolve_all(res_en.name, "pull"), 1)
+            self.assertEqual(svc.obj()["items"]["engineer"]["role"]["en"], "Chief Engineer")
+            svc.discard_drafts()
+            svc.resolve_all(res_en.name, "discard")
+            self.assertTrue(svc.apply()["ok"])
+            # a formatting-only Word edit is no drift, and the render keeps / reuses the new formatting
+            full_en = t.root / masters.MASTERS_DIR / masters.BY_ID["full-en"].file
+            from docx import Document
+
+            doc = Document(str(full_en))
+            para = next(p for p in doc.paragraphs if p.text == "Did another.")
+            para.runs[0].bold = True
+            doc.save(str(full_en))
+            self.assertEqual(svc.drift()["blocked"], [])
+            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "en"], "Did another thing.")
+            self.assertTrue(svc.apply()["ok"])
+            d = importer.read_master(full_en)
+            p = next(x for x in d.paragraphs if importer.norm(x.text) == "Did another thing.")
+            self.assertTrue(importer.is_bold(p.spans[0].key))
+            # a paragraph added in Word = structure drift → apply refused, "Import masters"
+            doc = Document(str(full_en))
+            doc.add_paragraph("Typed in Word")
+            doc.save(str(full_en))
+            d = svc.drift()
+            self.assertIn("Import masters", next(x for x in d["masters"] if x["file"] == full_en.name)["structure"])
+            self.assertEqual(svc.apply()["error"], "blocked")
+
+    def test_apply_refusals_and_full_apply(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            mdir = t.root / masters.MASTERS_DIR
+            before = {m.file: (mdir / m.file).read_bytes() for m in masters.MASTERS}
+            self.assertTrue(svc.apply()["noop"])
+            self.assertEqual(svc.apply(route="bogus")["error"], "route")
+            svc.set_text(["items", "engineer", "role", "es"], "Ingeniero jefe")
+            # open in Word → refused, nothing written
+            lock = mdir / ("~$" + masters.BY_ID["full-es"].file[2:])
+            lock.write_bytes(b"")
+            r = svc.apply()
+            self.assertEqual(r["error"], "blocked")
+            self.assertTrue(any("open in Word" in b for b in r["blockers"]), r["blockers"])
+            lock.unlink()
+            # a pre-existing error blocks apply (not only touched ones)
+            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "es"], "")
+            svc.save()
+            svc.set_text(["items", "engineer", "role", "es"], "Ingeniero jefe")
+            r = svc.apply()
+            self.assertEqual(r["error"], "blocked")
+            self.assertTrue(any("error(s) in the content" in b for b in r["blockers"]), r["blockers"])
+            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "es"], "Hice otra cosa.")
+            # a failed self-check stops before any write and makes no backup
+            import core.cv.textservice as ts
+
+            orig = ts.renderer.self_check
+            ts.renderer.self_check = lambda *a, **k: ["forced failure"]
+            try:
+                r = svc.apply()
+            finally:
+                ts.renderer.self_check = orig
+            self.assertEqual((r["ok"], r["error"], r["problems"]), (False, "self-check", ["forced failure"]))
+            self.assertEqual(svc.backups.list(), [x for x in svc.backups.list() if "applying" not in x.reason])
+            self.assertEqual({m.file: (mdir / m.file).read_bytes() for m in masters.MASTERS}, before)
+            self.assertEqual(svc.draft_count(), 2)
+            # the real thing
+            r = svc.apply()
+            self.assertTrue(r["ok"], r)
+            self.assertEqual(sorted(r["written"]), sorted(m.file for m in masters.MASTERS if m.lang == "es"))
+            bset = svc.backups.get(r["backup"])
+            self.assertEqual(len(bset.files), 13)  # content.json + six masters + six slot maps
+            for m in masters.MASTERS:
+                same = (mdir / m.file).read_bytes() == before[m.file]
+                self.assertEqual(same, m.lang == "en", m.file)
+            self.assertEqual(svc.draft_count(), 0)
+            self.assertIsNone(svc.draft)
+            docs = {v: {lang: importer.read_master(mdir / masters.BY_ID[f"{v}-{lang}"].file) for lang in ("en", "es")} for v in importer.VARIANTS}
+            content, slots, report = importer.merge(docs)
+            self.assertEqual(content["items"]["engineer"]["role"], {"en": "Engineer", "es": "Ingeniero jefe"})
+            self.assertEqual(content["items"]["engineer"]["children"]["engineer-2"]["text"]["es"], "Hice otra cosa.")
+            self.assertEqual({k: len(v) for k, v in svc.slots.items()}, {k: len(v) for k, v in slots.items()})
+            self.assertEqual(svc.obj()["hashes"][masters.BY_ID["full-es"].file]["engineer"], content["hashes"][masters.BY_ID["full-es"].file]["engineer"])
+            self.assertTrue(svc.apply()["noop"])
+            self.assertEqual(svc.drift()["blocked"], [])
+            # through the app
+            state = EditorState(t.root, t.local, "tok", 5510, 5501)
+            app = create_app(state)
+            app.testing = True
+            c = app.test_client()
+            h = {"Host": "127.0.0.1:5510", "X-Editor-Token": "tok"}
+            self.assertEqual(c.get("/api/cvtext/drift", headers=h).get_json()["blocked"], [])
+            r = c.post("/api/cvtext/apply", headers=h, json={"route": "python"})
+            self.assertEqual((r.status_code, r.get_json()["noop"]), (200, True))
+            self.assertEqual(c.post("/api/cvtext/apply", headers=h, json={"route": "bogus"}).status_code, 409)
+            r = c.post("/api/cvtext/op", headers=h, json={"op": "add-section", "en": "Volunteering", "es": "Voluntariado", "variant": "full"})
+            self.assertEqual(r.get_json()["result"], {"id": "volunteering"})
+            self.assertEqual(c.post("/api/cvtext/op", headers=h, json={"op": "delete-section", "id": "volunteering"}).status_code, 200)
+            self.assertEqual(c.post("/api/cvtext/op", headers=h, json={"op": "delete-section", "id": "experience"}).status_code, 400)
+
+
+# ----------------------------------------------------------------- Phase 4d
+
+
+def edit_set(svc: CvTextService) -> str:
+    """The edits every route test uses on the synthetic six: a bullet text, an entry's org, a bullet
+    inserted in the middle, an entry with a bullet appended at the end, a line unticked."""
+    svc.set_text(["items", "engineer", "children", "engineer-1", "text", "en"], "Did a thing, edited.")
+    svc.set_text(["items", "engineer", "org", "en"], "New Org, Town")
+    cid = svc.add_child("engineer", "bullet", "full")
+    svc.set_text(["items", "engineer", "children", cid, "text", "en"], "Inserted bullet.")
+    svc.set_text(["items", "engineer", "children", cid, "text", "es"], "Viñeta insertada.")
+    svc.move(cid, "full", -1)
+    iid = svc.add_item("experience", "entry", "Appended Role", "full")
+    for k, en, es in (("role", None, "Puesto añadido"), ("org", "Org3", "Org3"), ("date", "2023", "2023")):
+        if en:
+            svc.set_text(["items", iid, k, "en"], en)
+        svc.set_text(["items", iid, k, "es"], es)
+    c2 = svc.add_child(iid, "bullet", "full")
+    svc.set_text(["items", iid, "children", c2, "text", "en"], "Last bullet in the file.")
+    svc.set_text(["items", iid, "children", c2, "text", "es"], "Última viñeta.")
+    svc.include("test-university-1", "full", False)
+    return iid
+
+
+class WordRoutePlanTests(unittest.TestCase):
+    def test_plan_matches_the_python_route(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            full_en = masters.BY_ID["full-en"]
+            path = t.root / masters.MASTERS_DIR / full_en.file
+            content = svc.obj()
+            plan = wordroute.plan_ops(content, svc.slots[full_en.file], path)
+            self.assertFalse(plan.changed)
+            self.assertEqual([s.kind for s in plan.steps], ["keep"] * len(plan.steps))
+            edit_set(svc)
+            content = svc.obj()
+            plan = wordroute.plan_ops(content, svc.slots[full_en.file], path)
+            py = renderer.render_master(content, svc.slots[full_en.file], path)
+            self.assertEqual(plan.report, py.report)
+            self.assertEqual(plan.deletes, [5])
+            kinds = [s.kind for s in plan.steps]
+            self.assertEqual(kinds.count("insert"), 3)
+            self.assertEqual(kinds[-1], "insert")  # the appended bullet goes at the END
+            # rewrites are part-wise for the entry (only the org changed) and whole for texts
+            by_ref = {rw.ref: rw.replacements for rw in plan.rewrites}
+            self.assertEqual(by_ref[("orig", 7)], [(8, 13, " · New Org, Town\t")])
+            self.assertEqual(by_ref[("orig", 8)], [(0, 12, "Did a thing, edited.")])
+            self.assertEqual([off for off, _, _ in by_ref[("new", 1)]], [21, 8, 0])  # descending offsets
+            # the plain-list simulation reproduces the python render's paragraphs
+            before = ["".join(s.text for s in p.spans) for p in importer.read_master(path).paragraphs]
+            tmp = Path(tempfile.mkdtemp()) / "py.docx"
+            tmp.write_bytes(py.data)
+            after = ["".join(s.text for s in p.spans) for p in importer.read_master(tmp).paragraphs]
+            self.assertEqual(wordroute.simulate(plan, before), after)
+            # a move shows as a move step and no rewrite
+            svc.discard_drafts()
+            svc.move("engineer-1", "full", 1)
+            plan = wordroute.plan_ops(svc.obj(), svc.slots[full_en.file], path)
+            self.assertEqual(([s.kind for s in plan.steps].count("move"), plan.rewrites, len(plan.report["moved"])), (1, [], 1))
+            self.assertIn(plan.report["moved"][0], ("engineer-1", "engineer-2"))  # a swap: either id describes it
+            self.assertEqual(wordroute.simulate(plan, before), before[:8] + [before[9], before[8]])
+            # an empty text is refused before Word is ever involved
+            svc.discard_drafts()
+            svc.set_text(["items", "engineer", "children", "engineer-1", "text", "en"], "")
+            with self.assertRaises(renderer.RenderError):
+                wordroute.plan_ops(svc.obj(), svc.slots[full_en.file], path)
+
+
+class RoutesAndExportTests(unittest.TestCase):
+    def test_last_apply_crosscheck_refusals_and_relaxed_self_check(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            self.assertIsNone(svc.last_apply())
+            r = svc.crosscheck()
+            self.assertEqual(r["error"], "no-apply")
+            self.assertEqual(svc.apply(route="bogus")["error"], "route")
+            svc.set_text(["items", "engineer", "role", "es"], "Ingeniero jefe")
+            r = svc.apply()
+            self.assertTrue(r["ok"], r)
+            self.assertEqual(r["route"], "python")
+            la = svc.last_apply()
+            self.assertEqual((la["route"], la["backup"], sorted(la["written"])), ("python", r["backup"], sorted(r["written"])))
+            self.assertEqual(svc.state()["lastApply"]["backup"], r["backup"])
+            self.assertEqual(svc.review()["lastApply"]["route"], "python")
+            # with a draft the cross-check refuses; with the backup gone too
+            svc.set_text(["items", "engineer", "role", "es"], "Otro")
+            self.assertEqual(svc.crosscheck()["error"], "drafts")
+            svc.discard_drafts()
+            import shutil
+
+            shutil.rmtree(svc.backups.dir / r["backup"])
+            self.assertEqual(svc.crosscheck()["error"], "no-backup")
+            # the relaxed self-check: parts Word re-saves may differ, styles.xml may not
+            import zipfile
+
+            full_en = masters.BY_ID["full-en"]
+            path = t.root / masters.MASTERS_DIR / full_en.file
+            content = svc.obj()
+
+            def repack(mutate):
+                buf = tempfile.mkdtemp()
+                out = Path(buf) / "x.docx"
+                with zipfile.ZipFile(path) as zin, zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
+                    for item in zin.infolist():
+                        data = zin.read(item.filename)
+                        data = mutate(item.filename, data)
+                        zout.writestr(item, data)
+                return out.read_bytes()
+
+            settings_changed = repack(lambda n, d: d.replace(b"<w:settings", b"<w:settings w:x=\"1\"", 1) if n == "word/settings.xml" else d)
+            self.assertNotEqual(settings_changed, path.read_bytes())
+            self.assertTrue(any("word/settings.xml" in p for p in renderer.self_check(content, full_en.file, settings_changed, path)))
+            self.assertEqual(renderer.self_check(content, full_en.file, settings_changed, path, relaxed=True), [])
+            tmp_s = Path(tempfile.mkdtemp()) / "s.docx"
+            tmp_s.write_bytes(settings_changed)
+            self.assertEqual(renderer.parts_changed(path, tmp_s), ["word/settings.xml"])
+            # the paragraph checks still bite on the relaxed route
+            wrong = copy.deepcopy(content)
+            wrong["items"]["engineer"]["role"]["en"] = "Someone Else"
+            self.assertTrue(any("reads" in p for p in renderer.self_check(wrong, full_en.file, settings_changed, path, relaxed=True)))
+            # compare_layout: a render of the same content agrees with itself, a text change does not
+            self.assertEqual(renderer.compare_layout(path, path), [])
+            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "en"], "Did another thing.")
+            r2 = renderer.render_master(svc.obj(), svc.slots[full_en.file], path)
+            other = Path(tempfile.mkdtemp()) / "o.docx"
+            other.write_bytes(r2.data)
+            self.assertEqual(len(renderer.compare_layout(path, other)), 1)
+
+    def test_word_route_refuses_cleanly_without_word(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            svc.set_text(["items", "engineer", "role", "es"], "Ingeniero jefe")
+            before = {m.file: (t.root / masters.MASTERS_DIR / m.file).read_bytes() for m in masters.MASTERS}
+            orig = wordroute.word_available
+            wordroute.word_available = lambda: "Microsoft Word is not installed (test)"
+            try:
+                r = svc.apply(route="word")
+                self.assertEqual((r["ok"], r["error"]), (False, "route"))
+                self.assertIn("not installed", r["message"])
+                self.assertEqual(svc.review()["wordAvailable"], "Microsoft Word is not installed (test)")
+            finally:
+                wordroute.word_available = orig
+            self.assertEqual({m.file: (t.root / masters.MASTERS_DIR / m.file).read_bytes() for m in masters.MASTERS}, before)
+            self.assertEqual(svc.draft_count(), 1)
+
+    def test_export_and_check_from_the_app_with_a_fake_export(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            state = EditorState(t.root, t.local, "tok", 5510, 5501)
+            app = create_app(state)
+            app.testing = True
+            c = app.test_client()
+            h = {"Host": "127.0.0.1:5510", "X-Editor-Token": "tok"}
+            calls = []
+
+            def fake_export(docx, pdf, log):
+                calls.append(Path(docx).name)
+                log("fake export")
+                from test_cv import make_pdf
+
+                make_pdf(Path(pdf), [["Test Person", "Engineer · Org, Town Summer 2026", "Did a thing."]])
+
+            import core.cv.service as service_mod
+
+            orig = service_mod.export.export_pdf
+            service_mod.export.export_pdf = fake_export
+            try:
+                r = c.post("/api/cv/export", headers=h, json={"ids": ["resume-en", "resume-es"]})
+                self.assertEqual(r.status_code, 200, r.get_json())
+                for _ in range(100):
+                    if not state.busy():
+                        break
+                    time.sleep(0.05)
+            finally:
+                service_mod.export.export_pdf = orig
+            self.assertEqual(sorted(calls), sorted([masters.BY_ID["resume-en"].file, masters.BY_ID["resume-es"].file]))
+            self.assertEqual(c.post("/api/cvtext/apply", headers=h, json={"route": "python"}).status_code, 200)  # not busy any more
+            r = c.post("/api/cv/check", headers=h, json={"force": True}).get_json()
+            self.assertIn("resume-en", r["checks"])
+            self.assertTrue(r["checks"]["resume-en"]["pdf"]["exists"])
+            self.assertEqual(c.post("/api/cvtext/crosscheck", headers=h, json={}).status_code, 409)  # no apply recorded
+
+
+@unittest.skipUnless(os.environ.get("EDITOR_WORD_TESTS") == "1", "set EDITOR_WORD_TESTS=1 to run the Word route")
+class WordRouteForRealTests(unittest.TestCase):
+    def test_word_route_matches_python_and_cross_checks_both_ways(self):
+        with TempRepo() as t:
+            svc = import_six(t)
+            full_en = masters.BY_ID["full-en"]
+            path = t.root / masters.MASTERS_DIR / full_en.file
+            edit_set(svc)
+            content = svc.obj()
+            py = renderer.render_master(content, svc.slots[full_en.file], path)
+            wd = wordroute.render_master(content, svc.slots[full_en.file], path)
+            self.assertEqual(wd.report, py.report)
+            self.assertEqual(renderer.self_check(content, full_en.file, wd.data, path, relaxed=True), [])
+            tmp = Path(tempfile.mkdtemp())
+            (tmp / "py.docx").write_bytes(py.data)
+            (tmp / "wd.docx").write_bytes(wd.data)
+            self.assertEqual(renderer.compare_layout(tmp / "wd.docx", tmp / "py.docx"), [])
+            d = importer.read_master(tmp / "wd.docx")
+            self.assertEqual([p.kind for p in d.paragraphs[-2:]], ["entry", "bullet"])
+            info = docxread.read(tmp / "wd.docx")
+            first_bullet = next(p for p in info.paragraphs if p.kind == "bullet")
+            self.assertEqual((info.paragraphs[-1].is_bullet, info.paragraphs[-1].left_indent_pt), (True, first_bullet.left_indent_pt))
+            # a full apply through Word, then the python cross-check agrees
+            r = svc.apply(route="word")
+            self.assertTrue(r["ok"], r)
+            self.assertEqual(r["route"], "word")
+            self.assertIn(full_en.file, r["written"])
+            self.assertEqual(svc.drift()["blocked"], [])
+            cc = svc.crosscheck()
+            self.assertTrue(cc["ok"], cc)
+            self.assertEqual(cc["route"], "python")
+            self.assertTrue(cc["agree"], cc)
+            # and the reverse: a python apply cross-checked by Word
+            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "en"], "Did another thing.")
+            svc.include("tutor", "full", False) if "tutor" in svc.obj()["items"] else None
+            r = svc.apply(route="python")
+            self.assertTrue(r["ok"], r)
+            cc = svc.crosscheck()
+            self.assertTrue(cc["ok"], cc)
+            self.assertEqual(cc["route"], "word")
+            self.assertTrue(cc["agree"], cc)
+
+
 @unittest.skipUnless(MASTERS_PRESENT, "CV masters are not on this machine")
 class RealMastersTests(unittest.TestCase):
+    def test_render_no_edit_is_lossless_and_apply_round_trips_on_a_copy(self):
+        content_path = REPO_ROOT / "staging/cv-content/content.json"
+        if not content_path.is_file():
+            self.skipTest("no content set imported yet")
+        with TempRepo() as t:
+            import shutil
+
+            for rel in ("staging/cv-masters", "staging/cv-content"):
+                shutil.copytree(REPO_ROOT / rel, t.root / rel)
+            svc = CvTextService(t.root, Backups(t.root, t.local / "backups"), t.local)
+            content = svc.obj()
+            tmp = Path(tempfile.mkdtemp())
+            for m in masters.MASTERS:
+                p = t.root / masters.MASTERS_DIR / m.file
+                try:
+                    r = renderer.render_master(content, svc.slots[m.file], p)
+                except renderer.RenderError as e:  # an item with no text in this language yet
+                    self.assertIn("has no", str(e))
+                    continue
+                out = tmp / m.file
+                out.write_bytes(r.data)
+                if r.changed:  # a paragraph the master does not hold yet (the résumé's IEL line once it has Spanish)
+                    self.assertEqual((r.report["rewritten"], r.report["removed"]), ([], []), m.file)
+                    self.assertEqual(renderer.self_check(content, m.file, r.data, p), [], m.file)
+                else:
+                    self.assertEqual(importer.compare(p, out), [], m.file)
+            # give every included item its text, then apply one role edit and one new bullet
+            for iid, item in content["items"].items():
+                if item["kind"] == "entry":
+                    for cid, ch in item["children"].items():
+                        for lang in ("en", "es"):
+                            if not ch["text"][lang]:
+                                svc.set_text(["items", iid, "children", cid, "text", lang], ch["text"]["en" if lang == "es" else "es"])
+            svc.set_text(["items", "machine-shop-technician", "role", "en"], "Machine Shop Tech")  # shorter: it must still fit
+            cid = svc.add_child("machine-shop-technician", "bullet", "full")
+            svc.set_text(["items", "machine-shop-technician", "children", cid, "text", "en"], "A new bullet.")
+            svc.set_text(["items", "machine-shop-technician", "children", cid, "text", "es"], "Una viñeta nueva.")
+            r = svc.apply()
+            self.assertTrue(r["ok"], r)
+            docs = {v: {lang: importer.read_master(t.root / masters.MASTERS_DIR / masters.BY_ID[f"{v}-{lang}"].file) for lang in ("en", "es")} for v in importer.VARIANTS}
+            merged, slots, report = importer.merge(docs)
+            self.assertEqual(merged["items"]["machine-shop-tech"]["role"]["en"], "Machine Shop Tech")
+            self.assertIn("A new bullet.", [c["text"]["en"] for c in merged["items"]["machine-shop-tech"]["children"].values()])
+            self.assertEqual(svc.drift()["blocked"], [])
+
     def test_fit_meter_agrees_with_the_document_check(self):
         """Every entry slot of every real master: the meter (built from the content) measures what fit.check_doc measures on the file."""
         content_path = REPO_ROOT / "staging/cv-content/content.json"

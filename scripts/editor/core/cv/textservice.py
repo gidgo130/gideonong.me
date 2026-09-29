@@ -7,12 +7,18 @@ content.json, like the transcript tab), autosaved to .local/drafts/cvtext.json;
 text edits and structural operations (core/cv/content.py); validation and the
 fit meter (core/cv/cvcheck.py); review = change list in words + content.json
 diff + what rendering would do to each master (renderer.plan_master); save =
-backup + atomic write of content.json only. Masters are never written here
-(4c does that).
+backup + atomic write of content.json only.
+4c: drift — paragraphs edited in Word since the last import / apply (their text
+hash differs from content.hashes), each to be pulled into the content or
+discarded — and apply: render every master in memory (renderer.render_master),
+self-check each, then back up content.json + the six masters, write the
+changed masters atomically, rebuild the slot maps and hashes from the files as
+written, and save content.json. A master open in Word blocks the apply.
 """
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import os
@@ -28,7 +34,7 @@ from ..backups import Backups, atomic_write
 from ..jsonfile import JsonFile, changes, delete_path, set_path
 from ..transcript import paths as tpaths
 from . import content as C
-from . import cvcheck, docxread, fit, importer, masters, renderer, scans
+from . import cvcheck, docxread, fit, importer, masters, renderer, scans, wordroute
 
 log = logging.getLogger("editor.cvtext")
 
@@ -37,6 +43,8 @@ CONTENT_FILE = f"{CONTENT_DIR}/content.json"
 SLOTS_DIR = f"{CONTENT_DIR}/slots"
 REPORT_FILE = f"{CONTENT_DIR}/import-report.json"
 PROFILE_FILE = tpaths.rel("profile")
+ROUTES = ("python", "word")
+ROUTE_LABELS = {"python": "python", "word": "Word"}
 
 
 def _dump(obj) -> bytes:
@@ -53,11 +61,32 @@ class CvTextService:
         self.load_error: Optional[str] = None
         self.slots: dict[str, list] = {}
         self.draft: Optional[dict] = None
+        self.discarded: set = set()  # (master file, slot id) Word edits the next apply may overwrite
         self._docs: dict[str, tuple[float, docxread.DocInfo]] = {}
         self._profile: tuple[float, Optional[dict]] = (0.0, None)
         self.autosave_path = (self.local_dir / "drafts" / "cvtext.json") if self.local_dir else None
+        self.last_apply_path = (self.local_dir / "cvtext-last-apply.json") if self.local_dir else None
         self.pending_autosave: Optional[dict] = self._read_autosave()
         self.load()
+
+    # ------------------------------------------------------------- last apply record
+    def last_apply(self) -> Optional[dict]:
+        if not self.last_apply_path or not self.last_apply_path.is_file():
+            return None
+        try:
+            j = json.loads(self.last_apply_path.read_text(encoding="utf-8"))
+            return j if isinstance(j, dict) and j.get("route") in ROUTES else None
+        except (OSError, ValueError):
+            return None
+
+    def _record_apply(self, rec: dict) -> None:
+        if not self.last_apply_path:
+            return
+        try:
+            self.last_apply_path.parent.mkdir(parents=True, exist_ok=True)
+            atomic_write(self.last_apply_path, _dump(rec))
+        except OSError as e:
+            log.warning("could not record the apply: %s", e)
 
     # ------------------------------------------------------------- paths / loading
     def content_path(self) -> Path:
@@ -198,8 +227,20 @@ class CvTextService:
         C.delete(d, id)
         self._commit(d)
 
+    def add_section(self, en: str, es: str, variant: str) -> str:
+        d = self._working()
+        sid = C.add_section(d, en, es, variant)
+        self._commit(d)
+        return sid
+
+    def delete_section(self, section_id: str) -> None:
+        d = self._working()
+        C.delete_section(d, section_id)
+        self._commit(d)
+
     def discard_drafts(self) -> None:
         self.draft = None
+        self.discarded.clear()
         self._write_autosave()
 
     # ------------------------------------------------------------- autosave
@@ -313,6 +354,7 @@ class CvTextService:
         live = self.obj()
         gate = self.gate()
         dc = self.doc.disk_changed()
+        drift = self.drift(live)
         out = {
             "readOnly": False,
             "file": CONTENT_FILE,
@@ -322,6 +364,10 @@ class CvTextService:
             "diskChanged": dc,
             "noop": self.draft is None,
             "masters": self.master_plans(live),
+            "drift": drift,
+            "applyBlocked": self.apply_blockers(live, drift),
+            "lastApply": self.last_apply(),
+            "wordAvailable": wordroute.word_available(),
         }
         out["ok"] = gate.ok() and not dc and not out["noop"]
         return out
@@ -362,6 +408,320 @@ class CvTextService:
         log.info("saved %s (backup %s)", CONTENT_FILE, bset.id)
         return {"ok": True, "backup": bset.id, "message": f"Saved {CONTENT_FILE}. Backup set {bset.id}. The masters are rewritten by Apply (4c)."}
 
+    # ------------------------------------------------------------- 4c: drift
+    def _master_docs(self) -> dict[str, tuple[masters.Master, Path]]:
+        return {m.file: (m, masters.docx_path(self.repo_root, m)) for m in masters.MASTERS}
+
+    def drift(self, content: Optional[dict] = None) -> dict:
+        """Paragraphs edited in Word since the last import / apply, per master, with their
+        resolution; `blocked` lists what stops an apply (structure drift, unresolved paragraphs)."""
+        content = content if content is not None else self.obj()
+        out: dict = {"masters": [], "blocked": [], "unresolved": 0}
+        if content is None:
+            out["blocked"].append("no content set — import the masters first")
+            return out
+        for m, path in self._master_docs().values():
+            entry = {"file": m.file, "title": m.title, "structure": None, "paragraphs": []}
+            out["masters"].append(entry)
+            if not path.is_file():
+                entry["structure"] = f"{m.file} is missing from {masters.MASTERS_DIR}/"
+                out["blocked"].append(entry["structure"])
+                continue
+            slot_map = self.slots.get(m.file)
+            if slot_map is None:
+                entry["structure"] = "no slot map for this master — Import masters again"
+                out["blocked"].append(f"{m.title}: {entry['structure']}")
+                continue
+            try:
+                doc = importer.read_master(path)
+                live = renderer.live_slots(doc, slot_map)
+            except (importer.ImportError_, renderer.StructureDrift) as e:
+                entry["structure"] = f"changed in Word beyond text ({e}) — Import masters again to pick it up"
+                out["blocked"].append(f"{m.title}: {entry['structure']}")
+                continue
+            except Exception as e:  # unreadable file
+                entry["structure"] = f"cannot be read ({e})"
+                out["blocked"].append(f"{m.title}: {entry['structure']}")
+                continue
+            nodes = importer.structure(doc)
+            variant, lang = renderer.master_of(content, m.file)
+            hashes = content.get("hashes", {}).get(m.file, {})
+            for sl in live:
+                if sl["kind"] == "empty":
+                    continue
+                node = nodes[sl["para"]]
+                is_entry = sl["kind"] == "entry"
+                word_s = importer.text_string(node.parts, is_entry)
+                stored = hashes.get(sl["id"])
+                if stored is None or importer.hash_text(word_s) == stored:
+                    continue
+                content_s = renderer._expected_text(content, sl["id"], variant, lang)
+                if content_s == word_s:
+                    continue  # pulled, or typed the same thing
+                resolved = "discard" if (m.file, sl["id"]) in self.discarded else None
+                entry["paragraphs"].append(
+                    {
+                        "id": sl["id"],
+                        "label": C.label_of(content, sl["id"], lang),
+                        "kind": sl["kind"],
+                        "lang": lang,
+                        "wordText": word_s.replace("\t", " ⇥ "),
+                        "contentText": content_s.replace("\t", " ⇥ ") if content_s is not None else None,
+                        "resolved": resolved,
+                    }
+                )
+                if not resolved:
+                    out["unresolved"] += 1
+        if out["unresolved"]:
+            out["blocked"].append(f"{out['unresolved']} paragraph(s) were edited in Word since the last apply — pull each into the content or discard it")
+        return out
+
+    def _word_parts(self, master_file: str, sid: str) -> tuple[dict, bool]:
+        """(parts, is_entry) of a slot's paragraph as it is in the master now."""
+        m, path = self._master_docs()[master_file]
+        slot_map = self.slots.get(master_file)
+        if slot_map is None:
+            raise KeyError(master_file)
+        doc = importer.read_master(path)
+        live = renderer.live_slots(doc, slot_map)
+        sl = next((s for s in live if s["id"] == sid), None)
+        if sl is None:
+            raise KeyError(sid)
+        node = importer.structure(doc)[sl["para"]]
+        return node.parts, sl["kind"] == "entry"
+
+    def pull_drift(self, master_file: str, sid: str) -> None:
+        """The content takes the paragraph's text as it is in Word (a normal draft edit)."""
+        content = self.obj()
+        if content is None:
+            raise RuntimeError("no content set")
+        variant, lang = renderer.master_of(content, master_file)
+        parts, is_entry = self._word_parts(master_file, sid)
+        d = self._working()
+        if sid.startswith("header."):
+            part = sid.split(".", 1)[1]
+            path = ["header", "name"] if part == "name" else ["header", "title", variant, lang] if part == "title" else ["header", "contact", lang]
+            C.set_text(d, path, parts.get("text", ""))
+        elif sid.startswith("section."):
+            idx = next((i for i, s in enumerate(d["sections"]) if s["id"] == sid.split(".", 1)[1]), None)
+            if idx is None:
+                raise KeyError(sid)
+            C.set_text(d, ["sections", idx, "heading", lang], parts.get("text", ""))
+        else:
+            kind, *rest = C.find(d, sid)
+            if kind == "item" and is_entry:
+                for k in ("role", "org", "date"):
+                    C.set_text(d, ["items", sid, k, lang], parts.get(k, ""))
+            elif kind == "item":
+                C.set_text(d, ["items", sid, "text", lang], parts.get("text", ""))
+            else:
+                C.set_text(d, ["items", rest[0], "children", sid, "text", lang], parts.get("text", ""))
+        self.discarded.discard((master_file, sid))
+        self._commit(d)
+
+    def discard_drift(self, master_file: str, sid: str) -> None:
+        """Let the next apply overwrite the paragraph as edited in Word."""
+        if master_file not in self._master_docs():
+            raise KeyError(master_file)
+        self.discarded.add((master_file, sid))
+
+    def resolve_all(self, master_file: str, how: str) -> int:
+        """pull or discard every unresolved paragraph of one master; returns how many."""
+        n = 0
+        for entry in self.drift()["masters"]:
+            if entry["file"] != master_file:
+                continue
+            for p in entry["paragraphs"]:
+                if p["resolved"]:
+                    continue
+                if how == "pull":
+                    self.pull_drift(master_file, p["id"])
+                else:
+                    self.discard_drift(master_file, p["id"])
+                n += 1
+        return n
+
+    # ------------------------------------------------------------- 4c: apply
+    def apply_blockers(self, content: dict, drift: Optional[dict] = None) -> list[str]:
+        """Everything that stops an apply right now (nothing is rendered here)."""
+        reasons: list[str] = []
+        if self.doc is None:
+            return [self.load_error or "no content set"]
+        if self.doc.read_only:
+            reasons.append(self.doc.read_only)
+        if self.doc.disk_changed():
+            reasons.append(f"{CONTENT_FILE} changed on disk since it was loaded — reload first")
+        # every error counts here, pre-existing ones too: an empty, TODO or overflowing paragraph
+        # must never reach a master (saving content.json is gated more leniently)
+        errors = [i for i in self._issues(content) if i.level == "error"]
+        if errors:
+            first = errors[0]
+            reasons.append(f"{len(errors)} error(s) in the content — fix them first (e.g. {C.label_of(content, first.key)}: {first.message})")
+        d = drift if drift is not None else self.drift(content)
+        reasons += d["blocked"]
+        for p in self.master_plans(content):
+            if p["changed"] or p["added"] or p["removed"]:
+                m, path = self._master_docs()[p["file"]]
+                if masters.word_lock_file(path) is not None:
+                    reasons.append(f"{m.file} is open in Word — close it in Word first")
+        return reasons
+
+    def _render_with(self, route: str, content: dict, m: masters.Master, path: Path, log_line) -> renderer.RenderResult:
+        if route == "word":
+            return wordroute.render_master(content, self.slots[m.file], path, log_line)
+        return renderer.render_master(content, self.slots[m.file], path)
+
+    def apply(self, route: str = "python", log_line=lambda s: None) -> dict:
+        """Write the content into the masters (see the module docstring). Nothing is written
+        unless every master renders and passes its self-check. `route`: "python" (the renderer)
+        or "word" (the same edits through a private Word instance, wordroute.py)."""
+        if route not in ROUTES:
+            return {"ok": False, "error": "route", "message": f"unknown route {route!r}"}
+        if route == "word":
+            problem = wordroute.word_available()
+            if problem:
+                return {"ok": False, "error": "route", "message": f"Apply with Word cannot run: {problem}"}
+        other = "Word" if route == "python" else "python"
+        content = self.obj()
+        if self.doc is None or content is None:
+            return {"ok": False, "error": "read-only", "message": self.load_error or "no content set"}
+        drift = self.drift(content)
+        blockers = self.apply_blockers(content, drift)
+        if blockers:
+            return {"ok": False, "error": "blocked", "message": "Apply is blocked: " + "; ".join(blockers), "blockers": blockers, "drift": drift}
+        content = copy.deepcopy(content)
+        results: list[tuple[masters.Master, renderer.RenderResult]] = []
+        for m, path in self._master_docs().values():
+            try:
+                r = self._render_with(route, content, m, path, log_line)
+            except renderer.RenderError as e:
+                return {"ok": False, "error": "render", "master": m.file, "route": route, "message": f"{m.title} could not be rendered with {ROUTE_LABELS[route]}: {e}. Nothing was written; try Apply with {other}."}
+            except Exception as e:  # never half-write
+                log.exception("render crashed for %s", m.file)
+                return {"ok": False, "error": "render", "master": m.file, "route": route, "message": f"{m.title} could not be rendered with {ROUTE_LABELS[route]}: {type(e).__name__}: {e}. Nothing was written; try Apply with {other}."}
+            problems = renderer.self_check(content, m.file, r.data, path, relaxed=(route == "word")) if r.changed else []
+            if route == "word" and r.changed:
+                tmpf = Path(tempfile.mkdtemp(prefix="cv-parts-")) / m.file
+                try:
+                    tmpf.write_bytes(r.data)
+                    r.report["notes"] = [f"Word re-saved {n}" for n in renderer.parts_changed(path, tmpf)]
+                finally:
+                    shutil.rmtree(tmpf.parent, ignore_errors=True)
+            if problems:
+                return {
+                    "ok": False,
+                    "error": "self-check",
+                    "master": m.file,
+                    "route": route,
+                    "problems": problems,
+                    "message": f"{m.title}: the file {ROUTE_LABELS[route]} produced does not read back as the content ({problems[0]}). Nothing was written; try Apply with {other}.",
+                }
+            results.append((m, r))
+        changed = [(m, r) for m, r in results if r.changed]
+        if not changed and self.draft is None:
+            return {"ok": True, "noop": True, "route": route, "message": "Nothing to apply — every master already matches the content.", "masters": [dict(r.report, file=m.file, title=m.title, written=False) for m, r in results]}
+        locks = [m.file for m, r in changed if masters.word_lock_file(masters.docx_path(self.repo_root, m)) is not None]
+        if locks:
+            return {"ok": False, "error": "open-in-word", "message": "close in Word first: " + ", ".join(locks)}
+        rels = [CONTENT_FILE] + [f"{masters.MASTERS_DIR}/{m.file}" for m in masters.MASTERS] + [f"{SLOTS_DIR}/{m.file}.json" for m in masters.MASTERS]
+        bset = self.backups.create(rels, "before applying the CV text to the masters")
+        written = []
+        for m, r in changed:
+            try:
+                atomic_write(masters.docx_path(self.repo_root, m), r.data)
+            except OSError as e:
+                log.warning("write failed for %s: %s", m.file, e)
+                return {
+                    "ok": False,
+                    "error": "write-failed",
+                    "message": f"{m.file} could not be written ({e}). Already written: {', '.join(written) or 'none'}; content.json not updated. Backup set {bset.id} holds everything as it was.",
+                    "backup": bset.id,
+                    "written": written,
+                }
+            written.append(m.file)
+        content["hashes"] = {}
+        new_slots = {}
+        for m, path in self._master_docs().values():
+            try:
+                sl, hs = renderer.rebuild_slots(content, path)
+            except Exception as e:  # the file was just checked; this is a bug, not a user error
+                log.exception("slot rebuild failed for %s", m.file)
+                return {"ok": False, "error": "rebuild", "message": f"{m.file} was written but its slot map could not be rebuilt ({e}); restore backup set {bset.id} or Import masters again.", "backup": bset.id, "written": written}
+            new_slots[m.file] = sl
+            content["hashes"][m.file] = hs
+        (self.repo_root / SLOTS_DIR).mkdir(parents=True, exist_ok=True)
+        for name, sl in new_slots.items():
+            atomic_write(self.repo_root / SLOTS_DIR / (name + ".json"), _dump(sl))
+        atomic_write(self.doc.path, self.doc.render(content))
+        self.draft = None
+        self.discarded.clear()
+        self._write_autosave()
+        self.load()
+        summary = [dict(r.report, file=m.file, title=m.title, written=r.changed) for m, r in results]
+        rec = {"route": route, "when": datetime.now().isoformat(timespec="seconds"), "backup": bset.id, "written": written, "masters": summary}
+        self._record_apply(rec)
+        log.info("applied CV text with %s: wrote %s (backup %s)", route, written, bset.id)
+        return {"ok": True, "route": route, "backup": bset.id, "written": written, "masters": summary, "message": f"Applied with {ROUTE_LABELS[route]}: {len(written)} master(s) rewritten, content.json saved. Backup set {bset.id}. Next: Export & check."}
+
+    # ------------------------------------------------------------- 4d: cross-check
+    def crosscheck(self, log_line=lambda s: None) -> dict:
+        """Rerun the last apply through the OTHER route, from the backup set's copies of the
+        masters and slot maps against the current content, and compare with the masters on
+        disk. Nothing is written."""
+        rec = self.last_apply()
+        if not rec:
+            return {"ok": False, "error": "no-apply", "message": "no apply recorded yet — apply first"}
+        other = "word" if rec["route"] == "python" else "python"
+        if other == "word":
+            problem = wordroute.word_available()
+            if problem:
+                return {"ok": False, "error": "route", "message": f"the cross-check needs Word: {problem}"}
+        bset = self.backups.get(rec["backup"])
+        if bset is None:
+            return {"ok": False, "error": "no-backup", "message": f"backup set {rec['backup']} of that apply no longer exists — nothing to rerun from"}
+        content = self.obj()
+        if content is None:
+            return {"ok": False, "error": "read-only", "message": self.load_error or "no content set"}
+        if self.draft is not None:
+            return {"ok": False, "error": "drafts", "message": "save or discard the drafts first — the cross-check compares the content as applied"}
+        out = {"ok": True, "route": other, "applied": rec["route"], "backup": rec["backup"], "masters": [], "agree": True}
+        tmp = Path(tempfile.mkdtemp(prefix="cv-cross-"))
+        try:
+            for m, path in self._master_docs().values():
+                if m.file not in rec.get("written", []):
+                    continue
+                entry = {"file": m.file, "title": m.title, "problems": [], "notes": []}
+                out["masters"].append(entry)
+                master_bytes = self.backups.read_file(rec["backup"], f"{masters.MASTERS_DIR}/{m.file}")
+                slots_bytes = self.backups.read_file(rec["backup"], f"{SLOTS_DIR}/{m.file}.json")
+                if master_bytes is None or slots_bytes is None:
+                    entry["problems"].append("the backup set holds no copy of this master or its slot map")
+                    out["agree"] = False
+                    continue
+                src = tmp / m.file
+                src.write_bytes(master_bytes)
+                try:
+                    slot_map = json.loads(slots_bytes.decode("utf-8"))
+                    r = wordroute.render_master(content, slot_map, src, log_line) if other == "word" else renderer.render_master(content, slot_map, src)
+                except (renderer.RenderError, ValueError) as e:
+                    entry["problems"].append(f"the {ROUTE_LABELS[other]} route could not render it: {e}")
+                    out["agree"] = False
+                    continue
+                rendered = tmp / ("rendered-" + m.file)
+                rendered.write_bytes(r.data)
+                entry["problems"] = renderer.compare_layout(rendered, path)
+                entry["notes"] = [f"package part {n} differs" for n in renderer.parts_changed(rendered, path)]
+                if entry["problems"]:
+                    out["agree"] = False
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        out["message"] = (
+            f"The {ROUTE_LABELS[other]} route produces the same text and formatting as the {ROUTE_LABELS[rec['route']]} apply on every master."
+            if out["agree"]
+            else f"The {ROUTE_LABELS[other]} route differs from the {ROUTE_LABELS[rec['route']]} apply — see the paragraphs listed."
+        )
+        return out
+
     # ------------------------------------------------------------- state
     def state(self) -> dict:
         content = self.obj()
@@ -401,6 +761,8 @@ class CvTextService:
             "profileLoaded": self.profile() is not None,
             "gpa": self.gpa(),
             "autosave": {"saved": self.pending_autosave.get("saved")} if self.pending_autosave else None,
+            "lastApply": self.last_apply(),
+            "wordAvailable": wordroute.word_available(),
         }
 
     # ------------------------------------------------------------- import (4a)

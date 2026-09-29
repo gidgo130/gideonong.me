@@ -14,6 +14,7 @@
   <span class="file">staging/cv-content/</span>
   <span class="spacer"></span>
   <button id="importBtn" class="ghost" type="button" title="Re-read the six Word masters into the content set (proof of losslessness first)">Import masters…</button>
+  <button id="exportBtn" class="ghost" type="button" title="Export the masters to PDF with a private Word instance and run the CV & résumé tab's checks">Export &amp; check</button>
   <button id="reviewBtn" class="primary" type="button">Review &amp; save <span class="badge" id="draftCount" hidden>0</span></button>
 </header>
 
@@ -59,6 +60,18 @@
   </form>
 </dialog>
 
+<dialog id="sectionDlg" class="dlg narrow">
+  <form method="dialog">
+    <h2>Add section</h2>
+    <div class="form-grid">
+      <label class="field"><span>Heading (EN)</span><input id="secEn" type="text" autocomplete="off"></label>
+      <label class="field"><span>Heading (ES)</span><input id="secEs" type="text" autocomplete="off"></label>
+    </div>
+    <p class="muted small">The section goes to the end. It appears in a document once one of its items does; Apply then clones the nearest heading for it.</p>
+    <div class="dlg-actions"><span class="spacer"></span><button type="submit" class="ghost">Cancel</button><button type="button" class="primary" id="secGo">Add</button></div>
+  </form>
+</dialog>
+
 <dialog id="reviewDlg" class="dlg">
   <form method="dialog">
     <h2>Review &amp; save <span class="muted">CV content</span></h2>
@@ -67,7 +80,21 @@
       <button type="button" class="ghost danger" id="discardBtn">Discard all drafts</button>
       <span class="spacer"></span>
       <button type="submit" class="ghost">Back</button>
-      <button type="button" class="primary" id="saveBtn">Save</button>
+      <button type="button" class="ghost" id="saveBtn" title="Write staging/cv-content/content.json only">Save</button>
+      <button type="button" class="ghost" id="applyWordBtn" title="Save content.json and make the same edits in the masters through a private Word instance">Apply with Word</button>
+      <button type="button" class="primary" id="applyBtn" title="Save content.json and rewrite the Word masters with the python renderer">Apply with python</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="exportDlg" class="dlg">
+  <form method="dialog">
+    <h2>Export &amp; check</h2>
+    <div id="exportBody"></div>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Close</button>
+      <a class="ghost" href="/cv" title="Publish the Professional CV and résumé PDFs from the CV & résumé tab">Publish on the CV &amp; résumé tab →</a>
     </div>
   </form>
 </dialog>

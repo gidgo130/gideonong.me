@@ -280,6 +280,27 @@ def delete(content: dict, id: str) -> None:
                 order.remove(id)
 
 
+def add_section(content: dict, en: str, es: str, variant: str) -> str:
+    """A new, empty section at the end (it appears in a document once an item is added there)."""
+    _check_variant(variant)
+    en, es = norm(en), norm(es)
+    if not en:
+        raise ValueError("the English heading is required (it names the section)")
+    sid = unique_id(slugify(en, "section"), all_ids(content) | {"header", "top"})
+    content["sections"].append({"id": sid, "heading": {"en": en, "es": es}, "order": {variant: []}})
+    return sid
+
+
+def delete_section(content: dict, section_id: str) -> None:
+    """Remove a section that holds no item in any document."""
+    sec = next((s for s in content["sections"] if s["id"] == section_id), None)
+    if sec is None:
+        raise KeyError(section_id)
+    if any(sec["order"].values()):
+        raise ValueError("the section still holds items — delete or move them first")
+    content["sections"].remove(sec)
+
+
 # ----------------------------------------------------------------- listing for the page
 
 

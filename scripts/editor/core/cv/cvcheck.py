@@ -30,7 +30,7 @@ from . import content as C
 from . import fit, scans
 from .docxread import DocInfo, Para, Run
 from .importer import VARIANTS, Span, norm, role_length
-from .renderer import entry_part_spans
+from .renderer import entry_part_spans, template_for
 
 GPA_RE = re.compile(r"GPA\)?:\s*(\d(?:[.,]\d+)?)")
 ABBR_RE = re.compile(r"\b[A-Z](?:\.[A-Z])+\.")  # B.A., B.S.M.E., B.S.B.A.
@@ -252,24 +252,8 @@ def entry_fit(content: dict, item: dict, lang: str, slot: dict, para: Para, info
 
 
 def template_slot(content: dict, item_id: str, variant: str, slots: list[dict]) -> Optional[dict]:
-    """For an entry with no paragraph in a master yet: the nearest entry slot of a sibling in the
-    same section (the paragraph 4c would clone), else the master's first entry slot."""
-    entry_slots = {s["id"]: s for s in slots if s["kind"] == "entry"}
-    if not entry_slots:
-        return None
-    sec = C.section_of(content, item_id)
-    if sec:
-        order = sec["order"].get(variant) or []
-        if item_id in order:
-            i = order.index(item_id)
-            ranked = sorted((abs(j - i), j) for j, sid in enumerate(order) if sid != item_id and sid in entry_slots)
-            if ranked:
-                return entry_slots[order[ranked[0][1]]]
-        for o in sec["order"].values():
-            for sid in o:
-                if sid in entry_slots:
-                    return entry_slots[sid]
-    return next(iter(entry_slots.values()))
+    """For an entry with no paragraph in a master yet: the slot 4c would clone (renderer.template_for)."""
+    return template_for(content, item_id, variant, slots)
 
 
 def fits_for_item(content: dict, item_id: str, slots_by_master: dict, docs_by_master: dict) -> dict:

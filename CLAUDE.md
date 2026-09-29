@@ -57,9 +57,17 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      set: drafts, include flags and order per variant, validation (empty /
                      TODO / HTML / blocklist / degree-vs-profile.json / fit), a live one-line
                      fit meter per variant, review with what a render would change per master;
-                     saving writes content.json only. The write-back / drift check / Word
-                     route (4c–4d) are not built yet. Its .local/ (backups, logs, drafts,
-                     WebView2 storage) is gitignored. It never runs git write commands.
+                     Save writes content.json only. Phase 4c (renderer.render_master,
+                     self_check, textservice drift / apply) rewrites the masters: only changed
+                     paragraphs, clones of the nearest sibling for new items, re-import
+                     self-check before any write, Word edits since the last apply pulled or
+                     discarded per paragraph, a master open in Word blocks, all six masters
+                     backed up first. Phase 4d (core/cv/wordroute.py): the same edits through
+                     a private Word instance as a second standing route, a cross-check that
+                     reruns the last apply through the other route and compares, and Export &
+                     check from the tab (publish stays on the CV & résumé tab). Phase 4 is
+                     complete. Its .local/ (backups, logs, drafts, WebView2 storage) is
+                     gitignored. It never runs git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit
 assets/images/      Project photos and diagrams
 assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)

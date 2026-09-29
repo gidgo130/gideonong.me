@@ -257,6 +257,8 @@ table.fits td:first-child { width: 110px; }
 .card.excluded { opacity: 0.6; }
 .card .pair { margin: 0 0 6px; }
 .child-issues .gate { margin: 4px 0; padding: 4px 10px; }
+.dlg h4 { font-size: 13px; margin: 12px 0 4px; }
+table.drift td.actions { white-space: nowrap; }
 
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 6px; z-index: 20; max-width: 80vw; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); }
 

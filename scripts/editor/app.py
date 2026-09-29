@@ -649,6 +649,19 @@ def create_app(state: EditorState) -> Flask:
                 elif op == "delete":
                     svc.delete(s("id"))
                     result = None
+                elif op == "add-section":
+                    result = {"id": svc.add_section(s("en"), s("es", False) or "", s("variant"))}
+                elif op == "delete-section":
+                    svc.delete_section(s("id"))
+                    result = None
+                elif op == "pull-drift":
+                    svc.pull_drift(s("master"), s("id"))
+                    result = None
+                elif op == "discard-drift":
+                    svc.discard_drift(s("master"), s("id"))
+                    result = None
+                elif op in ("pull-all", "discard-all"):
+                    result = {"count": svc.resolve_all(s("master"), "pull" if op == "pull-all" else "discard")}
                 else:
                     return deny(400, "unknown op")
                 return jsonify(ok=True, result=result, **svc.state())
@@ -674,6 +687,28 @@ def create_app(state: EditorState) -> Flask:
     def cvtext_save():
         with state.lock:
             result = state.cvtext.save()
+        return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.get("/api/cvtext/drift")
+    def cvtext_drift():
+        with state.lock:
+            return jsonify(state.cvtext.drift())
+
+    @app.post("/api/cvtext/apply")
+    def cvtext_apply():
+        if state.busy():
+            return deny(409, "wait for the running job to finish")
+        body = request.get_json(silent=True) or {}
+        with state.lock:
+            result = state.cvtext.apply(str(body.get("route") or "python"))
+        return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.post("/api/cvtext/crosscheck")
+    def cvtext_crosscheck():
+        if state.busy():
+            return deny(409, "wait for the running job to finish")
+        with state.lock:
+            result = state.cvtext.crosscheck()
         return jsonify(result), (200 if result.get("ok") else 409)
 
     @app.post("/api/cvtext/autosave/restore")

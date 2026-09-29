@@ -184,7 +184,7 @@ files are written back in their own layout (`indent=2`, LF, no trailing newline 
 every load; a file in another layout is read-only here). Backups, changed-on-disk refusal,
 autosave and Restore work as on the Site text tab.
 
-## CV text tab (Phase 4 — 4a import + proof, 4b editor built; 4c render and 4d export to come)
+## CV text tab (Phase 4: import + proof, editor, apply to the masters by two routes, export & check)
 The full CV editor comes in four steps. **Import masters…** (4a) reads the six Word masters
 into one private content set, `staging/cv-content/content.json` (gitignored, like the
 masters): header (name, title words per variant, contact), sections, and items — entry lines
@@ -230,14 +230,72 @@ item moves it within its section in the current document only; ticking a documen
 item after its nearest neighbour from the current view (taking an entry out of a document
 takes its bullets out too). **+ Add item…** under a section asks for the kind (entry or line)
 and the English text, which names the item; the item starts in the current document only. A
-new bullet or line needs both languages before saving. **Delete…** is confirmed and lists
-the documents the item leaves. Nothing touches disk until **Review & save** (Ctrl+S): the
-change list in words, a table of what Apply (4c) would do to each master (paragraphs
-rewritten / added / removed — the Résumé (ES) shows "1 added" until the IEL line gets its
-Spanish text), the gate, and the exact content.json diff. Saving writes
-`staging/cv-content/content.json` only (backed up first, atomic); the Word masters are
-rewritten by Apply, which comes with 4c. Drafts autosave to `.local/drafts/cvtext.json`;
-changed-on-disk refusal, Reload, Discard and the restore banner work as on the other tabs.
+new bullet or line needs both languages before saving. **+ Add section…** (bottom of the
+list) takes a heading in both languages; an empty section can be deleted from its form.
+**Delete…** is confirmed and lists the documents the item leaves. Nothing touches disk until
+**Review & save** (Ctrl+S): the change list in words, a table of what Apply would do to each
+master (paragraphs rewritten / added / removed), the last apply (route, time, backup) with a
+**Cross-check** button, the Word edits found since the last apply (below), the gate, and the
+exact content.json diff. Three ways out: **Save** writes `staging/cv-content/content.json`
+only (backed up first, atomic); **Apply with python** and **Apply with Word** also rewrite
+the Word masters (below). Drafts autosave to `.local/drafts/cvtext.json`; changed-on-disk
+refusal, Reload, Discard and the restore banner work as on the other tabs.
+
+**Apply.** Every master is rendered in memory first: the slot map's paragraphs are
+re-read from the file as it is now (so a formatting tweak made in Word is what gets reused),
+only paragraphs whose text differs from the content are rewritten (their run formatting kept,
+the whole part written into its first run), a new item clones the nearest paragraph of its
+kind — the closest entry in the same section, the closest bullet under the same entry, the
+previous section's heading — with the new text, removed or unticked items lose their
+paragraphs, and the body is put in the content's order. Each rendered file must then pass a
+self-check: read back, its paragraphs are exactly the content's items with the content's text
+and every other package part (styles, numbering, settings) is untouched — one failure and
+nothing is written (the Word route comes with 4d). Then content.json, the six masters and the
+six slot maps go to a backup set, the changed masters are written atomically, the slot maps
+and the text hashes are rebuilt from the files as written, and content.json is saved. Apply
+needs the whole content set error-free (a pre-existing empty or overflowing paragraph must
+never reach a master — the résumé's IEL line blocks it until it has Spanish), and refuses
+while a master to be written is open in Word (`~$` owner file: "close it in Word first"). Your
+own check afterwards: Word › Review › Compare the master against its copy in the backup set.
+
+**Two routes, both always there.** *Apply with python* edits the files directly
+(python-docx; fully testable, byte-exact on untouched paragraphs). *Apply with Word* plans
+the very same operations (which paragraphs to rewrite part by part, which to copy, move or
+delete) and carries them out in a **private, hidden Word instance** on a temp copy of each
+master — the role, organization and date are replaced inside their own ranges so each keeps
+its formatting, a new paragraph is a copy of its template, nothing is ever inserted after
+the final paragraph mark, bookmarks are removed — then the copy is checked exactly like the
+python result on its paragraphs (the wanted items, their text and kinds); the package parts
+Word re-saves on its own (docProps, settings, footnotes / endnotes, list definitions; more
+on a file Word had never saved) are listed as notes, not failures. Word must be installed;
+masters you have open in Word block both routes. Use python by default; use
+Word when a python result looks wrong in Word, or to see whether the two agree:
+**Cross-check with Word / python** reruns the last apply through the other route from that
+apply's backup set (its masters and slot maps) against the content as applied, and compares
+each written master with the file on disk — paragraph count and kinds, every paragraph's text
+and its resolved bold / italic / underline / size runs (raw XML is not compared: the two
+write it differently). Nothing is written by a cross-check; it needs the backup set to still
+exist and no unsaved drafts. The review names the route of the last apply.
+
+**Export & check.** After an apply (banner button) or any time (top bar), the masters last
+written — all six when none are recorded — are exported to PDF and the CV & résumé tab's
+checks run on them (one-line fit, every entry line on one line in the PDF, the résumé one
+page, blocklist, stale PDFs), shown per master with the job log. Publishing stays on the CV &
+résumé tab (Publish…), where the same checks gate it.
+
+**Word edits since the last apply.** Each paragraph's text is hashed when the tool writes
+or imports it. A paragraph whose text now reads differently was edited in Word; the review
+lists it per master with Word's text beside the tool's: **Pull into content** makes it a
+normal draft edit (the content takes Word's words — for an entry its role, organization and
+date), **Discard** lets Apply overwrite it; *Pull all* / *Discard all* per master. Apply is
+refused while any is unresolved. A change beyond text (a paragraph added or removed, a
+bullet turned into plain text) is structure drift: the review says so and asks for **Import
+masters** again, which rebuilds the content set from the files (backing up the old one).
+Formatting-only edits are never drift.
+
+One structural rule for the content: a plain line that follows an entry is read as that
+entry's sub-line on the next import, so section-level lines belong in sections without
+entries (Skills, Honors) or before the first entry.
 
 Validation (errors block a save, warnings do not; only errors the draft introduces or on
 items it touches block — the résumé's IEL line, imported with no Spanish, stays a
@@ -251,8 +309,8 @@ pre-existing error until you type it or untick Résumé on it):
 | A degree line (under the Education entry) naming a degree or minor that `scripts/transcript/profile.json` does not list in that language (decision 4) | Degree lines unchecked because profile.json is not readable |
 | An entry line that overflows its width in a document it is in (that document only) | |
 
-Next steps (not built): 4c writing text back into the masters with a drift check (and, with
-it, adding a section), 4d export / publish with a python route and a Word route side by side.
+The Word-route tests run only with `EDITOR_WORD_TESTS=1` (a private Word for about a
+minute); the plan of operations and the pure simulation are tested without Word.
 
 ## How it stays lossless
 `core/jsdata.py` tokenizes the file with exact character spans and re-emits it. On every
@@ -344,7 +402,28 @@ and, when present, on every entry of all six real masters, goes red when a role 
 and amber within 3 %, and borrows a sibling's geometry for a new entry; review (change list,
 which masters would change, the diff), save (backup, reload, lossless), no-edit save, blocked
 save, changed-on-disk refusal with the draft re-applied, import refused with a draft, autosave
-offered and restored, and the `/api/cvtext/op` endpoint with its token check.
+offered and restored, and the `/api/cvtext/op` endpoint with its token check. Phase 4c: a
+no-edit render of every master is lossless; one bullet edit changes exactly that paragraph's
+text; a new bullet, entry, section-level line and section clone the right neighbour (same
+paragraph properties, right place); removed and unticked items lose exactly their paragraphs;
+a move keeps the element; an empty text is refused; drift found from a python-docx edit of a
+master (bullet and entry), pull and discard both work, a formatting-only edit is no drift and
+its formatting is reused, a paragraph added in Word is structure drift; apply refused for an
+open master, for a pre-existing error, and before any write when the self-check fails; a
+full apply backs up thirteen files, writes only the changed masters, re-imports to the
+content, rebuilds slots and hashes, and is a noop afterwards; the apply / drift / section
+endpoints. On the real masters (when present): the no-edit render is lossless, and an apply
+on a temp copy reads back through a fresh import. Phase 4d: the Word route's plan equals the
+python route's report for the same edit set (part-wise entry rewrites with descending
+offsets, the appended paragraph at the end, a move as a move) and its simulation reproduces
+the python render's paragraphs; an empty text is refused before Word; the last apply is
+recorded and shown; the cross-check refuses with drafts, without an apply or without its
+backup set; the relaxed self-check lets Word's re-saved parts differ but not styles.xml;
+`compare_layout`; Apply with Word refuses cleanly when Word is absent and writes nothing;
+export & check through the app with the fake export. With `EDITOR_WORD_TESTS=1`: the Word
+route renders the edit set, passes the relaxed self-check, matches the python route's layout
+(kinds, texts, run formatting, the appended bullet's paragraph properties), a full Word apply
+cross-checks against python and a python apply cross-checks against Word.
 
 ## Files
 | File | What it is |
@@ -366,10 +445,11 @@ offered and restored, and the `/api/cvtext/op` endpoint with its token check.
 | `core/cv/publish.py` | Publish plan + apply into assets/pdfs/, manifest regeneration |
 | `core/cv/service.py` | Cached checks, the background export job, publish — what the CV page talks to |
 | `core/cv/importer.py` | Masters → spans, structure, EN/ES pairing, merge into the content set, the losslessness comparison |
-| `core/cv/renderer.py` | Paragraph writer (one run per formatting span), the forced re-render the proof uses, and `plan_master` (what a render would change / add / remove) |
-| `core/cv/content.py` | Pure operations on the content set: text edits, include per variant, move, add item / child, delete, the per-variant listing |
+| `core/cv/renderer.py` | Paragraph writer (one run per formatting span), the forced re-render the proof uses, `plan_master` (preview), and the edit-aware render: live slots, clone templates, `render_master`, `self_check`, `rebuild_slots` |
+| `core/cv/content.py` | Pure operations on the content set: text edits, include per variant, move, add item / child / section, delete, the per-variant listing |
 | `core/cv/cvcheck.py` | Validation of the content set (empty / TODO / HTML / blocklist / voice / degree / GPA / fit) and the fit meter on synthetic paragraphs |
-| `core/cv/textservice.py` | Import with the proof gate; the draft, autosave, review, save — what the CV text page talks to |
+| `core/cv/wordroute.py` | The Word route: the plan of paragraph operations (no Word), its plain-list simulation, and the private-Word execution on a temp copy |
+| `core/cv/textservice.py` | Import with the proof gate; the draft, autosave, review, save; drift (pull / discard), apply by either route, the last-apply record and the cross-check — what the CV text page talks to |
 | `core/spans.py` | Span edits on the token tree: replace any value, insert / delete properties and array items, re-parse check |
 | `core/emit.py` | JS values in the data files' own style (inline vs one-per-line by property name) |
 | `core/site/datafiles.py` | The three data files as entry dicts; minimal span edits on save |

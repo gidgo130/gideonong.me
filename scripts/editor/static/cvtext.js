@@ -106,6 +106,7 @@
       rows(sec.others, true);
       box.append(el("button", { type: "button", class: "ghost small addlink", onclick: () => openAdd(sec.id) }, "+ Add item…"));
     }
+    box.append(el("button", { type: "button", class: "ghost small addlink", onclick: openAddSection }, "+ Add section…"));
   }
   function select(id) { state.selected = id; location.hash = state.variant + "/" + id; renderList(); renderForm(); }
 
@@ -209,8 +210,20 @@
     issueBox(ib, issuesFor("section." + sid));
     box.append(textPair(["sections", c.sections.indexOf(sec), "heading"], "Heading", sec.heading));
     const inV = Object.entries(sec.order).filter(([, o]) => o.length).map(([v]) => vlabel(v));
-    box.append(el("p", { class: "muted small" }, "Appears in: " + (inV.join(", ") || "no document") + ". A section appears in a document when at least one of its items does; its heading is written by Apply (4c)."));
+    box.append(el("p", { class: "muted small" }, "Appears in: " + (inV.join(", ") || "no document") + ". A section appears in a document when at least one of its items does; Apply clones the nearest heading for a new one."));
     box.append(el("button", { type: "button", class: "ghost", onclick: () => openAdd(sid) }, "+ Add item to this section…"));
+    if (!inV.length) box.append(el("div", { class: "rowline danger-zone" }, el("button", { type: "button", class: "ghost danger", onclick: () => { if (confirm("Delete the empty section “" + (sec.heading.en || sid) + "”?")) op({ op: "delete-section", id: sid }, true).then((r) => { if (r) select("header"); }); } }, "Delete section")));
+  }
+  function openAddSection() {
+    $("#secEn").value = ""; $("#secEs").value = "";
+    $("#sectionDlg").showModal();
+    $("#secEn").focus();
+  }
+  async function doAddSection() {
+    const en = $("#secEn").value.trim(), es = $("#secEs").value.trim();
+    if (!en) { toast("Type the English heading first."); return; }
+    const r = await op({ op: "add-section", en, es, variant: state.variant }, true);
+    if (r) { $("#sectionDlg").close(); select("section." + r.result.id); }
   }
   function renderItem(box, c, iid, item) {
     const sec = state.data.listing[state.variant].find((s) => s.items.includes(iid) || s.others.includes(iid));
@@ -366,8 +379,8 @@
     try { r = await api("/api/cvtext/review"); } catch (e) { body.replaceChildren(el("p", null, "Review failed: " + e.message)); return; }
     body.replaceChildren();
     if (r.readOnly) { body.append(el("div", { class: "gate err" }, "Read-only: " + r.error)); return; }
-    if (r.noop) { body.append(el("p", { class: "muted" }, "No changes — content.json already matches.")); return; }
-    body.append(el("ul", { class: "changes" }, ...r.changes.map((c) => el("li", null, c.text))));
+    if (r.noop) body.append(el("p", { class: "muted" }, "No changes — content.json already matches. Apply is still possible when a master differs from the content (see the table)."));
+    else body.append(el("ul", { class: "changes" }, ...r.changes.map((c) => el("li", null, c.text))));
     const mt = el("table", { class: "docs" }, el("tr", null, el("th", null, "Master"), el("th", null, "What Apply (4c) would do")));
     for (const m of r.masters) {
       const parts = [];
@@ -376,14 +389,129 @@
       if (m.removed.length) parts.push(`${m.removed.length} removed`);
       mt.append(el("tr", null, el("td", null, m.title), el("td", null, parts.length ? parts.join(", ") : el("span", { class: "muted" }, "unchanged"))));
     }
-    body.append(el("h3", null, "Masters"), el("p", { class: "muted small" }, "Saving writes only content.json. The Word masters are rewritten by Apply, which comes with 4c."), mt);
+    body.append(el("h3", null, "Masters"), el("p", { class: "muted small" }, "Save writes only content.json. Apply also rewrites the Word masters: only the paragraphs listed change, new items clone the nearest paragraph of their kind, every file is backed up first, and a master is written only after it reads back exactly as the content. Apply with python edits the files directly; Apply with Word makes the same edits through a private Word instance."), mt);
+    const la = r.lastApply;
+    const laLine = el("p", { class: "small", id: "lastApplyLine" });
+    if (la) {
+      laLine.append(el("strong", null, "Last apply: "), `${la.route === "word" ? "Word" : "python"} route, ${la.when.replace("T", " ")}, backup ${la.backup}, ${la.written.length} master(s) written. `);
+      const other = la.route === "word" ? "python" : "Word";
+      laLine.append(el("button", { type: "button", class: "ghost small", disabled: (other === "Word" && r.wordAvailable) ? "" : null, title: other === "Word" && r.wordAvailable ? r.wordAvailable : "rerun that apply through the " + other + " route from its backup set and compare with the masters on disk", onclick: doCrosscheck }, "Cross-check with " + other));
+    } else laLine.append(el("span", { class: "muted" }, "No apply recorded yet."));
+    body.append(laLine, el("div", { id: "crossBox" }));
+    renderDrift(body, r.drift);
+    if (r.applyBlocked.length) body.append(el("div", { class: "gate warn" }, el("strong", null, "Apply is blocked:"), el("ul", null, ...r.applyBlocked.map((x) => el("li", null, x)))));
     if (r.diskChanged) body.append(el("div", { class: "gate err" }, "content.json changed on disk since it was loaded. Close this, click Reload in the banner, then review again."));
     const g = r.gate;
     if (g.blocking.length) body.append(el("div", { class: "gate err" }, el("strong", null, "Blocking errors (fix before saving):"), issueList(g.blocking)));
     if (g.warnings.length) body.append(el("div", { class: "gate warn" }, el("strong", null, "Warnings (saving is allowed):"), issueList(g.warnings.slice(0, 15)), g.warnings.length > 15 ? el("p", { class: "muted" }, "… and " + (g.warnings.length - 15) + " more") : null));
-    if (g.preexisting.length) body.append(el("div", { class: "gate info" }, el("strong", null, "Pre-existing errors elsewhere (not blocking):"), issueList(g.preexisting)));
-    body.append(el("h3", null, r.file), renderDiff(r.diff));
+    if (g.preexisting.length) body.append(el("div", { class: "gate info" }, el("strong", null, "Pre-existing errors elsewhere (not blocking a save; they block Apply):"), issueList(g.preexisting)));
+    if (!r.noop) body.append(el("h3", null, r.file), renderDiff(r.diff));
     $("#saveBtn").disabled = !r.ok;
+    const nothingToApply = r.noop && !r.masters.some((m) => m.changed.length || m.added.length || m.removed.length);
+    $("#applyBtn").disabled = r.applyBlocked.length > 0 || r.diskChanged || nothingToApply;
+    $("#applyWordBtn").disabled = r.applyBlocked.length > 0 || r.diskChanged || nothingToApply || !!r.wordAvailable;
+    $("#applyWordBtn").title = r.wordAvailable ? "Apply with Word cannot run: " + r.wordAvailable : "Save content.json and make the same edits in the masters through a private Word instance";
+  }
+  async function doCrosscheck() {
+    const box = $("#crossBox");
+    box.replaceChildren(el("p", { class: "muted small" }, "Rerunning the last apply through the other route from its backup set…"));
+    let r;
+    try { r = await api("/api/cvtext/crosscheck", { method: "POST", body: {} }); } catch (e) { box.replaceChildren(el("div", { class: "gate err" }, "Cross-check failed: " + e.message)); return; }
+    box.replaceChildren();
+    if (!r.ok) { box.append(el("div", { class: "gate err" }, r.message)); return; }
+    box.append(el("div", { class: "gate " + (r.agree ? "info" : "warn") }, el("strong", null, r.agree ? "Routes agree. " : "Routes differ. "), r.message));
+    for (const m of r.masters) {
+      if (!m.problems.length && !m.notes.length) continue;
+      box.append(el("div", { class: "small" }, el("strong", null, m.title), m.problems.length ? el("ul", null, ...m.problems.map((p) => el("li", { class: "err-text" }, p))) : null, m.notes.length ? el("div", { class: "muted" }, m.notes.join("; ")) : null));
+    }
+  }
+  function renderDrift(body, d) {
+    const withDrift = (d.masters || []).filter((m) => m.structure || m.paragraphs.length);
+    if (!withDrift.length) return;
+    body.append(el("h3", null, "Word edits since the last apply"), el("p", { class: "muted small" }, "These paragraphs read differently in the master than what the tool last wrote. Pull takes Word's text into the content; Discard lets Apply overwrite it."));
+    for (const m of withDrift) {
+      body.append(el("h4", null, m.title));
+      if (m.structure) { body.append(el("div", { class: "gate err" }, m.structure)); continue; }
+      const t = el("table", { class: "docs drift" }, el("tr", null, el("th", null, "Paragraph"), el("th", null, "In Word now"), el("th", null, "In the tool"), el("th")));
+      for (const p of m.paragraphs) {
+        const act = el("td", { class: "actions" });
+        if (p.resolved === "discard") act.append(pill("st-same", "will be overwritten"));
+        else if (p.contentText === null) act.append(el("span", { class: "muted small" }, "deleted in the tool "), el("button", { type: "button", class: "ghost small", onclick: () => resolve({ op: "discard-drift", master: m.file, id: p.id }) }, "Discard"));
+        else act.append(el("button", { type: "button", class: "ghost small", onclick: () => resolve({ op: "pull-drift", master: m.file, id: p.id }) }, "Pull into content"), " ", el("button", { type: "button", class: "ghost small", onclick: () => resolve({ op: "discard-drift", master: m.file, id: p.id }) }, "Discard"));
+        t.append(el("tr", null, el("td", null, p.label, " ", el("span", { class: "muted small" }, p.lang.toUpperCase())), el("td", { class: "small" }, p.wordText), el("td", { class: "small" }, p.contentText === null ? el("span", { class: "muted" }, "—") : p.contentText), act));
+      }
+      body.append(t, el("div", { class: "rowline" }, el("button", { type: "button", class: "ghost small", onclick: () => resolve({ op: "pull-all", master: m.file }) }, "Pull all"), el("button", { type: "button", class: "ghost small", onclick: () => resolve({ op: "discard-all", master: m.file }) }, "Discard all")));
+    }
+  }
+  async function resolve(body) {
+    const r = await op(body, true);
+    if (r) await openReview();
+  }
+  async function doApply(route) {
+    $("#applyBtn").disabled = true; $("#applyWordBtn").disabled = true; $("#saveBtn").disabled = true;
+    toast(route === "word" ? "Starting a private Word and making the edits…" : "Rendering the masters and checking them…", 12000);
+    let r;
+    try { r = await api("/api/cvtext/apply", { method: "POST", body: { route } }); } catch (e) { toast("Apply failed: " + e.message, 7000); $("#applyBtn").disabled = false; $("#applyWordBtn").disabled = false; return; }
+    if (!r.ok) {
+      const box = el("div", { class: "gate err" }, el("strong", null, "Not applied: "), r.message);
+      if (r.problems) box.append(el("ul", null, ...r.problems.slice(0, 8).map((p) => el("li", null, p))));
+      $("#reviewBody").prepend(box);
+      if (r.error === "blocked") await openReview();
+      else { $("#applyBtn").disabled = false; $("#applyWordBtn").disabled = false; }
+      return;
+    }
+    $("#reviewDlg").close();
+    const parts = (r.masters || []).filter((m) => m.written).map((m) => `${m.title}: ${m.rewritten.length} rewritten, ${m.added.length} added, ${m.removed.length} removed, ${m.moved.length} moved`);
+    const routeName = r.route === "word" ? "Word" : "python";
+    setBanner("applied", "", (r.noop ? r.message : `Applied with ${routeName} to ${r.written.length} master(s) — ${parts.join("; ") || "nothing rewritten"}. Backup set ${r.backup}.`), r.noop ? [{ label: "Dismiss", onclick: () => clearBanner("applied") }] : [{ label: "Export & check", primary: true, onclick: () => { clearBanner("applied"); openExport(r.written); } }, { label: "Dismiss", onclick: () => clearBanner("applied") }]);
+    toast(r.noop ? r.message : "Applied with " + routeName + ".", 6000);
+    await loadState();
+  }
+
+  // ---------------------------------------------------------------- export & check (the CV & résumé tab's pieces)
+  const MASTER_IDS = { "Gideon Ong CV Full EN.docx": "full-en", "Gideon Ong CV Completo ES.docx": "full-es", "Gideon Ong CV Professional EN.docx": "professional-en", "Gideon Ong CV Profesional ES.docx": "professional-es", "Gideon Ong Resume EN.docx": "resume-en", "Gideon Ong Resume ES.docx": "resume-es" };
+  async function openExport(files) {
+    const dlg = $("#exportDlg"), body = $("#exportBody");
+    const ids = (files && files.length ? files.map((f) => MASTER_IDS[f]).filter(Boolean) : null);
+    body.replaceChildren(el("p", { class: "muted small" }, ids ? `Exporting ${ids.length} master(s) written by the last apply, then running the checks.` : "Exporting all six masters, then running the checks."), el("pre", { class: "joblog", id: "exportLog" }, "…"), el("div", { id: "checksBox" }));
+    dlg.showModal();
+    let res;
+    try { res = await api("/api/cv/export", { method: "POST", body: ids ? { ids } : {} }); } catch (e) { $("#exportLog").textContent = "Export refused: " + e.message; return; }
+    if (!res || res.ok === false) { $("#exportLog").textContent = "Export refused: " + (res && res.error); return; }
+    if (res.job && Object.keys(res.job.refused || {}).length) $("#exportLog").textContent = Object.values(res.job.refused).join("\n") + "\n";
+    await pollExport();
+  }
+  function pollExport() {
+    return new Promise((resolve) => {
+      const tick = async () => {
+        let j;
+        try { j = (await api("/api/cv/job")).job; } catch (e) { $("#exportLog").textContent += "\nlost the job status: " + e.message; resolve(); return; }
+        if (j) { $("#exportLog").textContent = j.log.join("\n") + (j.running ? "\n…" : ""); $("#exportLog").scrollTop = $("#exportLog").scrollHeight; }
+        if (j && j.running) { setTimeout(tick, 600); return; }
+        await renderChecks();
+        resolve();
+      };
+      tick();
+    });
+  }
+  async function renderChecks() {
+    const box = $("#checksBox");
+    box.replaceChildren(el("p", { class: "muted small" }, "Running the checks…"));
+    let r;
+    try { r = await api("/api/cv/check", { method: "POST", body: { force: true } }); } catch (e) { box.replaceChildren(el("div", { class: "gate err" }, "Checks failed: " + e.message)); return; }
+    box.replaceChildren(el("h3", null, "Checks"));
+    const t = el("table", { class: "docs" }, el("tr", null, el("th", null, "Master"), el("th", null, "PDF"), el("th", null, "Result")));
+    for (const m of r.masters) {
+      const c = r.checks[m.id];
+      if (!c) continue;
+      const pdf = c.pdf && c.pdf.exists ? `${c.pdf.pages} page${c.pdf.pages === 1 ? "" : "s"}${c.pdf.stale ? " (stale)" : ""}` : "no PDF";
+      const res = el("td");
+      if (c.errors.length) res.append(el("ul", { class: "plain" }, ...c.errors.map((e) => el("li", { class: "err-text" }, e.message))));
+      else res.append(pill("st-both", m.publishType ? "ready to publish" : "ok (never published)"));
+      if (c.warnings.length) res.append(el("details", null, el("summary", { class: "small" }, `${c.warnings.length} warning${c.warnings.length > 1 ? "s" : ""}`), el("ul", { class: "plain" }, ...c.warnings.map((w) => el("li", { class: "warn-text" }, w.message)))));
+      t.append(el("tr", null, el("td", null, m.title), el("td", null, pdf), res));
+    }
+    box.append(t, el("p", { class: "muted small" }, "Publishing the Professional CV and résumé PDFs into assets/pdfs/ happens on the CV & résumé tab (Publish…), where the same checks gate it."));
   }
   async function doSave() {
     $("#saveBtn").disabled = true;
@@ -459,6 +587,11 @@
     $("#saveBtn").addEventListener("click", doSave);
     $("#discardBtn").addEventListener("click", discardAll);
     $("#addGo").addEventListener("click", doAdd);
+    $("#applyBtn").addEventListener("click", () => doApply("python"));
+    $("#applyWordBtn").addEventListener("click", () => doApply("word"));
+    $("#exportBtn").addEventListener("click", () => openExport(state.data && state.data.lastApply ? state.data.lastApply.written : null));
+    $("#secGo").addEventListener("click", doAddSection);
+    $("#sectionDlg").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); doAddSection(); } });
     $("#addKind").addEventListener("change", () => { $("#addEnLabel").textContent = $("#addKind").value === "entry" ? "Role (EN)" : "Text (EN)"; });
     $("#addDlg").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); doAdd(); } });
     document.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (state.data && state.data.data && !$("#reviewDlg").open) openReview(); } });

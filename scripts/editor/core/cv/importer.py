@@ -424,12 +424,19 @@ def merge(variant_docs: dict) -> tuple[dict, dict, dict]:
     return content, slots, report
 
 
-def text_hash(node: Node) -> str:
-    if node.kind == "entry":
-        s = "\t".join([node.parts["role"], node.parts["org"], node.parts["date"]])
-    else:
-        s = node.parts.get("text", "")
+def text_string(parts: dict, entry: bool) -> str:
+    """The one string a paragraph's text hashes to: role⇥org⇥date for entries, the text otherwise."""
+    if entry:
+        return "\t".join([norm(parts.get("role", "")), norm(parts.get("org", "")), norm(parts.get("date", ""))])
+    return norm(parts.get("text", ""))
+
+
+def hash_text(s: str) -> str:
     return hashlib.sha1(s.encode("utf-8")).hexdigest()
+
+
+def text_hash(node: Node) -> str:
+    return hash_text(text_string(node.parts, node.kind == "entry"))
 
 
 # ----------------------------------------------------------------- proof of losslessness
