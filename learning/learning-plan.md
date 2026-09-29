@@ -119,6 +119,53 @@ How to build, what ships and the release checks: learning/workshop/offline/READM
   and Edge, online and offline, on the staged copy and on a partial install: see decision 19.
 - [ ] Gideon: run the installer once by hand (EN and ES wizard), then decide distribution
   (decision 19: GitHub Releases recommended; unsigned, so SmartScreen warns).
+
+### Phase D2 — Distribution on GitHub Releases (after the repo is public)
+Gate: decision 18 finished (papers purged from history, force push, repo public). Checked
+2026-09-29: the repo is still private and `gh` isn't installed.
+
+**Before the first release (one-time)**
+- [ ] `winget install GitHub.cli`, then `gh auth login` (HTTPS, browser). Or use the web UI.
+- [ ] build.ps1 `-Zip`: also write dist\ReadingYourFits-<version>.zip (the stage folder, whose
+  modules.js gets `window.LEARN_OFFLINE = { missing: [] }` so the crumb fix applies) and
+  dist\SHA256SUMS.txt for both files. The zip is for Mac/Linux and for anyone who won't run an
+  unsigned .exe.
+- [ ] Ship LICENSE (MIT) and LICENSE-CONTENT (CC BY-SA 4.0) in the app, next to learning\.
+  Public redistribution should carry them; the installer can show LICENSE-CONTENT as an info page.
+- [ ] Release notes template (EN + ES), kept at learning/workshop/offline/release-notes.md:
+  what it is, the Windows version, the SmartScreen steps ("More info → Run anyway"),
+  uninstall (Settings → Apps), the SHA-256 lines, the zip for other systems.
+
+**Each release**
+- [ ] Bump `AppVersion` in ReadingYourFits.iss; build; run the checks in the offline README.
+- [ ] Tag `offline-v<version>` on the commit that built it (the site itself has no version, so
+  the prefix keeps these tags apart from anything else later) and push the tag.
+- [ ] `gh release create offline-v<version> dist\ReadingYourFits-Setup-<version>.exe
+  dist\ReadingYourFits-<version>.zip dist\SHA256SUMS.txt --title "Reading Your Fits <version>
+  (offline)" --notes-file learning\workshop\offline\release-notes.md`
+- [ ] From a clean browser, download the .exe from the release page (so it carries
+  Mark-of-the-Web), go through SmartScreen, install, open, uninstall. Ideally on a second PC:
+  Windows 11 Home has no Windows Sandbox.
+
+**Link it from /learning** (inside learning/, so no OK needed beyond the wording)
+- [ ] One quiet line on the hub, e.g. "Use it offline: Windows app (8 MB) · zip", pointing at
+  https://github.com/gidgo130/gideonong.me/releases/latest (the release page, not the bare .exe,
+  so readers see the SmartScreen note). New EN/ES strings. Hidden in the installed copy
+  (LEARN_OFFLINE) and when opened from disk. `releases/latest` stays right as long as these are
+  the repo's only releases.
+- [ ] Offline copy: show the installed version (LEARN_OFFLINE.version) in the hub footer with an
+  "updates" link to the same page. The app can't check for updates by itself, and shouldn't.
+
+**Later / optional**
+- [ ] GitHub Actions: build on a tag push on windows-latest (Inno Setup is on the runner image,
+  otherwise `choco install innosetup`) and attach the files to the release. A clean checkout
+  can't contain the gitignored papers, so it's the safer build. Needs .github/workflows/ (outside
+  learning/, Gideon's OK) and `.github/` in .vercelignore. Worth it once releases are frequent.
+- [ ] Code signing: Microsoft Trusted Signing (~$10/month, individuals in the US), then
+  `SignTool=` + `SignedUninstaller=yes` in the .iss. SmartScreen still warns until the
+  certificate has download reputation.
+- [ ] Submit the .exe to Microsoft (microsoft.com/wdsi/filesubmission, "software developer")
+  if Defender or SmartScreen flags it as more than "unrecognized".
 - [ ] Optional: bundle the three web fonts (OFL) in the app so it looks the same offline.
 - [ ] Optional: offline readers can't reach About → Viewing settings (the site's localStorage
   is a different origin from file:); only the OS dark mode applies. A settings UI on
