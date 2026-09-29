@@ -99,7 +99,7 @@ hidden (by choice).
 - [ ] Optional: Google Search Console (only for the main site; /learning stays out of search)
 
 ## Phase D — Offline Windows app
-Status (2026-09-29): installer built and tested locally (v1.0.0, 8.4 MB); not released yet (Phase D2).
+Status (2026-09-29): v1.0.0 released on GitHub (offline-v1.0.0); site buttons not added yet (Phase D2 §4).
 How to build, what ships and the release checks: learning/workshop/offline/README.md.
 - [X] Inno Setup script + build script in learning/workshop/offline/ (`ReadingYourFits.iss`,
   `build.ps1`; stage/ and dist/ gitignored). Per-user install to
@@ -184,18 +184,21 @@ and Edge; the zip unpacks and opens; the 282 offline checks on the staged copy s
 - [ ] Not blocking, from decision 18: branch protection on `main`; delete the Vercel deployments
   older than 2dc3a4b.
 
-**3. Release v1.0.0 (by hand)**
-- [ ] Clean tree; `build.ps1 -Release`; the offline README checks.
-- [ ] `git tag -a offline-v1.0.0 -m "Reading Your Fits offline 1.0.0"`; push the tag. (The
-  `offline-` prefix keeps these apart from anything else tagged later; the site has no version.)
-- [ ] `gh release create offline-v1.0.0 --draft --title "Reading Your Fits 1.0.0 (offline)"
-  --notes-file learning\workshop\offline\release-notes.md dist\release\*`
-- [ ] Read the draft on github.com (notes, every asset, sizes), then
-  `gh release edit offline-v1.0.0 --draft=false --latest`.
-- [ ] `gh release download offline-v1.0.0 -D <tmp>`; checksums match SHA256SUMS.txt and dist\.
-- [ ] From a normal browser (so the file has Mark-of-the-Web): the full .exe and one module
-  .exe through SmartScreen, install one in Spanish, open, uninstall. Ideally on a second PC
-  (Windows 11 Home has no Windows Sandbox).
+**3. Release v1.0.0 (by hand)** — published 2026-09-29 23:47 UTC:
+https://github.com/gidgo130/gideonong.me/releases/tag/offline-v1.0.0 (commit 47a327f)
+- [X] Clean tree at 47a327f (pushed to main first); `build.ps1 -Release`; smoke test of the
+  release files (module installer, then the full one with a partial choice, into one folder;
+  manifest, footer "v1.0.0 (47a327f)" EN/ES, NOTICE without the logo; uninstall clean).
+- [X] Annotated tag `offline-v1.0.0` on 47a327f, pushed (protected by the ruleset from here on).
+- [X] Draft release with all 9 assets (full installer 8.4 MB, six module installers 3.8–4.9 MB,
+  zip 29 MB, SHA256SUMS.txt), sizes checked against distelease, then published as latest.
+- [X] `gh release download`: every file matches SHA256SUMS.txt, which is identical to the local
+  one. `releases/latest/download/<name>` serves the right file for the full installer, a
+  module installer and the zip (what section 4's buttons use); `releases/latest` resolves to
+  this release.
+- [ ] Gideon: from a normal browser (so the file has Mark-of-the-Web), the full .exe and one
+  module .exe through SmartScreen, install one in Spanish, open, uninstall. Ideally on a second
+  PC (Windows 11 Home has no Windows Sandbox). Not doable headless.
 
 **4. Install buttons on the online pages (one commit, right after v1.0.0 is published, so no
 link ever points at a missing file)**
