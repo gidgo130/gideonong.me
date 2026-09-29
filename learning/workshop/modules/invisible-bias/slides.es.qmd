@@ -67,10 +67,10 @@ La versión matemática: mínimos cuadrados ordinarios obliga a que los residuos
 
 ![](figures-es/attenuation.png){fig-align="center" height="440"}
 
-**Regla práctica:** compara el error del sensor de x con la **desviación estándar** de tus x (unos 2,9 si x va pareja de 0 a 10; no el rango de 10). Con un cociente de 0,3 la pendiente sale 8% baja; con 0,5, 20%; con 1, a la mitad.
+**Regla práctica:** compara el error del sensor de x con la **desviación estándar** de tus x (unos 2,9 si x va pareja entre 0 y 10; no el rango de 10). Con un cociente de 0,3 la pendiente sale más o menos un 8% baja; con 0,5, un 20%; con 1, la mitad.
 
 ::: notes
-La pendiente ajustada sale en DE² / (DE² + ruido²) de la verdadera, donde DE es la desviación estándar de los valores verdaderos de x. Los estadísticos llaman a ese cociente el cociente de confiabilidad. Esto es para valores de x que lees en un instrumento. Si fijas x con una perilla y anotas el valor fijado, el error es de otro tipo (error de Berkson) y no sesga la pendiente.
+La pendiente ajustada sale en σx² / (σx² + σu²) de la verdadera, donde σx es la desviación estándar de los valores verdaderos de x y σu el ruido del sensor de x. Los estadísticos llaman a ese cociente el cociente de confiabilidad. Esto es para valores de x que lees en un instrumento. Si fijas x con una perilla y anotas el valor fijado, el error es de otro tipo (error de Berkson) y no sesga la pendiente.
 :::
 
 ## ¿Lo arreglan más datos? No.
@@ -121,7 +121,7 @@ El interactivo viene de la página del módulo. [Ábrelo en otra pestaña](index
 ::: {.columns}
 ::: {.column width="33%"}
 ### ¿De verdad x es exacta?
-Compara el error del sensor de x con la desviación estándar de tus valores de x. ¿Es más de un tercio, más o menos? Espera una pendiente un 10% o más demasiado plana.
+Compara el error del sensor de x con la desviación estándar de tus valores de x. ¿Pasa de más o menos un tercio de eso? Espera una pendiente un 10% o más demasiado plana.
 :::
 ::: {.column width="33%"}
 ### ¿Qué cambió durante la sesión?

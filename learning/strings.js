@@ -32,7 +32,7 @@ window.LEARN_STRINGS = {
     how2Title: "Diapositivas",
     how2Body: "Una presentación corta para exponer el tema o repasarlo rápido.",
     how3Title: "Un script de Python",
-    how3Body: "Reproduce todas las gráficas. Corre tal cual en Google Colab.",
+    how3Body: "Reproduce todas las gráficas (el código está en inglés). Corre tal cual en Google Colab.",
     noscript: "La lista de módulos y las páginas interactivas necesitan JavaScript activado.",
     footBuilt: "Hecho con Claude por Gideon A. Ong, estudiante de ingeniería mecánica en la Universidad de Tulsa.",
     footMistake: "¿Encontraste un error? gao9819@utulsa.edu"

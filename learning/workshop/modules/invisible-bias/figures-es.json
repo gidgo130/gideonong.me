@@ -4,7 +4,7 @@
   "Noisy y sensor (σ = #), exact x": "Sensor de y ruidoso (σ = #), x exacta",
   "truth (slope #)": "verdad (pendiente #)",
   "ordinary fit (slope #)": "ajuste ordinario (pendiente #)",
-  "Noisy x sensor (σ = #), good y": "Sensor de x ruidoso (σ = #), y buena",
+  "Noisy x sensor (σ = #), good y": "Sensor de x ruidoso (σ = #), y precisa",
   "fitted y": "y ajustada",
   "residual": "residuo",
   "Its residual plot: looks healthy": "Su gráfica de residuos: se ve sana",
