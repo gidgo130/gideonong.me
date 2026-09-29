@@ -50,7 +50,10 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      siteData.checkData (core/site/datacheck.py — keep the two in step).
                      Phase 5 (core/site/images.py) imports images: orientation applied, sRGB,
                      all EXIF/GPS/profile data dropped, resized by preset, EN/ES alt required;
-                     existing files under assets/images/ are never re-encoded. Its .local/
+                     existing files under assets/images/ are never re-encoded. Phase 4a
+                     (core/cv/importer.py, renderer.py, textservice.py) imports the CV masters
+                     into staging/cv-content/ (gitignored) behind a losslessness proof; the
+                     editor / write-back / Word route (4b–4d) are not built yet. Its .local/
                      (backups, logs, drafts, WebView2 storage) is gitignored. It never runs
                      git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit

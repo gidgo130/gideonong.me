@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CV text — Site editor</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Site editor</div>
+  <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/content">Content</a><a href="/cv">CV &amp; résumé</a><a href="/cvtext">CV text</a><a href="/transcript">Transcript</a></nav>
+  <span class="file">staging/cv-content/</span>
+  <span class="spacer"></span>
+  <button id="importBtn" class="primary" type="button">Import masters…</button>
+</header>
+
+<div id="banners"></div>
+
+<main class="cvpage" id="cvtext">
+  <p class="muted intro">Phase 4a. <strong>Import masters</strong> reads the six Word masters in <code>staging/cv-masters/</code> into one
+    content set (<code>staging/cv-content/content.json</code>, private) and proves the round trip first: every master is
+    re-rendered from the imported text into a copy and compared paragraph by paragraph (text and run formatting) and
+    part by part. Nothing is written unless all six come back identical. The masters themselves are never changed here.</p>
+  <section id="status"></section>
+  <section id="report"></section>
+</main>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/static/common.js"></script>
+<script src="/static/cvtext.js"></script>
+</body>
+</html>

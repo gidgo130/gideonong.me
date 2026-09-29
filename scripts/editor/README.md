@@ -184,6 +184,31 @@ files are written back in their own layout (`indent=2`, LF, no trailing newline 
 every load; a file in another layout is read-only here). Backups, changed-on-disk refusal,
 autosave and Restore work as on the Site text tab.
 
+## CV text tab (Phase 4 — 4a built: import + proof of losslessness)
+The full CV editor comes in four steps; only the first is built so far. **Import masters…**
+reads the six Word masters into one private content set, `staging/cv-content/content.json`
+(gitignored, like the masters): header (name, title words per variant, contact), sections,
+and items — entry lines as role · organization · date, bullets and plain lines under them —
+each with EN + ES text and include flags per variant (Full / Professional / Résumé), with the
+item order kept per variant. Items are shared across variants only when both languages match
+word for word; the report lists near-duplicates (same English, different Spanish), paragraphs
+with no twin in the other language (imported with empty text there), and formatting notes
+(a role that is not bold, a separator that is not " · "). Slot maps in
+`staging/cv-content/slots/` record, per master, which paragraph each item lives in and the
+exact run formatting.
+
+**The proof.** Before anything is written, every master is re-rendered from the imported text
+into a temporary copy and compared with the original: paragraph count, paragraph properties,
+run formatting and text (after dropping spell-check markers, cached page breaks and revision
+ids), and every other package part. One difference blocks the import and names the
+paragraph. On 2026-09-29 all six masters passed. The masters are never modified by this step;
+your own check is Word › Review › Compare against a backup.
+
+Masters are read with python-docx and must be paragraphs only (no tables, fields, hyperlinks,
+content controls or tracked changes) — anything else refuses the import naming the paragraph.
+Next steps (not built): 4b the editor with fit meters, 4c writing text back with a drift
+check, 4d export / publish with a python route and a Word route side by side.
+
 ## How it stays lossless
 `core/jsdata.py` tokenizes the file with exact character spans and re-emits it. On every
 load it checks that re-emitting with no edits reproduces the file byte for byte
@@ -258,6 +283,13 @@ chunks; refusals (GIF, non-image, 25 MB, unknown preset) and names; the repo's o
 carry no warnings; the service flow (field + alt keys set, preview override, review, save
 writes clean files, replace backs up, delete refused while used, HTML references protect the
 headshot, discard drops staged bytes) and the multipart endpoint with its token check.
+Phase 4a (`test_cvtext.py`): synthetic masters with the real shapes (split runs with revision
+ids and spell-check markers, right-tab entry lines, numbered bullets) read into merged spans
+and classified; unsupported constructs refused; merge shares items only when EN and ES both
+match and keeps per-variant order; a pairing gap imports with empty text; the proof passes on
+the synthetic set and, when present, on all six real masters; an edited render changes only
+its paragraph and re-imports to the new text; the service writes the content set only when
+every master is lossless, backs up a previous set, and refuses unsupported or missing masters.
 
 ## Files
 | File | What it is |
@@ -278,6 +310,9 @@ headshot, discard drops staged bytes) and the multipart endpoint with its token 
 | `core/cv/scans.py` | Blocklist, voice words, EN/ES parity |
 | `core/cv/publish.py` | Publish plan + apply into assets/pdfs/, manifest regeneration |
 | `core/cv/service.py` | Cached checks, the background export job, publish — what the CV page talks to |
+| `core/cv/importer.py` | Masters → spans, structure, EN/ES pairing, merge into the content set, the losslessness comparison |
+| `core/cv/renderer.py` | Paragraph writer (one run per formatting span) and the forced re-render the proof uses |
+| `core/cv/textservice.py` | Import with the proof gate; content-set state — what the CV text page talks to |
 | `core/spans.py` | Span edits on the token tree: replace any value, insert / delete properties and array items, re-parse check |
 | `core/emit.py` | JS values in the data files' own style (inline vs one-per-line by property name) |
 | `core/site/datafiles.py` | The three data files as entry dicts; minimal span edits on save |
@@ -291,6 +326,6 @@ headshot, discard drops staged bytes) and the multipart endpoint with its token 
 | `core/transcript/titles.py` | course-titles.json rows joined with transcript-data.json; edits; validation |
 | `core/transcript/profile.py` | Validation for profile.json and adjustments.json |
 | `core/transcript/service.py` | Drafts / review / save of the inputs, parse and build jobs, publish — what the Transcript page talks to |
-| `static/` | The pages: index.html + app.js (site text), content.html + content.js, cv.html + cv.js, transcript.html + transcript.js, common.js, app.css |
+| `static/` | The pages: index.html + app.js (site text), content.html + content.js, cv.html + cv.js, cvtext.html + cvtext.js, transcript.html + transcript.js, common.js, app.css |
 | `tests/` | unittest suite |
 | `make-shortcut.ps1` | Desktop shortcut with the full pythonw.exe path |

@@ -132,16 +132,16 @@ every piece of figure text through the module's `figures-es.json`, so the .py st
 - Serve the repo root (`python -m http.server` or Live Server) and open `/learning` **without**
   the trailing slash: it should land on `/learning/`.
 - Each page at 375, 768 and 1280 px, light and dark: no sideways scroll, console clean.
+- The same at 375 and 1280 with About's readability on, colorblind on, and both: readouts and
+  sliders still fit, charts keep their shape, the dotted --fix line and ✕ / ✓ marks show under
+  colorblind. Chrome DevTools → Rendering → Emulate vision deficiencies on a Module 3, 4 or 6
+  chart: every red/blue pair still tells apart without color.
 - Every trial control changes its plot and readout; "Draw a new sample" changes the data.
 - Slides: the "Try it yourself" slide loads the interactive.
 - Open `learning/index.html` straight from disk: module links and the back links still work.
 - On the Vercel preview: repeat the `/learning` no-slash check, and view source for `noindex`.
 
 ## Fable review prompt (Claude Code, in this repo)
-- The same at 375 and 1280 with About's readability on, colorblind on, and both: readouts and
-  sliders still fit, charts keep their shape, the dotted --fix line and ✕ / ✓ marks show under
-  colorblind. Chrome DevTools → Rendering → Emulate vision deficiencies on a Module 3, 4 or 6
-  chart: every red/blue pair still tells apart without color.
 
 Paste this into Claude Code with the Fable model, on the branch you're about to merge:
 

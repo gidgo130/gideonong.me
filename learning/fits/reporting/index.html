@@ -33,9 +33,11 @@
        learning.css styles data-theme, data-readability and data-colorblind. No settings UI here. */
     (function () {
       try {
-        var t = localStorage.getItem("viewTheme");
-        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
-      } catch (e) { /* storage blocked: the OS setting decides */ }
+        var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
+        if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+      } catch (e) { /* storage blocked: the OS theme and the default view */ }
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">

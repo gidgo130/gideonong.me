@@ -38,6 +38,7 @@ from core import review as review_mod  # noqa: E402
 from core import validate as validate_mod  # noqa: E402
 from core.backups import Backups, atomic_write  # noqa: E402
 from core.cv.service import CvService  # noqa: E402
+from core.cv.textservice import CvTextService  # noqa: E402
 from core.jobs import JobRunner  # noqa: E402
 from core.jsdata import JsDataError, sha256_bytes  # noqa: E402
 from core.site.service import ContentService  # noqa: E402
@@ -86,6 +87,8 @@ class EditorState:
         self.load()
         # Phase 2: projects / experience / tags (needs self.site loaded first)
         self.content = ContentService(self)
+        # Phase 4: CV text (import of the masters into staging/cv-content/)
+        self.cvtext = CvTextService(self.repo_root, self.backups)
 
     def busy(self) -> bool:
         """True while a background job (a Word export, a transcript parse or build) is running."""
@@ -583,6 +586,23 @@ def create_app(state: EditorState) -> Flask:
         with state.lock:
             state.content.discard_autosave()
         return jsonify(ok=True)
+
+    # ---------------------------------------------------------- CV text (Phase 4)
+    @app.get("/cvtext")
+    def cvtext_page():
+        return send_from_directory(HERE / "static", "cvtext.html")
+
+    @app.get("/api/cvtext/state")
+    def cvtext_state():
+        return jsonify(state.cvtext.state())
+
+    @app.post("/api/cvtext/import")
+    def cvtext_import():
+        if state.busy():
+            return deny(409, "wait for the running job to finish")
+        with state.lock:
+            result = state.cvtext.run_import()
+        return jsonify(result), (200 if result.get("ok") else 409)
 
     # ---------------------------------------------------------- transcript
     @app.get("/transcript")
