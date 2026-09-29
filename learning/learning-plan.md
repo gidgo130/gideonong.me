@@ -97,7 +97,12 @@ Order: 2 → 1 → 3 → 4 → 6.
   Start Menu shortcut. Pages already work from disk; fonts fall back to system fonts offline.
 
 ## Optional later
-- [ ] marimo "play with the code" notebooks per module (served from the site over HTTP)
+- [ ] marimo "Play with the code" notebooks per module (served from the site over HTTP).
+  **Pilot built for residual-plots (2026-09-28), awaiting Gideon's review before the rest:**
+  see decision 16 for the cost numbers and the Colab comparison. Source
+  learning/workshop/modules/residual-plots/notebook.py, export
+  learning/workshop/tools/export-play.py → learning/fits/residual-plots/play/, link
+  "Play with the code" beside Slides / Python script (`takePlay`, hidden from file:).
 - [X] Honor About's readability / colorblind settings on /learning pages (2026-09-28, decision 15)
 
 ---
@@ -248,3 +253,40 @@ Order: 2 → 1 → 3 → 4 → 6.
      bars, readout marks), 2 (with / without point, Cook bars) and 1 (LOO chart), with the
      mode off and on.
    - **Not covered.** The slide decks (Quarto) keep their own colors and ignore the settings.
+16. **marimo "Play with the code" pilot** (2026-09-28, residual-plots only; the other five wait
+   for Gideon's review). The module's Python as a marimo notebook (short markdown cells, marimo
+   sliders for the page's knobs, the same figures), exported with `marimo export html-wasm
+   --mode edit --single-file` to learning/fits/residual-plots/play/index.html by
+   learning/workshop/tools/export-play.py,
+   which also adds noindex, the trailing-slash fix, the title, and turns on cell auto-run
+   (marimo 0.25 bakes it off and ignores config files), since marimo rewrites index.html on every
+   export. Linked as "Play with the code" beside Slides / Python script (`takePlay`, ES "Juega
+   con el código (en inglés)"); the link carries `data-http-only` and learning.js hides it when
+   the page is opened from disk (the page needs a CDN, so the offline app can't run it).
+   - **Packages.** numpy and matplotlib run under Pyodide. scipy runs too but is a 14 MB
+     download, so the notebook fits the exponential with numpy alone (a plain sweep over τ,
+     coarse then fine, written for beginners; matches `curve_fit` to three decimals). The module's .py script keeps `curve_fit`.
+   - **Cost, measured 2026-09-28 (Chromium, fast home connection).** First load: about 37 MB,
+     of which 22.6 MB Pyodide + wheels from cdn.jsdelivr.net (matplotlib 6.9, Pyodide core 3.5,
+     numpy 2.9, stdlib 2.5, jedi/pygments/fonttools/pillow/docutils ~5), 11.5 MB of marimo's
+     editor (from the site in the first export; from jsDelivr since `--single-file`), ~2.8 MB
+     of marimo's own wheels from PyPI. All four figures drawn
+     11–15 s after opening, on desktop and at 375 px. Warm reload (browser cache): ~7 MB, figures
+     at ~10 s. With scipy it would be ~51 MB. Repo: play/ is one ~80 KB index.html. The first
+     export was 481 files / 27 MB per module (marimo's whole editor bundle, of which a visitor
+     fetches ~90 files); Gideon chose `--single-file` the same day, so the editor comes from
+     jsDelivr, version-pinned, like Pyodide: the same download for the visitor, and nothing to
+     bloat git history on a marimo upgrade.
+   - **Compared with "Open in Colab".** Colab's open-from-GitHub link needs an .ipynb in a public
+     GitHub repo (`marimo export ipynb notebook.py`, or one made from the .py), not a .py, so
+     the lighter option is one .ipynb per module plus a badge link: nothing to host, nothing to
+     download, but a Google login, no sliders (edit a value, rerun), and Colab's own load time.
+     The marimo page gives sliders and instant edits at the price of ~37 MB and 10–15 s per
+     first visit on a good connection; on a phone over cellular expect a minute or more.
+   - **Known noise.** marimo's edit mode logs "Language server initialization failed" errors
+     about 35 s after load (its in-browser language server times out); harmless. The Pyodide
+     interrupt warning ("not running in a secure context") is because the page isn't
+     cross-origin isolated; also harmless.
+   - **Verify after deploy.** Open /learning/fits/residual-plots/play/ on the Vercel preview: the
+     editor appears within ~5 s and four figures within ~15 s; try /play without the slash; view
+     source for noindex. Vercel serves .wasm as application/wasm and needs no headers for this.

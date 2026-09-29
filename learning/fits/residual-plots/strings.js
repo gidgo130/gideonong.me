@@ -16,6 +16,7 @@ window.LEARN_STRINGS = {
     takeLabel: "Take it with you:",
     takeSlides: "Slides",
     takePy: "Python script",
+    takePlay: "Play with the code",
 
     // Trial 1
     t1Num: "Trial 1 of 3",
@@ -158,6 +159,7 @@ window.LEARN_STRINGS = {
     takeLabel: "Llévatelo:",
     takeSlides: "Diapositivas (en inglés)",
     takePy: "Script de Python",
+    takePlay: "Juega con el código (en inglés)",
 
     // Trial 1
     t1Num: "Prueba 1 de 3",

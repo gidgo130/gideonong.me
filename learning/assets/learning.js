@@ -300,7 +300,13 @@
       if (/\/$/.test(h) || h === "." || h === "..") a.setAttribute("href", h.replace(/\/?$/, "/") + "index.html");
     });
   }
-  document.addEventListener("DOMContentLoaded", function () { fixFileLinks(); });
+  // Some links only work over HTTP (the "Play with the code" notebook runs Python from a CDN).
+  // Mark them data-http-only and they disappear when the page is opened from disk.
+  function hideHttpOnly() {
+    if (location.protocol !== "file:") return;
+    document.querySelectorAll("[data-http-only]").forEach(function (el) { el.hidden = true; });
+  }
+  document.addEventListener("DOMContentLoaded", function () { fixFileLinks(); hideHttpOnly(); });
 
   window.LF = {
     mulberry32: mulberry32, normals: normals, uniforms: uniforms, newSeed: newSeed,
