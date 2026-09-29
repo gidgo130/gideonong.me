@@ -128,7 +128,14 @@ window.LEARN_STRINGS = {
     check3Title: "Does y ever push back on x?",
     check3Body: "In closed-loop tests a controller sets x based on y, so the two are tangled by design.",
     nameNoteHtml: "<b>The name for all of this:</b> statisticians call it <i>endogeneity</i>, meaning the error in y is related to x. Heteroskedasticity is a different problem (uneven scatter) that does show in the residual plot and leaves the slope unbiased. It has its own module, Uneven scatter.",
-    footNote: "Simulated data. True model: y = 1 + 2x + error. Built for engineering students; no statistics background assumed."
+    footNote: "Simulated data. True model: y = 1 + 2x + error. Built for engineering students; no statistics background assumed.",
+    footRead: "Further reading: Deming (1943), Statistical Adjustment of Data; Fuller (1987), Measurement Error Models."
   },
-  es: {}
+  es: {},
+  // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
+  chips: [
+    { phrase: { en: "Deming regression" }, href: "https://openlibrary.org/books/OL6456639M/Statistical_adjustment_of_data" },
+    { phrase: { en: "Statistical Adjustment of Data" }, href: "https://openlibrary.org/books/OL6456639M/Statistical_adjustment_of_data" },
+    { phrase: { en: "Measurement Error Models" }, href: "https://openlibrary.org/books/OL2733911M/Measurement_error_models" }
+  ]
 };

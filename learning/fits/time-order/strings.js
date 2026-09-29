@@ -112,7 +112,16 @@ window.LEARN_STRINGS = {
     check2Body: "dwtest(mdl) for Durbin–Watson, autocorr(res) for the lag plot, fitnlm for the exponential.",
     check3Title: "Python",
     check3Body: "statsmodels durbin_watson, plot_acf, fit(cov_type='HAC', cov_kwds={'maxlags': L}); scipy curve_fit for the exponential.",
-    footNote: "Simulated data. Trial 1: y = 1 + 0.2t + AR(1) noise, SD 1. Trial 2: T = 22 + 58·e^(−t/4) + noise, every 15 s for 20 min. Trial 3: steady value 50, run offsets and AR(1) noise with SD 1."
+    footNote: "Simulated data. Trial 1: y = 1 + 0.2t + AR(1) noise, SD 1. Trial 2: T = 22 + 58·e^(−t/4) + noise, every 15 s for 20 min. Trial 3: steady value 50, run offsets and AR(1) noise with SD 1.",
+    footRead: "Further reading: Durbin and Watson, \"Testing for Serial Correlation in Least Squares Regression\", part I (1950) and part II (1951); Newey and West (1987), \"A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix\"."
   },
-  es: {}
+  es: {},
+  // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
+  chips: [
+    { phrase: { en: "Durbin–Watson" }, href: "durbin-watson-1950.pdf" },
+    { phrase: { en: "Newey–West" }, href: "newey-west-1987.pdf" },
+    { phrase: { en: "part I (1950)" }, href: "durbin-watson-1950.pdf" },
+    { phrase: { en: "part II (1951)" }, href: "durbin-watson-1951.pdf" },
+    { phrase: { en: "\"A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix\"" }, href: "newey-west-1987.pdf" }
+  ]
 };

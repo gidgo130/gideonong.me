@@ -117,7 +117,13 @@ window.LEARN_STRINGS = {
     check2Body: "Uneven scatter and linked errors leave the line alone but break the error bars.",
     check3Title: "Module 5",
     check3Body: "Noise in x and hidden drift bias the line itself, invisibly. Design the experiment to prevent it.",
-    footNote: "Simulated data. Trials 1 and 3: y = 1 + 2x, noise SD 2, 15 readings. Trial 2: y = 2(x − c) with c the left edge of the data, noise SD 1, 12 readings."
+    footNote: "Simulated data. Trials 1 and 3: y = 1 + 2x, noise SD 2, 15 readings. Trial 2: y = 2(x − c) with c the left edge of the data, noise SD 1, 12 readings.",
+    footRead: "Further reading: JCGM 100:2008, Guide to the Expression of Uncertainty in Measurement (the GUM); the NIST/SEMATECH e-Handbook of Statistical Methods."
   },
-  es: {}
+  es: {},
+  // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
+  chips: [
+    { phrase: { en: "Guide to the Expression of Uncertainty in Measurement" }, href: "jcgm-100-2008.pdf" },
+    { phrase: { en: "NIST/SEMATECH e-Handbook of Statistical Methods" }, href: "https://www.itl.nist.gov/div898/handbook/index.htm" }
+  ]
 };

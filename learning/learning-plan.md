@@ -130,3 +130,19 @@ Order: 2 → 1 → 3 → 4 → 6.
    default range happens to hold up, which would have taught the wrong lesson; Module 6's
    derived-quantity trial moves the data away from x = 0, since that (not the distance to the
    crossing) is what makes ignoring the slope–intercept covariance go wrong.
+11. **Reference chips** (2026-09-28). A page's strings.js may carry `chips: [{ phrase: { en, es },
+   href }]`; learning-i18n.js links the first whole-word match per element as a quiet
+   `a.ref-chip` (new tab), like the main site's js/chips.js. Module 1: "Francis Anscombe" →
+   the paper (anscombe-1973.pdf, next to the page), the footnote's title → its DOI. The PDF is
+   the 2026 JSTOR copy (it has an OCR text layer; the 2007 copy doesn't), scrubbed of the
+   per-page download stamp (IP + time), Info/XMP metadata, the whole-issue bookmarks and the
+   cover's support link; the JSTOR cover and "All use subject to" line stay. Same treatment,
+   same day, for every module: Cook 1977 and Cook & Weisberg 1982 (Module 2), Long & Ervin
+   2000 and MacKinnon & White 1985 (3), Durbin & Watson 1950/1951 and Newey & West 1987 (4),
+   the GUM, unmodified as BIPM publishes it (6). Deming 1943 and Fuller 1987 (5) are books:
+   Open Library pages. The NIST/SEMATECH e-Handbook is linked from Modules 2 and 6. A chip
+   links once per page; each module's footer has a "Further reading" line (`footRead`).
+   White 1980 (HC0) joined Module 3's reading list the same day.
+12. **No author on the decks** (2026-09-28). The `author:` line is gone from every slides.qmd
+   and the rendered title slides. Claude built most of the series; Gideon's name stays on the
+   hub and the main site, but the modules don't carry a byline.

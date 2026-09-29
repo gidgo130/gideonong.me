@@ -16,7 +16,7 @@ window.LEARN_STRINGS = {
     how3Title: "A Python script",
     how3Body: "Reproduces every plot. Runs as-is in Google Colab.",
     noscript: "The module list and the interactive pages need JavaScript turned on.",
-    footBuilt: "Built by Gideon A. Ong, mechanical engineering student at the University of Tulsa.",
+    footBuilt: "Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.",
     footMistake: "Found a mistake? gao9819@utulsa.edu"
   },
   es: {}

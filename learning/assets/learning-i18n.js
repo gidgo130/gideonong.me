@@ -8,6 +8,11 @@
 //          data-i18n-html="key"   → innerHTML (our own authored strings only; keys end in "Html")
 //          data-i18n-aria="key"   → aria-label
 //          data-i18n-title="key"  → document.title (put it on <title>)
+// Chips:   LEARN_STRINGS.chips = [{ phrase: { en, es }, href }] turns the first whole-word
+//          match of each phrase on the page (data-i18n and data-i18n-html text, in document
+//          order) into <a class="ref-chip"> (new tab), built as DOM nodes. href is relative to
+//          the page. Headings, links, buttons and code are skipped. Notes that main.js
+//          redraws are not chipped; cite in static text.
 // Spanish readiness: a page shows ES (and its EN/ES toggle) only when <html data-es-ready>.
 // Until then the toggle stays hidden and the page renders English even if "es" is stored.
 // Dev check (localhost / file: only): warns about missing keys and markup text that has
@@ -43,6 +48,54 @@
     return s;
   }
 
+  var CHIPS = P.chips || [];
+  var SKIP_TAGS = /^(A|BUTTON|H1|H2|H3|H4|H5|H6|DT|LABEL|OUTPUT|TITLE)$/; // chips stay out of UI labels
+  var WORD = /[\p{L}\p{N}_]/u;
+  function isWordChar(ch) { return !!ch && WORD.test(ch); }
+  function findWhole(text, phrase) {
+    var from = 0;
+    while (from <= text.length) {
+      var i = text.indexOf(phrase, from);
+      if (i === -1) return -1;
+      if (!isWordChar(text.charAt(i - 1)) && !isWordChar(text.charAt(i + phrase.length))) return i;
+      from = i + 1;
+    }
+    return -1;
+  }
+
+  // Link each chip phrase once per page: its first whole-word match, in document order, in the
+  // text of a data-i18n / data-i18n-html element (never inside a link, button, heading or code).
+  // Runs after every apply(), which rewrites those elements, so it never links twice.
+  function linkChips() {
+    if (!CHIPS.length) return;
+    var todo = CHIPS.map(function (c) { return { phrase: c.phrase[lang] || c.phrase.en, href: c.href }; })
+      .filter(function (c) { return c.phrase; });
+    document.querySelectorAll("[data-i18n], [data-i18n-html]").forEach(function (el) {
+      if (!todo.length || SKIP_TAGS.test(el.tagName) || el.closest("a, button")) return;
+      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      var nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (node) {
+        if (node.parentElement.closest("a, button, code, h1, h2, h3, h4, h5, h6")) return;
+        for (var i = 0; i < todo.length; i++) {
+          var start = findWhole(node.data, todo[i].phrase);
+          if (start === -1) continue;
+          var hit = node.splitText(start);
+          node = hit.splitText(todo[i].phrase.length);
+          var a = document.createElement("a");
+          a.className = "ref-chip";
+          a.href = todo[i].href;
+          a.target = "_blank";
+          a.rel = "noopener";
+          hit.parentNode.replaceChild(a, hit);
+          a.appendChild(hit);
+          todo.splice(i, 1);
+          i = -1; // keep scanning the rest of this text node for other phrases
+        }
+      });
+    });
+  }
+
   function apply() {
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
       var k = el.getAttribute("data-i18n");
@@ -52,6 +105,7 @@
       el.textContent = t(k);
     });
     document.querySelectorAll("[data-i18n-html]").forEach(function (el) { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
+    linkChips();
     document.querySelectorAll("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
     var ti = document.querySelector("title[data-i18n-title]");
     if (ti) document.title = t(ti.getAttribute("data-i18n-title"));

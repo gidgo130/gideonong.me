@@ -141,7 +141,15 @@ window.LEARN_STRINGS = {
     pat3Body: "Something changed during the session. Module 4.",
     pat4Title: "One point far away",
     pat4Body: "Check the notes, then check its influence. Don't just delete it.",
-    footNote: "Simulated data. Trials 1 and 3: y = 1 + 2x + error. Trial 2: T = 22 + 58·e^(−t/4) + error, in °C and minutes."
+    footNote: "Simulated data. Trials 1 and 3: y = 1 + 2x + error. Trial 2: T = 22 + 58·e^(−t/4) + error, in °C and minutes.",
+    footRead: "Further reading: Cook (1977), \"Detection of Influential Observation in Linear Regression\"; Cook and Weisberg (1982), Residuals and Influence in Regression; the NIST/SEMATECH e-Handbook of Statistical Methods."
   },
-  es: {}
+  es: {},
+  // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
+  chips: [
+    { phrase: { en: "Cook's distance" }, href: "cook-1977.pdf" },
+    { phrase: { en: "\"Detection of Influential Observation in Linear Regression\"" }, href: "cook-1977.pdf" },
+    { phrase: { en: "Residuals and Influence in Regression" }, href: "cook-weisberg-1982.pdf" },
+    { phrase: { en: "NIST/SEMATECH e-Handbook of Statistical Methods" }, href: "https://www.itl.nist.gov/div898/handbook/index.htm" }
+  ]
 };

@@ -43,6 +43,9 @@ body {
 }
 a { color: inherit; text-underline-offset: 3px; }
 a:hover { color: var(--fix); }
+/* Reference chip: a quiet tinted link on a cited name or title (see learning-i18n.js). */
+a.ref-chip { text-decoration: none; padding: 1px 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
+a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%, transparent); }
 .wrap { max-width: 1080px; margin: 0 auto; }
 
 /* ---------- series bar (top of every page) ---------- */

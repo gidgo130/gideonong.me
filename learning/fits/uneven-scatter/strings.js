@@ -109,7 +109,15 @@ window.LEARN_STRINGS = {
     check2Body: "fitlm(x, y, 'Weights', 1./sigma.^2). Robust errors: hac(x, y, 'type', 'HC', 'weights', 'HC3') in the Econometrics Toolbox. (fitlm's 'RobustOpts' is something else: it downweights outliers.)",
     check3Title: "Python",
     check3Body: "statsmodels: sm.WLS(y, X, weights=1/sigma**2). Robust: .fit(cov_type='HC3'). scipy: curve_fit(..., sigma=sigma, absolute_sigma=True).",
-    footNote: "Simulated data. True model y = 1 + 2x; sensor error SD = 0.5 + p% of the true reading."
+    footNote: "Simulated data. True model y = 1 + 2x; sensor error SD = 0.5 + p% of the true reading.",
+    footRead: "Further reading: Long and Ervin (2000), \"Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model\"; MacKinnon and White (1985), \"Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties\"; White (1980), \"A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity\"."
   },
-  es: {}
+  es: {},
+  // Reference chips (see learning-i18n.js): each phrase links once, where it first appears.
+  chips: [
+    { phrase: { en: "HC3" }, href: "long-ervin-2000.pdf" },
+    { phrase: { en: "\"Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model\"" }, href: "long-ervin-2000.pdf" },
+    { phrase: { en: "\"Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties\"" }, href: "mackinnon-white-1985.pdf" },
+    { phrase: { en: "\"A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity\"" }, href: "white-1980.pdf" }
+  ]
 };

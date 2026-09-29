@@ -49,7 +49,7 @@ learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, lear
                     strings-common.js, modules.js)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
-                    slides.html, <slug>.py
+                    slides.html, <slug>.py, and any cited papers (<author>-<year>.pdf, scrubbed)
 CLAUDE.md           This file
 plan.md             Development roadmap
 
@@ -469,6 +469,9 @@ Rules for /learning (these replace the main-site rules where they conflict):
   Each page's head adds the trailing slash to folder URLs; LF.fixFileLinks points folder links
   at index.html when opened from disk.
 - Simulated data only; each page states its true model.
+- Cited papers: a quiet `a.ref-chip` via the page's `chips` table in strings.js (see
+  learning/README.md). A hosted paper sits next to its page and is scrubbed of download
+  stamps and metadata first; otherwise link its DOI. No author byline on module decks.
 - Motion: slider-driven redraws only. No page-load or scroll animation.
 - Files outside learning/ that /learning touches: js/about.js (the Interesting-sites entry)
   and these docs. Anything else outside learning/ needs Gideon's OK first.

@@ -100,5 +100,10 @@ window.LEARN_STRINGS = {
     check3Body: "The slope with its 95% range, not just the number. Module 6 covers the rest.",
     footNote: "Trial 1: Anscombe (1973), \"Graphs in Statistical Analysis\", The American Statistician 27(1). Trials 2 and 3: simulated, y = 1 + 2x + error."
   },
-  es: {}
+  es: {},
+  // Reference chips (see learning-i18n.js): the name opens the paper, the cited title its DOI.
+  chips: [
+    { phrase: { en: "Francis Anscombe", es: "Francis Anscombe" }, href: "anscombe-1973.pdf" },
+    { phrase: { en: "\"Graphs in Statistical Analysis\"", es: "\"Graphs in Statistical Analysis\"" }, href: "https://doi.org/10.1080/00031305.1973.10478966" }
+  ]
 };
