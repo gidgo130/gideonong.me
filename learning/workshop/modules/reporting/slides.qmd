@@ -1,7 +1,6 @@
 ---
 title: "Using and Reporting a Fit"
 subtitle: "Reading Your Fits · Module 6"
-author: "Gideon Ong"
 format:
   revealjs:
     theme: [simple, custom.scss]
@@ -13,7 +12,19 @@ format:
     center: false
     html-math-method: plain
     include-in-header:
-      text: <meta name="robots" content="noindex">
+      text: |
+        <meta name="robots" content="noindex">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Gideon A. Ong">
+        <meta property="og:locale" content="en_US">
+        <meta property="og:title" content="Using and Reporting a Fit (slides) · Reading Your Fits">
+        <meta property="og:description" content="Once the checks pass, the fit is a tool: for predicting a reading, estimating a constant, or computing something from the coefficients. Each use needs its own kind of error bar.">
+        <meta property="og:url" content="https://gideonong.me/learning/fits/reporting/slides.html">
+        <meta property="og:image" content="https://gideonong.me/learning/assets/og/reporting.png">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="Using and Reporting a Fit: a plot from the module beside its title, on lab-notebook paper.">
+        <meta name="twitter:card" content="summary_large_image">
 ---
 
 ## Two questions, two bands {.center}

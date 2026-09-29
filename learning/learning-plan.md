@@ -84,9 +84,13 @@ Order: 2 → 1 → 3 → 4 → 6.
 
 ## Phase C — Go public
 - [ ] Content review by a professor
-- [ ] Remove `noindex` from every /learning page and the slides.qmd header; re-render decks
+- [X] Keep `noindex` on every /learning page and deck, even once public (Gideon, 2026-09-28).
+  The section is shared by link, not searched for: the About link and the OG cards are how
+  people find it. Nothing to remove, nothing to re-render.
 - [ ] Unhide About → Interesting sites (replace or remove the placeholder sites first)
-- [ ] Optional: Open Graph tags, Google Search Console
+- [X] Open Graph / Twitter-card tags on the hub, all six modules and their decks, with a
+  1200×630 card per page in learning/assets/og/ (2026-09-28; decision 14). Pages stay noindex.
+- [ ] Optional: Google Search Console (only for the main site; /learning stays out of search)
 
 ## Phase D — Offline Windows app
 - [ ] Inno Setup script (in learning/workshop/offline/, build output git-ignored) that installs learning/ and a
@@ -104,8 +108,9 @@ Order: 2 → 1 → 3 → 4 → 6.
 1. **Unlisted, own design.** gideonong.me/learning/ hosts interactive teaching pages in their
    own "lab notebook" look (not the main-site palette or fonts). Not in the nav; the only link
    in is About → Interesting sites (currently hidden). CLAUDE.md → /learning holds the rules.
-2. **noindex now, index later.** Every page and deck carries robots noindex until the series is
-   finished and reviewed (Phase C). robots.txt deliberately not used.
+2. **noindex, permanently.** Every page and deck carries robots noindex. Originally "until the
+   series is finished and reviewed"; on 2026-09-28 Gideon decided it stays for good (Phase C):
+   /learning is reached by link, not by search. robots.txt deliberately not used.
 3. **Bilingual required, English first.** Strings files + learning-i18n.js from day one; the
    EN/ES toggle (shared "lang" key) is present but hidden until a page is `data-es-ready`.
 4. **Plain HTML/JS interactives, Python as a companion.** Chosen over marimo browser exports:
@@ -198,3 +203,15 @@ Order: 2 → 1 → 3 → 4 → 6.
    - **Check.** `learning/workshop/tools/check-es.js` compares every strings file's `en` and
      `es`: same keys, same {placeholders}, same tag counts in *Html keys, an `es` phrase on every
      chip. Run from the repo root: `node learning/workshop/tools/check-es.js`.
+14. **Link-preview cards** (2026-09-28). Every /learning page and deck has static Open Graph +
+   Twitter-card meta (og:title / og:description from the EN title and lead, absolute og:url with
+   a trailing slash, og:site_name "Gideon A. Ong", og:image with width / height / alt,
+   twitter:card summary_large_image). Cards are 1200×630 PNGs in learning/assets/og/ in the
+   lab-notebook look: the hub draws its own chart in the series colors; each module shows a crop
+   of its first workshop figure. Generator: learning/workshop/tools/make-og-cards.py (Pillow +
+   matplotlib; fetches the three web fonts into a git-ignored tools/fonts/). The decks get the
+   tags through `include-in-header` in slides.qmd, so a re-render keeps them; the tracked
+   slides.html copies were patched by hand to match. The description stays English (as the meta
+   description does). Verified locally: every og:image answers HEAD 200 and is under 60 KB;
+   noindex still on every page. After a deploy, check with LinkedIn Post Inspector and
+   opengraph.xyz (both fetch the live URL; the Post Inspector also clears LinkedIn's cache).

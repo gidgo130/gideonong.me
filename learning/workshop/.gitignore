@@ -5,3 +5,5 @@ modules/*/slides_files/
 # Offline installer build (Phase D)
 offline/stage/
 offline/dist/
+# Fonts fetched by tools/make-og-cards.py
+tools/fonts/

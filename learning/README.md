@@ -20,6 +20,8 @@ learning/
     learning-i18n.js          LI18N: EN/ES strings, shared "lang" key, hidden toggle, dev check
     strings-common.js         Text shared by all pages (series name, module titles, nav words)
     modules.js                The ONE module registry: order, slug, ready flag
+    og/                       Link-preview cards, 1200×630 PNG: learning.png (hub) + <slug>.png.
+                              Made by learning/workshop/tools/make-og-cards.py; never edit by hand
   fits/<slug>/
     index.html                The module's interactive page
     strings.js                All of that page's display text (EN/ES)
@@ -34,7 +36,7 @@ preview and opened straight from disk (the planned offline Windows app).
 ## The workshop (learning/workshop/, never deployed)
 
 `learning/workshop/modules/<slug>/` holds the slide source (`slides.qmd`, `custom.scss`) and the
-figures; `learning/workshop/tools/` holds dev scripts (`check-es.js`). It's tracked in git but
+figures; `learning/workshop/tools/` holds dev scripts (`check-es.js`, `make-og-cards.py`). It's tracked in git but
 listed in `.vercelignore`, so none of it reaches the site. Rebuild steps are in
 `learning/workshop/README.md`: run the module's `.py` from the module's workshop folder (writes
 `figures/`), `quarto render slides.qmd`, strip `role="img"`, copy `slides.html` into
@@ -42,9 +44,17 @@ listed in `.vercelignore`, so none of it reaches the site. Rebuild steps are in
 
 ## Rules of thumb
 
-- **Unlisted while in progress.** Every page carries `<meta name="robots" content="noindex">`
-  (slides get it through `include-in-header` in `slides.qmd`). Going public = delete that line
-  on every /learning page and the qmd option, then re-render the slides.
+- **Link previews are static.** Every page and deck carries Open Graph + Twitter-card meta
+  (`og:title` / `og:description` = the EN page title and lead, absolute `og:url` with a trailing
+  slash, `og:image` = `learning/assets/og/<slug>.png`, 1200×630). Scrapers don't run JS, so the
+  tags live in the HTML: the page head for index.html, `include-in-header` in slides.qmd for the
+  deck. If a title or lead changes, update the tags and re-run
+  `python learning/workshop/tools/make-og-cards.py <slug>` (its CARDS table holds the card text
+  and which figure panel to crop). noindex and OG are independent: a shared link previews fine
+  while the page stays out of search.
+- **Unlisted, and it stays that way.** Every page carries `<meta name="robots" content="noindex">`
+  (slides get it through `include-in-header` in `slides.qmd`), and that is permanent (Phase C,
+  2026-09-28): /learning is found by link (About, shared cards), not by search. Don't remove it.
 - **Linked only from About.** The About page's "Interesting sites" list (js/about.js) has the
   Learning entry. That block is `hidden` in about.html right now, so the link shows only once
   that attribute is removed.
@@ -79,12 +89,15 @@ listed in `.vercelignore`, so none of it reaches the site. Rebuild steps are in
 1. Workshop: `learning/workshop/modules/<slug>/` with `slides.qmd` (copy an existing one for the YAML) and the
    companion script.
 2. Repo: `learning/fits/<slug>/` with `index.html`, `strings.js`, `main.js`, `slides.html`,
-   `<slug>.py`. Copy the head block (noindex, trailing-slash fix, theme snippet, fonts) from an
+   `<slug>.py`. Copy the head block (noindex, OG tags, trailing-slash fix, viewing-settings snippet, fonts) from an
    existing module.
 3. Title and description: `mod<Key>Title` / `mod<Key>Desc` in `assets/strings-common.js`.
-4. Flip `ready: true` for it in `assets/modules.js`. The hub list and every module's prev/next
+4. Link preview: fill in the `og:` tags (title, lead, URL, image) in index.html and in the
+   qmd's `include-in-header`; add the module to CARDS in `workshop/tools/make-og-cards.py` and
+   run it for the slug to make `assets/og/<slug>.png`.
+5. Flip `ready: true` for it in `assets/modules.js`. The hub list and every module's prev/next
    links update from that one line.
-5. Run the checks below, then the Fable review.
+6. Run the checks below, then the Fable review.
 
 ## Checks before pushing
 

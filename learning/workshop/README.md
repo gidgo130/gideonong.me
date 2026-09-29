@@ -11,6 +11,7 @@ modules/<slug>/
   figures/                   PNGs made by the module's Python script (tracked)
 tools/
   check-es.js                Checks the ES strings against EN
+  make-og-cards.py           Makes the link-preview cards in learning/assets/og/ (fonts/ it fetches is git-ignored)
 .gitignore                   Keeps build output out of git (rendered slides.html, installer builds)
 ```
 

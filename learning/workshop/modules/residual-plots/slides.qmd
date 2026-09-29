@@ -1,7 +1,6 @@
 ---
 title: "Reading a Residual Plot"
 subtitle: "Reading Your Fits · Module 2"
-author: "Gideon Ong"
 format:
   revealjs:
     theme: [simple, custom.scss]
@@ -13,7 +12,19 @@ format:
     center: false
     html-math-method: plain
     include-in-header:
-      text: <meta name="robots" content="noindex">
+      text: |
+        <meta name="robots" content="noindex">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Gideon A. Ong">
+        <meta property="og:locale" content="en_US">
+        <meta property="og:title" content="Reading a Residual Plot (slides) · Reading Your Fits">
+        <meta property="og:description" content="After you fit a line, the leftovers are the most useful thing on your screen. A handful of shapes tell you almost everything that can go wrong with the fit.">
+        <meta property="og:url" content="https://gideonong.me/learning/fits/residual-plots/slides.html">
+        <meta property="og:image" content="https://gideonong.me/learning/assets/og/residual-plots.png">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="Reading a Residual Plot: a plot from the module beside its title, on lab-notebook paper.">
+        <meta name="twitter:card" content="summary_large_image">
 ---
 
 ## The leftovers are the evidence
