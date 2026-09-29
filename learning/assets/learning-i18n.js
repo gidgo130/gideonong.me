@@ -96,10 +96,12 @@
     });
   }
 
+  var firstApply = true; // the markup check compares the page's own HTML, so only before any switch
   function apply() {
+    var checkMarkup = firstApply; firstApply = false;
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
       var k = el.getAttribute("data-i18n");
-      if (isDev && lang === "en" && S.en[k] !== undefined && el.textContent.trim() !== S.en[k].trim()) {
+      if (isDev && checkMarkup && lang === "en" && S.en[k] !== undefined && el.textContent.trim() !== S.en[k].trim()) {
         console.warn("[learning i18n] markup differs from EN string:", k);
       }
       el.textContent = t(k);

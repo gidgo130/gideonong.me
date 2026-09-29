@@ -19,5 +19,22 @@ window.LEARN_STRINGS = {
     footBuilt: "Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.",
     footMistake: "Found a mistake? gao9819@utulsa.edu"
   },
-  es: {}
+  es: {
+    pageTitle: "Aprendizaje · Gideon A. Ong",
+    eyebrow: "Gideon A. Ong · Aprendizaje",
+    h1: "Aprendizaje",
+    lead: "Notas interactivas que [le pedí a Claude que] hiciera para estudiantes de ingeniería. Cada una corre en tu navegador con datos simulados, así que puedes mover los deslizadores, romper cosas y ver qué pasa.",
+    seriesIntro: "Seis módulos cortos sobre cómo revisar una recta ajustada a datos de laboratorio: qué te dicen los residuos, qué no te pueden decir y qué hacer al respecto. No necesitas saber estadística; ayuda saber algo de Excel o MATLAB.",
+    listAria: "Módulos de la serie Cómo leer tus ajustes",
+    howTitle: "Cada módulo incluye",
+    how1Title: "Una página interactiva",
+    how1Body: "Deslizadores y experimentos simulados. No hay que instalar nada.",
+    how2Title: "Diapositivas",
+    how2Body: "Una presentación corta para exponer el tema o repasarlo rápido. Por ahora, solo en inglés.",
+    how3Title: "Un script de Python",
+    how3Body: "Reproduce todas las gráficas. Corre tal cual en Google Colab.",
+    noscript: "La lista de módulos y las páginas interactivas necesitan JavaScript activado.",
+    footBuilt: "Hecho con Claude por Gideon A. Ong, estudiante de ingeniería mecánica en la Universidad de Tulsa.",
+    footMistake: "¿Encontraste un error? gao9819@utulsa.edu"
+  }
 };
