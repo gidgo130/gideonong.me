@@ -2,29 +2,41 @@
 ; Build with build.ps1 (it stages learning\ and generates stage\modules*.iss first); compiling
 ; this file on its own fails with a pointer to build.ps1. Saved as UTF-8 with BOM (Spanish text).
 ;
-; Components: the hub and shared files (always), then per series a group of modules, each with
-; optional parts (slides, Python). The module list comes from learning\assets\modules.js via
-; build.ps1, so a new module needs no edit here. What the reader leaves out is written into the
-; installed modules.js as window.LEARN_OFFLINE, and learning.js marks those modules
-; "Not installed" and hides links to left-out files. A future series: add its component group
-; and files the same way (build.ps1 section 3).
+; One script, two kinds of installer:
+;   full           everything, with a component choice: the hub (always), then per module the
+;                  interactive page and its optional Slides and Python parts.
+;   /DOnlyModule=  the hub + one module (its Slides and Python still optional). build.ps1 makes
+;                  one per ready module. It ADDS to an existing install: same AppId, same folder,
+;                  one uninstaller for everything.
+; The module list comes from learning\assets\modules.js via build.ps1, so a new module needs no
+; edit here. After every install, the paths that are NOT on disk are written into the installed
+; modules.js as window.LEARN_OFFLINE; learning.js marks those modules "Not installed" and hides
+; links to missing files.
 
 ; ---- The one place the version lives ------------------------------------------------------
 #define AppVersion "1.0.0"
 ; -------------------------------------------------------------------------------------------
 #define AppName "Reading Your Fits"
+#ifndef OnlyModule
+  #define OnlyModule ""
+#endif
+#ifndef BuildCommit
+  #define BuildCommit "dev"
+#endif
 
 #if !FileExists(AddBackslash(SourcePath) + "stage\modules.iss")
   #error stage\modules.iss is missing: run build.ps1, not ISCC on this file directly
 #endif
 
 [Setup]
-; AppId identifies the install for upgrades and the uninstaller. Never change it.
+; AppId identifies the install for upgrades and the uninstaller. Never change it; the full and
+; the per-module installers share it on purpose.
 AppId={{02F24A47-1234-4F1D-A418-ECF2285446C6}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher=Gideon A. Ong
 AppPublisherURL=https://gideonong.me/learning/
+AppUpdatesURL=https://github.com/gidgo130/gideonong.me/releases/latest
 VersionInfoVersion={#AppVersion}
 ; Per-user install: no admin prompt, nothing outside the user's profile.
 PrivilegesRequired=lowest
@@ -32,6 +44,9 @@ DefaultDirName={localappdata}\Programs\{#AppName}
 DisableProgramGroupPage=yes
 AlwaysShowComponentsList=yes
 ShowLanguageDialog=yes
+; Each run offers its own defaults (setup type AND components): a module installer must not
+; narrow what the full one offers next time.
+UsePreviousSetupType=no
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\assets\glogo.ico
 SetupIconFile=stage\assets\glogo.ico
@@ -39,7 +54,11 @@ WizardStyle=modern
 Compression=lzma2/max
 SolidCompression=yes
 OutputDir=dist
+#if OnlyModule == ""
 OutputBaseFilename=ReadingYourFits-Setup-{#AppVersion}
+#else
+OutputBaseFilename=ReadingYourFits-{#OnlyModule}-Setup-{#AppVersion}
+#endif
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
@@ -57,15 +76,24 @@ Name: "hub"; Description: "{cm:CompHub}"; Types: full compact custom; Flags: fix
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [InstallDelete]
-; Start clean on every install, repair or upgrade, so deselected modules and files dropped from
-; a newer version don't linger. The folder only ever holds what this installer put there.
+; Start clean, so deselected parts and files dropped from a newer version don't linger. The full
+; installer clears all of learning\ (it reinstalls whatever is chosen); a module installer
+; clears only its own module and leaves the others alone. The folder only ever holds what these
+; installers put there.
+#if OnlyModule == ""
 Type: filesandordirs; Name: "{app}\learning"
+#else
+Type: filesandordirs; Name: "{app}\learning\fits\{#OnlyModule}"
+#endif
 
 [Files]
-; Hub + shared assets (everything but the module folders), and the favicon the pages link at
-; ..\assets\glogo.ico. Module folders come from stage\modules.iss.
-Source: "stage\learning\*"; Excludes: "\fits\*";DestDir: "{app}\learning"; Components: hub; Flags: ignoreversion recursesubdirs createallsubdirs
+; Hub + shared assets (everything but the module folders), the favicon the pages link at
+; ..\assets\glogo.ico, and the license files. Module folders come from stage\modules.iss.
+Source: "stage\learning\*"; Excludes: "\fits\*"; DestDir: "{app}\learning"; Components: hub; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "stage\assets\glogo.ico"; DestDir: "{app}\assets"; Components: hub; Flags: ignoreversion
+Source: "stage\LICENSE.txt"; DestDir: "{app}"; Components: hub; Flags: ignoreversion
+Source: "stage\LICENSE-CONTENT.txt"; DestDir: "{app}"; Components: hub; Flags: ignoreversion
+Source: "stage\NOTICE.txt"; DestDir: "{app}"; Components: hub; Flags: ignoreversion
 
 #include "stage\modules.iss"
 
@@ -99,8 +127,9 @@ es.ShortcutComment=Módulos interactivos para revisar un ajuste de curvas con da
 [Code]
 #include "stage\modules-code.iss"
 
-// Tell the pages what was left out: append window.LEARN_OFFLINE to the installed modules.js
-// (a fresh copy on every install, since [InstallDelete] clears the folder first).
+// Tell the pages what is NOT on disk: append window.LEARN_OFFLINE to the installed modules.js
+// (a fresh copy on every install, since the hub files are always rewritten). Read from disk,
+// not from this run's choices, so a module installed earlier by another installer still counts.
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   F, S: String;
@@ -108,8 +137,9 @@ begin
   if CurStep = ssPostInstall then
   begin
     F := ExpandConstant('{app}\learning\assets\modules.js');
-    S := #13#10 + '// Added by the offline installer (learning/workshop/offline/): paths this copy leaves out.' + #13#10 +
-         'window.LEARN_OFFLINE = { version: "{#AppVersion}", missing: [' + OfflineMissing() + '] };' + #13#10;
+    S := #13#10 + '// Added by the offline installer (learning/workshop/offline/): paths this copy lacks.' + #13#10 +
+         'window.LEARN_OFFLINE = { version: "{#AppVersion}", commit: "{#BuildCommit}", missing: [' +
+         OfflineMissing(ExpandConstant('{app}\learning\')) + '] };' + #13#10;
     if not SaveStringToFile(F, S, True) then
       Log('Could not append the offline manifest to ' + F);
   end;

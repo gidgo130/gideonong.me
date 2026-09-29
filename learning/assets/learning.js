@@ -273,6 +273,16 @@
     });
   }
   function moduleMissing(m) { return isMissing("fits/" + m.slug + "/"); }
+  var RELEASES = "https://github.com/gidgo130/gideonong.me/releases/latest";
+  // Hub footer in the installed copy only: which version this is, and where newer ones are.
+  // The app never checks for updates by itself.
+  function offlineNote(el) {
+    if (!OFFLINE || !el) return;
+    var span = el.querySelector(".offline-copy");
+    if (!span) { span = document.createElement("span"); span.className = "offline-copy"; el.appendChild(span); }
+    span.innerHTML = esc(t("offlineCopy", { v: OFFLINE.version || "?", c: OFFLINE.commit || "?" })) +
+      ' · <a href="' + RELEASES + '" target="_blank" rel="noopener">' + esc(t("offlineUpdates")) + '</a>';
+  }
 
   // ---------- series navigation ----------
   // Paths are relative so pages work on the site AND opened from disk (offline app).
@@ -356,6 +366,7 @@
     ols: ols, deming: deming, tcrit: tcrit, num: num, r2: r2, influence: influence, expFit: expFit,
     solve: solve, polyfit: polyfit, wls: wls, hc3se: hc3se, bands: bands, ar1: ar1, acf: acf, durbinWatson: durbinWatson,
     chart: chart, line: line, dots: dots, esc: esc,
-    seriesNav: seriesNav, moduleList: moduleList, fixFileLinks: fixFileLinks, isLiteDevice: isLiteDevice
+    seriesNav: seriesNav, moduleList: moduleList, fixFileLinks: fixFileLinks, isLiteDevice: isLiteDevice,
+    offlineNote: offlineNote
   };
 }());

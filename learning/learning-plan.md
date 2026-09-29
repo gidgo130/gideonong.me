@@ -99,7 +99,7 @@ hidden (by choice).
 - [ ] Optional: Google Search Console (only for the main site; /learning stays out of search)
 
 ## Phase D — Offline Windows app
-Status (2026-09-29): installer built and tested locally (v1.0.0, 8.4 MB); not distributed yet.
+Status (2026-09-29): installer built and tested locally (v1.0.0, 8.4 MB); not released yet (Phase D2).
 How to build, what ships and the release checks: learning/workshop/offline/README.md.
 - [X] Inno Setup script + build script in learning/workshop/offline/ (`ReadingYourFits.iss`,
   `build.ps1`; stage/ and dist/ gitignored). Per-user install to
@@ -117,59 +117,125 @@ How to build, what ships and the release checks: learning/workshop/offline/READM
   (repo-root assets/glogo.ico) ships beside learning/ so the pages' ../assets/glogo.ico works.
 - [X] Offline checks from file:/// in Chromium (Chrome itself isn't installed on the build PC)
   and Edge, online and offline, on the staged copy and on a partial install: see decision 19.
-- [ ] Gideon: run the installer once by hand (EN and ES wizard), then decide distribution
-  (decision 19: GitHub Releases recommended; unsigned, so SmartScreen warns).
+- [ ] Gideon: run the installer once by hand (EN and ES wizard).
+- [X] Distribution decided (2026-09-29): GitHub Releases, per-module and full installers,
+  buttons on the online pages. Plan: Phase D2.
 
-### Phase D2 — Distribution on GitHub Releases (after the repo is public)
-Gate: decision 18 finished (papers purged from history, force push, repo public). Checked
-2026-09-29: the repo is still private and `gh` isn't installed.
+### Phase D2 — Distribution on GitHub Releases
+State (checked 2026-09-29, after decision 18): the repo is public (MIT detected; wiki off; secret
+scanning on), `gh` 2.101 is installed and logged in as gidgo130 (scopes repo, workflow), and the
+repo has no tags and no releases. The local dist\ build predates the history rewrite; rebuild
+before releasing.
+Gideon's calls (2026-09-29): install buttons on the online pages, per module and for the whole
+series, understated but present; an offline-copy footer in the app; a small line near the
+bottom of the repo README; tag protection on; release immutability off; automated builds later.
 
-**Before the first release (one-time)**
-- [ ] `winget install GitHub.cli`, then `gh auth login` (HTTPS, browser). Or use the web UI.
-- [ ] build.ps1 `-Zip`: also write dist\ReadingYourFits-<version>.zip (the stage folder, whose
-  modules.js gets `window.LEARN_OFFLINE = { missing: [] }` so the crumb fix applies) and
-  dist\SHA256SUMS.txt for both files. The zip is for Mac/Linux and for anyone who won't run an
-  unsigned .exe.
-- [ ] Ship LICENSE (MIT) and LICENSE-CONTENT (CC BY-SA 4.0) in the app, next to learning\.
-  Public redistribution should carry them; the installer can show LICENSE-CONTENT as an info page.
-- [ ] Release notes template (EN + ES), kept at learning/workshop/offline/release-notes.md:
-  what it is, the Windows version, the SmartScreen steps ("More info → Run anyway"),
-  uninstall (Settings → Apps), the SHA-256 lines, the zip for other systems.
+**What each release carries** (asset names without a version, so the site can link
+`https://github.com/gidgo130/gideonong.me/releases/latest/download/<name>` and never needs an
+edit per release; the version is in the tag, the release title, the installer and the footer)
+- `ReadingYourFits-Setup.exe`: everything, with the component choice (8.4 MB).
+- `ReadingYourFits-<slug>-Setup.exe`, one per ready module: the hub + that module, its Slides
+  and Python still optional (3.8–4.9 MB each, not the 1.5–2 MB first guessed: the six decks
+  share Quarto's reveal.js code, which the full installer's solid compression stores once, so
+  two single-module installers already weigh about as much as the full one; same .iss compiled
+  with `/DOnlyModule=<slug>`).
+- `ReadingYourFits.zip`: the whole stage folder, for Mac/Linux and anyone who won't run an
+  unsigned .exe (its modules.js gets `window.LEARN_OFFLINE = { version, commit, missing: [] }`;
+  29 MB, since zip compresses each file alone; `Reading Your Fits.html` at the top opens the hub).
+- `SHA256SUMS.txt` for all of the above.
+dist\ keeps the versioned names for local builds; `build.ps1 -Release` also writes the
+unversioned copies to dist\release\, which is what gets uploaded.
 
-**Each release**
-- [ ] Bump `AppVersion` in ReadingYourFits.iss; build; run the checks in the offline README.
-- [ ] Tag `offline-v<version>` on the commit that built it (the site itself has no version, so
-  the prefix keeps these tags apart from anything else later) and push the tag.
-- [ ] `gh release create offline-v<version> dist\ReadingYourFits-Setup-<version>.exe
-  dist\ReadingYourFits-<version>.zip dist\SHA256SUMS.txt --title "Reading Your Fits <version>
-  (offline)" --notes-file learning\workshop\offline\release-notes.md`
-- [ ] From a clean browser, download the .exe from the release page (so it carries
-  Mark-of-the-Web), go through SmartScreen, install, open, uninstall. Ideally on a second PC:
-  Windows 11 Home has no Windows Sandbox.
+**1. Installer and build changes (before v1.0.0; inside learning/)** — done 2026-09-29, tested
+(see the offline README checks): module → module → full → module into one folder, one uninstall
+entry, manifest matching the disk each time, uninstall leaves nothing; footer EN/ES in Chromium
+and Edge; the zip unpacks and opens; the 282 offline checks on the staged copy still pass.
+- [X] Per-module installers that ADD to an existing install: same AppId (one folder, one entry
+  in Settings → Apps, one uninstaller for everything). A module installer clears only its own
+  module folder; the full installer keeps "clear learning\ first" and sets
+  `UsePreviousComponents=no`, so after a module-only install it offers everything again rather
+  than just that module.
+- [X] LEARN_OFFLINE's `missing` list is computed from disk after every install (FileExists on
+  each module's index.html and each part's files), not from that run's selection, so installing
+  Module 1, then Module 3, shows both. The generated Pascal changes accordingly.
+- [X] `build.ps1 -Release`: stop if `git status --porcelain -- learning` isn't empty (a release
+  always equals a commit); pass the short commit hash to ISCC and into LEARN_OFFLINE; compile
+  the full installer and one per ready module; write the zip, dist\release\ and SHA256SUMS.txt.
+- [X] Ship LICENSE, LICENSE-CONTENT (read from the repo root) and a short NOTICE.txt beside
+  learning\, from README.md → Licensing (code MIT; teaching content CC BY-SA 4.0 with the
+  credit line; name and likeness not licensed; the logo is not mentioned, Gideon's call).
+  Files only, no click-through page.
+- [X] Offline-copy footer on the hub (installed copy only, i.e. when LEARN_OFFLINE is set):
+  "Offline copy · v1.0.0 (<commit>) · Check for updates", the link to …/releases/latest (the
+  page). New EN/ES strings. Must be in v1.0.0, or the first installs never learn of later
+  versions; the app never checks by itself.
+- [X] Tests, added to the offline README checks: module A then module B into one folder; full
+  after module; module after full; uninstall removes all of it; the footer shows the version.
+- [X] learning/workshop/offline/release-notes.md (EN + ES): what it is, Windows 10/11, the
+  SmartScreen steps ("More info → Run anyway"), full vs per-module installers, uninstall
+  (Settings → Apps), the zip, checking a download against SHA256SUMS.txt (`Get-FileHash`).
 
-**Link it from /learning** (inside learning/, so no OK needed beyond the wording)
-- [ ] One quiet line on the hub, e.g. "Use it offline: Windows app (8 MB) · zip", pointing at
-  https://github.com/gidgo130/gideonong.me/releases/latest (the release page, not the bare .exe,
-  so readers see the SmartScreen note). New EN/ES strings. Hidden in the installed copy
-  (LEARN_OFFLINE) and when opened from disk. `releases/latest` stays right as long as these are
-  the repo's only releases.
-- [ ] Offline copy: show the installed version (LEARN_OFFLINE.version) in the hub footer with an
-  "updates" link to the same page. The app can't check for updates by itself, and shouldn't.
+**2. GitHub settings**
+- [X] Release immutability: not used (Gideon, 2026-09-29). Rule of thumb instead: never replace
+  an asset or move a tag after publishing; ship a fix as a new version.
+- [X] Tag ruleset for `refs/tags/offline-v*` (2026-09-29, ruleset 24217873 "Protect offline
+  release tags", active): blocks deletion, updates (moving) and non-fast-forward, no bypass
+  list. Settings → Rules → Rulesets. To fix a mistaken tag, disable it for the minute it takes.
+- [ ] Not blocking, from decision 18: branch protection on `main`; delete the Vercel deployments
+  older than 2dc3a4b.
 
-**Later / optional**
-- [ ] GitHub Actions: build on a tag push on windows-latest (Inno Setup is on the runner image,
-  otherwise `choco install innosetup`) and attach the files to the release. A clean checkout
-  can't contain the gitignored papers, so it's the safer build. Needs .github/workflows/ (outside
-  learning/, Gideon's OK) and `.github/` in .vercelignore. Worth it once releases are frequent.
+**3. Release v1.0.0 (by hand)**
+- [ ] Clean tree; `build.ps1 -Release`; the offline README checks.
+- [ ] `git tag -a offline-v1.0.0 -m "Reading Your Fits offline 1.0.0"`; push the tag. (The
+  `offline-` prefix keeps these apart from anything else tagged later; the site has no version.)
+- [ ] `gh release create offline-v1.0.0 --draft --title "Reading Your Fits 1.0.0 (offline)"
+  --notes-file learning\workshop\offline\release-notes.md dist\release\*`
+- [ ] Read the draft on github.com (notes, every asset, sizes), then
+  `gh release edit offline-v1.0.0 --draft=false --latest`.
+- [ ] `gh release download offline-v1.0.0 -D <tmp>`; checksums match SHA256SUMS.txt and dist\.
+- [ ] From a normal browser (so the file has Mark-of-the-Web): the full .exe and one module
+  .exe through SmartScreen, install one in Spanish, open, uninstall. Ideally on a second PC
+  (Windows 11 Home has no Windows Sandbox).
+
+**4. Install buttons on the online pages (one commit, right after v1.0.0 is published, so no
+link ever points at a missing file)**
+- [ ] Hub: one understated line under the module list, in the takeaway-links style (muted
+  label, plain links, no button chrome): "Use it offline: Windows app, all modules · zip for
+  other systems", plus a small muted note "Not signed yet: Windows may ask you to confirm (More
+  info → Run anyway)" linking to the release page.
+- [ ] Each module page: one more link in the existing "Take it with you:" row, "Offline
+  (Windows)", pointing at that module's installer.
+- [ ] The .exe links show only on Windows (userAgentData.platform, else the UA string); elsewhere
+  the hub shows only the zip and module pages show no offline link. Hidden when opened from
+  disk (data-http-only) and in the installed copy (LEARN_OFFLINE). No sizes in the labels, so
+  nothing drifts between releases. New EN/ES strings; check-es.js passes.
+- [ ] Checks: 375 / 1280, light / dark, readability on; the row still wraps cleanly; Windows vs
+  non-Windows (Playwright can fake the platform); hidden from disk and in the installed copy.
+- [ ] Repo README.md (outside learning/, approved): a small line near the bottom, just above
+  "## Licensing": "An offline copy of the /learning pages for Windows is on the
+  [Releases](https://github.com/gidgo130/gideonong.me/releases) page."
+
+**Each later version**
+- Bump AppVersion → commit → `build.ps1 -Release` → checks → tag → draft release with every
+  asset → review → publish → compare checksums. A new module gets its own installer and
+  button with no edit here (both come from modules.js). Installs upgrade in place (same AppId).
+
+**Future (not now)**
+- [ ] Automated release builds (GitHub Actions): on a pushed `offline-v*` tag, windows-2025
+  runner, install Inno Setup first (no longer preinstalled on that image: `choco install
+  innosetup -y` or winget), run build.ps1 -Release, upload to a draft release. A clean checkout
+  can't contain the gitignored papers, and `actions/attest-build-provenance` adds a free
+  build-provenance attestation on public repos. Needs .github/workflows/ and `.github/` in
+  .vercelignore. Revisit once releases are more than occasional.
 - [ ] Code signing: Microsoft Trusted Signing (~$10/month, individuals in the US), then
   `SignTool=` + `SignedUninstaller=yes` in the .iss. SmartScreen still warns until the
-  certificate has download reputation.
+  certificate has download reputation. Drop the hub's "Not signed yet" note then.
 - [ ] Submit the .exe to Microsoft (microsoft.com/wdsi/filesubmission, "software developer")
-  if Defender or SmartScreen flags it as more than "unrecognized".
-- [ ] Optional: bundle the three web fonts (OFL) in the app so it looks the same offline.
-- [ ] Optional: offline readers can't reach About → Viewing settings (the site's localStorage
-  is a different origin from file:); only the OS dark mode applies. A settings UI on
-  /learning would go against the current rule, so it's Gideon's call.
+  only if Defender or SmartScreen flags it as more than "unrecognized".
+- [ ] Bundle the three web fonts (OFL) in the app so it looks the same offline.
+- [ ] Offline readers can't reach About → Viewing settings (the site's localStorage is a
+  different origin from file:); only the OS dark mode applies. A settings UI on /learning
+  would go against the current rule, so it's Gideon's call.
 
 ## Optional later
 - [X] marimo "Play with the code" notebooks per module (served from the site over HTTP).

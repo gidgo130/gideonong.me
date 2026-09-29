@@ -90,9 +90,10 @@
 <script src="assets/learning.js"></script>
 <script>
   (function () {
-    var list = document.getElementById("module-list");
+    var list = document.getElementById("module-list"), foot = document.querySelector(".foot");
     LF.moduleList(list);
-    document.addEventListener("learnlangchange", function () { LF.moduleList(list); });
+    LF.offlineNote(foot);   // installed copy only
+    document.addEventListener("learnlangchange", function () { LF.moduleList(list); LF.offlineNote(foot); });
   }());
 </script>
 </body>
