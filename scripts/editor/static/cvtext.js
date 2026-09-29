@@ -467,7 +467,13 @@
     $("#reviewDlg").close();
     const parts = (r.masters || []).filter((m) => m.written).map((m) => `${m.title}: ${m.rewritten.length} rewritten, ${m.added.length} added, ${m.removed.length} removed, ${m.moved.length} moved`);
     const routeName = r.route === "word" ? "Word" : "python";
-    setBanner("applied", "", (r.noop ? r.message : `Applied with ${routeName} to ${r.written.length} master(s) — ${parts.join("; ") || "nothing rewritten"}. Backup set ${r.backup}.`), r.noop ? [{ label: "Dismiss", onclick: () => clearBanner("applied") }] : [{ label: "Export & check", primary: true, onclick: () => { clearBanner("applied"); openExport(r.written); } }, { label: "Dismiss", onclick: () => clearBanner("applied") }]);
+    const actions = r.noop ? [] : [
+      { label: "Export & check", primary: true, onclick: () => { clearBanner("applied"); openExport(r.written); } },
+      { label: "Keep this backup set", onclick: async (ev) => { try { await api("/api/backups/" + encodeURIComponent(r.backup) + "/keep", { method: "POST", body: { keep: true } }); ev.target.disabled = true; ev.target.textContent = "Kept"; toast("Backup set " + r.backup + " is kept for good (Restore… on the Site text tab lists it)."); } catch (e) { toast("Could not keep it: " + e.message); } } },
+      { label: "Copy staging to my backup folder", onclick: async (ev) => { ev.target.disabled = true; try { const c = await api("/api/backups/copy-staging", { method: "POST", body: {} }); if (!c || c.ok === false) { toast("Copy refused: " + (c && c.error) + " — set the folder under Restore… on the Site text tab.", 9000); ev.target.disabled = false; return; } toast(`Copied ${c.files} files to ${c.folder}.`, 8000); ev.target.textContent = "Copied"; } catch (e) { toast("Copy failed: " + e.message, 8000); ev.target.disabled = false; } } },
+    ];
+    actions.push({ label: "Dismiss", onclick: () => clearBanner("applied") });
+    setBanner("applied", "", (r.noop ? r.message : `Applied with ${routeName} to ${r.written.length} master(s) — ${parts.join("; ") || "nothing rewritten"}. Backup set ${r.backup}.`), actions);
     toast(r.noop ? r.message : "Applied with " + routeName + ".", 6000);
     await loadState();
   }

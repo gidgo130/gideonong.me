@@ -41,8 +41,17 @@
 
 <dialog id="restoreDlg" class="dlg">
   <form method="dialog">
-    <h2>Restore a backup</h2>
-    <p class="muted">Every save copies the previous file into <code>scripts/editor/.local/backups/&lt;timestamp&gt;/</code>.
+    <h2>Backups</h2>
+    <div class="copybox" id="copyBox">
+      <p class="muted small">The backup sets below live inside the repo folder; this copies <code>staging/</code> (masters, content set, exports, blocklist) and every <strong>kept</strong> set to a folder outside it — the copy that survives a lost disk or a re-clone.</p>
+      <div class="rowline">
+        <label class="chk">Backup folder <input id="backupFolder" type="text" size="48" placeholder="e.g. C:\Users\gidgo\OneDrive\gideonong-backups" spellcheck="false"></label>
+        <button type="button" class="primary" id="copyStagingBtn">Copy staging now</button>
+        <span class="muted small" id="lastCopy"></span>
+      </div>
+    </div>
+    <h3>Restore a backup set</h3>
+    <p class="muted">Every save copies the previous file into <code>scripts/editor/.local/backups/&lt;timestamp&gt;/</code>. Sets expire after 60 days or beyond the newest 100 unless <strong>Keep</strong> is ticked.
       Restoring writes that copy back (after backing up the current file first). Unsaved drafts are kept.</p>
     <div id="restoreBody"></div>
     <div class="dlg-actions"><span class="spacer"></span><button type="submit" class="ghost">Close</button></div>

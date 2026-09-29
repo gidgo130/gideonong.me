@@ -23,6 +23,8 @@ from typing import Iterable, Optional
 from . import validate
 from .jsdata import Document, JsDataError, ObjectNode, StringNode, Property, comment_text, sha256_bytes
 
+_IDENT = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
+
 LANGS = ("en", "es")
 STATUSES = ("both", "en-only", "es-only", "same", "todo")
 
@@ -219,15 +221,17 @@ class SiteText:
             out[k] = v
         return out
 
-    def render(self, edits: dict[str, str], adds: Optional[dict] = None, removes: Optional[Iterable[str]] = None) -> bytes:
+    def render(self, edits: dict[str, str], adds: Optional[dict] = None, removes: Optional[Iterable[str]] = None, renames: Optional[dict] = None) -> bytes:
         """The file bytes with the given edits applied and nothing else changed.
 
         `adds`: {key: {"en": str, "es": str}} — new keys, inserted in both language
         objects after the last key of the same entry (same proj<SlugCamel> / exp<SlugCamel>
         prefix) or, for a new entry, after the last key of the same family (proj / exp /
         tag) with a blank line before it. `removes`: keys deleted from both objects.
+        `renames`: {old key: new key} — the key token is replaced in place in both objects
+        (the value and its position stay; `edits` still address the old name).
         """
-        if not adds and not removes:
+        if not adds and not removes and not renames:
             tok_edits: dict[int, str] = {}
             for k, v in self.normalize_edits(edits).items():
                 lang, _, key = k.partition(".")
@@ -248,6 +252,11 @@ class SiteText:
             assert p is not None and isinstance(p.value, StringNode)
             span_edits.append(spans.replace_string(self.doc, p.value, v))
         for lang, obj in self.objs.items():
+            for old, new in (renames or {}).items():
+                p = obj.get(old)
+                if p is not None and old not in removes:
+                    tok = self.doc.tokens[p.key_tok]
+                    span_edits.append((tok.start, tok.end, new if _IDENT.match(new) else scalar(new)))
             for key in removes:
                 if obj.get(key) is not None:
                     span_edits.append(spans.delete_prop(self.doc, obj, key))

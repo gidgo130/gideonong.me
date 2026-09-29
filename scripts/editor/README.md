@@ -39,7 +39,14 @@ window to the front. Closing the window stops the editor; with unsaved drafts it
   with drafts, the next launch offers to restore them.
 - Before writing, the previous file is copied to `.local/backups/<timestamp>/`. **Restore…**
   lists those sets, shows what restoring would change, and restores one (backing up the
-  current file first).
+  current file first). Sets expire after 60 days or beyond the newest 100 — unless their
+  **Keep** box is ticked (the apply banner on the CV text tab offers "Keep this backup set"
+  too): a kept set is never pruned and does not count toward the 100. The same dialog holds
+  **Copy staging now**: it copies `staging/` (masters, content set, slot maps, exports,
+  blocklist) and every kept set into `gideonong-staging-<timestamp>/` under a folder you
+  name once, outside the repo (OneDrive, an external drive) — the copy that survives a lost
+  disk or a re-clone. The folder and the last copy are remembered in `.local/settings.json`;
+  Word's `~$` owner files and temp files are skipped. Nothing here uses git.
 - If `js/translations.js` changes on disk while the editor is open (VS Code, Claude Code,
   git), a banner appears and saving is refused until you click **Reload**; drafts are kept
   and re-applied.
@@ -80,7 +87,16 @@ vocabulary with how often each tag is used. The form on the right edits one entr
 - **Add project / role** (slug + EN/ES title; new entries start hidden with today's season),
   **Hide** (listing → hidden / visible → false), **Delete…** (confirmed; the entry, the keys
   nothing else references, and the sub-page — moved to the backup set); **Add tag** and delete
-  (only when no entry uses it). The slug never changes here (a rename wizard comes later).
+  (only when no entry uses it). **Rename slug…** (danger zone) renames a project or role
+  everywhere in one draft: the entry's slug; every key that follows the naming convention and
+  belongs to it alone, renamed in place in translations.js (values and positions stay; a key
+  shared with another entry or named off-convention is left and listed); its image paths and
+  sub-page URL; references from other entries (a role's image link to a project's page or
+  `?part=`, projects' "Part of" a role); and, on save, the sub-page file (its `data-slug`
+  rewritten) and the image folder are moved (backed up first). The preview serves the new
+  paths before the save. Links from outside the site to the old `#slug` / `?part=` stop
+  working, and prose mentions in CLAUDE.md / plan.md / content.md are yours to edit. Renaming
+  back yields byte-identical files.
 
 **About (the About page's lists).** The **About** sub-tab edits `js/about-data.js` — the
 books strip, the interview FAQ and the interesting-sites list, each with inline EN | ES text
@@ -398,7 +414,12 @@ and translations.js byte-identical, bullets reorder, current-role flag, tag add 
 delete, blocked saves, changed-on-disk refusal, autosave; the About lists: the data file
 round-trips, one edit = one line, add / delete / a reorder that comes back byte-identical, the
 `hidden` toggle changes one attribute, every rule, and the service flow (drafts, gate, review
-with both files, save, and the reverse edits restoring both files byte for byte). Phase 5 (`test_images.py`): a
+with both files, save, and the reverse edits restoring both files byte for byte); the rename
+wizard: a project with sub-page, images and a role's link → keys, paths, references, preview
+aliases, gate, review, save (files moved, backup set holds them) and the rename back is
+byte-identical; a role rename cascades to projects' "Part of" and its own `?part=` link, a
+rename of a rename maps once, deleting a renamed entry undoes the rename, a never-saved
+entry just renames its pending keys and shell. Phase 5 (`test_images.py`): a
 synthetic phone JPEG (EXIF camera fields, GPS IFD, orientation 6, ICC profile) comes out with
 no metadata at all, upright and at the preset size; every preset; PNG stays PNG without text
 chunks; refusals (GIF, non-image, 25 MB, unknown preset) and names; the repo's own images

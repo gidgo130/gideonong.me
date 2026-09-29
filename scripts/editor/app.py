@@ -94,6 +94,28 @@ class EditorState:
         """True while a background job (a Word export, a transcript parse or build) is running."""
         return self.jobs.busy()
 
+    # ------------------------------------------------------------- settings (.local/settings.json)
+    @property
+    def settings_path(self) -> Path:
+        return self.local_dir / "settings.json"
+
+    def settings(self) -> dict:
+        try:
+            if self.settings_path.is_file():
+                j = json.loads(self.settings_path.read_text(encoding="utf-8"))
+                if isinstance(j, dict):
+                    return j
+        except (OSError, ValueError) as e:
+            log.warning("settings unreadable: %s", e)
+        return {}
+
+    def update_settings(self, **values) -> dict:
+        s = self.settings()
+        s.update(values)
+        self.settings_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(self.settings_path, json.dumps(s, indent=2, ensure_ascii=False).encode("utf-8"))
+        return s
+
     def draft_count(self) -> int:
         """Unsaved edits across the tools (the close prompt)."""
         return len(self.drafts) + self.transcript.draft_count() + self.content.draft_count() + self.cvtext.draft_count()
@@ -494,6 +516,13 @@ def create_app(state: EditorState) -> Flask:
         if not isinstance(b.get("file"), str) or not isinstance(b.get("slug"), str):
             return deny(400, "file and slug are required")
         return _content_call(state.content.add_entry, b["file"], b["slug"].strip(), str(b.get("titleEn") or ""), str(b.get("titleEs") or ""))
+
+    @app.post("/api/content/rename")
+    def content_rename():
+        b = request.get_json(silent=True) or {}
+        if not all(isinstance(b.get(k), str) for k in ("file", "slug", "newSlug")):
+            return deny(400, "file, slug and newSlug are required")
+        return _content_call(state.content.rename_entry, b["file"], b["slug"], b["newSlug"].strip())
 
     @app.post("/api/content/delete")
     def content_delete():
@@ -928,7 +957,48 @@ def create_app(state: EditorState) -> Flask:
 
     @app.get("/api/backups")
     def backups():
-        return jsonify(sets=[s.to_json() for s in state.backups.list()])
+        s = state.settings()
+        return jsonify(sets=[x.to_json() for x in state.backups.list()], backupFolder=s.get("backupFolder") or "", lastCopy=s.get("lastCopy"))
+
+    @app.post("/api/backups/<set_id>/keep")
+    def backup_keep(set_id: str):
+        body = request.get_json(silent=True) or {}
+        try:
+            s = state.backups.set_keep(set_id, bool(body.get("keep", True)))
+        except FileNotFoundError as e:
+            return deny(404, str(e))
+        except OSError as e:
+            return deny(409, f"could not update the set: {e}")
+        return jsonify(ok=True, set=s.to_json())
+
+    @app.get("/api/settings")
+    def get_settings():
+        return jsonify(settings=state.settings())
+
+    @app.post("/api/settings")
+    def set_settings():
+        body = request.get_json(silent=True) or {}
+        allowed = {k: v for k, v in body.items() if k in ("backupFolder",) and isinstance(v, str)}
+        if not allowed:
+            return deny(400, "nothing to set (backupFolder)")
+        return jsonify(ok=True, settings=state.update_settings(**allowed))
+
+    @app.post("/api/backups/copy-staging")
+    def copy_staging():
+        body = request.get_json(silent=True) or {}
+        folder = str(body.get("folder") or state.settings().get("backupFolder") or "").strip()
+        if not folder:
+            return deny(400, "choose a backup folder first (outside the repo)")
+        try:
+            result = state.backups.copy_staging(Path(folder), include_kept=body.get("includeKept", True) is not False)
+        except (FileNotFoundError, ValueError) as e:
+            return deny(400, str(e))
+        except OSError as e:
+            log.warning("copy-staging failed: %s", e)
+            return deny(409, f"the copy stopped: {e}")
+        state.update_settings(backupFolder=folder, lastCopy=result)
+        log.info("copied staging/ to %s (%d files)", result["folder"], result["files"])
+        return jsonify(ok=True, **result)
 
     @app.get("/api/backups/<set_id>/file")
     def backup_file(set_id: str):

@@ -2,6 +2,7 @@
 
 import json
 import unittest
+from pathlib import Path
 
 from _helpers import TempRepo
 from app import EditorState, create_app
@@ -135,6 +136,61 @@ class SaveTests(unittest.TestCase):
             r = c.get(f"/api/backups/{older}/file?path=../{newer}/js/translations.js", headers=hdr())
             self.assertEqual(r.status_code, 404)
 
+    def test_keep_flag_survives_pruning_and_copy_staging_goes_outside_the_repo(self):
+        import core.backups as backups_mod
+
+        with TempRepo() as t:
+            state, c = make(t)
+            b = state.backups
+            first = b.create(["js/translations.js"], "one")
+            second = b.create(["js/translations.js"], "two")
+            r = c.post(f"/api/backups/{first.id}/keep", headers=hdr(), json={"keep": True})
+            self.assertEqual((r.status_code, r.get_json()["set"]["keep"]), (200, True))
+            self.assertEqual(c.post("/api/backups/nope/keep", headers=hdr(), json={"keep": True}).status_code, 404)
+            sets = {s["id"]: s["keep"] for s in c.get("/api/backups", headers=hdr()).get_json()["sets"]}
+            self.assertEqual(sets, {first.id: True, second.id: False})
+            orig = backups_mod.KEEP_SETS
+            backups_mod.KEEP_SETS = 1
+            try:
+                third = b.create(["js/translations.js"], "three")
+            finally:
+                backups_mod.KEEP_SETS = orig
+            ids = [s.id for s in b.list()]
+            self.assertIn(first.id, ids)  # kept: survives the window
+            self.assertIn(third.id, ids)  # the newest of the unkept
+            self.assertNotIn(second.id, ids)  # beyond the window of 1
+            b.set_keep(first.id, False)
+            self.assertFalse(b.get(first.id).keep)
+            b.set_keep(first.id, True)
+            # copy staging: refused inside the repo or to a missing folder, then a real copy with the kept set
+            (t.root / "staging" / "cv-masters").mkdir(parents=True)
+            (t.root / "staging" / "cv-masters" / "m.docx").write_bytes(b"docx")
+            (t.root / "staging" / "cv-masters" / "~$m.docx").write_bytes(b"lock")
+            self.assertEqual(c.post("/api/backups/copy-staging", headers=hdr(), json={}).status_code, 400)  # no folder yet
+            self.assertEqual(c.post("/api/backups/copy-staging", headers=hdr(), json={"folder": str(t.root / "staging")}).status_code, 400)
+            self.assertEqual(c.post("/api/backups/copy-staging", headers=hdr(), json={"folder": str(t.dir / "nowhere")}).status_code, 400)
+            dest = t.dir / "outside"
+            dest.mkdir()
+            r = c.post("/api/backups/copy-staging", headers=hdr(), json={"folder": str(dest)})
+            self.assertEqual(r.status_code, 200, r.get_json())
+            j = r.get_json()
+            folder = Path(j["folder"])
+            self.assertTrue(folder.is_relative_to(dest))
+            self.assertTrue((folder / "staging" / "cv-masters" / "m.docx").is_file())
+            self.assertFalse((folder / "staging" / "cv-masters" / "~$m.docx").exists())  # Word owner files are skipped
+            self.assertTrue((folder / "backups" / first.id / "js" / "translations.js").is_file())
+            self.assertFalse((folder / "backups" / third.id).exists())  # not kept
+            self.assertEqual(j["kept"], [first.id])
+            self.assertEqual(j["files"], 4)  # m.docx + the fixture's staging/secret.txt + the kept set's file + its manifest
+            s = c.get("/api/settings", headers=hdr()).get_json()["settings"]
+            self.assertEqual(s["backupFolder"], str(dest))
+            self.assertEqual(s["lastCopy"]["folder"], j["folder"])
+            self.assertEqual(c.get("/api/backups", headers=hdr()).get_json()["backupFolder"], str(dest))
+            # the saved folder is used when none is sent; a second copy gets its own folder
+            r2 = c.post("/api/backups/copy-staging", headers=hdr(), json={}).get_json()
+            self.assertNotEqual(r2["folder"], j["folder"])
+            self.assertEqual(c.post("/api/settings", headers=hdr(), json={"other": 1}).status_code, 400)
+
     def test_write_failure_returns_409_and_leaves_file_and_drafts_alone(self):
         import app as app_mod
         import core.backups as backups_mod
@@ -233,7 +289,9 @@ class SecurityTests(unittest.TestCase):
                          "/api/content/field", "/api/content/text", "/api/content/add", "/api/content/delete", "/api/content/shell",
                          "/api/content/tag", "/api/content/tag/delete", "/api/content/save", "/api/content/drafts/discard", "/api/content/reload",
                          "/api/content/images/delete", "/api/cvtext/import", "/api/cvtext/op", "/api/cvtext/save", "/api/cvtext/drafts/discard",
-                         "/api/cvtext/reload", "/api/cvtext/autosave/restore", "/api/cvtext/autosave/discard", "/api/cvtext/apply", "/api/cvtext/crosscheck"):
+                         "/api/cvtext/reload", "/api/cvtext/autosave/restore", "/api/cvtext/autosave/discard", "/api/cvtext/apply", "/api/cvtext/crosscheck",
+                         "/api/backups/x/keep", "/api/backups/copy-staging", "/api/settings", "/api/content/about/add", "/api/content/about/order", "/api/content/about/shown",
+                         "/api/content/rename"):
                 r = c.post(path, headers={"Host": HOST}, json={"lang": "es", "key": "navAbout", "value": "X", "set": "x"})
                 self.assertEqual(r.status_code, 403, path)
                 r = c.post(path, headers={"Host": HOST, "X-Editor-Token": "wrong"}, json={"lang": "es", "key": "navAbout", "value": "X"})
@@ -250,7 +308,7 @@ class SecurityTests(unittest.TestCase):
             self.assertEqual(c.get("/api/cv/publish-plan", headers={"Host": HOST}).status_code, 403)
             self.assertEqual(c.get("/cv", headers={"Host": HOST}).status_code, 200)
             for path in ("/api/transcript/state", "/api/transcript/review", "/api/transcript/job", "/api/transcript/publish-plan",
-                         "/api/content/state", "/api/content/review", "/api/cvtext/state", "/api/cvtext/review", "/api/cvtext/drift"):
+                         "/api/content/state", "/api/content/review", "/api/cvtext/state", "/api/cvtext/review", "/api/cvtext/drift", "/api/settings", "/api/backups"):
                 self.assertEqual(c.get(path, headers={"Host": HOST}).status_code, 403, path)
             self.assertEqual(c.get("/transcript", headers={"Host": HOST}).status_code, 200)
             self.assertEqual(c.get("/content", headers={"Host": HOST}).status_code, 200)

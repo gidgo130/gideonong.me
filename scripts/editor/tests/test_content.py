@@ -251,6 +251,117 @@ class AboutTests(unittest.TestCase):
             self.assertEqual((t.root / "about.html").read_bytes(), before_page)
 
 
+class RenameTests(unittest.TestCase):
+    def test_rename_project_cascades_previews_saves_and_renames_back(self):
+        with TempRepo() as t:
+            files = ("js/projects-data.js", "js/experience-data.js", "js/translations.js")
+            before = {rel: (t.root / rel).read_bytes() for rel in files}
+            shell_before = (t.root / "projects/pump-cylinder-failure.html").read_bytes()
+            folder = t.root / "assets/images/projects/pump-cylinder-failure"
+            folder_files = sorted(p.name for p in folder.iterdir())
+            self.assertTrue(folder_files)
+            st = make(t)
+            c = st.content
+            orig_title = st.site.value("en", "projPumpCylinderFailureTitle")
+            for bad in ("Bad Slug", "g-view", "pump-cylinder-failure"):
+                with self.assertRaises(ValueError, msg=bad):
+                    c.rename_entry("projects", "pump-cylinder-failure", bad)
+            with self.assertRaises(KeyError):
+                c.rename_entry("projects", "nobody", "x")
+            s = c.rename_entry("projects", "pump-cylinder-failure", "pump-failure")
+            self.assertEqual((s["from"], s["to"]), ("pump-cylinder-failure", "pump-failure"))
+            self.assertIn(["projPumpCylinderFailureTitle", "projPumpFailureTitle"], s["keys"])
+            self.assertEqual(s["keysKept"], [])
+            self.assertGreaterEqual(s["paths"], 8)  # image, thumbnail, 5 photos, subpageUrl …
+            self.assertEqual(s["references"], ["role machine-shop › image link", "role machine-shop › image path"])  # the band image sits in the project's folder
+            self.assertEqual(s["files"], [["projects/pump-cylinder-failure.html", "projects/pump-failure.html"], ["assets/images/projects/pump-cylinder-failure/", "assets/images/projects/pump-failure/"]])
+            # the live entry, its keys and paths, the role's link
+            e = c.entry("projects", "pump-failure")
+            self.assertIsNone(c.entry("projects", "pump-cylinder-failure"))
+            self.assertEqual((e["titleKey"], e["subpageUrl"], e["imageSrc"].split("/")[3]), ("projPumpFailureTitle", "/projects/pump-failure.html", "pump-failure"))
+            self.assertTrue(all(ph["src"].startswith("assets/images/projects/pump-failure/") for ph in e["page"]["photos"]))
+            self.assertEqual(c.entry("experience", "machine-shop")["imageLink"], "projects/pump-failure.html")
+            self.assertTrue(c.entry("experience", "machine-shop")["imageSrc"].startswith("assets/images/projects/pump-failure/"))
+            en, es = c.texts()
+            self.assertEqual(en["projPumpFailureTitle"], st.site.value("en", "projPumpCylinderFailureTitle"))
+            self.assertNotIn("projPumpCylinderFailureTitle", en)
+            self.assertEqual(c.text("projPumpFailureTitle", "es"), st.site.value("es", "projPumpCylinderFailureTitle"))
+            # editing text on the renamed entry lands on the disk key as a site draft, not as a new key
+            c.set_text("projects", "pump-failure", "title", "en", "Pump failure")
+            self.assertEqual(st.drafts.get("en.projPumpCylinderFailureTitle"), "Pump failure")
+            self.assertEqual(c.drafts["newKeys"], {})
+            # preview: the new sub-page and image paths are served before anything is saved
+            ov = c.preview_overrides()
+            self.assertIn(b'data-slug="pump-failure"', ov["projects/pump-failure.html"])
+            self.assertEqual(ov[f"assets/images/projects/pump-failure/{folder_files[0]}"], folder / folder_files[0])
+            self.assertTrue(c.gate().ok(), c.gate().to_json())  # the dev check sees the moved files
+            rev = c.review()
+            self.assertTrue(rev["changes"][0]["text"].startswith("Rename project “pump-cylinder-failure” → “pump-failure”"), rev["changes"][0])
+            self.assertEqual([m["kind"] for m in rev["renames"]], ["file", "folder"])
+            self.assertEqual(sorted(f["path"] for f in rev["files"]), sorted(files))
+            self.assertEqual(c.state_json()["renamed"], {"projects": {"pump-failure": "pump-cylinder-failure"}})
+            self.assertIn("pump-failure", [p["slug"] for p in c.state_json()["projects"] if p["_draft"]])
+            res = c.save()
+            self.assertTrue(res["ok"], res)
+            self.assertFalse((t.root / "projects/pump-cylinder-failure.html").exists())
+            self.assertIn(b'data-slug="pump-failure"', (t.root / "projects/pump-failure.html").read_bytes())
+            self.assertFalse(folder.exists())
+            self.assertEqual(sorted(p.name for p in (t.root / "assets/images/projects/pump-failure").iterdir()), folder_files)
+            tr = t.translations.read_text(encoding="utf-8")
+            self.assertIn("projPumpFailureTitle: ", tr)
+            self.assertNotIn("projPumpCylinderFailure", tr)
+            self.assertIn('imageLink: "projects/pump-failure.html"', (t.root / "js/experience-data.js").read_text(encoding="utf-8"))
+            self.assertEqual(c.draft_count(), 0)
+            bset = st.backups.get(res["backup"])
+            self.assertIn("projects/pump-cylinder-failure.html", [f["path"] for f in bset.files])
+            self.assertTrue(all(f"assets/images/projects/pump-cylinder-failure/{n}" in [f["path"] for f in bset.files] for n in folder_files))
+            en2, es2 = st.site.as_dicts()
+            self.assertEqual([x for x in datacheck.check(t.root, en2, es2, c.files["projects"].entries(), c.files["experience"].entries(), c.files["tags"].entries()) if x.level == "error"], [])
+            # rename back: everything byte-identical (keys were renamed in place)
+            c.rename_entry("projects", "pump-failure", "pump-cylinder-failure")
+            c.set_text("projects", "pump-cylinder-failure", "title", "en", orig_title)
+            self.assertTrue(c.save()["ok"])
+            for rel in files:
+                self.assertEqual((t.root / rel).read_bytes(), before[rel], rel)
+            self.assertEqual((t.root / "projects/pump-cylinder-failure.html").read_bytes(), shell_before)
+            self.assertEqual(sorted(p.name for p in folder.iterdir()), folder_files)
+
+    def test_rename_role_and_undo_by_delete(self):
+        with TempRepo() as t:
+            st = make(t)
+            c = st.content
+            projects_of = [p["slug"] for p in c.live_entries("projects") if p.get("experience") == "baker-hughes"]
+            self.assertTrue(projects_of)
+            s = c.rename_entry("experience", "baker-hughes", "bh")
+            self.assertEqual(c.entry("experience", "bh")["roleKey"], "expBhRole")
+            self.assertTrue(all(c.entry("projects", p)["experience"] == "bh" for p in projects_of))
+            self.assertEqual(c.entry("experience", "bh")["imageLink"], "projects.html?part=bh")
+            self.assertEqual(len(s["references"]), len(projects_of) + 1)
+            self.assertTrue(c.gate().ok(), c.gate().to_json())
+            # a rename of a rename maps to the disk slug once
+            c.rename_entry("experience", "bh", "baker")
+            self.assertEqual(c.state_json()["renamed"], {"experience": {"baker": "baker-hughes"}})
+            self.assertEqual(c.drafts["renames"]["keys"]["expBakerRole"], "expBakerHughesRole")
+            self.assertNotIn("expBhRole", c.drafts["renames"]["keys"])
+            # deleting the renamed entry undoes the rename and deletes the disk entry
+            c.delete_entry("experience", "baker")
+            self.assertIsNone(c.drafts["entries"]["experience"]["baker-hughes"])
+            self.assertEqual(c.drafts["renames"]["entries"], {"experience": {}})
+            self.assertEqual(c.drafts["renames"]["keys"], {})
+            self.assertIn("expBakerHughesRole", c.drafts["removedKeys"])
+            c.discard_drafts()
+            self.assertEqual(c.draft_count(), 0)
+            # a new (unsaved) entry renamed before its first save just renames its pending keys and shell
+            c.add_entry("projects", "brand-new", "New", "Nuevo")
+            c.create_shell("brand-new")
+            c.rename_entry("projects", "brand-new", "newer")
+            self.assertIn("projNewerTitle", c.drafts["newKeys"])
+            self.assertNotIn("projBrandNewTitle", c.drafts["newKeys"])
+            self.assertEqual(c.drafts["shells"], {"newer": "create"})
+            self.assertEqual(c.drafts["renames"]["files"], {})
+            self.assertEqual(c.entry("projects", "newer")["subpageUrl"], "/projects/newer.html")
+
+
 class ContentServiceTests(unittest.TestCase):
     def test_add_edit_hide_delete_round_trip(self):
         with TempRepo() as t:

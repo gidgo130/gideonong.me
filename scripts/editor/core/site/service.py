@@ -1,10 +1,16 @@
 """What the Content page talks to. Owned by app.EditorState as `content`.
 
 Drafts (autosaved to .local/drafts/content.json):
-    entries:     {file: {slug: entry dict | None (delete)}}   — full live entry
+    entries:     {file: {slug: entry dict | None (delete)}}   — full live entry, keyed by the
+                                                                 slug ON DISK (a renamed entry
+                                                                 keeps its disk key)
     newKeys:     {key: {"en": str, "es": str}}                — keys not on disk yet
     removedKeys: [key, ...]                                   — keys to delete
     shells:      {slug: "create" | "delete"}                  — projects/<slug>.html
+    renames:     {entries: {file: {new slug: disk slug}},     — the slug-rename wizard:
+                  keys: {new key: old key},                      keys renamed in place in
+                  files: {old rel: new rel},                     translations.js, files and
+                  summary: {file: {new slug: {...}}}}            folders moved on save
 Text edits to keys that exist on disk go through the Site text drafts
 (EditorState.set_draft), so both tabs share one translations.js review.
 """
@@ -14,6 +20,7 @@ from __future__ import annotations
 import copy
 import json
 import logging
+import os
 import re
 import time
 from datetime import date, datetime
@@ -57,7 +64,27 @@ class ContentService:
     @staticmethod
     def _empty() -> dict:
         return {"entries": {"projects": {}, "experience": {}, "tags": {}, "about": {}}, "newKeys": {}, "removedKeys": [], "shells": {}, "images": {}, "removedImages": [],
-                "aboutOrder": {}, "aboutShown": {}}
+                "aboutOrder": {}, "aboutShown": {}, "renames": {"entries": {}, "keys": {}, "files": {}, "summary": {}}}
+
+    def _normalize(self) -> None:
+        """Fill in draft parts an older autosave may lack."""
+        for k, v in self._empty().items():
+            if k not in self.drafts:
+                self.drafts[k] = v
+        for k, v in self._empty()["renames"].items():
+            self.drafts["renames"].setdefault(k, v)
+        self.drafts["entries"].setdefault("about", {})
+
+    # ------------------------------------------------------------- the slug-rename map
+    def _disk_ident(self, name: str, ident: str) -> str:
+        """The slug an entry has on disk (a pending rename maps the new slug back to it)."""
+        return self.drafts["renames"]["entries"].get(name, {}).get(ident, ident)
+
+    def _new_ident(self, name: str, disk_ident: str) -> str:
+        for new, old in self.drafts["renames"]["entries"].get(name, {}).items():
+            if old == disk_ident:
+                return new
+        return disk_ident
 
     @property
     def image_staging(self) -> Path:
@@ -65,6 +92,7 @@ class ContentService:
 
     # ------------------------------------------------------------- loading
     def load(self) -> None:
+        self._normalize()
         for name in FILES:
             try:
                 self.files[name] = aboutmod.AboutFile(self.repo_root) if name == "about" else DataFile(self.repo_root, name)
@@ -148,23 +176,27 @@ class ContentService:
         return None
 
     def _working(self, name: str, ident: str) -> dict:
-        """The draft copy of an entry, created on first touch."""
+        """The draft copy of an entry, created on first touch (keyed by its slug on disk)."""
         d = self.drafts["entries"][name]
-        if ident in d and d[ident] is not None:
-            return d[ident]
+        key = self._disk_ident(name, ident)
+        if key in d and d[key] is not None:
+            return d[key]
         e = self.entry(name, ident)
         if e is None:
             raise KeyError(f"{name}/{ident}")
-        d[ident] = copy.deepcopy(e)
-        return d[ident]
+        d[key] = copy.deepcopy(e)
+        return d[key]
 
     def _settle(self, name: str, ident: str) -> None:
         """Drop the draft when it equals the disk entry again."""
         f = self.files[name]
         d = self.drafts["entries"][name]
-        disk = next((e for e in f.entries() if e[f.id_field] == ident), None)
-        if disk is not None and d.get(ident) == disk:
-            d.pop(ident)
+        key = self._disk_ident(name, ident)
+        disk = next((e for e in f.entries() if e[f.id_field] == key), None)
+        if disk is not None and d.get(key) == disk:
+            d.pop(key)
+            self.drafts["renames"]["entries"].get(name, {}).pop(ident, None)
+            self.drafts["renames"]["summary"].get(name, {}).pop(ident, None)
         self._write_autosave()
 
     def texts(self) -> tuple[dict, dict]:
@@ -176,9 +208,15 @@ class ContentService:
         for k in self.drafts["removedKeys"]:
             en.pop(k, None)
             es.pop(k, None)
+        for new, old in self.drafts["renames"]["keys"].items():
+            if old in en:
+                en[new] = en.pop(old)
+            if old in es:
+                es[new] = es.pop(old)
         return en, es
 
     def text(self, key: str, lang: str) -> Optional[str]:
+        key = self.drafts["renames"]["keys"].get(key, key)
         if key in self.drafts["newKeys"]:
             return self.drafts["newKeys"][key].get(lang, "")
         if key in self.drafts["removedKeys"]:
@@ -217,6 +255,8 @@ class ContentService:
         if not key:
             key = keymod.key_for(name, ident, field)
             keymod.set_path(e, path, key)
+        stored = key
+        key = self.drafts["renames"]["keys"].get(key, key)  # a renamed key is still its old self on disk
         site = self.state.site
         on_disk = site is not None and (site.value("en", key) is not None or site.value("es", key) is not None)
         if on_disk and key not in self.drafts["removedKeys"]:
@@ -230,7 +270,7 @@ class ContentService:
                 self.drafts["removedKeys"].remove(key)
             self.drafts["newKeys"].setdefault(key, {"en": "", "es": ""})[lang] = value
         self._settle(name, ident)
-        return key
+        return stored
 
     def add_entry(self, name: str, ident: str, title_en: str = "", title_es: str = "") -> dict:
         if self.read_only:
@@ -269,6 +309,143 @@ class ContentService:
             self.set_text(name, ident, "org", "es", "")
         self._write_autosave()
         return self.entry(name, ident)
+
+    # ------------------------------------------------------------- the slug-rename wizard
+    def rename_entry(self, name: str, old: str, new: str) -> dict:
+        """Rename a project's or role's slug everywhere, as a draft: the entry, its keys (in
+        place in translations.js), its image paths and sub-page URL, references from other
+        entries, the sub-page file and the image folder (moved on save)."""
+        if self.read_only:
+            raise RuntimeError(self.read_only)
+        if name not in ("projects", "experience"):
+            raise ValueError("only projects and roles have slugs")
+        new = (new or "").strip()
+        problem = keymod.valid_slug(new)
+        if problem:
+            raise ValueError(problem)
+        if new == old:
+            raise ValueError("that is the current slug")
+        f = self.files[name]
+        if any(e.get("slug") == new for e in self.live_entries(name)):
+            raise ValueError(f"“{new}” already exists")
+        e = self.entry(name, old)
+        if e is None:
+            raise KeyError(f"{name}/{old}")
+        disk_ident = self._disk_ident(name, old)
+        if self.drafts["entries"][name].get(disk_ident, "x") is None:
+            raise ValueError("this entry is marked for deletion")
+        w = self._working(name, old)
+        kind = "projects" if name == "projects" else "experience"
+        old_prefix, new_prefix = keymod.entry_prefix(name, old), keymod.entry_prefix(name, new)
+        summary = {"from": old, "to": new, "keys": [], "keysKept": [], "paths": 0, "references": [], "files": []}
+        # 1. keys: rename every key that follows the convention and belongs to this entry alone
+        others: set[str] = set()
+        for n in FILES:
+            for other in self.live_entries(n):
+                if n == name and other.get("slug") == old:
+                    continue
+                others |= keymod.referenced_keys(n, other)
+        rename_map: dict[str, str] = {}
+        for k in sorted(keymod.referenced_keys(name, e)):
+            follows = k.startswith(old_prefix) and (len(k) == len(old_prefix) or k[len(old_prefix)].isupper() or k[len(old_prefix)].isdigit())
+            if follows and k not in others:
+                rename_map[k] = new_prefix + k[len(old_prefix):]
+            else:
+                summary["keysKept"].append(k)
+        _replace_strings(w, rename_map)
+        for k_old, k_new in rename_map.items():
+            if k_old in self.drafts["newKeys"]:  # not on disk yet: just rename the pending key
+                self.drafts["newKeys"][k_new] = self.drafts["newKeys"].pop(k_old)
+            else:
+                origin = self.drafts["renames"]["keys"].pop(k_old, k_old)  # a rename of a rename keeps the disk name
+                if origin == k_new:
+                    continue
+                self.drafts["renames"]["keys"][k_new] = origin
+            summary["keys"].append([k_old, k_new])
+        # 2. paths inside the entry
+        folder_old, folder_new = f"assets/images/{kind}/{old}/", f"assets/images/{kind}/{new}/"
+        summary["paths"] = _replace_prefix(w, folder_old, folder_new)
+        if name == "projects" and w.get("subpageUrl") == f"/projects/{old}.html":
+            w["subpageUrl"] = f"/projects/{new}.html"
+            summary["paths"] += 1
+        # 3. references from other entries
+        if name == "experience":
+            for p in self.live_entries("projects"):
+                if p.get("experience") == old:
+                    self._working("projects", p["slug"])["experience"] = new
+                    summary["references"].append(f"project {p['slug']} › Part of")
+        forms = {f"projects/{old}.html": f"projects/{new}.html"} if name == "projects" else {f"projects.html?part={old}": f"projects.html?part={new}"}
+        for x in self.live_entries("experience"):
+            link = x.get("imageLink") or ""
+            if link in forms:
+                target = w if (name == "experience" and x.get("slug") == old) else self._working("experience", x["slug"])
+                target["imageLink"] = forms[link]
+                summary["references"].append(f"role {x['slug']} › image link")
+        # files inside the moved folder that OTHER entries point at (a band image borrowed from a project)
+        for n in ("projects", "experience", "about"):
+            id_field = "id" if n == "about" else "slug"
+            for x in self.live_entries(n):
+                if n == name and x.get(id_field) == old:
+                    continue
+                if _replace_prefix(copy.deepcopy(x), folder_old, folder_new):
+                    _replace_prefix(self._working(n, x[id_field]), folder_old, folder_new)
+                    summary["references"].append(f"{'project' if n == 'projects' else 'role' if n == 'experience' else 'about'} {x[id_field]} › image path")
+        # 4. files: the sub-page shell and the image folder move on save
+        files = self.drafts["renames"]["files"]
+        if name == "projects":
+            shell_old, shell_new = f"projects/{old}.html", f"projects/{new}.html"
+            if self.drafts["shells"].get(old) == "create":
+                self.drafts["shells"].pop(old)
+                self.drafts["shells"][new] = "create"
+            elif (self.repo_root / shell_old).is_file() and self.drafts["shells"].get(old) != "delete":
+                origin = next((o for o, t in files.items() if t == shell_old), None)
+                if origin:
+                    files.pop(origin)
+                    if origin != shell_new:
+                        files[origin] = shell_new
+                else:
+                    files[shell_old] = shell_new
+                summary["files"].append([shell_old, shell_new])
+        if (self.repo_root / folder_old).is_dir():
+            origin = next((o for o, t in files.items() if t == folder_old), None)
+            if origin:
+                files.pop(origin)
+                if origin != folder_new:
+                    files[origin] = folder_new
+            else:
+                files[folder_old] = folder_new
+            summary["files"].append([folder_old, folder_new])
+        for rel in list(self.drafts["images"]):
+            if rel.startswith(folder_old):
+                self.drafts["images"][folder_new + rel[len(folder_old):]] = self.drafts["images"].pop(rel)
+        self.drafts["removedImages"] = [folder_new + r[len(folder_old):] if r.startswith(folder_old) else r for r in self.drafts["removedImages"]]
+        # 5. the slug itself; the draft stays under the disk slug
+        w["slug"] = new
+        ent = self.drafts["renames"]["entries"].setdefault(name, {})
+        ent.pop(old, None)
+        if new != disk_ident:
+            ent[new] = disk_ident
+        summ = self.drafts["renames"]["summary"].setdefault(name, {})
+        summ.pop(old, None)
+        summ[new] = summary
+        self._settle(name, new)
+        return dict(summary, entry=self.entry(name, new))
+
+    def _renamed_files(self) -> list[dict]:
+        """Pending moves as [{from, to, kind}] with the files a folder move carries."""
+        out = []
+        for old, new in self.drafts["renames"]["files"].items():
+            if old.endswith("/"):
+                folder = self.repo_root / old
+                names = sorted(p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file()) if folder.is_dir() else []
+                out.append({"from": old, "to": new, "kind": "folder", "files": names})
+            else:
+                out.append({"from": old, "to": new, "kind": "file", "files": []})
+        return out
+
+    def _renamed_shell_bytes(self, old_rel: str, new_slug: str) -> bytes:
+        text = (self.repo_root / old_rel).read_text(encoding="utf-8")
+        return re.sub(r'data-slug="[^"]*"', f'data-slug="{new_slug}"', text, count=1).encode("utf-8")
 
     # ------------------------------------------------------------- the About lists
     def add_about_entry(self, list_name: str, ident: str, en: str = "", es: str = "") -> dict:
@@ -340,8 +517,19 @@ class ContentService:
         e = self.entry(name, ident)
         if e is None:
             raise KeyError(ident)
-        mine = keymod.referenced_keys(name, e)
+        keys_map = self.drafts["renames"]["keys"]
+        mine = {keys_map.get(k, k) for k in keymod.referenced_keys(name, e)}  # renamed keys by their disk names
         d = self.drafts["entries"][name]
+        disk_ident = self._disk_ident(name, ident)
+        if disk_ident != ident:  # a pending rename: undo it, then delete the disk entry
+            self.drafts["renames"]["entries"].get(name, {}).pop(ident, None)
+            self.drafts["renames"]["summary"].get(name, {}).pop(ident, None)
+            for k_new in [k for k, v in keys_map.items() if v in mine]:
+                keys_map.pop(k_new)
+            kind = "projects" if name == "projects" else "experience"
+            for old_rel in [o for o, t in self.drafts["renames"]["files"].items() if t in (f"projects/{ident}.html", f"assets/images/{kind}/{ident}/")]:
+                self.drafts["renames"]["files"].pop(old_rel)
+            ident = disk_ident
         on_disk = ident in f.ids()
         if on_disk:
             d[ident] = None
@@ -425,7 +613,8 @@ class ContentService:
     def draft_count(self) -> int:
         d = self.drafts
         return (sum(len(v) for v in d["entries"].values()) + len(d["newKeys"]) + len(d["removedKeys"]) + len(d["shells"])
-                + len(d.get("images", {})) + len(d.get("removedImages", [])) + len(d.get("aboutOrder", {})) + len(d.get("aboutShown", {})))
+                + len(d.get("images", {})) + len(d.get("removedImages", [])) + len(d.get("aboutOrder", {})) + len(d.get("aboutShown", {}))
+                + len(d.get("renames", {}).get("files", {})))
 
     # ------------------------------------------------------------- images (Phase 5)
     IMAGE_FIELDS = {  # alt text field → the property path that holds the file
@@ -640,13 +829,18 @@ class ContentService:
         if self.read_only:
             return []
         en, es = self.texts()
+        renamed_to = set(self.drafts["renames"]["files"].values())
         shells = {}
         for e in self.live_entries("projects"):
             slug = e.get("slug")
             action = self.drafts["shells"].get(slug)
-            shells[slug] = action == "create" or (action != "delete" and (self.repo_root / "projects" / f"{slug}.html").is_file())
+            shells[slug] = action == "create" or (action != "delete" and (self.repo_root / "projects" / f"{slug}.html").is_file()) or f"projects/{slug}.html" in renamed_to
+        pending = set(self.drafts.get("images", {}))
+        for mv in self._renamed_files():
+            if mv["kind"] == "folder":
+                pending |= {mv["to"] + n for n in mv["files"]}
         return self._check(en, es, self.live_entries("projects"), self.live_entries("experience"), self.live_entries("tags"), shells,
-                           pending_files=set(self.drafts.get("images", {})), about=self.live_entries("about"), about_shown=self.about_shown())
+                           pending_files=pending, about=self.live_entries("about"), about_shown=self.about_shown())
 
     def touched(self) -> set[str]:
         t = {f"{n}:{ident}" for n, d in self.drafts["entries"].items() for ident in d}
@@ -676,7 +870,8 @@ class ContentService:
 
     def render_translations(self) -> bytes:
         site = self.state.site
-        return site.render(self.state.drafts, adds=self.drafts["newKeys"], removes=self.drafts["removedKeys"])
+        renames = {old: new for new, old in self.drafts["renames"]["keys"].items()}
+        return site.render(self.state.drafts, adds=self.drafts["newKeys"], removes=self.drafts["removedKeys"], renames=renames)
 
     def preview_overrides(self) -> dict:
         if self.read_only:
@@ -684,13 +879,22 @@ class ContentService:
         out = {}
         for n in self._touched_files():
             out[self.files[n].rel_path] = self.render_file(n)
-        if self.drafts["newKeys"] or self.drafts["removedKeys"]:
+        if self.drafts["newKeys"] or self.drafts["removedKeys"] or self.drafts["renames"]["keys"]:
             out[SiteText.REL_PATH] = self.render_translations()
         if self.drafts.get("aboutShown"):
             out[aboutmod.PAGE] = self.render_page()
         for slug, action in self.drafts["shells"].items():
             if action == "create":
                 out[f"projects/{slug}.html"] = self.shell_html(slug)
+        for mv in self._renamed_files():  # pending moves: the new paths serve the old files
+            if mv["kind"] == "file":
+                try:
+                    out[mv["to"]] = self._renamed_shell_bytes(mv["from"], Path(mv["to"]).stem)
+                except OSError:
+                    pass
+            else:
+                for n in mv["files"]:
+                    out[mv["to"] + n] = self.repo_root / mv["from"] / n
         for rel, info in self.drafts.get("images", {}).items():
             try:
                 out[rel] = Path(info["file"]).read_bytes()
@@ -711,7 +915,7 @@ class ContentService:
             files.append({"path": f.rel_path, "diff": unified_diff(f.raw, new, f.rel_path), "diskChanged": dc})
             changes += self._entry_changes(n)
         site = self.state.site
-        if self.drafts["newKeys"] or self.drafts["removedKeys"] or self.state.drafts:
+        if self.drafts["newKeys"] or self.drafts["removedKeys"] or self.state.drafts or self.drafts["renames"]["keys"]:
             from .. import review as review_mod
 
             new = self.render_translations()
@@ -727,6 +931,12 @@ class ContentService:
             changes.append({"text": f"Text › removed: {k}"})
         for lst in self.drafts.get("aboutOrder", {}):
             changes.append({"text": f"About › {aboutmod.LABELS[lst]}: order changed"})
+        for n, summ in self.drafts["renames"]["summary"].items():
+            for new, s in summ.items():
+                label = "project" if n == "projects" else "role"
+                bits = [f"{len(s['keys'])} key(s) renamed in place", f"{s['paths']} path(s)"] + [f"{len(s['references'])} reference(s) in other entries"] * bool(s["references"]) + [f"{len(s['files'])} file / folder move(s)"] * bool(s["files"])
+                changes.insert(0, {"text": f"Rename {label} “{s['from']}” → “{new}”: " + ", ".join(bits) + (" — keys kept as they are: " + ", ".join(s["keysKept"]) if s["keysKept"] else "")})
+        renames = self._renamed_files()
         if self.drafts.get("aboutShown"):
             new = self.render_page()
             dc = self.page_disk_changed()
@@ -747,10 +957,11 @@ class ContentService:
             "shells": shells,
             "assets": assets,
             "siteTextDrafts": len(self.state.drafts),
+            "renames": renames,
             "gate": gate.to_json(),
             "siteTextGate": site_gate.to_json(),
             "diskChanged": disk_changed,
-            "noop": not files and not shells and not assets,
+            "noop": not files and not shells and not assets and not renames,
         }
 
     def _entry_changes(self, name: str) -> list[dict]:
@@ -786,7 +997,7 @@ class ContentService:
             if self.files[n].disk_changed():
                 return {"ok": False, "error": "changed-on-disk", "message": f"{self.files[n].rel_path} changed on disk since it was loaded. Reload and re-apply your edits."}
         site = self.state.site
-        write_site = bool(self.drafts["newKeys"] or self.drafts["removedKeys"] or self.state.drafts)
+        write_site = bool(self.drafts["newKeys"] or self.drafts["removedKeys"] or self.state.drafts or self.drafts["renames"]["keys"])
         if write_site and site.disk_changed():
             return {"ok": False, "error": "changed-on-disk", "message": "js/translations.js changed on disk since it was loaded. Reload and re-apply your edits."}
         write_page = bool(self.drafts.get("aboutShown"))
@@ -803,9 +1014,23 @@ class ContentService:
         paths += [f"projects/{s}.html" for s, a in self.drafts["shells"].items() if a == "delete"]
         paths += [rel for rel, i in self.drafts.get("images", {}).items() if i.get("replace")]
         paths += list(self.drafts.get("removedImages", []))
+        moves = self._renamed_files()
+        for mv in moves:
+            paths += [mv["from"]] if mv["kind"] == "file" else [mv["from"] + n for n in mv["files"]]
+            if (self.repo_root / mv["to"]).exists():
+                return {"ok": False, "error": "blocked", "message": f"{mv['to']} already exists — the rename cannot move {mv['from']} there."}
         bset = self.state.backups.create(paths, "before saving content")
         written = []
         try:
+            for mv in moves:  # moves first, so the data files never point at files that are not there yet
+                src, dst = self.repo_root / mv["from"], self.repo_root / mv["to"]
+                if mv["kind"] == "file":
+                    atomic_write(dst, self._renamed_shell_bytes(mv["from"], Path(mv["to"]).stem))
+                    src.unlink()
+                else:
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    os.rename(src, dst)
+                written.append(f"{mv['from']} → {mv['to']}")
             for rel, info in self.drafts.get("images", {}).items():
                 dst = self.repo_root / rel
                 dst.parent.mkdir(parents=True, exist_ok=True)
@@ -878,7 +1103,7 @@ class ContentService:
         by_owner: dict[str, list] = {}
         for i in issues:
             by_owner.setdefault(i.key, []).append(i.to_json())
-        drafted = {n: list(d) for n, d in self.drafts["entries"].items()}
+        drafted = {n: [self._new_ident(n, k) for k in d] for n, d in self.drafts["entries"].items()}
         projects = order.projects_display(self.live_entries("projects")) if not self.read_only else []
         experience = order.experience_display(self.live_entries("experience")) if not self.read_only else []
         tags = self.live_entries("tags") if not self.read_only else []
@@ -909,7 +1134,8 @@ class ContentService:
             "draftCount": self.draft_count(),
             "siteTextDrafts": len(self.state.drafts),
             "shells": self.drafts["shells"],
-            "shellsOnDisk": sorted(p.stem for p in (self.repo_root / "projects").glob("*.html")),
+            "renamed": self.drafts["renames"]["entries"],
+            "shellsOnDisk": sorted(p.stem for p in (self.repo_root / "projects").glob("*.html")) + [Path(t).stem for t in self.drafts["renames"]["files"].values() if t.endswith(".html")],
             "images": self.images() + [{"path": rel, "size": i["kb"] * 1024, "pending": True} for rel, i in self.drafts.get("images", {}).items() if not (self.repo_root / rel).is_file()],
             "pendingImages": {rel: {k: v for k, v in i.items() if k != "file"} for rel, i in self.drafts.get("images", {}).items()},
             "presets": {k: v["label"] for k, v in __import__("core.site.images", fromlist=["PRESETS"]).PRESETS.items()},
@@ -936,3 +1162,44 @@ class ContentService:
 
 def _esc(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _replace_strings(obj: Any, mapping: dict) -> int:
+    """Replace, in place, every string value of a nested dict / list that is a key of `mapping`."""
+    n = 0
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if isinstance(v, str) and v in mapping:
+                obj[k] = mapping[v]
+                n += 1
+            else:
+                n += _replace_strings(v, mapping)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, str) and v in mapping:
+                obj[i] = mapping[v]
+                n += 1
+            else:
+                n += _replace_strings(v, mapping)
+    return n
+
+
+def _replace_prefix(obj: Any, old: str, new: str) -> int:
+    """Replace, in place, the prefix of every string value that starts with `old`."""
+    n = 0
+    if isinstance(obj, dict):
+        items = list(obj.items())
+        for k, v in items:
+            if isinstance(v, str) and v.startswith(old):
+                obj[k] = new + v[len(old):]
+                n += 1
+            else:
+                n += _replace_prefix(v, old, new)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, str) and v.startswith(old):
+                obj[i] = new + v[len(old):]
+                n += 1
+            else:
+                n += _replace_prefix(v, old, new)
+    return n

@@ -69,8 +69,13 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      a private Word instance as a second standing route, a cross-check that
                      reruns the last apply through the other route and compares, and Export &
                      check from the tab (publish stays on the CV & résumé tab). Phase 4 is
-                     complete. Its .local/ (backups, logs, drafts, WebView2 storage) is
-                     gitignored. It never runs git write commands.
+                     complete. Also (2026-09-29): "Duplicate into <document>" on the CV text
+                     tab; Content › About (js/about-data.js + the hidden flags in about.html);
+                     the slug-rename wizard (core/site/service.py rename_entry: keys renamed in
+                     place in translations.js, paths, references, shell and image folder moved
+                     on save); backup sets can be kept (never pruned) and staging/ + kept sets
+                     copied to a folder outside the repo. Its .local/ (backups, logs, drafts,
+                     settings, WebView2 storage) is gitignored. It never runs git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit
 assets/images/      Project photos and diagrams
 assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)

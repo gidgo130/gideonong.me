@@ -3,8 +3,14 @@
 Before any overwrite the original is copied to
     scripts/editor/.local/backups/<YYYYMMDD-HHMMSS>/<same relative path>
 with a manifest.json beside it. Sets older than 60 days, or beyond the newest
-100, are pruned after each new backup. A restore backs up the current file
-first, so a restore is itself undoable.
+100, are pruned after each new backup — except sets marked KEEP (manifest
+"keep": true), which stay for good and do not count toward the 100. A restore
+backs up the current file first, so a restore is itself undoable.
+
+copy_staging() copies the private staging/ folder (masters, content set, slot
+maps, exports, blocklist) and every kept set into a timestamped folder under a
+destination OUTSIDE the repo (OneDrive, an external drive): the one copy that
+survives a lost disk or a re-clone.
 """
 
 from __future__ import annotations
@@ -50,9 +56,10 @@ class BackupSet:
     created: str
     reason: str
     files: list[dict]
+    keep: bool = False
 
     def to_json(self) -> dict:
-        return {"id": self.id, "created": self.created, "reason": self.reason, "files": self.files}
+        return {"id": self.id, "created": self.created, "reason": self.reason, "files": self.files, "keep": self.keep}
 
 
 class Backups:
@@ -115,7 +122,7 @@ class Backups:
             if m.is_file():
                 try:
                     j = json.loads(m.read_text(encoding="utf-8"))
-                    sets.append(BackupSet(d.name, j.get("created", ""), j.get("reason", ""), j.get("files", [])))
+                    sets.append(BackupSet(d.name, j.get("created", ""), j.get("reason", ""), j.get("files", []), bool(j.get("keep"))))
                     continue
                 except (OSError, ValueError):
                     pass
@@ -134,6 +141,25 @@ class Backups:
             if s.id == set_id:
                 return s
         return None
+
+    def set_keep(self, set_id: str, keep: bool) -> BackupSet:
+        """Mark a set as kept (never pruned) or let it expire again."""
+        s = self.get(set_id)
+        if s is None:
+            raise FileNotFoundError(f"no backup set {set_id!r}")
+        m = self.dir / set_id / "manifest.json"
+        try:
+            j = json.loads(m.read_text(encoding="utf-8")) if m.is_file() else {}
+        except (OSError, ValueError):
+            j = {}
+        j.setdefault("id", s.id)
+        j.setdefault("created", s.created)
+        j.setdefault("reason", s.reason)
+        j.setdefault("files", s.files)
+        j["keep"] = bool(keep)
+        atomic_write(m, json.dumps(j, indent=2, ensure_ascii=False).encode("utf-8"))
+        s.keep = bool(keep)
+        return s
 
     def read_file(self, set_id: str, rel: str) -> Optional[bytes]:
         if not _SET_ID_RE.match(set_id or ""):
@@ -167,15 +193,63 @@ class Backups:
 
     # ------------------------------------------------------------ prune
     def prune(self) -> list[str]:
+        """Drop expiring sets: older than KEEP_DAYS or beyond the newest KEEP_SETS. Kept sets
+        (manifest "keep": true) are never dropped and are not counted."""
         removed = []
         sets = [d for d in sorted(self.dir.iterdir(), reverse=True) if d.is_dir() and _SET_ID_RE.match(d.name)]
         cutoff = datetime.now() - timedelta(days=KEEP_DAYS)
-        for i, d in enumerate(sets):
+        rank = 0
+        for d in sets:
+            if self._is_kept(d):
+                continue
             try:
                 created = datetime.strptime(d.name[:15], "%Y%m%d-%H%M%S")
             except ValueError:
                 continue
-            if i >= KEEP_SETS or created < cutoff:
+            if rank >= KEEP_SETS or created < cutoff:
                 shutil.rmtree(d, ignore_errors=True)
                 removed.append(d.name)
+            rank += 1
         return removed
+
+    @staticmethod
+    def _is_kept(set_dir: Path) -> bool:
+        m = set_dir / "manifest.json"
+        try:
+            return bool(json.loads(m.read_text(encoding="utf-8")).get("keep")) if m.is_file() else False
+        except (OSError, ValueError):
+            return False
+
+    # ------------------------------------------------------------ the copy outside the repo
+    STAGING = "staging"
+    COPY_IGNORE = staticmethod(shutil.ignore_patterns("__pycache__", "*.tmp-*", "~$*"))
+
+    def copy_staging(self, dest: Path, include_kept: bool = True) -> dict:
+        """Copy <repo>/staging/ and every kept set into <dest>/gideonong-staging-<timestamp>/.
+
+        `dest` must exist, be a folder, and lie outside the repo. Returns the folder written,
+        the file count and the bytes copied."""
+        dest = Path(dest)
+        if not dest.is_dir():
+            raise FileNotFoundError(f"{dest} is not a folder that exists")
+        repo = self.repo_root.resolve()
+        if dest.resolve() == repo or dest.resolve().is_relative_to(repo):
+            raise ValueError("choose a folder outside the repo — a copy inside it would be lost with it")
+        src = self.repo_root / self.STAGING
+        if not src.is_dir():
+            raise FileNotFoundError(f"{self.STAGING}/ does not exist in the repo")
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        target = dest / f"gideonong-staging-{stamp}"
+        n = 2
+        while target.exists():
+            target = dest / f"gideonong-staging-{stamp}-{n}"
+            n += 1
+        shutil.copytree(src, target / self.STAGING, ignore=self.COPY_IGNORE)
+        kept = []
+        if include_kept:
+            for s in self.list():
+                if s.keep:
+                    shutil.copytree(self.dir / s.id, target / "backups" / s.id, ignore=self.COPY_IGNORE)
+                    kept.append(s.id)
+        files = [p for p in target.rglob("*") if p.is_file()]
+        return {"folder": str(target), "files": len(files), "bytes": sum(p.stat().st_size for p in files), "kept": kept, "when": datetime.now().isoformat(timespec="seconds")}

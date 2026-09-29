@@ -47,7 +47,7 @@
     renderList();
     renderCounts();
     if (fullForm) renderForm(); else refreshIssues();
-    return true;
+    return r;  // truthy; callers that need the op's result read r.result
   }
   async function call(path, body, fullForm) {
     try { return applyReply(await api(path, { method: "POST", body }), fullForm); }
@@ -111,6 +111,8 @@
       row.append(el("div", { class: "entry-meta" }, meta.join("")));
       const pills = el("div", { class: "entry-pills" });
       if (e._draft) pills.append(pill("draft", "draft"));
+      const renamedFrom = ((state.data.renamed || {})[file] || {})[slug];
+      if (renamedFrom) pills.append(pill("draft", "renamed from " + renamedFrom));
       if (errs) pills.append(pill("st-todo", errs + " error" + (errs > 1 ? "s" : "")));
       else if (iss.length) pills.append(pill("st-same", iss.length + " warning" + (iss.length > 1 ? "s" : "")));
       if (file === "projects" && e.pinned) pills.append(pill("", "pinned"));
@@ -351,6 +353,7 @@
     const danger = el("div", { class: "rowline danger-zone" });
     if (file === "projects" && entry.listing !== "hidden") danger.append(el("button", { type: "button", class: "ghost", onclick: () => setField(file, slug, ["listing"], "hidden") }, "Hide (listing → hidden)"));
     if (file === "experience" && entry.visible) danger.append(el("button", { type: "button", class: "ghost", onclick: () => setField(file, slug, ["visible"], false) }, "Hide (visible → false)"));
+    danger.append(el("button", { type: "button", class: "ghost", onclick: () => openRename(file, slug) }, "Rename slug…"));
     danger.append(el("button", { type: "button", class: "ghost danger", onclick: () => deleteEntry(file, slug) }, "Delete…"));
     box.append(danger);
     requestAnimationFrame(() => box.querySelectorAll("textarea").forEach(autosize));
@@ -529,6 +532,31 @@
       : await call("/api/content/add", { file, slug, titleEn: en, titleEs: es }, true);
     if (ok) { $("#addDlg").close(); if (file !== "tags" && file !== "about") select(file, slug); }
   }
+  const renameCtx = {};
+  function openRename(file, slug) {
+    Object.assign(renameCtx, { file, slug });
+    $("#renameTitle").textContent = "Rename " + FILE_LABEL[file] + " “" + slug + "”";
+    $("#renameSlug").value = slug;
+    $("#renameNote").textContent = (file === "projects"
+      ? "Everything follows in one draft: the text keys (renamed in place in translations.js), the image paths and the sub-page URL, links from roles to this project, the sub-page file and the image folder (moved on save). "
+      : "Everything follows in one draft: the text keys (renamed in place), the band image paths, projects that say “Part of” this role, and the image folder (moved on save). ")
+      + "Links from outside the site to the old #slug or ?part= stop working. Mentions in CLAUDE.md / plan.md / content.md are for you to edit by hand.";
+    $("#renameDlg").showModal();
+    $("#renameSlug").focus();
+    $("#renameSlug").select();
+  }
+  async function doRename() {
+    const newSlug = $("#renameSlug").value.trim();
+    if (!newSlug || newSlug === renameCtx.slug) { $("#renameDlg").close(); return; }
+    const r = await call("/api/content/rename", { file: renameCtx.file, slug: renameCtx.slug, newSlug }, true);
+    if (r) {
+      $("#renameDlg").close();
+      const s = r.result;
+      toast(`Renamed to “${newSlug}”: ${s.keys.length} key(s), ${s.paths} path(s), ${s.references.length} reference(s), ${s.files.length} file / folder move(s) — Review & save to apply.`, 8000);
+      select(renameCtx.file, newSlug);
+    }
+  }
+
   async function deleteEntry(file, slug) {
     if (!confirm("Delete " + FILE_LABEL[file] + " “" + slug + "”?\n\nIts text that nothing else uses is removed too" + (file === "projects" ? ", and its sub-page (if any) moves to the backup set" : "") + ". Nothing happens until you Review & save.")) return;
     const r = await call("/api/content/delete", { file, slug }, true);
@@ -555,6 +583,7 @@
     if (r.noop) { body.append(el("p", { class: "muted" }, "No changes — the files on disk already match.")); return; }
     body.append(el("ul", { class: "changes" }, ...r.changes.map((c) => el("li", null, c.text))));
     if (r.shells.length) body.append(el("ul", { class: "changes" }, ...r.shells.map((s) => el("li", null, el("strong", null, s.action === "create" ? "Create " : "Delete "), el("code", null, s.path)))));
+    if (r.renames && r.renames.length) body.append(el("ul", { class: "changes" }, ...r.renames.map((m) => el("li", null, el("strong", null, "Move "), el("code", null, m.from), " → ", el("code", null, m.to), m.kind === "folder" ? ` (${m.files.length} file${m.files.length === 1 ? "" : "s"})` : ""))));
     if (r.assets && r.assets.length) body.append(el("ul", { class: "changes" }, ...r.assets.map((a) => el("li", null, el("strong", null, { add: "Add ", replace: "Replace ", remove: "Remove " }[a.action]), el("code", null, a.path), a.size ? ` (${a.size}, ${a.kb} KB)` : ""))));
     if (r.diskChanged) body.append(el("div", { class: "gate err" }, "A file changed on disk since it was loaded. Close this, click Reload in the banner, then review again."));
     for (const g of [r.gate, r.siteTextGate]) {
@@ -622,6 +651,8 @@
     $("#saveBtn").addEventListener("click", doSave);
     $("#discardBtn").addEventListener("click", discardAll);
     $("#addGo").addEventListener("click", doAdd);
+    $("#renameGo").addEventListener("click", doRename);
+    $("#renameDlg").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); doRename(); } });
     $("#importGo").addEventListener("click", doImport);
     $("#addDlg").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); doAdd(); } });
     $("#previewLink").addEventListener("click", async (e) => { e.preventDefault(); try { await api("/api/open-preview", { method: "POST", body: {} }); toast("Preview opened in your browser."); } catch (err) { toast("Could not open the preview: " + err.message); } });

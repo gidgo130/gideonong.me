@@ -155,6 +155,11 @@ pre.diff .meta { color: var(--muted); display: block; }
 table.sets { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.sets th, table.sets td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
 table.sets td.actions { white-space: nowrap; }
+table.sets td.center { text-align: center; }
+table.sets tr.kept td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.copybox { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin: 0 0 12px; background: var(--bg); }
+.copybox .rowline { margin: 4px 0 0; }
+#backupFolder { padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--panel); font-family: ui-monospace, Consolas, monospace; font-size: 12px; margin-left: 6px; }
 .setdiff { margin: 0 0 12px; }
 
 /* CV & résumé page */

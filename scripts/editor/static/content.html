@@ -36,6 +36,17 @@
   </form>
 </dialog>
 
+<dialog id="renameDlg" class="dlg narrow">
+  <form method="dialog">
+    <h2 id="renameTitle">Rename slug</h2>
+    <div class="form-grid">
+      <label class="field"><span>New slug (lowercase-with-hyphens)</span><input id="renameSlug" type="text" autocomplete="off" spellcheck="false"></label>
+    </div>
+    <p class="muted small" id="renameNote"></p>
+    <div class="dlg-actions"><span class="spacer"></span><button type="submit" class="ghost">Cancel</button><button type="button" class="primary" id="renameGo">Rename</button></div>
+  </form>
+</dialog>
+
 <dialog id="importDlg" class="dlg narrow">
   <form method="dialog">
     <h2>Import image</h2>

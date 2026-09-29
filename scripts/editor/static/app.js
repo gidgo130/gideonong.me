@@ -357,12 +357,17 @@
     dlg.showModal();
     const r = await api("/api/backups");
     body.replaceChildren();
+    $("#backupFolder").value = r.backupFolder || "";
+    $("#lastCopy").textContent = r.lastCopy ? `last copy ${r.lastCopy.when.replace("T", " ")}: ${r.lastCopy.files} files → ${r.lastCopy.folder}` : "no copy made yet";
     if (!r.sets.length) { body.append(el("p", { class: "muted" }, "No backups yet. The first save creates one.")); return; }
     const table = el("table", { class: "sets" });
-    table.append(el("tr", null, el("th", null, "Set"), el("th", null, "Created"), el("th", null, "Reason"), el("th", null, "Files"), el("th")));
+    table.append(el("tr", null, el("th", null, "Set"), el("th", null, "Created"), el("th", null, "Reason"), el("th", null, "Files"), el("th", null, "Keep"), el("th")));
     for (const s of r.sets) {
       const actions = el("td", { class: "actions" });
-      const diffRow = el("tr", { hidden: "" }, el("td", { colspan: 5 }));
+      const diffRow = el("tr", { hidden: "" }, el("td", { colspan: 6 }));
+      const keep = el("input", { type: "checkbox", title: "a kept set is never pruned and goes into the copy outside the repo" });
+      keep.checked = !!s.keep;
+      keep.addEventListener("change", async () => { try { await api("/api/backups/" + encodeURIComponent(s.id) + "/keep", { method: "POST", body: { keep: keep.checked } }); toast(keep.checked ? "Kept: " + s.id : "Will expire again: " + s.id); } catch (e) { keep.checked = !keep.checked; toast("Could not update: " + e.message); } });
       actions.append(
         el("button", { type: "button", class: "ghost", onclick: async () => {
           const f = s.files[0];
@@ -378,9 +383,22 @@
           if (res && res.ok) { dlg.close(); toast("Restored " + res.restored.join(", ") + " (current file saved as " + res.backup + ")", 6000); await loadState(); }
           else toast("Restore failed: " + (res && res.error));
         } }, "Restore"));
-      table.append(el("tr", null, el("td", null, el("code", null, s.id)), el("td", null, s.created), el("td", null, s.reason), el("td", null, s.files.map((f) => f.path).join(", ")), actions), diffRow);
+      table.append(el("tr", { class: s.keep ? "kept" : "" }, el("td", null, el("code", null, s.id)), el("td", null, s.created), el("td", null, s.reason), el("td", null, s.files.map((f) => f.path).join(", ")), el("td", { class: "center" }, keep), actions), diffRow);
     }
     body.append(table);
+  }
+  async function copyStaging() {
+    const folder = $("#backupFolder").value.trim();
+    if (!folder) { toast("Type the backup folder first (outside the repo)."); return; }
+    $("#copyStagingBtn").disabled = true;
+    toast("Copying staging/ …", 8000);
+    try {
+      const r = await api("/api/backups/copy-staging", { method: "POST", body: { folder } });
+      if (!r || r.ok === false) { toast("Copy refused: " + (r && r.error), 8000); return; }
+      $("#lastCopy").textContent = `last copy ${r.when.replace("T", " ")}: ${r.files} files → ${r.folder}`;
+      toast(`Copied ${r.files} files (${(r.bytes / 1048576).toFixed(1)} MB) to ${r.folder}${r.kept.length ? " with " + r.kept.length + " kept set(s)" : ""}.`, 8000);
+    } catch (e) { toast("Copy failed: " + e.message, 8000); }
+    finally { $("#copyStagingBtn").disabled = false; }
   }
 
   // ---------------------------------------------------------------- wiring
@@ -393,6 +411,7 @@
     $("#saveBtn").addEventListener("click", doSave);
     $("#discardBtn").addEventListener("click", discardAll);
     $("#restoreBtn").addEventListener("click", openRestore);
+    $("#copyStagingBtn").addEventListener("click", copyStaging);
     // Preview opens in the normal browser (the editor window is a WebView2 app window).
     $("#previewLink").addEventListener("click", async (e) => {
       e.preventDefault();

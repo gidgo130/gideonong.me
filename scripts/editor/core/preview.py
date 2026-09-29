@@ -189,6 +189,12 @@ class PreviewHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404, "Not Found")
             return None
         data = self.overrides().get(check)
+        if isinstance(data, Path):  # an alias: serve another file on disk under this path (a pending rename)
+            try:
+                data = data.read_bytes()
+            except OSError:
+                self.send_error(404, "Not Found")
+                return None
         if data is not None:
             ctype = mimetypes.guess_type(check)[0] or "application/octet-stream"
             if ctype.startswith("text/") or ctype in ("application/javascript", "application/json"):
