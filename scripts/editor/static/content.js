@@ -62,6 +62,14 @@
     box.replaceChildren();
     const file = state.tab;
     for (const a of document.querySelectorAll("#subtabs a")) a.classList.toggle("active", a.dataset.tab === file);
+    if (file === "images") {
+      box.append(el("p", { class: "muted small" }, "Every file under assets/images/ with what uses it."));
+      const pending = Object.keys(state.data.pendingImages || {});
+      if (pending.length) box.append(el("h3", null, "Pending imports"), ...pending.map((p) => el("div", { class: "entry has-draft" }, el("div", { class: "entry-title small" }, p.replace(/^assets\/images\//, "")))));
+      const removed = state.data.removedImages || [];
+      if (removed.length) box.append(el("h3", null, "Removed on save"), ...removed.map((p) => el("div", { class: "entry deleted" }, el("div", { class: "entry-title small" }, p.replace(/^assets\/images\//, "")))));
+      return;
+    }
     box.append(el("button", { type: "button", class: "primary wide", onclick: openAdd }, "Add " + FILE_LABEL[file] + "…"));
     const items = state.data[file] || [];
     let lastTier = null;
@@ -134,15 +142,97 @@
     });
     return el("label", { class: "field" }, el("span", null, label), inp);
   }
-  function imageField(file, slug, entry, path, label) {
+  function imageField(file, slug, entry, path, label, altField, preset) {
     const sel = el("select");
     sel.append(el("option", { value: "" }, "(none)"));
-    for (const img of state.data.images) sel.append(el("option", { value: img.path }, img.path.replace(/^assets\/images\//, "")));
+    for (const img of state.data.images) sel.append(el("option", { value: img.path }, img.path.replace(/^assets\/images\//, "") + (img.pending ? " (pending)" : "")));
     const cur = getPath(entry, path) || "";
     if (cur && !state.data.images.some((i) => i.path === cur)) sel.append(el("option", { value: cur }, cur + " (missing)"));
     sel.value = cur;
     sel.addEventListener("change", () => setField(file, slug, path, sel.value));
-    return el("label", { class: "field" }, el("span", null, label), sel);
+    const wrap = el("label", { class: "field" }, el("span", null, label), sel);
+    if (altField) wrap.append(el("button", { type: "button", class: "ghost small", onclick: (ev) => { ev.preventDefault(); openImport(file, slug, altField, preset || "main"); } }, "Import…"));
+    return wrap;
+  }
+
+  // ---------------------------------------------------------------- image import
+  const importCtx = {};
+  function openImport(file, slug, altField, preset) {
+    Object.assign(importCtx, { file, slug, altField });
+    $("#importNote").textContent = `For ${FILE_LABEL[file]} “${slug}” → ${altField.replace(/\.(\d+)\.alt$/, " $1").replace("imageAlt", "main image").replace("thumbAlt", "thumbnail")} — saved under assets/images/${file}/${slug}/`;
+    const sel = $("#importPreset");
+    sel.replaceChildren(...Object.entries(state.data.presets || {}).map(([k, v]) => el("option", { value: k }, v)));
+    sel.value = preset;
+    $("#importFile").value = ""; $("#importName").value = ""; $("#importAltEn").value = ""; $("#importAltEs").value = ""; $("#importReplace").checked = false;
+    $("#importDlg").showModal();
+  }
+  $("#importFile").addEventListener("change", () => {
+    const f = $("#importFile").files[0];
+    if (f && !$("#importName").value) $("#importName").value = f.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (f && /\.png$/i.test(f.name) && $("#importPreset").value === "main") $("#importPreset").value = "asis";
+  });
+  async function doImport() {
+    const f = $("#importFile").files[0];
+    if (!f) { toast("Pick a file first."); return; }
+    const fd = new FormData();
+    fd.append("image", f, f.name);
+    fd.append("file", importCtx.file); fd.append("slug", importCtx.slug); fd.append("field", importCtx.altField);
+    fd.append("preset", $("#importPreset").value); fd.append("name", $("#importName").value.trim());
+    fd.append("altEn", $("#importAltEn").value.trim()); fd.append("altEs", $("#importAltEs").value.trim());
+    fd.append("replace", $("#importReplace").checked ? "1" : "0");
+    $("#importGo").disabled = true;
+    try {
+      const r = await api("/api/content/images/import", { method: "POST", body: fd });
+      if (!r || r.ok === false) { toast("Import refused: " + (r && r.error), 7000); return; }
+      const res = r.result;
+      applyReply(r, true);
+      $("#importDlg").close();
+      toast(`Imported ${res.path} (${res.width} × ${res.height}, ${res.kb} KB${res.hadGps ? "; GPS data removed" : res.hadExif ? "; camera data removed" : ""}${res.transposed ? "; rotated upright" : ""}). It shows in the preview now and is written on save.`, 8000);
+    } catch (e) { toast("Import failed: " + e.message, 7000); }
+    finally { $("#importGo").disabled = false; }
+  }
+
+  // ---------------------------------------------------------------- images panel
+  let imagesRender = 0;
+  async function renderImagesPanel(box) {
+    const seq = ++imagesRender;
+    box.append(el("h2", null, "Images ", el("span", { class: "muted small" }, "assets/images/ — existing files are never re-encoded")));
+    let d;
+    try { d = await api("/api/content/images"); } catch (e) { box.append(el("p", null, "Could not list images: " + e.message)); return; }
+    if (seq !== imagesRender) return;  // a newer render started while the list was loading
+    state.data.presets = d.presets;
+    const filter = el("div", { class: "chips" });
+    const table = el("table", { class: "docs" });
+    let mode = "all";
+    function draw() {
+      table.replaceChildren(el("tr", null, el("th", null, "File"), el("th", null, "Size"), el("th", null, "Used by"), el("th", null, "Notes"), el("th")));
+      let n = 0;
+      for (const img of d.images) {
+        const unused = !img.users.length;
+        if (mode === "unused" && !unused) continue;
+        if (mode === "warnings" && !img.warnings.length) continue;
+        n++;
+        const info = img.info || {};
+        const notes = el("td", null, ...img.warnings.map((w) => el("div", { class: "warn-text" }, w)));
+        if (img.pending) notes.append(pill("draft", img.pending === "replace" ? "replaces on save" : "added on save"));
+        if (img.removed) notes.append(pill("st-todo", "removed on save"));
+        const act = el("td", { class: "actions" });
+        if (unused && !img.removed && !img.pending) act.append(el("button", { type: "button", class: "ghost danger", onclick: async () => { if (confirm("Remove " + img.path + "?\n\nIt moves to the backup set on Review & save.")) { const ok = await call("/api/content/images/delete", { path: img.path }, false); if (ok) renderForm(); } } }, "Remove"));
+        if (img.pending) act.append(el("button", { type: "button", class: "ghost", onclick: async () => { const ok = await call("/api/content/images/delete", { path: img.path }, false); if (ok) renderForm(); } }, "Drop import"));
+        table.append(el("tr", { class: img.removed ? "deleted" : "" },
+          el("td", null, el("code", null, img.path.replace(/^assets\/images\//, ""))),
+          el("td", null, info.width ? `${info.width} × ${info.height} · ${info.kb} KB` : "?"),
+          el("td", { class: "small" }, img.users.length ? img.users.join(", ") : el("span", { class: "muted" }, "not used")),
+          notes, act));
+      }
+      if (!n) table.append(el("tr", null, el("td", { colspan: 5, class: "muted center" }, "Nothing to show.")));
+    }
+    const counts = { all: d.images.length, unused: d.images.filter((i) => !i.users.length).length, warnings: d.images.filter((i) => i.warnings.length).length };
+    for (const [id, label] of [["all", "All"], ["unused", "Unused"], ["warnings", "With warnings"]]) {
+      filter.append(el("button", { type: "button", class: "chip" + (mode === id ? " active" : ""), onclick: (ev) => { mode = id; for (const c of filter.children) c.classList.toggle("active", c === ev.currentTarget); draw(); } }, `${label} ${counts[id]}`));
+    }
+    box.append(el("p", { class: "muted small" }, "Import new images from a project or role form (“Import…” beside each image field). Remove only files nothing uses; they move to the backup set on save."), filter, table);
+    draw();
   }
   function datesEditor(file, slug, entry) {
     const d = entry.dates || {};
@@ -224,6 +314,7 @@
     const file = state.tab, slug = state.selected[file];
     if (state.data.readOnly) { box.append(el("div", { class: "gate err" }, "Read-only: " + state.data.readOnly)); return; }
     if (file === "tags") { renderTagsForm(box); return; }
+    if (file === "images") { renderImagesPanel(box); return; }
     const entry = slug && entryOf(file, slug);
     if (!entry) { box.append(el("p", { class: "muted" }, "Pick a " + FILE_LABEL[file] + " on the left, or add one.")); return; }
     box.append(el("h2", null, slug, " ", el("span", { class: "muted small" }, file === "projects" ? "project" : "role")));
@@ -264,13 +355,13 @@
       el("div", { class: "field" }, el("span", null, "Flags"), checkField(f, slug, e, ["featured"], "featured (max 3, index only)"), checkField(f, slug, e, ["pinned"], "pinned to the top of the index")),
       inputField(f, slug, e, ["featuredOrder"], "Featured order (number, blank = none)", { number: true, removeWhenEmpty: true }),
       datesEditor(f, slug, e), tagsField(f, slug, e)));
-    box.append(el("h3", null, "Images"), el("div", { class: "form-grid" }, imageField(f, slug, e, ["imageSrc"], "Main image"), imageField(f, slug, e, ["thumbSrc"], "Thumbnail (optional, index rows)")));
+    box.append(el("h3", null, "Images"), el("div", { class: "form-grid" }, imageField(f, slug, e, ["imageSrc"], "Main image", "imageAlt", "main"), imageField(f, slug, e, ["thumbSrc"], "Thumbnail (optional, index rows)", "thumbAlt", "thumb")));
     if (e.imageSrc) box.append(textPair(f, slug, e, "imageAlt", "Image alt text"));
     if (e.thumbSrc) box.append(textPair(f, slug, e, "thumbAlt", "Thumbnail alt text", { note: e.thumbAltKey && e.thumbAltKey !== ("proj" + camel(slug) + "ThumbAlt") ? "(shared with another field)" : "" }));
     box.append(el("div", { class: "form-grid" }, selectField(f, slug, e, ["homeLayout"], "Home layout", v.homeLayouts.map((x) => [x, x]), { allowEmpty: true, emptyLabel: "(default: stacked)" })));
     if (e.homeLayout === "collage" || e.gallery) {
       box.append(listEditor(f, slug, e, ["gallery"], "Collage gallery (2–4 images; the main image is not a cell)", (item, i) => el("div", null,
-        el("div", { class: "form-grid" }, imageField(f, slug, e, ["gallery", i, "src"], "Image " + (i + 1))), textPair(f, slug, e, "gallery." + (i + 1) + ".alt", "Alt text")), () => ({ src: "", altKey: "" }), { max: 4, itemName: "image" }));
+        el("div", { class: "form-grid" }, imageField(f, slug, e, ["gallery", i, "src"], "Image " + (i + 1), "gallery." + (i + 1) + ".alt", "main")), textPair(f, slug, e, "gallery." + (i + 1) + ".alt", "Alt text")), () => ({ src: "", altKey: "" }), { max: 4, itemName: "image" }));
     }
     box.append(el("h3", null, "Sub-page"));
     const shell = state.data.shells[slug];
@@ -286,7 +377,7 @@
       else {
         box.append(listEditor(f, slug, e, ["page", "sections"], "Sections", (s, i) => el("div", null, textPair(f, slug, e, "page.sections." + (i + 1) + ".heading", "Heading"), textPair(f, slug, e, "page.sections." + (i + 1) + ".body", "Body")), () => ({ headingKey: "", bodyKey: "" }), { itemName: "section" }));
         box.append(listEditor(f, slug, e, ["page", "facts"], "Quick facts", (s, i) => el("div", null, textPair(f, slug, e, "page.facts." + (i + 1) + ".label", "Label"), textPair(f, slug, e, "page.facts." + (i + 1) + ".value", "Value")), () => ({ labelKey: "", valueKey: "" }), { itemName: "fact" }));
-        box.append(listEditor(f, slug, e, ["page", "photos"], "Photos", (s, i) => el("div", null, el("div", { class: "form-grid" }, imageField(f, slug, e, ["page", "photos", i, "src"], "Photo " + (i + 1))), textPair(f, slug, e, "page.photos." + (i + 1) + ".alt", "Alt text")), () => ({ src: "", altKey: "" }), { itemName: "photo" }));
+        box.append(listEditor(f, slug, e, ["page", "photos"], "Photos", (s, i) => el("div", null, el("div", { class: "form-grid" }, imageField(f, slug, e, ["page", "photos", i, "src"], "Photo " + (i + 1), "page.photos." + (i + 1) + ".alt", "main")), textPair(f, slug, e, "page.photos." + (i + 1) + ".alt", "Alt text")), () => ({ src: "", altKey: "" }), { itemName: "photo" }));
         const pdf = el("select", null, el("option", { value: "" }, "(none)"), ...state.data.pdfs.map((p) => el("option", { value: p }, p)));
         pdf.value = page.reportPdf || "";
         pdf.addEventListener("change", () => setField(f, slug, ["page", "reportPdf"], pdf.value));
@@ -307,7 +398,7 @@
       el("div", { class: "field" }, el("span", null, "Flags"),
         checkField(f, slug, e, ["visible"], "visible on the site"),
         checkField(f, slug, e, ["status"], "current role (hero status sentence)", { onchange: (on) => setField(f, slug, ["status"], on ? "current" : null) })),
-      imageField(f, slug, e, ["imageSrc"], "Band image"),
+      imageField(f, slug, e, ["imageSrc"], "Band image", "imageAlt", "main"),
       inputField(f, slug, e, ["imageLink"], "Image link (optional, e.g. projects.html?part=" + slug + ")")));
     if (e.imageSrc) box.append(textPair(f, slug, e, "imageAlt", "Image alt text"));
     box.append(el("h3", null, "Band colors ", el("span", { class: "muted small" }, "tints over the section background; none = inherit")));
@@ -381,6 +472,7 @@
     if (r.noop) { body.append(el("p", { class: "muted" }, "No changes — the files on disk already match.")); return; }
     body.append(el("ul", { class: "changes" }, ...r.changes.map((c) => el("li", null, c.text))));
     if (r.shells.length) body.append(el("ul", { class: "changes" }, ...r.shells.map((s) => el("li", null, el("strong", null, s.action === "create" ? "Create " : "Delete "), el("code", null, s.path)))));
+    if (r.assets && r.assets.length) body.append(el("ul", { class: "changes" }, ...r.assets.map((a) => el("li", null, el("strong", null, { add: "Add ", replace: "Replace ", remove: "Remove " }[a.action]), el("code", null, a.path), a.size ? ` (${a.size}, ${a.kb} KB)` : ""))));
     if (r.diskChanged) body.append(el("div", { class: "gate err" }, "A file changed on disk since it was loaded. Close this, click Reload in the banner, then review again."));
     for (const g of [r.gate, r.siteTextGate]) {
       if (g.blocking.length) body.append(el("div", { class: "gate err" }, el("strong", null, "Blocking errors (fix before saving):"), issueList(g.blocking)));
@@ -425,7 +517,7 @@
     if (d.autosave) setBanner("autosave", "warn", "Unsaved content edits from " + d.autosave.saved + " were found.", [
       { label: "Restore drafts", primary: true, onclick: async () => { const r = await api("/api/content/autosave/restore", { method: "POST", body: {} }); clearBanner("autosave"); toast("Restored " + r.applied + " draft item(s)"); await loadState(); } },
       { label: "Discard", onclick: async () => { await api("/api/content/autosave/discard", { method: "POST", body: {} }); clearBanner("autosave"); } }]);
-    const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags)(?:\/(.+))?$/);
+    const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags|images)(?:\/(.+))?$/);
     if (m) { state.tab = m[1]; if (m[2]) state.selected[m[1]] = decodeURIComponent(m[2]); }
     renderCounts();
     renderList();
@@ -446,11 +538,12 @@
     $("#saveBtn").addEventListener("click", doSave);
     $("#discardBtn").addEventListener("click", discardAll);
     $("#addGo").addEventListener("click", doAdd);
+    $("#importGo").addEventListener("click", doImport);
     $("#addDlg").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); doAdd(); } });
     $("#previewLink").addEventListener("click", async (e) => { e.preventDefault(); try { await api("/api/open-preview", { method: "POST", body: {} }); toast("Preview opened in your browser."); } catch (err) { toast("Could not open the preview: " + err.message); } });
     document.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (!$("#reviewDlg").open) openReview(); } });
     window.addEventListener("beforeunload", (e) => { if (state.unsaved && !window.__navigating) { e.preventDefault(); e.returnValue = ""; } });
-    window.addEventListener("hashchange", () => { const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags)(?:\/(.+))?$/); if (m) { state.tab = m[1]; if (m[2]) state.selected[m[1]] = decodeURIComponent(m[2]); renderList(); renderForm(); } });
+    window.addEventListener("hashchange", () => { const m = location.hash.replace(/^#/, "").match(/^(projects|experience|tags|images)(?:\/(.+))?$/); if (m) { state.tab = m[1]; if (m[2]) state.selected[m[1]] = decodeURIComponent(m[2]); renderList(); renderForm(); } });
     loadState().catch((e) => setBanner("load", "err", "Could not load the content state: " + e.message));
     heartbeat();
     setInterval(heartbeat, 5000);

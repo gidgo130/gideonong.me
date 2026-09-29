@@ -31,7 +31,7 @@
   async function api(path, opts) {
     const o = Object.assign({ headers: {} }, opts || {});
     o.headers["X-Editor-Token"] = token || "";
-    if (o.body && typeof o.body !== "string") {
+    if (o.body && typeof o.body !== "string" && !(o.body instanceof FormData)) {
       o.body = JSON.stringify(o.body);
       o.headers["Content-Type"] = "application/json";
     }

@@ -15,6 +15,7 @@ import copy
 import json
 import logging
 import re
+import time
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -52,7 +53,11 @@ class ContentService:
 
     @staticmethod
     def _empty() -> dict:
-        return {"entries": {"projects": {}, "experience": {}, "tags": {}}, "newKeys": {}, "removedKeys": [], "shells": {}}
+        return {"entries": {"projects": {}, "experience": {}, "tags": {}}, "newKeys": {}, "removedKeys": [], "shells": {}, "images": {}, "removedImages": []}
+
+    @property
+    def image_staging(self) -> Path:
+        return Path(self.state.local_dir) / "drafts" / "images"
 
     # ------------------------------------------------------------- loading
     def load(self) -> None:
@@ -329,19 +334,165 @@ class ContentService:
         return self.delete_entry("tags", ident)
 
     def discard_drafts(self) -> None:
+        for info in self.drafts.get("images", {}).values():
+            try:
+                Path(info["file"]).unlink()
+            except OSError:
+                pass
         self.drafts = self._empty()
         self._write_autosave()
 
     def draft_count(self) -> int:
         d = self.drafts
-        return sum(len(v) for v in d["entries"].values()) + len(d["newKeys"]) + len(d["removedKeys"]) + len(d["shells"])
+        return (sum(len(v) for v in d["entries"].values()) + len(d["newKeys"]) + len(d["removedKeys"]) + len(d["shells"])
+                + len(d.get("images", {})) + len(d.get("removedImages", [])))
+
+    # ------------------------------------------------------------- images (Phase 5)
+    IMAGE_FIELDS = {  # alt text field → the property path that holds the file
+        "projects": {"imageAlt": ["imageSrc"], "thumbAlt": ["thumbSrc"], "gallery.N.alt": ["gallery", "N", "src"], "page.photos.N.alt": ["page", "photos", "N", "src"]},
+        "experience": {"imageAlt": ["imageSrc"]},
+    }
+
+    def image_folder(self, name: str, ident: str) -> str:
+        kind = {"projects": "projects", "experience": "experience"}.get(name)
+        if kind is None:
+            raise ValueError("images belong to a project or a role")
+        return f"assets/images/{kind}/{ident}"
+
+    def import_image(self, data: bytes, filename: str, name: str, ident: str, field: str, preset: str, alt_en: str, alt_es: str,
+                     new_name: str = "", replace: bool = False) -> dict:
+        from . import images as imgmod
+
+        if self.read_only:
+            raise RuntimeError(self.read_only)
+        if not alt_en.strip() or not alt_es.strip():
+            raise ValueError("alt text is required in both EN and ES")
+        if self.entry(name, ident) is None:
+            raise KeyError(f"{name}/{ident}")
+        table = self.IMAGE_FIELDS.get(name) or {}
+        pattern = re.sub(r"\.(\d+)(?=\.|$)", ".N", field)
+        if pattern not in table:
+            raise ValueError(f"{field} is not an image field of a {name[:-1]}")
+        nums = [int(n) for n in re.findall(r"\.(\d+)(?=\.|$)", field)]
+        # the list slot must exist or be the next one, before anything is staged
+        probe = [(nums[0] - 1 if p == "N" else p) for p in table[pattern]] if nums else table[pattern]
+        if len(probe) > 1 and isinstance(probe[-2], int):
+            lst = keymod.get_path(self.entry(name, ident), probe[:-2])
+            if probe[-2] > len(lst or []):
+                raise ValueError("add the previous gallery / photo items first")
+        out, info = imgmod.process(data, preset)
+        fname = imgmod.output_name(new_name or filename or "image", preset, info["format"])
+        rel = f"{self.image_folder(name, ident)}/{fname}"
+        on_disk = (self.repo_root / rel).is_file()
+        if on_disk and not replace:
+            raise ValueError(f"{rel} already exists — tick “replace” to overwrite it (the old file is backed up)")
+        if rel in self.drafts["removedImages"]:
+            self.drafts["removedImages"].remove(rel)
+        self.image_staging.mkdir(parents=True, exist_ok=True)
+        staged = self.image_staging / (re.sub(r"[^a-z0-9]+", "-", rel.lower()).strip("-") + "-" + str(int(time.time() * 1000)) + Path(fname).suffix)
+        atomic_write(staged, out)
+        old = self.drafts["images"].get(rel)
+        if old:
+            try:
+                Path(old["file"]).unlink()
+            except OSError:
+                pass
+        self.drafts["images"][rel] = {"file": str(staged), "preset": preset, "source": filename, "width": info["width"], "height": info["height"], "kb": info["kb"], "replace": on_disk,
+                                      "hadExif": info["hadExif"], "hadGps": info["hadGps"], "transposed": info["transposed"]}
+        # the file path into the entry, then the alt text (keys named by the conventions)
+        path = [(nums.pop(0) - 1 if p == "N" else p) for p in table[pattern]]
+        e = self._working(name, ident)
+        container = keymod.get_path(e, path[:-1]) if len(path) > 1 else e
+        if isinstance(path[-2] if len(path) > 1 else None, int) and container is None:
+            lst = keymod.get_path(e, path[:-2])
+            if lst is None:
+                keymod.set_path(e, path[:-2], [])
+                lst = keymod.get_path(e, path[:-2])
+            if path[-2] == len(lst):
+                lst.append({"src": "", "altKey": ""})
+            elif path[-2] > len(lst):
+                raise ValueError("add the previous gallery / photo items first")
+        keymod.set_path(e, path, rel)
+        self._settle(name, ident)
+        key = self.set_text(name, ident, field, "en", alt_en.strip())
+        self.set_text(name, ident, field, "es", alt_es.strip())
+        self._write_autosave()
+        return {"path": rel, "key": key, **{k: v for k, v in self.drafts["images"][rel].items() if k != "file"}}
+
+    def image_refs(self) -> dict[str, list[str]]:
+        """rel path → who uses it (entries and fields, plus HTML pages)."""
+        refs: dict[str, list[str]] = {}
+
+        def add(rel, who):
+            if rel:
+                refs.setdefault(rel, []).append(who)
+
+        for e in self.live_entries("projects"):
+            s = e.get("slug")
+            add(e.get("imageSrc"), f"project {s}: main image")
+            add(e.get("thumbSrc"), f"project {s}: thumbnail")
+            for i, g in enumerate(e.get("gallery") or [], 1):
+                if isinstance(g, dict):
+                    add(g.get("src"), f"project {s}: collage {i}")
+            for i, ph in enumerate((e.get("page") or {}).get("photos") or [], 1):
+                if isinstance(ph, dict):
+                    add(ph.get("src"), f"project {s}: photo {i}")
+        for e in self.live_entries("experience"):
+            add(e.get("imageSrc"), f"role {e.get('slug')}: band image")
+        for html in self.repo_root.glob("*.html"):
+            try:
+                text = html.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for m in re.finditer(r"assets/images/[\w./-]+", text):
+                add(m.group(0), html.name)
+        return refs
+
+    def delete_image(self, rel: str) -> dict:
+        if self.read_only:
+            raise RuntimeError(self.read_only)
+        rel = rel.replace("\\", "/").lstrip("/")
+        if not rel.startswith("assets/images/") or ".." in rel:
+            raise ValueError("only files under assets/images/ can be removed here")
+        users = self.image_refs().get(rel, [])
+        if users:
+            raise ValueError(f"{rel} is still used by: {', '.join(users)} — change those first")
+        if rel in self.drafts["images"]:
+            try:
+                Path(self.drafts["images"][rel]["file"]).unlink()
+            except OSError:
+                pass
+            self.drafts["images"].pop(rel)
+            self._write_autosave()
+            return {"pending": True}
+        if not (self.repo_root / rel).is_file():
+            raise KeyError(rel)
+        if rel not in self.drafts["removedImages"]:
+            self.drafts["removedImages"].append(rel)
+        self._write_autosave()
+        return {"pending": False}
+
+    def images_state(self) -> dict:
+        from . import images as imgmod
+
+        refs = self.image_refs()
+        rows = []
+        for item in imgmod.scan(self.repo_root):
+            rel = item["path"]
+            rows.append(dict(item, users=refs.get(rel, []), pending=None, removed=rel in self.drafts["removedImages"]))
+        for rel, info in self.drafts["images"].items():
+            rows.append({"path": rel, "info": {"width": info["width"], "height": info["height"], "kb": info["kb"], "format": Path(rel).suffix[1:], "exifTags": [], "gps": False, "icc": False},
+                         "warnings": [], "users": refs.get(rel, []), "pending": "replace" if info.get("replace") else "add", "removed": False})
+        rows.sort(key=lambda r: r["path"])
+        return {"images": rows, "presets": {k: v["label"] for k, v in imgmod.PRESETS.items()}}
 
     # ------------------------------------------------------------- autosave
     def _read_autosave(self) -> Optional[dict]:
         try:
             if self.autosave_path.is_file():
                 j = json.loads(self.autosave_path.read_text(encoding="utf-8"))
-                if isinstance(j, dict) and j.get("drafts") and any(j["drafts"].get(k) for k in ("newKeys", "removedKeys", "shells")) or (isinstance(j, dict) and any(j.get("drafts", {}).get("entries", {}).values())):
+                d = j.get("drafts") if isinstance(j, dict) else None
+                if isinstance(d, dict) and (any(d.get(k) for k in ("newKeys", "removedKeys", "shells", "images", "removedImages")) or any((d.get("entries") or {}).values())):
                     return j
         except (OSError, ValueError) as e:
             log.warning("content autosave unreadable: %s", e)
@@ -380,13 +531,12 @@ class ContentService:
                 pass
 
     # ------------------------------------------------------------- checks
-    def _check(self, en: dict, es: dict, projects, experience, tags, shells_exist) -> list[validate.Issue]:
+    def _check(self, en: dict, es: dict, projects, experience, tags, shells_exist, pending_files=()) -> list[validate.Issue]:
         from ..cv import scans
         from ..cv.masters import BLOCKLIST_PATH
-        from ..site_text import hidden_key_prefixes
 
         terms, _ = scans.load_blocklist(self.repo_root / BLOCKLIST_PATH)
-        return datacheck.check(self.repo_root, en, es, projects, experience, tags, blocklist_terms=terms, shells_exist=shells_exist)
+        return datacheck.check(self.repo_root, en, es, projects, experience, tags, blocklist_terms=terms, shells_exist=shells_exist, pending_files=pending_files)
 
     def baseline_issues(self) -> list[validate.Issue]:
         site = self.state.site
@@ -404,7 +554,8 @@ class ContentService:
             slug = e.get("slug")
             action = self.drafts["shells"].get(slug)
             shells[slug] = action == "create" or (action != "delete" and (self.repo_root / "projects" / f"{slug}.html").is_file())
-        return self._check(en, es, self.live_entries("projects"), self.live_entries("experience"), self.live_entries("tags"), shells)
+        return self._check(en, es, self.live_entries("projects"), self.live_entries("experience"), self.live_entries("tags"), shells,
+                           pending_files=set(self.drafts.get("images", {})))
 
     def touched(self) -> set[str]:
         t = {f"{n}:{ident}" for n, d in self.drafts["entries"].items() for ident in d}
@@ -417,6 +568,10 @@ class ContentService:
     # ------------------------------------------------------------- render / review / save
     def _touched_files(self) -> list[str]:
         return [n for n, d in self.drafts["entries"].items() if d]
+
+    def image_checks(self) -> list[validate.Issue]:
+        """Warnings for pending imports that still carried camera data (already stripped) — informational."""
+        return []
 
     def render_file(self, name: str) -> bytes:
         f = self.files[name]
@@ -441,6 +596,11 @@ class ContentService:
         for slug, action in self.drafts["shells"].items():
             if action == "create":
                 out[f"projects/{slug}.html"] = self.shell_html(slug)
+        for rel, info in self.drafts.get("images", {}).items():
+            try:
+                out[rel] = Path(info["file"]).read_bytes()
+            except OSError:
+                pass
         return out
 
     def review(self) -> dict:
@@ -471,6 +631,8 @@ class ContentService:
         for k in self.drafts["removedKeys"]:
             changes.append({"text": f"Text › removed: {k}"})
         shells = [{"slug": s, "action": a, "path": f"projects/{s}.html"} for s, a in self.drafts["shells"].items()]
+        assets = [{"path": rel, "action": "replace" if i.get("replace") else "add", "kb": i["kb"], "size": f"{i['width']} × {i['height']}"} for rel, i in self.drafts.get("images", {}).items()]
+        assets += [{"path": rel, "action": "remove"} for rel in self.drafts.get("removedImages", [])]
         gate = self.gate()
         site_gate = self.state.gate()
         return {
@@ -478,11 +640,12 @@ class ContentService:
             "files": files,
             "changes": changes,
             "shells": shells,
+            "assets": assets,
             "siteTextDrafts": len(self.state.drafts),
             "gate": gate.to_json(),
             "siteTextGate": site_gate.to_json(),
             "diskChanged": disk_changed,
-            "noop": not files and not shells,
+            "noop": not files and not shells and not assets,
         }
 
     def _entry_changes(self, name: str) -> list[dict]:
@@ -530,9 +693,27 @@ class ContentService:
         site_bytes = self.render_translations() if write_site else None
         paths = [self.files[n].rel_path for n in touched] + ([SiteText.REL_PATH] if write_site else [])
         paths += [f"projects/{s}.html" for s, a in self.drafts["shells"].items() if a == "delete"]
+        paths += [rel for rel, i in self.drafts.get("images", {}).items() if i.get("replace")]
+        paths += list(self.drafts.get("removedImages", []))
         bset = self.state.backups.create(paths, "before saving content")
         written = []
         try:
+            for rel, info in self.drafts.get("images", {}).items():
+                dst = self.repo_root / rel
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                atomic_write(dst, Path(info["file"]).read_bytes())
+                written.append(rel)
+            for rel in self.drafts.get("removedImages", []):
+                p = self.repo_root / rel
+                if p.is_file():
+                    p.unlink()
+                    written.append(f"{rel} (removed)")
+                    # an emptied <slug>/ folder goes too (git would not keep it anyway)
+                    parent = p.parent
+                    images_root = self.repo_root / "assets" / "images"
+                    while parent != images_root and parent.is_relative_to(images_root) and parent.is_dir() and not any(parent.iterdir()):
+                        parent.rmdir()
+                        parent = parent.parent
             for n in touched:
                 atomic_write(self.files[n].path, rendered[n])
                 written.append(self.files[n].rel_path)
@@ -550,6 +731,11 @@ class ContentService:
         except OSError as e:
             log.warning("content save failed: %s", e)
             return {"ok": False, "error": "write-failed", "message": f"A file could not be written ({e}) — it is probably open in another program. Written so far: {', '.join(written) or 'nothing'}; backup set {bset.id}.", "backup": bset.id}
+        for info in self.drafts.get("images", {}).values():
+            try:
+                Path(info["file"]).unlink()
+            except OSError:
+                pass
         self.drafts = self._empty()
         self._write_autosave()
         if write_site:
@@ -604,7 +790,10 @@ class ContentService:
             "siteTextDrafts": len(self.state.drafts),
             "shells": self.drafts["shells"],
             "shellsOnDisk": sorted(p.stem for p in (self.repo_root / "projects").glob("*.html")),
-            "images": self.images(),
+            "images": self.images() + [{"path": rel, "size": i["kb"] * 1024, "pending": True} for rel, i in self.drafts.get("images", {}).items() if not (self.repo_root / rel).is_file()],
+            "pendingImages": {rel: {k: v for k, v in i.items() if k != "file"} for rel, i in self.drafts.get("images", {}).items()},
+            "presets": {k: v["label"] for k, v in __import__("core.site.images", fromlist=["PRESETS"]).PRESETS.items()},
+            "removedImages": list(self.drafts.get("removedImages", [])),
             "pdfs": self.pdfs(),
             "autosave": {"saved": self.pending_autosave.get("saved")} if self.pending_autosave else None,
             "vocab": {"contexts": list(order.CONTEXTS), "listings": list(order.LISTINGS), "homeLayouts": list(order.HOME_LAYOUTS), "expLayouts": list(order.EXP_LAYOUTS), "seasons": list(order.SEASONS)},

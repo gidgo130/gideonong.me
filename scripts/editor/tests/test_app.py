@@ -231,7 +231,8 @@ class SecurityTests(unittest.TestCase):
                          "/api/transcript/draft", "/api/transcript/title", "/api/transcript/save", "/api/transcript/parse", "/api/transcript/build",
                          "/api/transcript/publish", "/api/transcript/open-folder", "/api/transcript/drafts/discard", "/api/transcript/reload",
                          "/api/content/field", "/api/content/text", "/api/content/add", "/api/content/delete", "/api/content/shell",
-                         "/api/content/tag", "/api/content/tag/delete", "/api/content/save", "/api/content/drafts/discard", "/api/content/reload"):
+                         "/api/content/tag", "/api/content/tag/delete", "/api/content/save", "/api/content/drafts/discard", "/api/content/reload",
+                         "/api/content/images/delete"):
                 r = c.post(path, headers={"Host": HOST}, json={"lang": "es", "key": "navAbout", "value": "X", "set": "x"})
                 self.assertEqual(r.status_code, 403, path)
                 r = c.post(path, headers={"Host": HOST, "X-Editor-Token": "wrong"}, json={"lang": "es", "key": "navAbout", "value": "X"})

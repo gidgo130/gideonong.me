@@ -349,6 +349,7 @@ class EditorState:
 def create_app(state: EditorState) -> Flask:
     app = Flask("gideonong_editor", static_folder=str(HERE / "static"), static_url_path="/static")
     app.config["JSON_AS_ASCII"] = False
+    app.config["MAX_CONTENT_LENGTH"] = 26 * 1024 * 1024  # image imports (25 MB cap + form fields)
     allowed_hosts = {f"127.0.0.1:{state.editor_port}", f"localhost:{state.editor_port}"}
     allowed_origins = {"http://" + h for h in allowed_hosts}
 
@@ -518,6 +519,42 @@ def create_app(state: EditorState) -> Flask:
         if not isinstance(b.get("id"), str):
             return deny(400, "id is required")
         return _content_call(state.content.delete_tag, b["id"])
+
+    @app.post("/api/content/images/import")
+    def content_image_import():
+        f = request.files.get("image")
+        form = request.form
+        if f is None or not f.filename:
+            return deny(400, "no image file in the request")
+        for k in ("file", "slug", "field", "preset", "altEn", "altEs"):
+            if not isinstance(form.get(k), str):
+                return deny(400, f"{k} is required")
+        data = f.read()
+        try:
+            with state.lock:
+                result = state.content.import_image(
+                    data, f.filename, form["file"], form["slug"], form["field"], form["preset"], form["altEn"], form["altEs"],
+                    new_name=form.get("name", ""), replace=form.get("replace") in ("1", "true", "on"),
+                )
+                return jsonify(ok=True, result=result, **state.content.state_json())
+        except KeyError as e:
+            return deny(404, f"unknown entry {e}")
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+
+    @app.post("/api/content/images/delete")
+    def content_image_delete():
+        b = request.get_json(silent=True) or {}
+        if not isinstance(b.get("path"), str):
+            return deny(400, "path is required")
+        return _content_call(state.content.delete_image, b["path"])
+
+    @app.get("/api/content/images")
+    def content_images():
+        with state.lock:
+            return jsonify(state.content.images_state())
 
     @app.post("/api/content/drafts/discard")
     def content_discard():

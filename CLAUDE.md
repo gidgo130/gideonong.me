@@ -47,7 +47,10 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      tags-data.js and the matching translations keys in place with span edits
                      (keys named by the conventions below, never shown), creates/deletes
                      projects/<slug>.html shells, and gates saves with a Python port of
-                     siteData.checkData (core/site/datacheck.py — keep the two in step). Its .local/
+                     siteData.checkData (core/site/datacheck.py — keep the two in step).
+                     Phase 5 (core/site/images.py) imports images: orientation applied, sRGB,
+                     all EXIF/GPS/profile data dropped, resized by preset, EN/ES alt required;
+                     existing files under assets/images/ are never re-encoded. Its .local/
                      (backups, logs, drafts, WebView2 storage) is gitignored. It never runs
                      git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit

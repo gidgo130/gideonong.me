@@ -30,8 +30,10 @@ SORT_DATE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 class Checker:
     def __init__(self, repo_root: Path, en: dict, es: dict, projects: list[dict], experience: list[dict], tags: list[dict],
-                 hidden_prefixes: Iterable[str] = (), blocklist_terms: Optional[list] = None, shells_exist: Optional[dict] = None):
+                 hidden_prefixes: Iterable[str] = (), blocklist_terms: Optional[list] = None, shells_exist: Optional[dict] = None,
+                 pending_files: Iterable[str] = ()):
         self.root = Path(repo_root)
+        self.pending_files = set(pending_files)  # files a draft will add on save (imported images)
         self.en, self.es = en, es
         self.projects, self.experience, self.tags = projects, experience, tags
         self.hidden = list(hidden_prefixes)
@@ -79,6 +81,8 @@ class Checker:
 
     def file_exists(self, owner: str, field: str, rel: str) -> None:
         if not rel:
+            return
+        if rel.lstrip("/") in self.pending_files:
             return
         p = self.root / rel.lstrip("/")
         if not p.is_file():

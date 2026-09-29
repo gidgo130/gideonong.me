@@ -82,6 +82,20 @@ vocabulary with how often each tag is used. The form on the right edits one entr
   nothing else references, and the sub-page — moved to the backup set); **Add tag** and delete
   (only when no entry uses it). The slug never changes here (a rename wizard comes later).
 
+**Images (Phase 5).** **Import…** beside every image field (main image, thumbnail, collage
+cell, sub-page photo, band image) takes a JPG or PNG from anywhere (up to 25 MB), applies the
+phone's orientation, converts the colour profile to sRGB, drops every camera tag, GPS position
+and profile, resizes by preset (main: fit 1600; thumbnail: 4:3 at 800 × 600; wide: 16:9 at
+1600 × 900; portrait: fit 1250; as is: metadata strip only, for plots) — never upscaling — and
+names the file from the original (`IMG_2041.jpg` → `img-2041.jpg`, `-thumb` for thumbnails)
+under `assets/images/<projects|experience>/<slug>/`. Alt text in both languages is required
+before the import is accepted; the field and the alt keys are set at once. The file lives in
+`.local/drafts/images/` until Review & save copies it into `assets/images/` (a replaced file
+is backed up first); the preview shows it immediately. The **Images** sub-tab lists every file
+with its size, what uses it (entries and HTML pages) and warnings (EXIF, GPS, profile, over
+600 KB or 2000 px); files nothing uses can be removed (into the backup set on save). Existing
+files are never re-encoded.
+
 Saving writes the data files with span edits that touch only the changed lines (comments,
 blank lines and every untouched entry stay byte for byte), translations.js with the new /
 removed keys, and the shells; every file is backed up first and re-parsed by the tokenizer
@@ -237,7 +251,13 @@ key add / delete lands in the right translations blocks, key naming and referenc
 rules, rendered order, the dev-check port (no errors on today's files, every seeded problem
 caught), and the service: add → sub-page → index → save → delete → save leaves both data files
 and translations.js byte-identical, bullets reorder, current-role flag, tag add / refuse /
-delete, blocked saves, changed-on-disk refusal, autosave.
+delete, blocked saves, changed-on-disk refusal, autosave. Phase 5 (`test_images.py`): a
+synthetic phone JPEG (EXIF camera fields, GPS IFD, orientation 6, ICC profile) comes out with
+no metadata at all, upright and at the preset size; every preset; PNG stays PNG without text
+chunks; refusals (GIF, non-image, 25 MB, unknown preset) and names; the repo's own images
+carry no warnings; the service flow (field + alt keys set, preview override, review, save
+writes clean files, replace backs up, delete refused while used, HTML references protect the
+headshot, discard drops staged bytes) and the multipart endpoint with its token check.
 
 ## Files
 | File | What it is |
@@ -264,7 +284,8 @@ delete, blocked saves, changed-on-disk refusal, autosave.
 | `core/site/keys.py` | Key naming by the conventions; which fields hold keys; slug rules |
 | `core/site/order.py` | Rendered order (featured / index / roles), date rendering, suggested sortDate |
 | `core/site/datacheck.py` | Python port of `siteData.checkData` as errors / warnings |
-| `core/site/service.py` | Content drafts, text-field resolution, add / delete / shells / tags, review, save, preview overlay |
+| `core/site/service.py` | Content drafts, text-field resolution, add / delete / shells / tags / images, review, save, preview overlay |
+| `core/site/images.py` | Image import: orientation, sRGB, metadata strip, presets; inspect / scan for the Images panel |
 | `core/jsonfile.py` | JSON file that re-emits byte-for-byte (layout detected and proven on load), path edits, change lists |
 | `core/jobs.py` | One background job at a time with a live log; subprocess runner that streams output |
 | `core/transcript/titles.py` | course-titles.json rows joined with transcript-data.json; edits; validation |
