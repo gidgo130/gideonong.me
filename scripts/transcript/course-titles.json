@@ -15,19 +15,19 @@
     "en": "Essential Business Skills Development",
     "es": "Desarrollo de habilidades empresariales esenciales",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "CHE 2003": {
     "en": "Principles of Chemical Engineering",
     "es": "Principios de Ingeniería Química",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "CHEM 1013": {
     "en": "General Chemistry I",
     "es": "Química General I",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "CS 1043": {
     "en": "Introduction to Programming and Problem-solving",
@@ -45,7 +45,7 @@
     "en": "Electric Circuit Analysis",
     "es": "Análisis de Circuitos Eléctricos",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ECON 2013": {
     "en": "Principles of Economics I: Macroeconomics",
@@ -69,13 +69,13 @@
     "en": "Exposition and Argument",
     "es": "Exposición y argumentación",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ES 2013": {
     "en": "Statics",
     "es": "Estática",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ES 3003": {
     "en": "Introductory Fluid Mechanics",
@@ -87,19 +87,19 @@
     "en": "Mechanics of Materials",
     "es": "Mecánica de Materiales",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ES 3053": {
     "en": "Thermodynamics",
     "es": "Termodinámica",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ES 3073": {
     "en": "Heat Transfer",
     "es": "Transferencia de Calor",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ES 4863": {
     "sections": {
@@ -107,7 +107,7 @@
         "en": "Special Topics: AI for Engineers",
         "es": "Temas selectos: IA para ingenieros",
         "source": "transcript (section title)",
-        "verified": false
+        "verified": true
       }
     }
   },
@@ -121,13 +121,13 @@
     "en": "Three Ancient Cities",
     "es": "Tres ciudades antiguas",
     "source": "transcript (honors seminar title)",
-    "verified": false
+    "verified": true
   },
   "HON 2223": {
     "en": "The Birth of Modernity",
     "es": "El nacimiento de la modernidad",
     "source": "transcript (honors seminar title)",
-    "verified": false
+    "verified": true
   },
   "MATH 2014": {
     "en": "Calculus I",
@@ -157,19 +157,19 @@
     "en": "Differential Equations",
     "es": "Ecuaciones Diferenciales",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "MATH 3971": {
-    "en": "Seminar in Mathematics",
-    "es": "Seminario de Matemáticas",
+    "en": "Putnam Preparation",
+    "es": "Preparación para Putnam",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "MATH 4003": {
     "en": "Advanced Calculus I",
     "es": "Cálculo Avanzado I",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "MATH 4123": {
     "en": "Linear Algebra and Matrix Theory",
@@ -187,13 +187,13 @@
     "en": "Discrete and Integral Transforms",
     "es": "Transformadas Discretas e Integrales",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "MATH 5423": {
     "en": "Probability",
     "es": "Probabilidad",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ME 1123": {
     "en": "Design and Manufacturing",
@@ -235,13 +235,13 @@
     "en": "Manufacturing Processes",
     "es": "Procesos de Manufactura",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ME 3120": {
     "en": "Dynamic Systems Laboratory",
     "es": "Laboratorio de Sistemas Dinámicos",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "ME 3123": {
     "en": "Dynamic Systems",
@@ -252,16 +252,16 @@
   "ME 4863": {
     "sections": {
       "ST: Intro Aerospace Eng": {
-        "en": "Special Topics: Introduction to Aerospace Engineering",
-        "es": "Temas selectos: Introducción a la Ingeniería Aeroespacial",
+        "en": "Introduction to Aerospace Engineering",
+        "es": "Introducción a la Ingeniería Aeroespacial",
         "source": "transcript (section title)",
-        "verified": false
+        "verified": true
       },
       "ST: Mech Composite Mate": {
         "en": "Special Topics: Mechanics of Composite Materials",
         "es": "Temas selectos: Mecánica de Materiales Compuestos",
         "source": "transcript (section title)",
-        "verified": false
+        "verified": true
       }
     }
   },
@@ -299,7 +299,7 @@
     "en": "Statistics I",
     "es": "Estadística I",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "QM 2023": {
     "en": "Statistics II: Data Analytics",
@@ -317,37 +317,37 @@
     "en": "Scottish Reformation",
     "es": "La Reforma escocesa",
     "source": "transcript (section title)",
-    "verified": false
+    "verified": true
   },
   "SPAN 3003": {
     "en": "Composition in Spanish",
     "es": "Composición en español",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "SPAN 3033": {
     "en": "Hispanic Literary Texts",
     "es": "Textos literarios hispánicos",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "SPAN 3123": {
     "en": "Introduction to Spanish Linguistics",
     "es": "Introducción a la lingüística hispánica",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "SPAN 3463": {
     "en": "Business Spanish",
     "es": "Español para los negocios",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "SPAN 4983": {
-    "en": "Latin American Literature",
-    "es": "Literatura latinoamericana",
+    "en": "The Vanguard Revolution",
+    "es": "La vanguardia",
     "source": "transcript",
-    "verified": false
+    "verified": true
   },
   "STAT 4843": {
     "en": "Mathematical Statistics",

@@ -31,7 +31,7 @@ T = {  # interface text, EN / ES
   'en': dict(title='Unofficial Academic Record', program='Program', majors='Majors', minors='Minors',
              grad='Expected graduation', gpa='Cumulative GPA', hours='Total credit hours',
              asof='Record current as of {date}',
-             exam='Credit by Examination', exam_kinds={'Proficiency': 'Proficiency exam', 'AP': 'Advanced Placement (AP) Equivalencies'},
+             exam='Credit by Examination', exam_kinds={'Proficiency': 'Advanced Placement (AP) Equivalencies', 'AP': 'Advanced Placement (AP) Equivalencies'},
              cols=('Course', 'Title', 'Credits', 'Grade'), in_progress='In progress',
              term_line='Term: {cr} credits · GPA {gpa} · Cumulative GPA {cum}',
              term_line_nogpa='Term: {cr} credits (pass/fail only)',
@@ -44,7 +44,7 @@ T = {  # interface text, EN / ES
   'es': dict(title='Expediente académico no oficial', program='Programa', majors='Carreras', minors='Especializaciones menores',
              grad='Graduación prevista', gpa='Promedio general (GPA)', hours='Total de créditos',
              asof='Expediente actualizado al {date}',
-             exam='Créditos por examen', exam_kinds={'Proficiency': 'Examen de suficiencia', 'AP': 'Equivalencias de Advanced Placement (AP)'},
+             exam='Créditos por examen', exam_kinds={'Proficiency': 'Equivalencias de Advanced Placement (AP)', 'AP': 'Equivalencias de Advanced Placement (AP)'},
              cols=('Curso', 'Título', 'Créditos', 'Calificación'), in_progress='En curso',
              term_line='Periodo: {cr} créditos · promedio {gpa} · promedio general {cum}',
              term_line_nogpa='Periodo: {cr} créditos (solo aprobado/no aprobado)',
@@ -287,9 +287,16 @@ def build(lang, data, titles, profile, cum, exam_total, out_path):
     exams = [b for b in data['blocks'] if b['kind'] == 'exam']
     if exams:
         heading(doc, t['exam'])
+        groups = []  # merge adjacent blocks that share a display label (e.g. Proficiency into AP)
         for b in exams:
-            para(doc, t['exam_kinds'].get(b['source'], b['source']), bold=True, before=2, after=1, keep=True)
-            course_table(doc, b['courses'], titles, lang)
+            label = t['exam_kinds'].get(b['source'], b['source'])
+            if groups and groups[-1][0] == label:
+                groups[-1][1].extend(b['courses'])
+            else:
+                groups.append((label, list(b['courses'])))
+        for label, courses in groups:
+            para(doc, label, bold=True, before=2, after=1, keep=True)
+            course_table(doc, courses, titles, lang)
 
     for b in (b for b in data['blocks'] if b['kind'] == 'term'):
         ip = all(not c['grade'] for c in b['courses'])
