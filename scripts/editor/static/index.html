@@ -8,7 +8,9 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">Site editor <span class="file" id="fileName">js/translations.js</span></div>
+  <div class="brand">Site editor</div>
+  <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/cv">CV &amp; résumé</a><a href="/transcript">Transcript</a></nav>
+  <span class="file" id="fileName">js/translations.js</span>
   <div class="counts" id="counts" title="Parity of EN and ES per key"></div>
   <input id="search" type="search" placeholder="Search keys and text…" autocomplete="off" spellcheck="false">
   <label class="chk"><input type="checkbox" id="attention"> Needs attention</label>
@@ -48,6 +50,7 @@
 </dialog>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/static/common.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

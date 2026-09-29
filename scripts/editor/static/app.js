@@ -2,28 +2,8 @@
 (function () {
   "use strict";
 
-  // ---------------------------------------------------------------- token
-  const params = new URLSearchParams(location.search);
-  let token = params.get("token");
-  if (token) {
-    try { sessionStorage.setItem("editorToken", token); } catch (e) { /* ignore */ }
-    history.replaceState(null, "", location.pathname);
-  } else {
-    try { token = sessionStorage.getItem("editorToken"); } catch (e) { token = null; }
-  }
-
-  const $ = (sel, root) => (root || document).querySelector(sel);
-  const el = (tag, attrs, ...children) => {
-    const n = document.createElement(tag);
-    if (attrs) for (const [k, v] of Object.entries(attrs)) {
-      if (k === "class") n.className = v;
-      else if (k === "html") n.innerHTML = v;
-      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-      else if (v !== null && v !== undefined) n.setAttribute(k, v);
-    }
-    for (const c of children) if (c !== null && c !== undefined) n.append(c);
-    return n;
-  };
+  // token, api(), el(), toast, banners, renderDiff: static/common.js
+  const { token, $, el, api, toast, setBanner, clearBanner, banners, fold, renderDiff } = window.Editor;
 
   const STATUS_LABEL = { both: "EN + ES", "en-only": "EN only", "es-only": "ES only", same: "ES = EN", todo: "TODO" };
   const STATUS_ORDER = ["both", "same", "todo", "en-only", "es-only"];
@@ -40,48 +20,7 @@
     unsaved: false,
   };
 
-  // ---------------------------------------------------------------- api
-  async function api(path, opts) {
-    const o = Object.assign({ headers: {} }, opts || {});
-    o.headers["X-Editor-Token"] = token || "";
-    if (o.body && typeof o.body !== "string") {
-      o.body = JSON.stringify(o.body);
-      o.headers["Content-Type"] = "application/json";
-    }
-    const r = await fetch(path, o);
-    let j = null;
-    try { j = await r.json(); } catch (e) { /* not json */ }
-    if (!r.ok && !(j && (j.error || j.gate))) throw new Error((j && j.error) || (r.status + " " + r.statusText));
-    return j;
-  }
-
-  // ---------------------------------------------------------------- toast
-  let toastTimer = null;
-  function toast(msg, ms) {
-    const t = $("#toast");
-    t.textContent = msg;
-    t.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.hidden = true; }, ms || 3500);
-  }
-
-  // ---------------------------------------------------------------- banners
-  const banners = {};
-  function setBanner(id, kind, content, actions) {
-    clearBanner(id);
-    if (!content) return;
-    const b = el("div", { class: "banner " + (kind || ""), "data-id": id });
-    const text = el("div", { class: "text" });
-    if (typeof content === "string") text.textContent = content; else text.append(content);
-    b.append(text);
-    for (const a of actions || []) b.append(el("button", { type: "button", class: a.primary ? "primary" : "ghost", onclick: a.onclick }, a.label));
-    $("#banners").append(b);
-    banners[id] = b;
-  }
-  function clearBanner(id) { if (banners[id]) { banners[id].remove(); delete banners[id]; } }
-
   // ---------------------------------------------------------------- helpers
-  const fold = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   function liveValue(lang, key) {
     const k = lang + "." + key;
     if (k in state.drafts) return state.drafts[k];
@@ -348,18 +287,6 @@
   }
 
   // ---------------------------------------------------------------- review & save
-  function renderDiff(text) {
-    const pre = el("pre", { class: "diff" });
-    for (const line of text.split("\n")) {
-      let cls = "";
-      if (line.startsWith("+++") || line.startsWith("---")) cls = "meta";
-      else if (line.startsWith("@@")) cls = "hunk";
-      else if (line.startsWith("+")) cls = "add";
-      else if (line.startsWith("-")) cls = "del";
-      pre.append(el("span", { class: cls }, line + "\n"));
-    }
-    return pre;
-  }
   function issueList(items) {
     const ul = el("ul");
     for (const i of items) ul.append(el("li", null, i.key + (i.lang ? " (" + i.lang.toUpperCase() + ")" : "") + ": " + i.message));
@@ -458,10 +385,8 @@
 
   // ---------------------------------------------------------------- wiring
   function init() {
-    if (!token) {
-      setBanner("token", "err", "No access token. Open the editor from its desktop shortcut (or the URL the launcher printed) — a bare URL is refused on purpose.");
-      return;
-    }
+    window.Editor.initTabs();
+    if (!token) { window.Editor.noToken(); return; }
     $("#search").addEventListener("input", (e) => { state.query = fold(e.target.value.trim()); applyFilters(); });
     $("#attention").addEventListener("change", (e) => { state.attention = e.target.checked; applyFilters(); });
     $("#reviewBtn").addEventListener("click", openReview);
@@ -478,7 +403,8 @@
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (!$("#reviewDlg").open) openReview(); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f" && !e.shiftKey) { e.preventDefault(); $("#search").focus(); $("#search").select(); }
     });
-    window.addEventListener("beforeunload", (e) => { if (state.unsaved) { e.preventDefault(); e.returnValue = ""; } });
+    // drafts live on the server (and are autosaved), so switching tabs is safe; only warn when leaving otherwise
+    window.addEventListener("beforeunload", (e) => { if (state.unsaved && !window.__navigating) { e.preventDefault(); e.returnValue = ""; } });
     window.addEventListener("hashchange", focusHashTarget);
     loadState().catch((e) => setBanner("load", "err", "Could not load the editor state: " + e.message));
     heartbeat();

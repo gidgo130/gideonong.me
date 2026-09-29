@@ -298,7 +298,7 @@ def main(argv=None) -> int:
         try:
             while not state.shutdown_requested.is_set():
                 time.sleep(1.0)
-                if state.heartbeat_silence() >= editor_app.HEARTBEAT_TIMEOUT and not state.drafts:
+                if state.heartbeat_silence() >= editor_app.HEARTBEAT_TIMEOUT and not state.draft_count() and not state.busy():
                     break
         except KeyboardInterrupt:
             pass
@@ -312,7 +312,15 @@ def main(argv=None) -> int:
     window = webview.create_window(WINDOW_TITLE, url, width=1440, height=920, min_size=(900, 600), text_select=True)
 
     def on_closing():
-        n = len(state.drafts)
+        if state.busy() and not state.shutdown_requested.is_set():
+            return bool(
+                window.create_confirmation_dialog(
+                    "Site editor",
+                    "A job (Word export, transcript parse or build) is still running. Closing now abandons "
+                    "it (a hidden Word process may be left behind).\n\nClose anyway?",
+                )
+            )
+        n = state.draft_count()
         if n and not state.shutdown_requested.is_set():
             return bool(
                 window.create_confirmation_dialog(
@@ -354,7 +362,7 @@ def main(argv=None) -> int:
                     os._exit(0)
                 continue
             gone_since = None
-            if state.heartbeat_silence() >= editor_app.HEARTBEAT_TIMEOUT and not state.drafts:
+            if state.heartbeat_silence() >= editor_app.HEARTBEAT_TIMEOUT and not state.draft_count() and not state.busy():
                 log.info("no heartbeat for %.0f s and no drafts — destroying window", state.heartbeat_silence())
                 state.shutdown_requested.set()
                 _destroy(window)

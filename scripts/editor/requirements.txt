@@ -1,5 +1,9 @@
-# Local content editor — Phases 0–1: Flask (server) and pywebview (the window, WebView2 backend).
-# Install into the real Python (not Inkscape's), from the repo root:
+# Local content editor — Phases 0–1b. Install into the real Python (not Inkscape's), from the repo root:
 #   & "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" -m pip install -r scripts\editor\requirements.txt
-Flask>=3.0,<4
-pywebview>=6.0,<7
+Flask>=3.0,<4          # the server
+pywebview>=6.0,<7      # the window (WebView2 backend)
+# Phase 1b — CV / résumé check & publish
+python-docx>=1.1       # read the .docx masters (never written)
+pdfplumber>=0.11       # page count, line geometry and text of the exported PDFs
+Pillow>=10.1           # measure entry lines with Georgia (float sizes); Phase 5 images later
+docx2pdf>=0.1.8        # brings pywin32; the export itself drives a private Word instance via win32com

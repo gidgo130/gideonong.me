@@ -3,9 +3,10 @@ transcript-data.json + course-titles.json + profile.json.
 
 Usage:
     python make_transcript.py              # .docx files into scripts/transcript/output/ (for checking)
-    python make_transcript.py --pdf        # also PDFs via Word (docx2pdf) into assets/pdfs/transcript/
+    python make_transcript.py --pdf        # also PDFs via Word into assets/pdfs/transcript/
     python make_transcript.py --pdf --date 20260914 --pdf-dir SOME/DIR
-Needs: python-docx (pip install python-docx); docx2pdf only with --pdf.
+Needs: python-docx (pip install python-docx); pywin32 only with --pdf (a private, hidden Word
+instance does the export — your own open Word is never touched or closed).
 
 Safety checks (the build stops if any fails):
   * every course code has a title in course-titles.json;
@@ -233,6 +234,26 @@ def course_table(doc, courses, titles, lang, in_progress=False):
 def gpa(points, hours):
     return f'{points / hours:.2f}' if hours else '—'
 
+def export_pdf(docx_path, pdf_path):
+    """docx → PDF through a PRIVATE Word instance (DispatchEx), opened read-only, quit afterwards.
+    Not docx2pdf.convert(): that attaches to the Word already running and calls Quit() on it, which
+    would close whatever else is open in Word (same fix as scripts/editor/core/cv/export.py)."""
+    import pythoncom, win32com.client  # pywin32
+    pythoncom.CoInitialize()
+    word = None
+    try:
+        word = win32com.client.DispatchEx('Word.Application')
+        word.Visible, word.DisplayAlerts = False, 0
+        doc = word.Documents.Open(os.path.abspath(docx_path), ReadOnly=True, AddToRecentFiles=False, Visible=False)
+        try:
+            doc.ExportAsFixedFormat(os.path.abspath(pdf_path), 17)  # wdExportFormatPDF
+        finally:
+            doc.Close(0)
+    finally:
+        if word is not None:
+            word.Quit()
+        pythoncom.CoUninitialize()
+
 # ---------------------------------------------------------------- build
 def build(lang, data, titles, profile, cum, exam_total, out_path):
     t, pr = T[lang], profile[lang]
@@ -294,7 +315,7 @@ def main():
     ap.add_argument('--docx-dir', default=os.path.join(HERE, 'output'))
     ap.add_argument('--pdf-dir', default=os.path.normpath(os.path.join(HERE, '..', '..', 'assets', 'pdfs', 'transcript')))
     ap.add_argument('--date', help='YYYYMMDD for the file names (default: the transcript print date)')
-    ap.add_argument('--pdf', action='store_true', help='also export PDF with Word (docx2pdf)')
+    ap.add_argument('--pdf', action='store_true', help='also export PDF with Word (private instance)')
     ap.add_argument('--strict', action='store_true', help='fail on unverified course titles')
     a = ap.parse_args()
     data, titles, profile = load(a.data), load('course-titles.json'), load('profile.json')
@@ -315,10 +336,9 @@ def main():
         build(lang, data, titles, profile, cum, exam_total, path)
         print('wrote', path)
         if a.pdf:
-            from docx2pdf import convert  # needs Microsoft Word (Windows/macOS)
             os.makedirs(a.pdf_dir, exist_ok=True)
             pdf = os.path.join(a.pdf_dir, name + '.pdf')
-            convert(path, pdf)
+            export_pdf(path, pdf)  # needs Microsoft Word (Windows)
             print('wrote', pdf)
 
 if __name__ == '__main__':

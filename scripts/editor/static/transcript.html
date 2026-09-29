@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcript — Site editor</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Site editor</div>
+  <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/cv">CV &amp; résumé</a><a href="/transcript">Transcript</a></nav>
+  <span class="file">scripts/transcript/</span>
+  <input id="search" type="search" placeholder="Search course codes and titles…" autocomplete="off" spellcheck="false">
+  <span class="spacer"></span>
+  <a id="previewLink" class="ghost" href="#" target="_blank" rel="noopener">Preview ↗</a>
+  <button id="publishBtn" class="ghost" type="button">Publish…</button>
+  <button id="reviewBtn" class="primary" type="button">Review &amp; save <span class="badge" id="draftCount" hidden>0</span></button>
+</header>
+
+<div id="banners"></div>
+
+<main class="cvpage" id="transcript">
+  <p class="muted intro">Each semester: drop TU's unofficial transcript PDF into <code>references/transcripts/</code> (never leaves this
+    machine), <strong>Parse</strong> it, give any new course its EN/ES title, <strong>Build</strong> the Unofficial Academic Record
+    (Word files to check, then PDFs), and <strong>Publish</strong> the two PDFs to <code>assets/pdfs/transcript/</code>. The
+    scripts in <code>scripts/transcript/</code> do the work; this page only runs them and edits their inputs.</p>
+
+  <section id="sourceSec">
+    <h2>1 · Source transcript</h2>
+    <div class="rowline">
+      <select id="rawPdf"></select>
+      <button id="parseBtn" class="ghost" type="button">Parse</button>
+      <button class="ghost" type="button" data-open="raw">Open folder</button>
+      <span class="muted small" id="dataInfo"></span>
+    </div>
+    <div id="parseResult"></div>
+  </section>
+
+  <section id="titlesSec">
+    <h2>2 · Course titles <span class="muted small" id="titlesPath"></span></h2>
+    <div class="chips" id="titleFilters"></div>
+    <table class="titles" id="titles"></table>
+  </section>
+
+  <section id="profileSec">
+    <h2><button class="linkish" type="button" data-toggle="profileBody">3 · Profile ▸</button> <span class="muted small" id="profilePath"></span></h2>
+    <div id="profileBody" hidden></div>
+  </section>
+
+  <section id="adjSec">
+    <h2><button class="linkish" type="button" data-toggle="adjBody">4 · Adjustments ▸</button> <span class="muted small" id="adjPath"></span></h2>
+    <div id="adjBody" hidden></div>
+  </section>
+
+  <section id="buildSec">
+    <h2>5 · Build</h2>
+    <div class="rowline">
+      <label class="chk"><input type="checkbox" id="buildStrict"> Strict (fail on unverified titles)</label>
+      <label class="chk">Date <input id="buildDate" type="text" size="9" maxlength="8" placeholder="print date"></label>
+      <label class="chk"><input type="checkbox" id="buildPdf"> Also PDFs (Word)</label>
+      <button id="buildBtn" class="primary" type="button">Build</button>
+      <button class="ghost" type="button" data-open="output">Open Word files</button>
+      <button class="ghost" type="button" data-open="built">Open PDFs</button>
+    </div>
+    <div id="buildStatus" class="muted small"></div>
+    <pre class="joblog" id="jobLog" hidden></pre>
+    <div id="buildSummary"></div>
+  </section>
+</main>
+
+<dialog id="reviewDlg" class="dlg">
+  <form method="dialog">
+    <h2>Review &amp; save <span class="muted">transcript inputs</span></h2>
+    <div id="reviewBody"></div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost danger" id="discardBtn">Discard all drafts</button>
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Back</button>
+      <button type="button" class="primary" id="saveBtn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="publishDlg" class="dlg">
+  <form method="dialog">
+    <h2>Publish transcript PDFs</h2>
+    <div id="publishBody"></div>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Back</button>
+      <button type="button" class="primary" id="publishGo">Publish</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/static/common.js"></script>
+<script src="/static/transcript.js"></script>
+</body>
+</html>

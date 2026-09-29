@@ -50,6 +50,12 @@ class TempRepo:
         (self.root / "scripts" / "editor" / ".local").mkdir(parents=True)
         (self.root / "scripts" / "editor" / ".local" / "editor.lock").write_text('{"url": "TOKEN"}', encoding="utf-8")
         (self.root / ".env.local").write_text("VERCEL_OIDC_TOKEN=secret", encoding="utf-8")
+        # Phase 1b: the manifest generator (publish runs it) and the PDF folders
+        gen = REPO_ROOT / "scripts" / "build-docs-manifest.js"
+        if gen.is_file():
+            shutil.copy2(gen, self.root / "scripts" / "build-docs-manifest.js")
+        for sub in ("resume", "cv", "transcript"):
+            (self.root / "assets" / "pdfs" / sub).mkdir(parents=True, exist_ok=True)
         self.local.mkdir()
         return self
 

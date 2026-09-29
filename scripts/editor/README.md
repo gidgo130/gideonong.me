@@ -1,8 +1,10 @@
 # Local content editor (dev-side tool, never deployed)
 
 Edits the site's content files in place from a local web page shown in its own window. Phase 1
-edits the EN/ES strings in `js/translations.js`; later phases add projects, experience, tags,
-images and the CV/transcript tools (see `staging/editor-plan.md`). `scripts/` is in
+edits the EN/ES strings in `js/translations.js` (**Site text** tab); Phase 1b checks and
+publishes the CV / résumé PDFs (**CV & résumé** tab); Phase 3 runs the transcript scripts and
+edits their inputs (**Transcript** tab); later phases add projects, experience, tags and
+images (see `staging/editor-plan.md`). `scripts/` is in
 `.vercelignore`, so nothing here is published. The tool never runs a git write command — you
 commit.
 
@@ -14,8 +16,9 @@ $py = "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe"   # not `python` 
 powershell -ExecutionPolicy Bypass -File scripts\editor\make-shortcut.ps1
 ```
 
-This installs Flask (the server) and pywebview (the window; it uses the WebView2 runtime that
-ships with Edge — no Edge profile, no Edge window, so Cold Turkey Blocker leaves it alone). The
+This installs Flask (the server), pywebview (the window; it uses the WebView2 runtime that
+ships with Edge — no Edge profile, no Edge window, so Cold Turkey Blocker leaves it alone) and,
+for the CV tab, python-docx, pdfplumber, Pillow and docx2pdf (which brings pywin32). The
 second command puts a **Site editor** shortcut on the desktop that runs `launch.pyw` with the
 real `pythonw.exe` (no console window). Re-run it any time; it just rewrites the shortcut.
 
@@ -59,6 +62,76 @@ keys the draft **touches**, block — anything pre-existing elsewhere is shown i
 | File outside the supported JS subset, or a key that appears twice in one object (the file becomes read-only; the message names the line) | |
 | The file could not be written (open in another program): the save answers "close it and retry", nothing changes, drafts are kept | |
 
+## CV & résumé tab (Phase 1b: check & publish, no editing)
+You keep editing the six masters in Word (`staging/cv-masters/`, gitignored). The tab only
+reads them.
+
+- **Export** (all, or one row) turns each master into `staging/cv-out/<same name>.pdf` with a
+  **private, hidden Word instance** that opens the master read-only and quits when done — your
+  own Word session is never touched (docx2pdf's `convert()` would have attached to it and quit
+  it). A master that is open in Word (its `~$…` owner file exists) is skipped with "close it in
+  Word first", because what Word shows may not be on disk yet. Progress streams into the log
+  panel; closing the window during an export asks first.
+- **Run checks** (no Word; runs automatically after an export and on load):
+  * *One-line fit* — for every "Role · Org ⇥ Date" line, the text, one space and the date are
+    measured with Georgia itself (`C:\Windows\Fonts\georgia*.ttf`, bold / italic faces as used)
+    against the room between the paragraph's indent and its right tab stop, taken from the
+    document. **Details** shows a space-left meter per line; within 3% is "tight".
+  * *PDF check* (the authority): every entry line must sit on one line of the PDF, every
+    paragraph of the master must be in the PDF (otherwise it was edited after the export →
+    "stale"), a PDF older than its master is stale, and the résumé must be exactly one page.
+  * *Confidentiality* — every term in `staging/editor-private/blocklist.txt` (gitignored; one
+    `term | reason` per line, `#` comments, case- and spacing-insensitive) must be absent from
+    the PDF text. The +1 (918) number is allowed in these PDFs (decision 9) and stripped first.
+  * *Voice words* (same list as the site text; "leveraged" is allowed in the Spinelli bullet)
+    and *EN/ES parity* (paragraph and entry counts, bullets per entry, numbers per paired
+    paragraph) are warnings.
+- **Publish…** shows the dry run for a date (default today, `YYYYMMDD`): which PDFs are added or
+  overwritten under `assets/pdfs/<cv|resume>/<en|es> Gideon Ong <CV|Resume> <date>.pdf`, and
+  which older dated files of the same type + language move to the backup set. Errors (missing,
+  stale or wrapped PDF, résumé > 1 page, blocklist hit) block it; warnings do not. Publishing
+  backs up every file it overwrites or moves, copies the PDFs, then runs
+  `node scripts/build-docs-manifest.js` exactly as the pre-commit hook would (no node → a
+  warning; the hook regenerates it at commit). The Full CV is never published.
+- **Restore…** (Site text tab) lists publish sets too. Restoring one writes the old PDFs back
+  but does not remove the newer published files — delete those by hand if you really want the
+  old ones to win (the manifest picks the newest date).
+
+## Transcript tab (Phase 3: the scripts stay in charge)
+`scripts/transcript/` keeps doing the work (see its README); the tab runs its two scripts as
+subprocesses with the editor's own interpreter and shows their output live, and edits their
+JSON inputs without reformatting them. One job (parse, build or a Word export) runs at a time.
+
+1. **Source** — lists `references/transcripts/*.pdf` (gitignored; TU's PDFs hold the student
+   ID). **Parse** backs up `transcript-data.json`, runs `parse_transcript.py`, and shows the
+   unified diff of what changed. Only files in that folder can be parsed.
+2. **Course titles** — every entry of `course-titles.json` joined with the transcript: code,
+   TU's printed title and the terms it appears in, EN, ES, source, verified. Filters:
+   *Needs attention*, *Missing* (on the transcript, no title yet — an error until both EN and
+   ES are typed; new codes are inserted in sorted position), *Unverified*, *ES = EN*, *Drafts*.
+   Special-topics codes (`ES 4863`, `ME 4863`) have one row per section title.
+3. **Profile** and 4. **Adjustments** — forms over `profile.json` and `adjustments.json`
+   (majors / minors one per line; an adjustment's block must exist on the transcript, credits
+   0–6, a known grade, a code that TU does not already print).
+5. **Build** — `make_transcript.py` with Word files into `scripts/transcript/output/` and, with
+   *Also PDFs*, PDFs into `staging/transcript-out/` (private Word instance). *Strict* fails on
+   unverified titles; *Date* overrides the print date in the file names. The summary pulls the
+   script's own messages (STOPPED reasons, ADJUSTMENT lines, unverified titles) out of the log.
+   Drafts must be saved or discarded first — the build reads the files on disk. "Rebuild
+   needed" appears when an input changed after the last build; a GPA that differs from the
+   `GPA:` line in the CV masters is flagged.
+6. **Publish…** — copies the newest built EN + ES PDFs to `assets/pdfs/transcript/<en|es>
+   Gideon Ong Transcript <date>.pdf` (the date they were built with), moves older dated
+   transcript PDFs to the backup set, and regenerates `js/docs-data.js`. Blocked when a
+   language is not built, the build is older than an input, EN and ES carry different dates, or
+   the blocklist hits (fill the student-ID / birth-date placeholders in
+   `staging/editor-private/blocklist.txt` so this gate means something).
+
+**Review & save** (Ctrl+S) lists the changes per JSON file in words plus the exact diff; the
+files are written back in their own layout (`indent=2`, LF, no trailing newline — checked on
+every load; a file in another layout is read-only here). Backups, changed-on-disk refusal,
+autosave and Restore work as on the Site text tab.
+
 ## How it stays lossless
 `core/jsdata.py` tokenizes the file with exact character spans and re-emits it. On every
 load it checks that re-emitting with no edits reproduces the file byte for byte
@@ -92,7 +165,9 @@ cd scripts\editor
 
 For browser checks, `& $py scripts\editor\launch.pyw --no-window` starts both servers without
 a window and prints the tokenized URL (it exits ~10 min after the last page heartbeat if no
-drafts exist, or on Ctrl+C).
+drafts exist, or on Ctrl+C). The real Word export test runs only with `EDITOR_WORD_TESTS=1`
+(it starts a private Word for a few seconds); tests that read the private masters skip when
+`staging/cv-masters/` is absent.
 
 Covers: round-trip of every data file, one edit = one changed line, no-edit save = identical
 file, changed-on-disk → refused (including a same-size rewrite), unsupported syntax or a
@@ -102,7 +177,22 @@ cannot reach a sibling set), autosave, the token/Host/Origin checks (including `
 and `/api/open-preview`), the preview's Vercel-style 404s, draft overlay, Host/Origin
 allow-list, letter-case and 8.3 short-name variants of excluded paths (the short-name test
 skips where the volume has no 8.3 names), hidden-key prefixes from both data files, and a scan
-that fails if the editor's code contains a git write command.
+that fails if the editor's code contains a git write command. Phase 1b (`test_cv.py`, on
+synthetic .docx/.pdf files with made-up text): the master table matches the manifest's
+filename rule, Word owner-file detection, paragraph kinds and resolved fonts, the fit rule
+(fits / tight / overflow; measurement agrees with Word's PDF within 1 pt), PDF line grouping
+with hyphen-join tolerance, blocklist parsing and the phone exception, voice words with the
+Spinelli exemption, EN/ES parity, the publish plan and apply (add / overwrite / move to backup,
+manifest regenerated), every gate (2 pages, wrapped line, stale PDF, edited text, blocklist)
+blocking, the background export job refusing an open master, and the `/api/cv/*` token checks.
+Phase 3 (`test_transcript.py`, `test_jobs.py`, on temp copies of `scripts/transcript/`): the
+four real JSON inputs round-trip byte for byte (other layouts detected or refused), one edit =
+one diff line, title rows joined with the transcript, missing codes and sorted insertion, all
+validation rules, drafts → review → save → changed-on-disk refusal and autosave, the parse job
+restricted to `references/transcripts/` and backing up first (stand-in parser), the real
+builder run docx-only (plus `--strict` stopping), publish plan / apply / gates (not built,
+stale, mixed dates, blocklist), the job runner and subprocess streaming, and the
+`/api/transcript/*` token checks.
 
 ## Files
 | File | What it is |
@@ -115,6 +205,19 @@ that fails if the editor's code contains a git write command.
 | `core/backups.py` | Backup sets, atomic write, restore, pruning (60 days / 100 sets) |
 | `core/review.py` | Change list + unified diff |
 | `core/preview.py` | Read-only preview server with `.vercelignore` rules and draft overlay |
-| `static/` | The page (index.html, app.js, app.css) |
+| `core/cv/masters.py` | The six masters (file, variant, language, publish type), PDF paths, Word owner-file check |
+| `core/cv/docxread.py` | Read a master into paragraphs with resolved bold / italic / size, tab stop, indents (read-only) |
+| `core/cv/fit.py` | One-line fit rule measured with Georgia (Pillow) |
+| `core/cv/export.py` | .docx → PDF through a private Word instance (pywin32) |
+| `core/cv/pdfcheck.py` | Page count, line grouping, entry-line and coverage checks (pdfplumber) |
+| `core/cv/scans.py` | Blocklist, voice words, EN/ES parity |
+| `core/cv/publish.py` | Publish plan + apply into assets/pdfs/, manifest regeneration |
+| `core/cv/service.py` | Cached checks, the background export job, publish — what the CV page talks to |
+| `core/jsonfile.py` | JSON file that re-emits byte-for-byte (layout detected and proven on load), path edits, change lists |
+| `core/jobs.py` | One background job at a time with a live log; subprocess runner that streams output |
+| `core/transcript/titles.py` | course-titles.json rows joined with transcript-data.json; edits; validation |
+| `core/transcript/profile.py` | Validation for profile.json and adjustments.json |
+| `core/transcript/service.py` | Drafts / review / save of the inputs, parse and build jobs, publish — what the Transcript page talks to |
+| `static/` | The pages: index.html + app.js (site text), cv.html + cv.js, transcript.html + transcript.js, common.js, app.css |
 | `tests/` | unittest suite |
 | `make-shortcut.ps1` | Desktop shortcut with the full pythonw.exe path |

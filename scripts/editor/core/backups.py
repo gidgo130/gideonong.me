@@ -93,6 +93,18 @@ class Backups:
         self.prune()
         return BackupSet(manifest["id"], manifest["created"], reason, files)
 
+    def move_away(self, rel_paths: Iterable[str], reason: str) -> BackupSet:
+        """Back up the files, then delete the originals (a move into the set).
+
+        Used by publish for the older dated PDFs. Restoring the set writes them
+        back; files added after the backup are not removed by a restore.
+        """
+        rels = [r for r in rel_paths if (self.repo_root / r).is_file()]
+        bset = self.create(rels, reason)
+        for rel in rels:
+            (self.repo_root / rel).unlink()
+        return bset
+
     # ------------------------------------------------------------ list
     def list(self) -> list[BackupSet]:
         sets = []

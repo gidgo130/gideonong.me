@@ -35,10 +35,16 @@ js/about.js         about.html behaviors
 js/docs-data.js     GENERATED documents manifest (see Documents below) — never edit by hand
 scripts/build-docs-manifest.js  Dev-side generator for js/docs-data.js (Node built-ins only)
 scripts/transcript/  Dev-side transcript PDF generator (Python; see its README) — never deployed
-scripts/editor/      Dev-side local content editor (Python/Flask + a vanilla-JS page; see its
+scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pages; see its
                      README and staging/editor-plan.md) — never deployed. Phase 1 edits
-                     js/translations.js in place, losslessly. Its .local/ (backups, logs,
-                     drafts, Edge profile) is gitignored. It never runs git write commands.
+                     js/translations.js in place, losslessly. Phase 1b (core/cv/) checks and
+                     publishes the CV/résumé PDFs from staging/cv-masters/ into assets/pdfs/
+                     (export through a private Word instance; one-line fit, one-page résumé,
+                     blocklist scans; never edits a master). Phase 3 (core/transcript/) runs
+                     scripts/transcript/ as subprocesses, edits its JSON inputs losslessly,
+                     builds PDFs into staging/transcript-out/ and publishes them. Its .local/
+                     (backups, logs, drafts, WebView2 storage) is gitignored. It never runs
+                     git write commands.
 .githooks/pre-commit  Runs the generator and stages the manifest on every commit
 assets/images/      Project photos and diagrams
 assets/pdfs/        resume/, cv/, transcript/ — dated PDFs (see Documents below)
@@ -46,7 +52,7 @@ assets/videos/      Project video clips
 learning/           UNLISTED Learning section (own design, noindex) — see /learning below and
                     learning/README.md. Linked only from About → Interesting sites.
 learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, learning-i18n.js,
-                    strings-common.js, modules.js)
+                    strings-common.js, modules.js) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
                     slides.html, <slug>.py, and any cited papers (<author>-<year>.pdf, scrubbed)
@@ -450,17 +456,20 @@ Rules for /learning (these replace the main-site rules where they conflict):
   in grayscale (decided 2026-09-28).
   Red may also mark a miss or a flag (a reading outside a band, a range that misses the
   truth, a readout that fails its check); when it does, the caption says so.
-- Unlisted: NOT in the main nav, sitemap or project list. The only link in is the Learning
-  entry in about.html's Interesting sites (js/about.js `interestingSites`, `internal: true` =
-  same tab); that block is `hidden` for now, so the link shows once `hidden` is removed.
-- noindex while in progress: every /learning page (and each deck, via `include-in-header` in
-  slides.qmd) has `<meta name="robots" content="noindex">`. Going public = remove it everywhere
-  (learning-plan.md Phase C). Do not use robots.txt for this.
   Colorblind mode (`data-colorblind` on <html>, see the viewing-settings bullet) swaps the pair
   for orange / blue (--fit #b85000, --fix #0072b2; dark #ff9a4a / #63b3f0) and learning.css adds
   a non-color cue to the red/grey distinctions: highlighted or missed points (.pt-hi) and
   flagged bars (.bar-hi) wear an ink ring; .v.bad readouts are marked ✕ and .v.good ✓ besides
   bold. New charts must reuse those class names so the cues apply without touching JS.
+- Unlisted: NOT in the main nav, sitemap or project list. The only link in is the Learning
+  entry in about.html's Interesting sites (js/about.js `interestingSites`, `internal: true` =
+  same tab); that block is `hidden` for now, so the link shows once `hidden` is removed.
+- noindex, permanently: every /learning page (and each deck, via `include-in-header` in
+  slides.qmd) has `<meta name="robots" content="noindex">`. Do not remove it: /learning is
+  reached by link, not by search (learning-plan.md Phase C, 2026-09-28). Do not use robots.txt.
+- Link previews: every page and deck carries static Open Graph + Twitter-card meta (title and
+  lead in EN, absolute og:url, og:image = learning/assets/og/<slug>.png, 1200×630, made by
+  learning/workshop/tools/make-og-cards.py). Scrapers don't run JS, so they stay in the HTML.
 - Bilingual is REQUIRED; English ships first. All display text lives in strings files
   (learning/assets/strings-common.js + each page's strings.js), never hard-coded in JS.
   learning-i18n.js shares the main site's localStorage "lang" key and default rule. The EN/ES

@@ -37,15 +37,18 @@ from core import preview as preview_mod  # noqa: E402
 from core import review as review_mod  # noqa: E402
 from core import validate as validate_mod  # noqa: E402
 from core.backups import Backups, atomic_write  # noqa: E402
+from core.cv.service import CvService  # noqa: E402
+from core.jobs import JobRunner  # noqa: E402
 from core.jsdata import JsDataError, sha256_bytes  # noqa: E402
 from core.site_text import SiteText, hidden_key_prefixes  # noqa: E402
+from core.transcript.service import TranscriptService  # noqa: E402
 
 log = logging.getLogger("editor.app")
 
 EDITOR_PORT = 5510
 PREVIEW_PORT = 5501
 HEARTBEAT_TIMEOUT = 10 * 60  # seconds of silence before the crash fallback may exit
-VERSION = "0.1 (phase 1)"
+VERSION = "0.3 (phase 3)"
 
 
 class EditorState:
@@ -73,7 +76,21 @@ class EditorState:
         self.backups = Backups(self.repo_root, self.local_dir / "backups")
         self.autosave_path = self.local_dir / "drafts" / "translations.json"
         self.pending_autosave: Optional[dict] = self._read_autosave()
+        # One background job at a time across the tools (Word export, transcript parse / build).
+        self.jobs = JobRunner()
+        # Phase 1b: CV / résumé check & publish (its own module; shares the backups)
+        self.cv = CvService(self.repo_root, self.backups, self.jobs)
+        # Phase 3: transcript inputs, parse / build jobs, publish
+        self.transcript = TranscriptService(self.repo_root, self.local_dir, self.backups, self.jobs)
         self.load()
+
+    def busy(self) -> bool:
+        """True while a background job (a Word export, a transcript parse or build) is running."""
+        return self.jobs.busy()
+
+    def draft_count(self) -> int:
+        """Unsaved edits across the tools (the close prompt)."""
+        return len(self.drafts) + self.transcript.draft_count()
 
     # ------------------------------------------------------------- loading
     def load(self) -> None:
@@ -361,6 +378,179 @@ def create_app(state: EditorState) -> Flask:
     def index():
         return send_from_directory(HERE / "static", "index.html")
 
+    @app.get("/cv")
+    def cv_page():
+        return send_from_directory(HERE / "static", "cv.html")
+
+    # ---------------------------------------------------------- CV / résumé
+    @app.get("/api/cv/state")
+    def cv_state():
+        return jsonify(state.cv.state())
+
+    @app.post("/api/cv/check")
+    def cv_check():
+        body = request.get_json(silent=True) or {}
+        ids = body.get("ids")
+        if ids is not None and not (isinstance(ids, list) and all(isinstance(i, str) for i in ids)):
+            return deny(400, "ids must be a list of master ids")
+        return jsonify(ok=True, checks=state.cv.check(ids, force=bool(body.get("force"))), masters=state.cv.state()["masters"])
+
+    @app.post("/api/cv/export")
+    def cv_export():
+        body = request.get_json(silent=True) or {}
+        ids = body.get("ids")
+        if ids is not None and not (isinstance(ids, list) and all(isinstance(i, str) for i in ids)):
+            return deny(400, "ids must be a list of master ids")
+        try:
+            job = state.cv.start_export(ids)
+        except RuntimeError as e:
+            return deny(409, str(e))
+        return jsonify(ok=True, job=job)
+
+    @app.get("/api/cv/job")
+    def cv_job():
+        return jsonify(job=state.cv.job_json())
+
+    @app.get("/api/cv/publish-plan")
+    def cv_publish_plan():
+        return jsonify(state.cv.publish_plan(request.args.get("date") or None))
+
+    @app.post("/api/cv/publish")
+    def cv_publish():
+        body = request.get_json(silent=True) or {}
+        result = state.cv.publish_apply(body.get("date") or None)
+        return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.post("/api/cv/open-out")
+    def cv_open_out():
+        try:
+            path = state.cv.open_out()
+        except OSError as e:  # pragma: no cover
+            return deny(500, f"could not open the folder: {e}")
+        return jsonify(ok=True, path=path)
+
+    # ---------------------------------------------------------- transcript
+    @app.get("/transcript")
+    def transcript_page():
+        return send_from_directory(HERE / "static", "transcript.html")
+
+    @app.get("/api/transcript/state")
+    def transcript_state():
+        return jsonify(state.transcript.state_json())
+
+    @app.post("/api/transcript/reload")
+    def transcript_reload():
+        state.transcript.load()
+        return jsonify(state.transcript.state_json())
+
+    @app.post("/api/transcript/draft")
+    def transcript_draft():
+        body = request.get_json(silent=True) or {}
+        name, path = body.get("file"), body.get("path")
+        if not isinstance(name, str) or not isinstance(path, list) or not path:
+            return deny(400, "file and a non-empty path list are required")
+        if not all(isinstance(p, (str, int)) and not isinstance(p, bool) for p in path):
+            return deny(400, "path parts must be strings or integers")
+        try:
+            state.transcript.set_draft(name, path, body.get("value"), delete=bool(body.get("delete")))
+        except KeyError:
+            return deny(404, f"unknown file {name}")
+        except (RuntimeError, ValueError, IndexError, TypeError) as e:
+            return deny(409, str(e))
+        return jsonify(ok=True, **_transcript_draft_reply())
+
+    @app.post("/api/transcript/title")
+    def transcript_title():
+        body = request.get_json(silent=True) or {}
+        code, section, field = body.get("code"), body.get("section") or "", body.get("field")
+        if not isinstance(code, str) or not code.strip() or not isinstance(field, str):
+            return deny(400, "code and field are required")
+        try:
+            state.transcript.set_title(code.strip(), section, field, body.get("value"))
+        except KeyError:
+            return deny(400, f"unknown field {field}")
+        except (RuntimeError, ValueError) as e:
+            return deny(409, str(e))
+        return jsonify(ok=True, **_transcript_draft_reply())
+
+    def _transcript_draft_reply() -> dict:
+        t = state.transcript
+        return {
+            "draftCount": t.draft_count(),
+            "issues": {n: [i.to_json() for i in v] for n, v in t.draft_issues().items()},
+            "gates": {n: g.to_json() for n, g in t.gates().items()},
+            "titles": t.state_json()["titles"],
+        }
+
+    @app.post("/api/transcript/drafts/discard")
+    def transcript_discard():
+        state.transcript.discard_drafts()
+        return jsonify(ok=True, draftCount=0)
+
+    @app.get("/api/transcript/review")
+    def transcript_review():
+        return jsonify(state.transcript.review())
+
+    @app.post("/api/transcript/save")
+    def transcript_save():
+        result = state.transcript.save()
+        return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.post("/api/transcript/autosave/restore")
+    def transcript_autosave_restore():
+        return jsonify(ok=True, **state.transcript.restore_autosave())
+
+    @app.post("/api/transcript/autosave/discard")
+    def transcript_autosave_discard():
+        state.transcript.discard_autosave()
+        return jsonify(ok=True)
+
+    @app.post("/api/transcript/parse")
+    def transcript_parse():
+        body = request.get_json(silent=True) or {}
+        try:
+            job = state.transcript.start_parse(str(body.get("pdf") or ""))
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+        return jsonify(ok=True, job=job)
+
+    @app.post("/api/transcript/build")
+    def transcript_build():
+        body = request.get_json(silent=True) or {}
+        try:
+            job = state.transcript.start_build(bool(body.get("strict")), (body.get("date") or None), bool(body.get("pdf")))
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+        return jsonify(ok=True, job=job)
+
+    @app.get("/api/transcript/job")
+    def transcript_job():
+        return jsonify(job=state.transcript.job_json())
+
+    @app.get("/api/transcript/publish-plan")
+    def transcript_publish_plan():
+        return jsonify(state.transcript.publish_plan())
+
+    @app.post("/api/transcript/publish")
+    def transcript_publish():
+        result = state.transcript.publish_apply()
+        return jsonify(result), (200 if result.get("ok") else 409)
+
+    @app.post("/api/transcript/open-folder")
+    def transcript_open_folder():
+        body = request.get_json(silent=True) or {}
+        try:
+            path = state.transcript.open_folder(str(body.get("which") or ""))
+        except ValueError as e:
+            return deny(400, str(e))
+        except OSError as e:  # pragma: no cover
+            return deny(500, f"could not open the folder: {e}")
+        return jsonify(ok=True, path=path)
+
     @app.get("/api/ping")
     def ping():
         return jsonify(ok=True, app="gideonong-editor", pid=os.getpid(), version=VERSION)
@@ -448,6 +638,7 @@ def create_app(state: EditorState) -> Flask:
             log.warning("restore of %s failed: %s", set_id, e)
             return deny(409, "js/translations.js could not be written — it is probably open in another program. Close it and retry.")
         state.load()
+        state.transcript.load()  # a set may hold transcript inputs; drafts there are re-applied
         log.info("restored %s (backup %s)", set_id, result["backup"])
         return jsonify(ok=True, **result)
 

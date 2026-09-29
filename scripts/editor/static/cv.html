@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CV &amp; résumé — Site editor</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Site editor</div>
+  <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/cv">CV &amp; résumé</a><a href="/transcript">Transcript</a></nav>
+  <span class="file" id="mastersDir">staging/cv-masters/</span>
+  <span class="spacer"></span>
+  <button id="checkBtn" class="ghost" type="button" title="Re-read the masters and PDFs and run every check (no Word)">Run checks</button>
+  <button id="exportBtn" class="ghost" type="button" title="Export every master to PDF with a private Word instance">Export all</button>
+  <button id="openOutBtn" class="ghost" type="button" title="Open staging/cv-out/ in Explorer">Open PDFs folder</button>
+  <a id="previewLink" class="ghost" href="#" target="_blank" rel="noopener">Preview ↗</a>
+  <button id="publishBtn" class="primary" type="button">Publish…</button>
+</header>
+
+<div id="banners"></div>
+
+<main id="cv" class="cvpage">
+  <p class="muted intro">Edit the masters in Word. Here: <strong>Export</strong> makes the PDFs (<code>staging/cv-out/</code>),
+    the checks say whether every “Role · Org — date” line still fits on one line, the résumé is one page and nothing
+    blocked slipped in, and <strong>Publish</strong> copies the Professional CV + résumé PDFs into <code>assets/pdfs/</code>
+    (older dated files go to the backup set). Nothing here edits a .docx.</p>
+  <table class="docs" id="docs"></table>
+  <section id="jobPanel" hidden>
+    <h2>Export</h2>
+    <pre class="joblog" id="jobLog"></pre>
+  </section>
+  <section id="details"></section>
+</main>
+
+<dialog id="publishDlg" class="dlg">
+  <form method="dialog">
+    <h2>Publish CV &amp; résumé PDFs</h2>
+    <div id="publishBody"></div>
+    <div class="dlg-actions">
+      <label class="chk">Date in the file names <input id="publishDate" type="text" size="9" maxlength="8" pattern="\d{8}" placeholder="YYYYMMDD"></label>
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Back</button>
+      <button type="button" class="primary" id="publishGo">Publish</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/static/common.js"></script>
+<script src="/static/cv.js"></script>
+</body>
+</html>

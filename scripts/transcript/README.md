@@ -15,6 +15,11 @@ in English and Spanish:
 | `make_transcript.py` | Checks the data, then writes the two .docx files and (with `--pdf`) the PDFs. | nobody |
 | `output/` | The .docx files, for checking (gitignored). | generated |
 
+The site editor's **Transcript** tab (`scripts/editor/`, since 2026-09-28) runs these same
+steps with buttons: parse from `references/transcripts/`, edit the three JSON inputs, build
+(PDFs go to `staging/transcript-out/` first) and publish into `assets/pdfs/transcript/` with
+the old files backed up. The commands below still work on their own.
+
 ## One-time setup (Windows, PowerShell)
 ```powershell
 $py = "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe"   # not `python` (that's Inkscape's)
@@ -31,7 +36,7 @@ $py = "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe"   # not `python` 
 3. Build and check (stops if a course has no title, or if its GPA/credit math disagrees with TU's totals):
    ```powershell
    & $py make_transcript.py          # .docx only → output\, open them to look
-   & $py make_transcript.py --pdf    # + PDFs into assets\pdfs\transcript\ (uses Word)
+   & $py make_transcript.py --pdf    # + PDFs into assets\pdfs\transcript\ (a private, hidden Word instance; yours stays untouched)
    ```
    New course codes → add them to `course-titles.json` (EN + ES) and rerun.
 4. Delete the previous transcript PDFs from `assets\pdfs\transcript\` and commit. The pre-commit hook updates `js/docs-data.js`.
