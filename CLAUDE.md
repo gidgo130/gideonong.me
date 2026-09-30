@@ -223,6 +223,13 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
   both CV and transcript → resume morphs into CV + Transcript; exactly one → resume morphs
   into Resume + that document (a clone of the resume button fills the top slot); neither →
   no morph, the resume button stays static.
+- The public CV is the Professional CV, not the Full CV (Gideon's decision, 2026-09-29).
+  assets/pdfs/cv/ holds only the Professional CV (EN/ES), which leaves out political and
+  pre-college items. The button label still says "Download Full CV" / "Descargar CV
+  Completo" (cvBtn) on purpose: it tells recruiters this is the complete multi-page CV, as
+  opposed to the one-page resume. The real Full CV is never published on the site; Gideon
+  chooses who gets it and shares it himself. Don't rename the button to "Professional CV",
+  and never put a Full CV PDF in assets/pdfs/ or anywhere else that deploys.
 
 ### Experience hero (2026-09-27)
 A solid `--footer-bg` text panel (min(540px, 52%) wide) and three captioned photo tiles
