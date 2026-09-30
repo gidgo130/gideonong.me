@@ -10,7 +10,8 @@ Domain: gideonong.me. See plan.md for the development roadmap.
 
 ## Stack
 Plain HTML + CSS + vanilla JavaScript. No frameworks, no build tools, no npm.
-External resources: Google Fonts only (Lora + DM Sans).
+External resources: Google Fonts only (Lora + DM Sans), plus GoatCounter's count.js for
+analytics (see Analytics below).
 /learning is the one exception: it also loads Barlow Semi Condensed, Source Serif 4 and
 JetBrains Mono (see /learning below).
 
@@ -24,6 +25,7 @@ css/style.css       All styles (single file, organized by section)
 js/chips.js         The one phrase auto-linker (IEL, Zohaib Sheikh, …) — see Phrase chips
 js/site-config.js   Author-side switches (home featured side-by-side flag); index.html only
 js/main.js          Nav behavior, language toggle, document links
+js/analytics.js     Vercel Web Analytics + GoatCounter loader and click events (see Analytics)
 js/translations.js  All EN and ES text strings for the bilingual toggle (plain text, no HTML)
 js/tags-data.js     The one shared tag vocabulary (id + i18n key)
 js/projects-data.js Project entries (feeds projects.html and the home featured block)
@@ -294,6 +296,19 @@ auto-fit grid so the settings panel takes the full row on its own when the sites
 hidden. The AI statement and viewing settings stay. The headshot is a plain
 `<img src="assets/images/about/headshot.jpg" data-i18n-alt="headshotAlt">` in about.html —
 swap the file or the src there.
+
+### Analytics (2026-09-30)
+- Every main-site page's <head> ends with `<script defer src="js/analytics.js">` (`../js/` in
+  projects/<slug>.html). A NEW page must include it too; new project shells get it
+  automatically because the editor copies projects/g-view.html. /learning does not load it.
+- js/analytics.js loads two cookieless tools (no consent banner): Vercel Web Analytics
+  (same-origin /_vercel/insights/script.js; exists only on Vercel deploys) and GoatCounter
+  (gc.zgo.at/count.js, site code GC_CODE = "gideonong"). Neither loads on the siteData.isDev
+  hosts, so Live Server stays console-clean and local previews are never counted.
+- GoatCounter click events come from ONE delegated document listener in js/analytics.js — no
+  markup attributes, so JS-rendered links are covered: doc-<type>-<lang> (data-doc-link
+  buttons), email (mailto:), out-<host> (links to other sites), lang-<en|es> (the toggle).
+  Do not add data-goatcounter-click attributes; extend the listener instead.
 
 ## Home page (index.html) structure
 1. Sticky white navbar
