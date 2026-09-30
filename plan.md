@@ -727,6 +727,85 @@ Features:
   - Caveat: missing files then answer 200, so the localhost dev-check HEAD probes must recognize
     the router page.
   - Add the router to .vercelignore.
+- [X] Analytics, hosted: **shipped 2026-09-30.** Vercel Web Analytics + GoatCounter
+  (gideonong.goatcounter.com), both loaded by js/analytics.js, cookieless and skipped on dev hosts.
+  GoatCounter records click events: doc-<type>-<lang>, email, out-<host>, lang-<en|es>.
+  CLAUDE.md → Analytics.
+- [ ] Analytics, self-built ("option 2", chosen 2026-09-30). A first-party collector on Vercel
+  that stores event-level data Gideon owns and can analyze in Colab. It runs **alongside**
+  GoatCounter, which stays as the reference count. It's also the first backend code in the repo.
+  Build in this order:
+  - **A1 — "Exclude me" flag (do first, small).** Visiting `?notrack=1` sets
+    `localStorage.noTrack = "1"` (`?notrack=0` clears it). js/analytics.js then skips all three
+    tools: Vercel, GoatCounter (also set GoatCounter's own `skipgc` key) and the collector.
+    Gideon sets it once per browser/device he uses.
+  - **A2 — Collector `api/hit.js`** (Vercel serverless function).
+    - Code rules: Node built-ins + `fetch` only. No package.json, no npm, no build step.
+    - Upstash Redis through its REST API.
+    - Env vars are set in the Vercel dashboard. Local copies go in `.env.local`, which is
+      already gitignored.
+      - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+      - `ANALYTICS_SALT_SECRET`
+      - `ANALYTICS_EXPORT_TOKEN`
+    - Client (added to js/analytics.js): `navigator.sendBeacon("/api/hit", JSON)`. Events:
+      - `pageview` on load
+      - the same click events GoatCounter gets
+      - `leave` on `visibilitychange → hidden`, carrying time-on-page (visible time only) and
+        max scroll %
+    - Client fields:
+      - path, normalized (strip `.html`; `/`, `/index.html` and `/portfolio` merge), so data
+        survives the clean-URL change
+      - referrer host (not the full URL)
+      - site language and `navigator.language`
+      - viewport-width bucket
+      - timezone
+      - a per-tab session id (random, in sessionStorage)
+      - `utm_source` if present
+    - Server adds:
+      - timestamp
+      - country / region / city from Vercel's `x-vercel-ip-*` headers
+      - coarse browser / OS / device class parsed from User-Agent
+      - `visitor` = first 16 hex chars of SHA-256(daily salt + IP + UA), where daily salt =
+        HMAC(ANALYTICS_SALT_SECRET, UTC date). This matches GoatCounter's approach: unique
+        per day, not trackable across days.
+      - **Never store the IP or the raw User-Agent.**
+    - Rejects (answer 204 and store nothing):
+      - anything other than POST
+      - `Origin` other than gideonong.me or a Vercel preview host
+      - bodies over ~2 KB
+      - bot User-Agents (regex list kept in the file)
+      - more than N hits/minute per visitor hash
+    - Storage: `RPUSH hits:<YYYY-MM-DD>` (one JSON line per event), each key expiring after
+      ~13 months.
+  - **A3 — Export + notebook.**
+    - `api/export.js` returns NDJSON for `?from=&to=`. It needs
+      `Authorization: Bearer <ANALYTICS_EXPORT_TOKEN>`, otherwise 404.
+    - A Colab notebook in `scripts/analytics/` (never deployed) pulls the export and a
+      GoatCounter CSV. Questions it answers:
+      - pageviews/day
+      - top pages and referrers
+      - referrer → résumé-download funnel
+      - EN vs ES
+      - country
+      - time on page
+  - **A4 — Validate (≥ 4 weeks).** Compare daily pageviews against GoatCounter. Expect the
+    collector ≥ GoatCounter, since a same-domain endpoint is blocked less often. A gap in
+    the other direction means a bug. Record the result here.
+  - **A5 — Optional, only after A4.**
+    - A private dashboard page (unlisted, reads /api/export with the token).
+    - Or drop GoatCounter if the collector has proven itself.
+  - Testing: the dev-host skip means Live Server never sends. Test on a Vercel preview deploy
+    (or `vercel dev` with .env.local). Check each reject path returns 204 and stores nothing.
+  - **Before starting, check the current Vercel Hobby function and Upstash free-tier limits**
+    (quotas change).
+  - When built, update CLAUDE.md:
+    - Stack line → `api/` holds serverless functions (Node built-ins + fetch, no npm)
+    - File structure: api/, scripts/analytics/
+    - Analytics section: the collector, its fields and the privacy rules above
+  - Optional: a one-line "This site counts visits without cookies" note (EN/ES) in the footer
+    or the About FAQ.
+  - Synergy: the same `x-vercel-ip-country` header could later drive the "Language detection
+    refinement" item below with no third-party API.
 - [ ] Language detection refinement: add IP geolocation (free API) for regional default
 - [ ] Flag-based EN/ES toggle (cosmetic — replace pill buttons with small flag icons)
 
@@ -1027,3 +1106,19 @@ every page and the three sub-pages: no overflow, no nested anchors, no broken im
 every image, console clean; hover scale on and off (reduced motion); `?part=` alone, with
 `?tag=`, with search, unknown, ES; lightbox keyboard-only (Enter, → ←, Esc, focus return);
 side-by-side flag on at 1280 / 1024.
+
+[2026-09-30] Analytics. Shipped Vercel Web Analytics + GoatCounter via one shared
+js/analytics.js (a `<script defer>` in every main-site head; skipped on dev hosts;
+cookieless, so no consent banner). The GoatCounter code is `gideonong`. Click events come
+from one delegated listener, with no markup attributes. CLAUDE.md's "Google Fonts only"
+external-resource rule now also allows GoatCounter's count.js.
+Self-built analytics: of Sheets + Apps Script, a Vercel function + Upstash, and self-hosted
+Umami/GoatCounter, **chose the Vercel function + Upstash** (Phase 3 → "Analytics, self-built",
+A1–A5). Reasons:
+- geolocation from Vercel headers
+- a same-domain endpoint (fewest ad-blocker losses)
+- cookieless daily-salted unique visitors
+- event-level data for Colab
+- $0 cost
+Sheets was rejected because Apps Script can't see the IP or headers (no geo, no uniques, weak
+bot filtering). Self-hosting was rejected because of cost and upkeep.
