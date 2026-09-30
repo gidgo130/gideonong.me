@@ -253,8 +253,13 @@ runtime but never the og tags.
   fetched into the git-ignored scripts/.og-fonts/). Rerun it from the repo root:
     & "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" scripts/make-og-cards.py [name ...]
   Same content rules as the pages: Baker Hughes only through images already published, no
-  new photos of people, nothing political. The Eagle card is a designed text card (the
-  photos are Matthew Rowan's).
+  new photos of people, nothing political. The Eagle card uses a people-free crop of
+  Matthew Rowan's finished-path photo and carries "Photo: Matthew Rowan" on the card (a shared
+  card has no credit line of its own); Gideon's call, 2026-09-29.
+- Cards are sized for LinkedIn, which shows them at ~400–550 px and re-compresses them: keep
+  the designed-card text sizes, and prefer a designed card with a detail crop over a full
+  screenshot (G-View's full screenshot turned to mush). The script shrinks a long title to
+  fit and stops with an error rather than cut text; shorten the text in CARDS if it does.
 - A new project sub-page needs its own CARDS entry and its own tag block (copy one from
   another sub-page and change title, description, url, image, alt). The local editor strips
   the block from the shells it creates (they are built from projects/g-view.html), so a new
