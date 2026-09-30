@@ -326,6 +326,33 @@ class RenameTests(unittest.TestCase):
             self.assertEqual((t.root / "projects/pump-cylinder-failure.html").read_bytes(), shell_before)
             self.assertEqual(sorted(p.name for p in folder.iterdir()), folder_files)
 
+    def test_rename_project_carries_link_preview(self):
+        with TempRepo() as t:
+            og = t.root / "assets/images/og"
+            og.mkdir(parents=True)
+            card = bytes(range(256)) * 4  # binary: must move byte for byte
+            (og / "pump-cylinder-failure.jpg").write_bytes(card)
+            shell_before = (t.root / "projects/pump-cylinder-failure.html").read_bytes()
+            self.assertIn(b"https://gideonong.me/projects/pump-cylinder-failure.html", shell_before)
+            c = make(t).content
+            s = c.rename_entry("projects", "pump-cylinder-failure", "pump-fix")
+            self.assertIn(["assets/images/og/pump-cylinder-failure.jpg", "assets/images/og/pump-fix.jpg"], s["files"])
+            ov = c.preview_overrides()
+            self.assertEqual(ov["assets/images/og/pump-fix.jpg"], card)
+            res = c.save()
+            self.assertTrue(res["ok"], res)
+            shell = (t.root / "projects/pump-fix.html").read_text(encoding="utf-8")
+            self.assertIn('<meta property="og:url" content="https://gideonong.me/projects/pump-fix.html">', shell)
+            self.assertIn('<meta property="og:image" content="https://gideonong.me/assets/images/og/pump-fix.jpg">', shell)
+            self.assertNotIn("pump-cylinder-failure", shell)
+            self.assertEqual((og / "pump-fix.jpg").read_bytes(), card)
+            self.assertFalse((og / "pump-cylinder-failure.jpg").exists())
+            # and back: byte-identical
+            c.rename_entry("projects", "pump-fix", "pump-cylinder-failure")
+            self.assertTrue(c.save()["ok"])
+            self.assertEqual((t.root / "projects/pump-cylinder-failure.html").read_bytes(), shell_before)
+            self.assertEqual((og / "pump-cylinder-failure.jpg").read_bytes(), card)
+
     def test_rename_role_and_undo_by_delete(self):
         with TempRepo() as t:
             st = make(t)
@@ -390,6 +417,12 @@ class ContentServiceTests(unittest.TestCase):
             self.assertIn("projects/test-editor.html", c.preview_overrides())
             self.assertIn(b'data-slug="test-editor"', c.shell_html("test-editor"))
             self.assertIn(b"<title>Test project", c.shell_html("test-editor"))
+            # the template's link previews are G-View's: a new shell carries none (CLAUDE.md → Link previews)
+            self.assertIn(b'property="og:image"', (t.root / "projects/g-view.html").read_bytes())
+            shell = c.shell_html("test-editor")
+            for gone in (b"og:", b"twitter:", b"Link previews", b"g-view"):
+                self.assertNotIn(gone, shell)
+            self.assertIn(b'<meta name="description" content="A test.">', shell)
             c.set_field("projects", "test-editor", ["listing"], "index")
             self.assertIn("test-editor", [p["slug"] for p in order.projects_index(c.live_entries("projects"))])
             rev = c.review()

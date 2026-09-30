@@ -41,6 +41,12 @@ FILES = dict(DATA_FILES, about=(aboutmod.REL_PATH, "ABOUT_*", "id"))  # the Abou
 log = logging.getLogger("editor.content")
 
 SHELL_TEMPLATE = "projects/g-view.html"
+# Link-preview cards (made by scripts/make-og-cards.py): a sub-page's card is <slug>.jpg|png here.
+OG_DIR = "assets/images/og/"
+OG_EXT = (".jpg", ".png")
+# The template's link-preview block (comment + og:/twitter: metas) belongs to G-View: a new
+# shell drops it, so it never shares with another page's card. CLAUDE.md → Link previews.
+_OG_BLOCK = re.compile(r'^[ \t]*(?:<!-- Link previews\b.*?-->|<meta (?:property="og:|name="twitter:)[^>]*>)[ \t]*\r?\n', re.M | re.S)
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif"}
 
 
@@ -406,6 +412,18 @@ class ContentService:
                 else:
                     files[shell_old] = shell_new
                 summary["files"].append([shell_old, shell_new])
+            for ext in OG_EXT:  # the link-preview card follows its slug
+                card_old, card_new = f"{OG_DIR}{old}{ext}", f"{OG_DIR}{new}{ext}"
+                origin = next((o for o, t in files.items() if t == card_old), None)
+                if origin:
+                    files.pop(origin)
+                    if origin != card_new:
+                        files[origin] = card_new
+                elif (self.repo_root / card_old).is_file():
+                    files[card_old] = card_new
+                else:
+                    continue
+                summary["files"].append([card_old, card_new])
         if (self.repo_root / folder_old).is_dir():
             origin = next((o for o, t in files.items() if t == folder_old), None)
             if origin:
@@ -444,7 +462,12 @@ class ContentService:
         return out
 
     def _renamed_shell_bytes(self, old_rel: str, new_slug: str) -> bytes:
+        if not old_rel.endswith(".html"):  # a link-preview card moves as it is
+            return (self.repo_root / old_rel).read_bytes()
         text = (self.repo_root / old_rel).read_text(encoding="utf-8")
+        old_slug = Path(old_rel).stem
+        text = text.replace(f'/projects/{old_slug}.html">', f'/projects/{new_slug}.html">')  # og:url
+        text = text.replace(f"{OG_DIR}{old_slug}.", f"{OG_DIR}{new_slug}.")  # og:image and its comment
         return re.sub(r'data-slug="[^"]*"', f'data-slug="{new_slug}"', text, count=1).encode("utf-8")
 
     # ------------------------------------------------------------- the About lists
@@ -527,7 +550,7 @@ class ContentService:
             for k_new in [k for k, v in keys_map.items() if v in mine]:
                 keys_map.pop(k_new)
             kind = "projects" if name == "projects" else "experience"
-            for old_rel in [o for o, t in self.drafts["renames"]["files"].items() if t in (f"projects/{ident}.html", f"assets/images/{kind}/{ident}/")]:
+            for old_rel in [o for o, t in self.drafts["renames"]["files"].items() if t in (f"projects/{ident}.html", f"assets/images/{kind}/{ident}/") + tuple(f"{OG_DIR}{ident}{x}" for x in OG_EXT)]:
                 self.drafts["renames"]["files"].pop(old_rel)
             ident = disk_ident
         on_disk = ident in f.ids()
@@ -578,7 +601,8 @@ class ContentService:
         e = self.entry("projects", ident) or {}
         title = self.text(e.get("titleKey", ""), "en") or ident
         desc = self.text(e.get("descKey", ""), "en") or ""
-        out = re.sub(r'data-slug="[^"]*"', f'data-slug="{ident}"', tpl)
+        out = _OG_BLOCK.sub("", tpl)
+        out = re.sub(r'data-slug="[^"]*"', f'data-slug="{ident}"', out)
         out = re.sub(r"<title>.*?</title>", f"<title>{_esc(title)} — Gideon A. Ong</title>", out, count=1, flags=re.S)
         out = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{_esc(desc)}">', out, count=1)
         return out.encode("utf-8")

@@ -679,7 +679,9 @@ Content:
 - [ ] All projects with final descriptions, photos, videos, tag lists, and report links
 - [ ] Create unlinked project pages (not in nav, accessible by direct URL)
 - [ ] Final hero description (both EN and ES) reviewed and edited
-- [ ] Add Open Graph metadata tags to all pages (controls LinkedIn/social preview image)
+- [X] Add Open Graph metadata tags to all pages (controls LinkedIn/social preview image) —
+  **done 2026-09-29**: static EN og/twitter block on the 4 main pages and 3 sub-pages, cards
+  in assets/images/og/ from scripts/make-og-cards.py (CLAUDE.md → Link previews).
 
 Features:
 
@@ -696,6 +698,21 @@ Features:
   Phase 3a: TF-IDF + cosine similarity in vanilla JS — replaces the body of
   `searchEntries(query, entries)` in `js/projects.js` only. No markup or caller changes.
   Phase 3b (optional upgrade): Transformers.js in-browser embeddings (more semantic)
+- [ ] Clean URLs (`/about`, `/projects/g-view`) — soon; Live Server must keep working.
+  Today there is no vercel.json, so only the `.html` form works (`/about` is a 404; checked
+  2026-09-29). Candidate routes, decision pending:
+  (a) `vercel.json { "cleanUrls": true }`, links left as `.html` — Live Server untouched,
+      but every click in production takes a 308 redirect to the clean form;
+  (b) the same plus links rewritten to the clean form — plain Live Server can't serve
+      `/about`, so local preview needs a small server that emulates cleanUrls;
+  (c) folder-per-page (`about/index.html` → `/about/`) — works in Live Server and on Vercel
+      with no config, but every page's relative paths and `data-root` change.
+  Any route must also update: og:url in all 7 heads (CLAUDE.md → Link previews),
+  `subpageUrl` in js/projects-data.js and the dev-check probes, the editor's
+  `"/projects/<slug>.html"` convention (create_shell / rename_entry in
+  scripts/editor/core/site/service.py, and datacheck.py), CLAUDE.md, and a LinkedIn Post
+  Inspector re-scrape of every shared link. Check /learning's folder URLs and its
+  trailing-slash script under the chosen route before deploying.
 - [ ] Language detection refinement: add IP geolocation (free API) for regional default
 - [ ] Flag-based EN/ES toggle (cosmetic — replace pill buttons with small flag icons)
 

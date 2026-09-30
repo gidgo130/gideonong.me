@@ -287,6 +287,11 @@
   }
 
   siteData.checkData();
+  // Link previews live in the shell's static <head> (scrapers don't run JS);
+  // a shell without them shares with no card. See CLAUDE.md → Link previews.
+  if (siteData.isDev() && console && console.warn && !document.querySelector('meta[property="og:image"]')) {
+    console.warn("[project page] " + slug + ": no og:image meta in the <head> — add a card (scripts/make-og-cards.py) and the link-preview tags");
+  }
   document.addEventListener("langchange", render);
   render();
 }());
