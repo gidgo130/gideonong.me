@@ -24,5 +24,5 @@ const ABOUT_FAQ = [
 ];
 
 const ABOUT_SITES = [
-  { id: "atomic-rockets", url: "https://projectrho.com/public_html/rocket/", internal: false, labelEN: "Atomic Rockets", labelES: "Atomic Rockets", descEN: "Winchell Chung's encyclopedic guide to the physics and engineering of spaceflight, written for science-fiction authors who want to get it right.", descES: "La guía enciclopédica de Winchell Chung sobre la física y la ingeniería del vuelo espacial, escrita para autores de ciencia ficción que quieren acertar.", visible: true }
+  { id: "atomic-rockets", url: "https://projectrho.com/public_html/rocket/", internal: false, labelEN: "Atomic Rockets", labelES: "Atomic Rockets", descEN: "A really cool science fiction website by Winchell Chung.", descES: "Un sitio web de ciencia ficción realmente genial de Winchell Chung.", visible: true }
 ];
