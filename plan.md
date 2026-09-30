@@ -5,7 +5,7 @@ Claude Code: read this file at the start of each session alongside CLAUDE.md.
 
 ---
 
-## Phase 0 — Setup (in progress)
+## Phase 0 — Setup (complete)
 
 - [X] Buy domain: gideonong.me (Porkbun)
 - [X] Create GitHub repository (empty)
@@ -666,7 +666,8 @@ Goal: site works cleanly on phone and tablet; typography and visual polish compl
 - [ ] Optimize all images (compress, correct dimensions, add alt text to every image)
 - [ ] Add real project photos, diagrams, and embedded PDFs where available
 - [ ] Cross-browser test (Chrome, Firefox, Safari desktop + mobile)
-- [ ] Review "under development" banner — hide when ready to go live
+- [X] Review "under development" banner — hidden before the 2026-09-30 career fair (`display: none`
+  on `.dev-banner` in css/style.css; the markup stays until Phase 4 removes it)
 
 ---
 
@@ -713,6 +714,19 @@ Features:
   scripts/editor/core/site/service.py, and datacheck.py), CLAUDE.md, and a LinkedIn Post
   Inspector re-scrape of every shared link. Check /learning's folder URLs and its
   trailing-slash script under the chosen route before deploying.
+  **2026-09-30 proposal (Gideon, not decided):** portfolio at `/portfolio`, and a new unlisted `/toc`
+  page (an Atomic-Rockets-style table of contents linking the sub-pages, /learning, unlisted
+  projects and interesting sites). Working shape:
+  - Route (a) + `vercel.json` `redirects` `/ → /portfolio` (temporary 307, so `/` can be repointed
+    later; browsers cache 308s) and `rewrites` `/portfolio → /index.html`, so index.html stays at
+    the root for Live Server. `toc.html` then serves at `/toc`. Test the file on a Vercel preview
+    deploy or with `vercel dev` before merging.
+  - Clean links on Live Server: `liveServer.settings.file` (in .vscode/settings.json) serves one
+    file for every missing path. Point it at a small `dev-router.html` that redirects `/about` →
+    `/about.html` and `/portfolio` → `/index.html`, and shows a 404 message otherwise.
+  - Caveat: missing files then answer 200, so the localhost dev-check HEAD probes must recognize
+    the router page.
+  - Add the router to .vercelignore.
 - [ ] Language detection refinement: add IP geolocation (free API) for regional default
 - [ ] Flag-based EN/ES toggle (cosmetic — replace pill buttons with small flag icons)
 

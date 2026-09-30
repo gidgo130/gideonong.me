@@ -2,7 +2,9 @@
 
 ## What this project is
 Personal portfolio and career site for Gideon A. Ong, a Mechanical Engineering student at the University of Tulsa in the International Engineering and Language Program (5-year).
-Expected degrees: Mechanical Engineering B.S.M.E. and Spanish B.A.; additional minors TBD.
+Degrees: the full list is on the published transcript. Site copy intentionally names only a subset
+(mechanical engineering and Spanish, minoring in math and economics). That's Gideon's choice, so the
+degrees don't distract. Don't flag it or "fix" it.
 Audience: engineering recruiters and hiring managers.
 Domain: gideonong.me. See plan.md for the development roadmap.
 
@@ -193,7 +195,8 @@ DESIGN TOKENS IN USE (copy from active palette above into style.css)
 
 ### "Under development" banner
 Thin bar (~32px) directly below navbar. Background: #8B3A2A. Text: near-white.
-Easy to show/hide via a single CSS class or display property.
+Currently HIDDEN: `display: none` on `.dev-banner` in css/style.css (delete that line to show it).
+The markup stays on every page until it is removed for good (plan.md, Phase 4).
 
 ### Footer (dark, full-width)
 See active palette for --footer-bg and --footer-text values.
@@ -220,8 +223,8 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
   run the script by hand afterwards.
 - This is dev-side tooling, not a site build step: the site still deploys as plain
   static files, and js/docs-data.js is committed like any other file.
-- Dev files are excluded from deploys by .vercelignore (*.md, scripts/, .githooks/,
-  .gitattributes, references/, staging/). Add any new dev-only path there.
+- Dev files are excluded from deploys by .vercelignore (*.md, LICENSE*, scripts/, .githooks/,
+  .gitattributes, references/, staging/, learning/workshop/). Add any new dev-only path there.
 - about.html's resume → CV + transcript morph (js/about.js), by what the manifest holds:
   both CV and transcript → resume morphs into CV + Transcript; exactly one → resume morphs
   into Resume + that document (a clone of the resume button fills the top slot); neither →
