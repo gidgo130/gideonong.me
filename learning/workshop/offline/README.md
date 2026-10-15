@@ -50,7 +50,10 @@ workshop/, `*.md`, `*.pdf`, `assets/og/` (link-preview cards) and `fits/*/play/`
 notebooks need HTTP and a CDN; the pages already hide that link from disk). Plus, from the repo
 root: the favicon `assets/glogo.ico` (every page links `../assets/glogo.ico`), `LICENSE` and
 `LICENSE-CONTENT` (as .txt), and a NOTICE.txt written by build.ps1 that says what each license
-covers (keep it in step with README.md → Licensing). The zip also gets `Reading Your Fits.html`
+covers (keep it in step with README.md → Licensing). The Reflections section
+(`learning/reflections/`, `assets/reflections.js`, `assets/vendor/`) is excluded too: the app is
+Reading Your Fits only, and the hub hides its Reflections block when `LEARN_OFFLINE` is set
+(learning-plan.md → Reflections, R7). The zip also gets `Reading Your Fits.html`
 at its top, which opens learning/index.html. build.ps1 fails if a `.md`, `.pdf` or `.qmd`
 reaches stage/.
 

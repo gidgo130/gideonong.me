@@ -5,6 +5,10 @@ One card for the hub (learning.png) and one per module (<slug>.png), in the /lea
 module's main figure from learning/workshop/modules/<slug>/figures/ (make those first by
 running the module's .py, see learning/workshop/README.md). The hub card draws its own small
 chart with the series' fixed colors (dashed ink = truth, red = ordinary fit, blue = corrected).
+Reflections (learning/reflections/): reflections.png for the all-books and book pages, and
+<book>-<reflection>.png per reflection. They have no workshop figure, so each entry names a
+`chart` function below that draws its own, in the reflection series colors (reflections.css
+--s1..--s4, light values), never the fit/fix pair.
 
 Run from anywhere:   python learning/workshop/tools/make-og-cards.py [slug ...]
 Needs Pillow and matplotlib. Fonts: the script fetches Barlow Semi Condensed, Source Serif 4
@@ -36,6 +40,7 @@ FRAME = (PAD + COL_W + 40, PAD, W - PAD, H - PAD)   # figure frame (x0, y0, x1, 
 # learning.css tokens (light theme)
 PAPER, PLOT, GRID, RULE = "#f2f5f0", "#fbfcfa", "#dde5da", "#c5d0c3"
 INK, MUTED, PT, FIT, FIX = "#1c2420", "#56645b", "#6b7b70", "#c93a22", "#1d5ea6"
+S1, S2, S3, S4 = "#9a6a12", "#2d6a9f", "#b0565c", "#5f7a3a"     # reflections.css series tokens
 
 SITE = "gideonong.me/learning"
 
@@ -90,6 +95,21 @@ CARDS = {
         "lead": "Once the checks pass, the fit is a tool: for predicting a reading, estimating "
                 "a constant, or computing something from the coefficients.",
         "figure": "t1_bands.png", "crop": (0.0, 0.0, 0.51, 1.0),
+    },
+    # Reflections. No professor's name on a card, so a rename never needs a new image.
+    "reflections": {
+        "eyebrow": "Gideon A. Ong · Learning",
+        "title": "Reflections",
+        "lead": "Notes on 11 books recommended to industrial engineers, written as I read them. "
+                "Some are short essays; some work the math out with interactive charts.",
+        "chart": "mm1_chart",
+    },
+    "the-goal-balanced-plant": {
+        "eyebrow": "Reflections · The Goal",
+        "title": "The Balanced Plant Theorem",
+        "lead": "Jonah says a mathematical proof shows that trimming capacity to match demand cuts "
+                "throughput and sends inventory through the roof. Here is that proof, from queueing theory.",
+        "chart": "buffers_chart",
     },
 }
 
@@ -173,7 +193,78 @@ def hub_chart(size: tuple[int, int]) -> Image.Image:
     return Image.open(buf).convert("RGB")
 
 
+def _axes(size: tuple[int, int]):
+    """A matplotlib figure/axes pair in the card's plot style (shared by the drawn charts)."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    dpi = 100
+    fig, ax = plt.subplots(figsize=(size[0] / dpi, size[1] / dpi), dpi=dpi)
+    fig.patch.set_facecolor(PLOT)
+    ax.set_facecolor(PLOT)
+    ax.grid(True, color=GRID, lw=1)
+    for s in ax.spines.values():
+        s.set_color(RULE)
+    ax.tick_params(colors=MUTED, labelsize=11)
+    return plt, fig, ax, dpi
+
+
+def _render(plt, fig, dpi: int) -> Image.Image:
+    fig.tight_layout(pad=1.0)
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=dpi, facecolor=PLOT)
+    plt.close(fig)
+    buf.seek(0)
+    return Image.open(buf).convert("RGB")
+
+
+def mm1_chart(size: tuple[int, int]) -> Image.Image:
+    """Reflections card: the M/M/1 hockey stick L = ρ/(1−ρ) with its ±1 sd band (page §4)."""
+    import numpy as np
+
+    plt, fig, ax, dpi = _axes(size)
+    r = np.linspace(0, 0.975, 300)
+    L, sd = r / (1 - r), np.sqrt(r) / (1 - r)
+    ax.fill_between(r, np.maximum(0, L - sd), L + sd, color=S2, alpha=0.15, lw=0)
+    ax.plot(r, L, color=S1, lw=2.8, label="jobs in system, L = ρ/(1−ρ)")
+    ax.plot(r, L + sd, color=S2, lw=1.4, ls=(0, (6, 4)), label="±1 standard deviation")
+    ax.plot(r, np.maximum(0, L - sd), color=S2, lw=1.4, ls=(0, (6, 4)))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 40)
+    ax.set_xlabel("utilization ρ", color=MUTED, fontsize=12)
+    ax.set_ylabel("jobs in system", color=MUTED, fontsize=12)
+    ax.legend(loc="upper left", frameon=False, fontsize=11, labelcolor=INK)
+    return _render(plt, fig, dpi)
+
+
+def buffers_chart(size: tuple[int, int]) -> Image.Image:
+    """Balanced-plant card: exact throughput of balanced exponential lines vs buffer size (page §8).
+    The numbers are the page's DATA.bufsweep (exact Markov-chain solutions)."""
+    plt, fig, ax, dpi = _axes(size)
+    data = {
+        2: [0.66667, 0.75, 0.8, 0.83333, 0.85714, 0.875, 0.88889, 0.9, 0.90909],
+        3: [0.5641, 0.67047, 0.73402, 0.77671, 0.80749, 0.83076, 0.84899, 0.86367, 0.87573],
+        4: [0.51478, 0.63115, 0.70071, 0.74771, 0.78178, 0.80766, 0.82803, 0.84447, 0.85804],
+        5: [0.4858, 0.60758, 0.68049, 0.72995, 0.76593, 0.79337, 0.815],
+    }
+    styles = {2: (S1, "solid"), 3: (S2, (0, (6, 3))), 4: (S3, (0, (1.5, 3))), 5: (S4, (0, (6, 3, 1.5, 3)))}
+    ax.axhline(1, color=MUTED, lw=1.2, ls=(0, (4, 3)))
+    ax.text(7.9, 1.012, "demand", color=MUTED, fontsize=11, ha="right", va="bottom")
+    for n, ys in data.items():
+        c, ls = styles[n]
+        ax.plot(range(len(ys)), ys, color=c, lw=2.4, ls=ls, marker="o", ms=5, label=f"{n} stations")
+    ax.set_xlim(-0.3, 8.3)
+    ax.set_ylim(0.4, 1.04)
+    ax.set_xlabel("buffer slots between stations", color=MUTED, fontsize=12)
+    ax.set_ylabel("throughput ÷ demand", color=MUTED, fontsize=12)
+    ax.legend(loc="lower right", frameon=False, fontsize=11, labelcolor=INK)
+    return _render(plt, fig, dpi)
+
+
 def figure_for(slug: str, spec: dict, size: tuple[int, int]) -> Image.Image:
+    if "chart" in spec:
+        return globals()[spec["chart"]](size)
     if "figure" not in spec:
         return hub_chart(size)
     src = FIG / slug / "figures" / spec["figure"]

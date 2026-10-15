@@ -33,7 +33,7 @@ parts of the repository each one covers.
 - **Teaching content** under `learning/` (module text, strings, slides, figures, the
   companion scripts and notebooks): [CC BY-SA 4.0](LICENSE-CONTENT). Share and adapt it
   with credit to "Gideon A. Ong, gideonong.me/learning", and keep adaptations under the
-  same license.
+  same license. Quoted passages in the Reflections remain their authors' and publishers'.
 - **Not licensed, all rights reserved:** Gideon A. Ong's name and likeness; the headshot
   and other personal photos; everything under `assets/pdfs/` (resume, CV, transcript,
   project reports); the project and experience photos and videos under `assets/images/`

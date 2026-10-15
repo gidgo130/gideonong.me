@@ -3,6 +3,8 @@
 # Add new dev-only paths here. See CLAUDE.md → Documents / Data conventions.
 *.md
 LICENSE*
+# Except KaTeX's notice: MIT requires it to ship with the code (learning/assets/vendor/).
+!learning/assets/vendor/katex/LICENSE
 scripts/
 .githooks/
 .gitattributes

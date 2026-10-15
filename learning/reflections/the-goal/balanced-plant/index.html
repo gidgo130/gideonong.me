@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
+  <meta name="robots" content="noindex">
+  <title>The Balanced Plant Theorem · Reflections · Gideon A. Ong</title>
+  <meta name="description" content="Jonah says a mathematical proof shows that trimming capacity to match demand cuts throughput and sends inventory through the roof. Here is that proof, from queueing theory.">
+  <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gideon A. Ong">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="The Balanced Plant Theorem · Reflections">
+  <meta property="og:description" content="Jonah says a mathematical proof shows that trimming capacity to match demand cuts throughput and sends inventory through the roof. Here is that proof, from queueing theory.">
+  <meta property="og:url" content="https://gideonong.me/learning/reflections/the-goal/balanced-plant/">
+  <meta property="og:image" content="https://gideonong.me/learning/assets/og/the-goal-balanced-plant.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The Balanced Plant Theorem: throughput of balanced lines against buffer size, four curves that never reach demand, beside the title, on lab-notebook paper.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/balanced-plant/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Viewing settings: follow the main site's saved choices (About → Viewing settings) before first
+       paint. Same keys and <html> attributes as the main site's head snippet (see js/about.js §6);
+       learning.css styles data-theme, data-readability and data-colorblind. No settings UI here. */
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
+        if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+      } catch (e) { /* storage blocked: the OS theme and the default view */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../../../assets/learning.css">
+  <!-- KaTeX 0.19.0, self-hosted (learning/assets/vendor/katex/, MIT): no CDN, works from disk. -->
+  <link rel="stylesheet" href="../../../assets/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../reflections.css">
+</head>
+<body>
+
+<nav class="series-bar" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../../">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../../">Learning</a><span aria-hidden="true">/</span>
+    <a href="../../">Reflections</a><span aria-hidden="true">/</span>
+    <a href="../">The Goal</a>
+  </div>
+</nav>
+
+<div class="wrap essay-wrap">
+<main class="essay">
+<header class="top">
+  <span class="sec">Reflections · <i>The Goal</i>, Eliyahu M. Goldratt &amp; Jeff Cox (1984)</span>
+  <h1>The Balanced Plant Theorem</h1>
+  <p class="dek">Jonah says a mathematical proof shows that trimming capacity to exactly match demand lowers throughput and sends inventory through the roof. Here is that proof, built up from a first course in probability.</p>
+</header>
+
+<div class="answer">
+  <p><b>Short answer.</b> The book never gives the proof, and Goldratt cites none. But the claim is a real theorem of queueing theory, and its core fits on half a page (§7–§8). Stated carefully, it says you cannot have both: with random processing times and capacity exactly equal to demand, either inventory grows without bound, or, if you cap inventory, throughput falls strictly below demand.</p>
+  <p class="note">The interactive parts run in your browser on simulated data. The Python script at the end has the same models, plus an exact solver for longer lines.</p>
+</div>
+
+<nav class="toc" aria-label="Contents">
+<span class="sec">Contents</span>
+<ol>
+<li><a href="#s1">What exactly is being claimed</a></li>
+<li><a href="#s2">The matchstick and dice game</a></li>
+<li><a href="#s3">Toolkit: exponentials and Markov chains</a></li>
+<li><a href="#s4">The M/M/1 queue, derived</a></li>
+<li><a href="#s5">Little's Law</a></li>
+<li><a href="#s6">Pollaczek–Khinchine and Kingman</a></li>
+<li><a href="#s7">Utilization exactly 1: the random walk</a></li>
+<li><a href="#s8">Finite buffers: throughput falls</a></li>
+<li><a href="#s9">The bowl phenomenon</a></li>
+<li><a href="#s10">Does the cost claim hold?</a></li>
+<li><a href="#s11">What the proof does not say</a></li>
+<li><a href="#s12">Reading list</a></li>
+<li><a href="#s13">Where this goes next</a></li>
+</ol>
+</nav>
+
+<!-- 1 -->
+<h2 id="s1"><span class="sec">§1</span>What exactly is being claimed</h2>
+<p>Jonah's argument rests on two conditions he names elsewhere in the book: <b>dependent events</b> (a station can only work on what the station before it has finished) and <b>statistical fluctuations</b> (how much a station gets done in a period varies). A "balanced plant" in his sense means every resource has capacity equal to market demand. Nothing is held in reserve.</p>
+
+<figure class="wide">
+<div class="fig" style="overflow-x:auto">
+<svg viewBox="0 0 720 150" role="img" aria-label="A serial line: raw material, then stations 1 through N separated by buffers, then finished goods.">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs>
+  <g style="stroke:var(--muted);stroke-width:1.5">
+    <line x1="70" y1="70" x2="104" y2="70" marker-end="url(#ar)"/>
+    <line x1="176" y1="70" x2="214" y2="70" marker-end="url(#ar)"/>
+    <line x1="256" y1="70" x2="294" y2="70" marker-end="url(#ar)"/>
+    <line x1="366" y1="70" x2="404" y2="70" marker-end="url(#ar)"/>
+    <line x1="446" y1="70" x2="484" y2="70" marker-end="url(#ar)"/>
+    <line x1="556" y1="70" x2="606" y2="70" marker-end="url(#ar)"/>
+  </g>
+  <rect x="8" y="48" width="60" height="44" rx="4" style="fill:var(--paper);stroke:var(--rule)"/>
+  <text x="38" y="66" text-anchor="middle">raw</text><text x="38" y="82" text-anchor="middle">material</text>
+  <g style="fill:var(--paper);stroke:var(--ink);stroke-width:1.5">
+    <rect x="106" y="45" width="70" height="50" rx="5"/><rect x="296" y="45" width="70" height="50" rx="5"/><rect x="486" y="45" width="70" height="50" rx="5"/>
+  </g>
+  <text x="141" y="67" text-anchor="middle" style="fill:var(--ink);font-weight:600">station 1</text><text x="141" y="85" text-anchor="middle">rate μ₁</text>
+  <text x="331" y="67" text-anchor="middle" style="fill:var(--ink);font-weight:600">station 2</text><text x="331" y="85" text-anchor="middle">rate μ₂</text>
+  <text x="521" y="67" text-anchor="middle" style="fill:var(--ink);font-weight:600">station N</text><text x="521" y="85" text-anchor="middle">rate μ_N</text>
+  <g style="fill:var(--plot);stroke:var(--s2);stroke-width:1.5"><path d="M218,52 L252,52 L235,88 z"/><path d="M408,52 L442,52 L425,88 z"/></g>
+  <text x="235" y="112" text-anchor="middle">buffer ≤ b</text><text x="425" y="112" text-anchor="middle">buffer ≤ b</text>
+  <text x="400" y="40" text-anchor="middle">· · ·</text>
+  <rect x="608" y="48" width="96" height="44" rx="4" style="fill:var(--paper);stroke:var(--rule)"/>
+  <text x="656" y="66" text-anchor="middle">finished</text><text x="656" y="82" text-anchor="middle">goods (output)</text>
+  <text x="360" y="140" text-anchor="middle" style="fill:var(--ink)">"Balanced": every mean rate μᵢ equals demand d.</text>
+</svg></div>
+<figcaption>The model used throughout: a serial line. Triangles are buffers (the standard industrial-engineering symbol for stored inventory).</figcaption>
+</figure>
+
+<p>Two facts make the claim precise. The first is pure bookkeeping. Material is conserved, so for any time \(t\)</p>
+$$\text{Output}(t) \;=\; \text{Released}(t) \;-\; \big[\text{WIP}(t) - \text{WIP}(0)\big].$$
+<p>If material is released at the demand rate \(d\), then the output shortfall \(d\,t - \mathbb{E}[\text{Output}(t)]\) <i>is</i> the expected growth in work-in-process (WIP). "Throughput goes down" and "inventory goes up" are the same number, read from two ends of the line.</p>
+
+<div class="thm">
+<p><b class="lab">Theorem (what is actually provable).</b> Take a serial line whose stations have random processing times with nonzero variance and mean rates all equal to demand \(d\).</p>
+<p>(a) <b>Unlimited buffers:</b> WIP has no steady state. \(\mathbb{E}[\text{WIP}(t)]\) grows without bound, like \(\sqrt{t}\). The long-run output rate still tends to \(d\), but the cumulative shortfall grows like \(\sqrt{t}\) too.</p>
+<p>(b) <b>Bounded buffers</b> (or any cap on WIP): the long-run throughput is <i>strictly</i> less than \(d\).</p>
+<p>(c) With <b>zero variance</b>, neither happens. The effect comes entirely from randomness.</p>
+</div>
+<p>Goldratt's sentence merges (a) and (b). Over any finite horizon, both effects are present at once, which is what the dice game in §2 shows. §7 proves (a) and §8 proves (b).</p>
+
+<!-- 2 -->
+<h2 id="s2"><span class="sec">§2</span>The matchstick and dice game</h2>
+<p>On the scout hike, Alex sets up the game with matches and a die. Each player in turn rolls and passes along that many matches, but can't pass more than are sitting in his bowl. The first player draws from an unlimited box. Each die averages 3.5, so a naive plan expects 3.5 matches out per round. Play it below.</p>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <label for="dN">Stations <output id="dNo">5</output><input id="dN" type="range" min="2" max="10" value="5"></label>
+  <label for="dR">Rounds <output id="dRo">100</output><input id="dR" type="range" min="20" max="400" step="10" value="100"></label>
+  <label for="dV">Variability
+    <select id="dV"><option value="d6">Fair die, 1–6</option><option value="narrow">Narrow die, 3–4</option><option value="none">None, always 3.5</option></select></label>
+  <button id="dPlay">Play one game</button>
+  <button id="dAvg" class="ghost">Average 2,000 games</button>
+</div>
+<div class="charts">
+  <div><svg id="dc1" viewBox="0 0 640 360" aria-label="Cumulative output versus the 3.5 per round plan"></svg>
+    <div class="legend"><span style="--sw:var(--muted)" class="dash">plan: 3.5 × round</span><span style="--sw:var(--s1)">output</span></div></div>
+  <div><svg id="dc2" viewBox="0 0 640 360" aria-label="Matches sitting in bowls (WIP) by round"></svg>
+    <div class="legend"><span style="--sw:var(--s2)">WIP in bowls</span><span style="--sw:var(--s3)" class="dash">fit c·√round</span></div></div>
+</div>
+<div class="readout" id="dRead"></div>
+</div>
+<figcaption>WIP here means matches waiting in bowls. The fitted √round curve appears in the averaged view. Switch variability to "None" to see condition (c).</figcaption>
+</figure>
+
+<p><b>Why output falls short, in one inequality.</b> Player \(k\) moves \(\min(X_k, Q_k)\), where \(X_k\) is his roll and \(Q_k\) what's in his bowl. The function \(\min(x, q)\) is concave, so Jensen's inequality gives</p>
+$$\mathbb{E}[\min(X_k,Q_k)] \;\le\; \min\!\big(\mathbb{E}X_k,\ \mathbb{E}Q_k\big) \;\le\; 3.5,$$
+<p>with strict inequality whenever there's a positive chance that \(Q_k\) is smaller than \(X_k\). A low roll upstream starves the next player, and he can never catch up later: his best roll is capped at 6, and on average he has no spare capacity to make up lost ground. Fluctuations downward propagate, fluctuations upward get clipped.</p>
+<div class="tie"><b>From a probability course:</b> this is Jensen's inequality with a concave \(\varphi\) instead of the usual convex one, so the inequality points the other way.</div>
+
+<!-- 3 -->
+<h2 id="s3"><span class="sec">§3</span>Toolkit: exponentials and Markov chains</h2>
+<p>The dice game is hard to solve exactly. Queueing theory picks a model that is solvable and keeps the two essential conditions. You need three ideas.</p>
+
+<h3>The exponential distribution and memorylessness</h3>
+<p>\(S\sim\text{Exp}(\mu)\) has density \(\mu e^{-\mu s}\), mean \(1/\mu\) and variance \(1/\mu^2\). Its key property is <b>memorylessness</b>:</p>
+$$P(S > s+t \mid S > s) = \frac{e^{-\mu(s+t)}}{e^{-\mu s}} = e^{-\mu t} = P(S>t).$$
+<p>A job that has been on the machine for 10 minutes has the same remaining time as a fresh one. That's unrealistic for machining, but it means the future depends only on <i>how many</i> jobs are where, not on how long each has been there. That is what makes a Markov chain possible.</p>
+
+<h3>The Poisson process</h3>
+<p>If gaps between arrivals are i.i.d. Exp(\(\lambda\)), the number of arrivals in time \(t\) is Poisson(\(\lambda t\)), and in any short interval \(h\) an arrival happens with probability \(\lambda h + o(h)\). We'll treat "arrivals at rate \(\lambda\)" and "service at rate \(\mu\)" as two competing exponential clocks.</p>
+
+<h3>Continuous-time Markov chains as a flow balance</h3>
+<p>A continuous-time Markov chain (CTMC) has states and jump <i>rates</i> \(q_{ij}\) between them. Its stationary distribution \(\pi\) is the long-run fraction of time spent in each state. Think of \(\pi_i\) as fluid sitting in tank \(i\), with fluid flowing from \(i\) to \(j\) at rate \(\pi_i q_{ij}\). In steady state, flow in equals flow out at every tank:</p>
+$$\pi_j \sum_{k\ne j} q_{jk} \;=\; \sum_{i\ne j} \pi_i\, q_{ij}\quad\text{for all } j, \qquad \textstyle\sum_j \pi_j = 1.$$
+<p>That's the mass balance you know from fluids and thermo. For a <b>birth–death chain</b> (states \(0,1,2,\dots\), jumps only to neighbors), there's a shortcut: draw a cut between states \(n\) and \(n+1\). The only flow across it is up at rate \(\pi_n\lambda_n\) and down at rate \(\pi_{n+1}\mu_{n+1}\), so these must match:</p>
+$$\pi_n\lambda_n = \pi_{n+1}\mu_{n+1}.$$
+<p>Two more facts we'll use. A finite chain in which every state can reach every other (<b>irreducible</b>) has a unique \(\pi\) with every \(\pi_i>0\). An infinite chain may have no \(\pi\) at all. It can be <b>positive recurrent</b> (returns to each state, with finite mean return time; \(\pi\) exists), <b>null recurrent</b> (returns with probability 1, but the mean return time is infinite; no \(\pi\)), or <b>transient</b> (may never return).</p>
+<div class="tie"><b>Where this is in Ross</b> (<i>Introduction to Probability Models</i>): Ch. 4 for discrete-time chains and recurrence, Ch. 5 for the exponential and Poisson process, Ch. 6 for CTMCs and birth–death chains, Ch. 8 for queueing. Every derivation below is in those chapters.</div>
+
+<!-- 4 -->
+<h2 id="s4"><span class="sec">§4</span>The M/M/1 queue, derived</h2>
+<p>Kendall notation <b>A/S/c</b> lists the arrival distribution, the service distribution and the number of servers. M means Markovian (exponential), G means general, D means deterministic. So M/M/1 is one machine, Poisson arrivals at rate \(\lambda\), exponential service at rate \(\mu\). The state \(N\) is the number of jobs present (waiting plus in service). Define the <b>utilization</b> \(\rho = \lambda/\mu\).</p>
+
+<h3>Stationary distribution</h3>
+<p>The cut equation with \(\lambda_n=\lambda\), \(\mu_n=\mu\) gives \(\pi_{n+1} = \rho\,\pi_n\), so \(\pi_n = \rho^n\pi_0\). Normalizing needs the geometric series to converge:</p>
+$$\sum_{n\ge0}\rho^n\pi_0 = \frac{\pi_0}{1-\rho}=1 \;\Longrightarrow\; \pi_n=(1-\rho)\rho^n,\qquad \text{valid only if }\rho<1.$$
+<p>So \(N\) is geometric (counting from 0) with success probability \(1-\rho\). At \(\rho\ge1\) the series diverges and no stationary distribution exists. Keep that in mind for §7.</p>
+
+<h3>Mean and variance via the generating function</h3>
+<p>The probability generating function is the MGF with \(z=e^t\):</p>
+$$G(z)=\mathbb{E}[z^N]=\sum_{n\ge0}(1-\rho)(\rho z)^n=\frac{1-\rho}{1-\rho z}.$$
+$$L=\mathbb{E}[N]=G'(1)=\frac{\rho}{1-\rho},\qquad \operatorname{Var}(N)=G''(1)+G'(1)-G'(1)^2=\frac{\rho}{(1-\rho)^2}.$$
+<p>Note the variance grows like \((1-\rho)^{-2}\), faster than the mean. Near saturation the queue isn't just long, it's wildly unpredictable.</p>
+
+<h3>Time in system via the tower property</h3>
+<p>Let \(T\) be a job's time in system. Poisson arrivals see the system in its stationary state (this is called <b>PASTA</b>: Poisson Arrivals See Time Averages). So an arriving job finds \(N_a\sim\pi\). Given \(N_a=n\), it waits for \(n\) jobs and then its own service. The job in service has a fresh Exp(\(\mu\)) remaining time by memorylessness, so \(\mathbb{E}[T\mid N_a=n]=(n+1)/\mu\). Then</p>
+<span class="eq-wide">$$\mathbb{E}[T]=\mathbb{E}\big[\mathbb{E}[T\mid N_a]\big]=\frac{L+1}{\mu}=\frac{1}{\mu}\cdot\frac{1}{1-\rho}=\frac{1}{\mu-\lambda}.$$</span>
+<span class="eq-narrow">$$\begin{aligned}\mathbb{E}[T]&=\mathbb{E}\big[\mathbb{E}[T\mid N_a]\big]=\frac{L+1}{\mu}\\&=\frac{1}{\mu}\cdot\frac{1}{1-\rho}=\frac{1}{\mu-\lambda}.\end{aligned}$$</span>
+<div class="tie"><b>From a probability course:</b> this is the tower property, \(\mathbb{E}[T]=\mathbb{E}[\mathbb{E}[T\mid N_a]]\) (Ross, Ch. 3): condition on what the arrival sees, then average.</div>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <label for="mR">Utilization ρ <output id="mRo">0.80</output><input id="mR" type="range" min="0.05" max="0.98" step="0.01" value="0.80"></label>
+</div>
+<svg id="mc" viewBox="0 0 640 340" aria-label="Mean number in system L versus utilization rho for M/M/1"></svg>
+<div class="legend"><span style="--sw:var(--s1)">L = ρ/(1−ρ)</span><span style="--sw:var(--s2)" class="dash">±1 standard deviation</span></div>
+<div class="readout" id="mRead"></div>
+</div>
+<figcaption>The hockey stick. Going from 80% to 90% utilization doubles the average queue, and 90% to 95% doubles it again.</figcaption></figure>
+
+<div class="tbl"><table>
+<thead><tr><th>ρ</th><th>0.50</th><th>0.80</th><th>0.90</th><th>0.95</th><th>0.99</th><th>1.00</th></tr></thead>
+<tbody><tr><td>L = ρ/(1−ρ)</td><td>1</td><td>4</td><td>9</td><td>19</td><td>99</td><td>no steady state</td></tr>
+<tr><td>sd(N) = √ρ/(1−ρ)</td><td>1.4</td><td>4.5</td><td>9.5</td><td>19.5</td><td>99.5</td><td>—</td></tr></tbody></table></div>
+
+<!-- 5 -->
+<h2 id="s5"><span class="sec">§5</span>Little's Law</h2>
+<p>Check: \(\lambda\,\mathbb{E}[T]=\lambda/(\mu-\lambda)=\rho/(1-\rho)=L\). That isn't a coincidence of the M/M/1 model. It's <b>Little's Law</b> (John D. C. Little, 1961):</p>
+$$L=\lambda W\qquad\text{(average number in system = arrival rate × average time in system)}.$$
+<p>It holds for essentially any system in which the long-run averages exist: any distributions, any queue discipline, any network. In factory language (Hopp & Spearman write it this way) it reads <b>WIP = TH × CT</b>: work-in-process equals throughput times cycle time.</p>
+
+<figure class="wide"><div class="fig">
+<svg id="lc" viewBox="0 0 640 300" aria-label="Cumulative arrivals and departures; the shaded area between them equals the total time spent in system"></svg>
+<div class="legend"><span style="--sw:var(--s2)">arrivals A(t)</span><span style="--sw:var(--s1)">departures D(t)</span><span style="--sw:var(--s3)">area = ∫ N(t) dt = Σ Tᵢ</span></div>
+</div>
+<figcaption>The proof in one picture. Read the shaded region by vertical slices: its height at time t is N(t), so the area is the time integral of N. Read it by horizontal strips: strip i runs from job i's arrival to its departure, so the area is the sum of the jobs' times in system.</figcaption></figure>
+
+<p>Equate the two readings over \([0,\tau]\) with \(A(\tau)\) arrivals and divide by \(\tau\):</p>
+$$\underbrace{\frac1\tau\int_0^\tau N(t)\,dt}_{\to\,L}\;=\;\underbrace{\frac{A(\tau)}{\tau}}_{\to\,\lambda}\cdot\underbrace{\frac{1}{A(\tau)}\sum_{i\le A(\tau)}T_i}_{\to\,W}\quad(\text{up to edge effects from jobs still inside at }\tau).$$
+<p>For Goldratt this means: if throughput is pinned at demand and WIP rises, cycle time (lead time to the customer) rises in proportion. Inventory is never "just" a carrying cost; it is also lateness.</p>
+
+<!-- 6 -->
+<h2 id="s6"><span class="sec">§6</span>Pollaczek–Khinchine and Kingman</h2>
+<p>Exponential service is a strong assumption. Two named results tell you what happens with other distributions. Both use the <b>squared coefficient of variation</b> (SCV), a unitless measure of variability:</p>
+$$c^2 = \frac{\operatorname{Var}(X)}{\mathbb{E}[X]^2}.\qquad c^2=0\text{ deterministic},\quad c^2=1\text{ exponential},\quad c^2>1\text{ highly variable}.$$
+<p>Write \(t_e=\mathbb{E}[S]\) for mean process time, \(u=\lambda t_e\) for utilization, \(c_s^2\) for the SCV of process times and \(c_a^2\) for the SCV of the gaps between arrivals.</p>
+
+<h3>Pollaczek–Khinchine (M/G/1, exact)</h3>
+<p>With Poisson arrivals and <i>any</i> service distribution, the mean wait in queue \(W_q\) (excluding service) is</p>
+$$W_q=\frac{\lambda\,\mathbb{E}[S^2]}{2(1-u)}=\frac{1+c_s^2}{2}\cdot\frac{u}{1-u}\cdot t_e.$$
+<p><b>Derivation.</b> An arrival waits for the \(N_q\) jobs in queue to be served, plus the <i>residual</i> time \(R\) of the job in service (if any). Arrivals see time averages (PASTA), and service times of queued jobs are independent of how many are queued, so</p>
+$$W_q=\mathbb{E}[N_q]\,t_e+u\,\mathbb{E}[R].$$
+<p>By Little's Law applied to the queue alone, \(\mathbb{E}[N_q]=\lambda W_q\). The residual time of a randomly inspected service is \(\mathbb{E}[R]=\mathbb{E}[S^2]/(2\,\mathbb{E}[S])\). That's the <b>inspection paradox</b>: a random moment is more likely to land inside a long service than a short one. Substituting gives \(W_q = uW_q + \lambda\mathbb{E}[S^2]/2\), and solving for \(W_q\) gives the formula. Finally \(\mathbb{E}[S^2]=t_e^2(1+c_s^2)\).</p>
+
+<h3>Kingman's formula (G/G/1, approximate)</h3>
+<p>J. F. C. Kingman (1961) showed that as \(u\to1\), the waiting time in a general single-server queue behaves like an exponential random variable with mean approaching</p>
+$$\mathbb{E}[W_q]\;\approx\;\underbrace{\left(\frac{c_a^2+c_s^2}{2}\right)}_{V}\;\underbrace{\left(\frac{u}{1-u}\right)}_{U}\;\underbrace{t_e}_{T}.$$
+<p>Hopp & Spearman call this the <b>VUT equation</b>: Variability × Utilization × Time. It's exact for M/G/1 (it reduces to Pollaczek–Khinchine when \(c_a^2=1\)) and an approximation otherwise, very good at high utilization. The structure is the whole lesson: waiting is a <i>product</i>. Cutting variability in half has the same effect as a large drop in utilization, and no amount of variability reduction short of zero saves you as \(u\to1\).</p>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <label for="kA">Arrival SCV c²ₐ <output id="kAo">1.00</output><input id="kA" type="range" min="0" max="2" step="0.05" value="1"></label>
+  <label for="kS">Process SCV c²ₛ <output id="kSo">0.25</output><input id="kS" type="range" min="0" max="2" step="0.05" value="0.25"></label>
+  <button id="kSim">Simulate points</button>
+</div>
+<svg id="kc" viewBox="0 0 640 340" aria-label="Waiting time versus utilization: Kingman curve and simulated points"></svg>
+<div class="legend"><span style="--sw:var(--s1)">Kingman (VUT)</span><span style="--sw:var(--muted)" class="dash">M/M/1 for reference</span><span style="--sw:var(--s3)" class="dot">simulation (200,000 jobs each)</span></div>
+<div class="readout" id="kRead"></div>
+</div>
+<figcaption>Simulated with gamma-distributed times of the chosen SCV, using Lindley's recursion (below). With c²ₐ = 1 the curve is exact; try c²ₐ = c²ₛ = 0.25 to see the approximation sag slightly below simulation at low utilization.</figcaption></figure>
+
+<h3>Lindley's recursion: the thread that ties it together</h3>
+<p>For a single first-in-first-out machine, job \(k+1\)'s wait follows from job \(k\)'s:</p>
+$$W_{k+1}=\max\big(0,\;W_k+S_k-A_{k+1}\big),$$
+<p>where \(A_{k+1}\) is the gap between arrivals. That is a random walk with steps \(S_k-A_{k+1}\), pushed back up whenever it would go below zero (a <b>reflected random walk</b>). The step's mean is \(t_e(1-1/u)\): negative when \(u<1\), which pulls the walk back toward zero and gives a steady state. At \(u=1\) the drift is zero. That's the case §7 handles, and it's exactly the balanced plant.</p>
+
+<!-- 7 -->
+<h2 id="s7"><span class="sec">§7</span>Utilization exactly 1: the random walk</h2>
+<p>Set \(\lambda=\mu\). The M/M/1 chain now moves up or down with equal probability at each event, bouncing off 0. The cut equations force \(\pi_n=\pi_0\) for all \(n\), which can't sum to 1. There is no stationary distribution. The walk is <b>null recurrent</b>: it returns to 0 with probability 1, but the expected time to do so is infinite, and in between it makes ever longer excursions.</p>
+<p><b>How fast does it grow?</b> Ignoring the floor, \(X(t)=\text{arrivals}-\text{services}\) has mean 0 and variance \((\lambda+\mu)t=2\lambda t\). Reflected at 0, the queue length is \(N(t)=X(t)-\min_{s\le t}X(s)\). By the central limit theorem \(X\) looks like Brownian motion \(\sigma B(t)\) with \(\sigma^2=2\lambda\), and Lévy's theorem says a Brownian motion minus its running minimum has the same distribution as \(|\sigma B(t)|\). So</p>
+$$\mathbb{E}[N(t)]\;\approx\;\mathbb{E}|\sigma B(t)|=\sigma\sqrt{\tfrac{2t}{\pi}}=2\sqrt{\frac{\lambda t}{\pi}}\;\longrightarrow\;\infty.$$
+<p>That proves part (a) of the theorem for one station. A line of stations is a chain of such walks, each feeding the next, and the same \(\sqrt{t}\) growth appears (you saw it in the dice game fit).</p>
+
+<figure class="wide"><div class="fig">
+<div class="controls"><button id="rRun">Run 300 paths</button></div>
+<svg id="rc" viewBox="0 0 640 340" aria-label="Queue length over time at utilization 1: sample paths, average, and theory"></svg>
+<div class="legend"><span style="--sw:var(--grid)">sample paths</span><span style="--sw:var(--s1)">average of 300 paths</span><span style="--sw:var(--s3)" class="dash">theory 2√(λt/π)</span></div>
+</div>
+<figcaption>M/M/1 with λ = μ = 1. Individual paths return to zero now and then, but their typical size keeps growing.</figcaption></figure>
+
+<!-- 8 -->
+<h2 id="s8"><span class="sec">§8</span>Finite buffers: throughput falls</h2>
+<p>Real plants don't have infinite floor space, and good ones cap WIP on purpose. Then the queue can't blow up, and the cost shows up as lost throughput instead. Here's the cleanest case.</p>
+
+<h3>Two stations, buffer of size b</h3>
+<p>Station 1 never starves (unlimited raw material) and runs at rate \(\mu_1\). Station 2 runs at rate \(\mu_2\). Between them is room for \(b\) parts. If station 1 finishes a part and the buffer is full, it holds the part and stops (<b>blocking after service</b>). Track \(n\) = parts finished by station 1 but not yet by station 2, counting the one on station 2 and a blocked part on station 1. Then \(n\in\{0,\dots,b+2\}\), it goes up at rate \(\mu_1\) (unless \(n=b+2\)) and down at rate \(\mu_2\) (unless \(n=0\)). That's a birth–death chain, the M/M/1 queue cut off at \(K=b+2\). The cut equations give \(\pi_n\propto r^n\) with \(r=\mu_1/\mu_2\), and</p>
+$$\text{TH}=\mu_2\,(1-\pi_0),\qquad \pi_0=\frac{1-r}{1-r^{K+1}}\;(r\ne1).$$
+<p>In the balanced case \(\mu_1=\mu_2=\mu\), every state is equally likely, \(\pi_n=1/(b+3)\), and</p>
+<span class="eq-wide">$$\boxed{\;\text{TH}=\mu\,\frac{b+2}{b+3}\;}\qquad b=0:\ \tfrac23\mu,\quad b=1:\ \tfrac34\mu,\quad b=10:\ \tfrac{12}{13}\mu.$$</span>
+<span class="eq-narrow">$$\begin{aligned}&\boxed{\;\text{TH}=\mu\,\frac{b+2}{b+3}\;}\\&b=0:\ \tfrac23\mu,\quad b=1:\ \tfrac34\mu,\quad b=10:\ \tfrac{12}{13}\mu.\end{aligned}$$</span>
+<p>With no buffer, a balanced two-machine line loses a third of its capacity. Station 2 is starved (\(n=0\)) a fraction \(1/(b+3)\) of the time and station 1 is blocked (\(n=b+2\)) another \(1/(b+3)\).</p>
+
+<h3>The general proof of part (b)</h3>
+<p>For any number of stations with exponential times, the state (each station working, blocked or starved, plus each buffer's count) lives in a <b>finite</b> set. The chain is irreducible, so it has a unique stationary \(\pi\) with every state having positive probability. One of those states has the last station starved. Therefore</p>
+<span class="eq-wide">$$\text{TH}=\mu_N\big(1-P(\text{last station starved})\big)\;<\;\mu_N=d.$$</span>
+<span class="eq-narrow">$$\begin{aligned}\text{TH}&=\mu_N\big(1-P(\text{last station starved})\big)\\&<\;\mu_N=d.\end{aligned}$$</span>
+<p>That's the whole proof, and it's the one Jonah could have meant. The same argument works for general distributions with more machinery (the chain then needs extra coordinates for elapsed times, and "irreducible" becomes a regeneration argument), but the conclusion is identical.</p>
+
+<figure class="wide"><div class="fig">
+<svg id="bc" viewBox="0 0 640 340" aria-label="Exact throughput of balanced exponential lines versus buffer size, for 2 to 5 stations"></svg>
+<div class="legend"><span style="--sw:var(--s1)">2 stations</span><span style="--sw:var(--s2)" class="d2">3 stations</span><span style="--sw:var(--s3)" class="d3">4 stations</span><span style="--sw:var(--s4)" class="d4">5 stations</span></div>
+</div>
+<figcaption>Exact values from solving the full Markov chain (the solver is in the Python script; it reproduces (b+2)/(b+3) for two stations exactly, and gives 22/39 ≈ 0.564 for three stations with no buffers, which a simulation confirms). Longer lines lose more, and each extra buffer slot buys less throughput than the one before while adding WIP.</figcaption></figure>
+
+<p>This is the trade-off in one picture. Throughput approaches demand only as buffers, and therefore WIP, go to infinity, which is part (a) again. There is no setting with full throughput and bounded inventory.</p>
+
+<!-- 9 -->
+<h2 id="s9"><span class="sec">§9</span>The bowl phenomenon</h2>
+<p>If you can't unbalance capacity, you can at least shift work. Frederick Hillier and Ronald Boling (1960s–70s) found that for a fixed total amount of work, a perfectly balanced line isn't the best one. Giving the <i>middle</i> stations slightly less work beats equal shares. Plot throughput against the work allocation and you get an upside-down bowl whose peak is off-center. The reason: a middle station suffers interference from both sides (it can be starved by the station before it and blocked by the one after), while end stations face only one kind.</p>
+
+<figure class="wide"><div class="fig">
+<svg id="wc" viewBox="0 0 640 340" aria-label="Throughput of a three-station line versus the middle station's share of work"></svg>
+<div class="legend"><span style="--sw:var(--s1)">buffer b = 0</span><span style="--sw:var(--s2)" class="d2">b = 1</span><span style="--sw:var(--s3)" class="d3">b = 3</span><span style="--sw:var(--s4)" class="dot">optimum</span></div>
+</div>
+<figcaption>Three exponential stations, total mean work 3. The middle station's mean time is on the x-axis; the two end stations split the rest equally. Exact values. The best middle time is about 0.83–0.93, and the gain over a balanced line is small (about 0.3–0.6%).</figcaption></figure>
+<p>The size matters as much as the direction. Unbalancing <i>work</i> recovers half a percent. Adding <i>capacity</i> (§10) is where the real gain is, which is Goldratt's actual recommendation.</p>
+
+<!-- 10 -->
+<h2 id="s10"><span class="sec">§10</span>Does the cost claim hold?</h2>
+<p>Jonah's last step says carrying cost rises, so trimming capacity may not even lower operating expense. That's an empirical claim, but a simple model shows when it's true. Let capacity cost \(c\) per unit of rate per hour and inventory cost \(h\) per unit per hour. For an M/M/1 station,</p>
+$$C(\mu)=c\,\mu+h\,\frac{\lambda}{\mu-\lambda},\qquad C'(\mu)=c-\frac{h\lambda}{(\mu-\lambda)^2}=0\;\Longrightarrow\;\mu^*=\lambda+\sqrt{\frac{h\lambda}{c}}.$$
+<p>The optimal capacity is demand plus a <b>square-root safety margin</b> (the same square-root rule shows up in call-center staffing and inventory safety stock). Trimming to \(\mu=\lambda\) sends cost to infinity. But if you start above \(\mu^*\), some trimming does save money. So "questionable" is the right word: the answer depends on where you start relative to \(\mu^*\).</p>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <label for="cL">Demand λ <output id="cLo">10</output><input id="cL" type="range" min="2" max="40" step="1" value="10"></label>
+  <label for="cH">Ratio h/c <output id="cHo">0.50</output><input id="cH" type="range" min="0.05" max="5" step="0.05" value="0.5"></label>
+  <label for="cM">Current capacity μ <output id="cMo">16</output><input id="cM" type="range" min="2.5" max="80" step="0.5" value="16"></label>
+</div>
+<svg id="cc" viewBox="0 0 640 340" aria-label="Total cost versus capacity"></svg>
+<div class="legend"><span style="--sw:var(--s1)">total cost / c</span><span style="--sw:var(--s2)" class="d2">capacity part</span><span style="--sw:var(--s3)" class="d3">inventory part</span><span style="--sw:var(--s4)" class="ring">optimum μ*</span><span style="--sw:var(--ink)" class="dot">current μ</span></div>
+<div class="readout" id="cRead"></div>
+</div>
+<figcaption>Cost is shown divided by c, so only the ratio h/c matters. A finite-buffer line adds a third term, the margin lost on throughput below demand, which pushes μ* higher still.</figcaption></figure>
+
+<!-- 11 -->
+<h2 id="s11"><span class="sec">§11</span>What the proof does not say</h2>
+<ul>
+<li><b>It needs randomness.</b> With deterministic times and synchronized stations, a balanced line runs perfectly. Lean manufacturing's push to cut variability (standard work, setup reduction) is the other way out of the same equation.</li>
+<li><b>"Through the roof" is the limiting case.</b> Unbounded growth needs unlimited release and unlimited space. Real plants see high but finite WIP, plus lost throughput, a mix of parts (a) and (b).</li>
+<li><b>The magnitude depends on the numbers.</b> How bad it gets scales with c² and buffer size. With low variability and decent buffers, the loss can be a few percent, which a manager might reasonably accept.</li>
+<li><b>Exponential models exaggerate.</b> c² = 1 is a lot of variability for a machine. Most machining processes are closer to c² ≈ 0.1–0.5, though breakdowns and setups push effective variability back up (Hopp &amp; Spearman, Ch. 8).</li>
+<li><b>The cost step is a model, not a theorem.</b> It depends on the real ratio h/c and on where capacity starts relative to μ*.</li>
+<li><b>Goldratt's fix is consistent with the math.</b> Protect the bottleneck with a buffer and give every non-bottleneck <i>protective capacity</i>, the √ margin of §10. Hopp & Spearman's CONWIP (cap total WIP, release one job per completion) is the same idea from the queueing side.</li>
+</ul>
+
+<!-- 12 -->
+<h2 id="s12"><span class="sec">§12</span>Reading list</h2>
+<ol class="books">
+<li><span class="tag">Start</span><div><b>Hopp &amp; Spearman, <i>Factory Physics</i></b> (3rd ed., 2008; Waveland reissue). The book that turned Goldratt's intuitions into equations. Ch. 7 covers Little's Law and best/worst-case lines; Ch. 8 covers variability, the VUT equation and blocking. Written for engineers and managers, not mathematicians. If you read one book, read this.</div></li>
+<li><span class="tag">Rigor</span><div><b>Ross, <i>Introduction to Probability Models</i></b>. A standard course text. Ch. 4 (Markov chains), 5 (exponential and Poisson), 6 (CTMCs, birth–death) and 8 (queueing) contain every derivation on this page with full rigor.</div></li>
+<li><span class="tag">Best intro</span><div><b>Harchol-Balter, <i>Performance Modeling and Design of Computer Systems</i></b> (Cambridge, 2013). The most readable queueing text there is. Excellent on Little's Law, PASTA and the inspection paradox. The examples are computer systems, but the math is identical.</div></li>
+<li><span class="tag">Transport</span><div><b>Larson &amp; Odoni, <i>Urban Operations Research</i></b> (1981). Queueing and spatial models for city services (ambulances, transit, police beats). Free online from MIT. The bridge from factory queues to transportation.</div></li>
+<li><span class="tag">Goldratt</span><div><b>Goldratt &amp; Fox, <i>The Race</i></b> (1986). Goldratt's own fuller argument for drum-buffer-rope and protective capacity, with diagrams instead of a novel.</div></li>
+<li><span class="tag">Lines</span><div><b>Gershwin, <i>Manufacturing Systems Engineering</i></b> (1994). The rigorous treatment of finite-buffer lines like §8, including decomposition methods for long lines.</div></li>
+<li><span class="tag">Classic</span><div><b>Kleinrock, <i>Queueing Systems, Vol. 1: Theory</i></b> (1975). The standard graduate reference. Dense, but complete.</div></li>
+<li><span class="tag">Papers</span><div>Little, "A proof for the queuing formula L = λW," <i>Operations Research</i> (1961), and Little's 50th-anniversary retrospective in the same journal (2011). Kingman, "The single server queue in heavy traffic," <i>Proc. Cambridge Phil. Soc.</i> (1961). Spearman, Woodruff &amp; Hopp, "CONWIP: a pull alternative to kanban," <i>IJPR</i> (1990).</div></li>
+</ol>
+
+<div class="takeaway-links">
+  <span>Take it with you:</span>
+  <a href="balanced-plant.py" download>Python script</a>
+  <a class="take-colab" href="https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/reflections/the-goal/balanced-plant/balanced-plant.ipynb" target="_blank" rel="noopener">Open in Colab</a>
+</div>
+
+<!-- 13 -->
+<h2 id="s13"><span class="sec">§13</span>Where this goes next</h2>
+<ul>
+<li><b>Reading Your Fits.</b> Queue output is a clean example of the problem in <a href="../../../fits/time-order/">Time-ordered data</a>. Consecutive waiting times are strongly correlated, so a standard error that treats them as independent comes out about 20 times too small at 90% utilization. The last section of the Python script shows the batch-means fix.</li>
+<li><b>Operations management.</b> Little's Law and the VUT equation are standard material in a first operations management course, and <i>The Goal</i> is a common assignment there. <i>Factory Physics</i> connects the two.</li>
+<li><b>Traffic.</b> Congestion is a queueing problem too. The common BPR travel-time curve, t = t₀[1 + 0.15(V/C)⁴], stays finite at V/C = 1, while Davidson's queueing-based curve, t = t₀[1 + J·x/(1−x)] with x = V/C, blows up exactly like L = ρ/(1−ρ). Which form fits real roads better, and whether the answer differs between rural and urban links, is a question I want to come back to.</li>
+</ul>
+</main>
+
+<p class="foot">
+  <span>Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
+  <span>Found a mistake? gao9819@utulsa.edu</span>
+  <span class="license">Text, figures and code here are CC BY-SA 4.0. Quotations from the books remain their authors' and publishers'.</span>
+</p>
+</div>
+
+<script src="../../../assets/vendor/katex/katex.min.js"></script>
+<script src="../../../assets/vendor/katex/auto-render.min.js"></script>
+<script>
+  /* Exactly two delimiter pairs: \( \) inline and $$ $$ display. No single-$ pair, so a dollar
+     amount in later text can never turn into math. Display math wider than the column scrolls
+     inside its own box (reflections.css → .katex-display). */
+  renderMathInElement(document.querySelector("main.essay"), {
+    delimiters: [{ left: "$$", right: "$$", display: true }, { left: "\\(", right: "\\)", display: false }],
+    throwOnError: false,
+    /* The approved text has a "×" inside \text{…}; KaTeX renders it but would warn in the console. */
+    strict: function (code) { return code === "unknownSymbol" ? "ignore" : "warn"; }
+  });
+</script>
+<script src="../../../assets/learning.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

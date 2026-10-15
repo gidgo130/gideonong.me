@@ -1,0 +1,139 @@
+/* reflections.css — the essay pieces for learning/reflections/ (R5), on top of learning.css,
+   which provides the chrome (series bar, fonts, tokens, dark mode, readability, colorblind).
+   Sizes are in em so About's readability setting (bigger body text) scales everything here.
+
+   Chart colors: reflections never use --fit / --fix (those mean "ordinary fit" and "corrected
+   estimate" across Reading Your Fits). Series tokens --s1..--s4 below, light and dark, with a
+   colorblind set (Okabe–Ito) under data-colorblind. Every chart line is also told apart by dash
+   or marker (legend classes .dash / .d2 / .d3 / .d4 / .dot / .ring match main.js), so the series
+   read in grayscale too. */
+
+:root {
+  --s1: #9a6a12;   /* amber: the main series */
+  --s2: #2d6a9f;   /* blue */
+  --s3: #b0565c;   /* rose */
+  --s4: #5f7a3a;   /* green */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --s1: #d9a957; --s2: #7fb0d0; --s3: #e0989c; --s4: #b8c27e; }
+}
+:root[data-theme="dark"] { --s1: #d9a957; --s2: #7fb0d0; --s3: #e0989c; --s4: #b8c27e; }
+:root[data-colorblind] { --s1: #c7780a; --s2: #0072b2; --s3: #cc5a99; --s4: #009e73; }
+@media (prefers-color-scheme: dark) {
+  :root[data-colorblind]:not([data-theme="light"]) { --s1: #ffb347; --s2: #63b3f0; --s3: #f0a0cc; --s4: #4fd1a5; }
+}
+:root[data-colorblind][data-theme="dark"] { --s1: #ffb347; --s2: #63b3f0; --s3: #f0a0cc; --s4: #4fd1a5; }
+
+/* ---------- essay column ---------- */
+main.essay { max-width: 46rem; margin-inline: auto; min-width: 0; }
+.essay .wide { max-width: min(58rem, 100%); margin-inline: auto; }
+.essay h1 { font-size: clamp(34px, 6vw, 56px); margin: 0; }
+.essay h2 { font-size: clamp(24px, 3.4vw, 32px); margin: 3.2rem 0 .6rem; padding-top: 1.6rem; border-top: 1px solid var(--rule); }
+.essay h3 { font-size: 1.25em; margin: 2rem 0 .4rem; }
+.essay p { margin: .6em 0; max-width: 68ch; }
+.essay li { max-width: 68ch; }
+.essay ul, .essay ol { padding-left: 1.3em; }
+.essay a { color: inherit; text-decoration-color: var(--s2); text-decoration-thickness: 1.5px; }
+.essay a:hover { color: var(--fix); }
+.essay .sec { font-family: var(--font-display); font-weight: 600; font-size: .8em; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: .5rem; }
+.essay h2 .sec { font-size: .55em; letter-spacing: .12em; }
+.essay header.top { padding-block: 2.4rem 1rem; border-bottom: 0; display: block; }
+.essay header.top .sec i { font-style: normal; }
+.essay .dek { font-size: 1.2em; line-height: 1.4; color: var(--muted); margin: .8rem 0 0; }
+.essay .answer { background: var(--note-bg); border-radius: 6px; padding: 1rem 1.2rem; margin: 1.6rem 0; }
+.essay .answer p { margin: .4rem 0; }
+.essay nav.toc ol { columns: 2 14rem; padding-left: 1.2rem; margin: .5rem 0; font-size: .9em; }
+.essay nav.toc li { break-inside: avoid; margin: .15rem 0; }
+.essay .thm { border-left: 3px solid var(--ink); padding: .2rem 0 .2rem 1rem; margin: 1.2rem 0; }
+.essay .thm b.lab { font-family: var(--font-display); font-weight: 700; }
+.essay .note { background: transparent; padding: 0; border-radius: 0; font-size: .9em; color: var(--muted); }
+.essay .tie { border: 1px dashed var(--rule); border-radius: 6px; padding: .6rem .9rem; margin: 1rem 0; font-size: .9em; max-width: 68ch; }
+.essay .tie b { font-family: var(--font-display); font-weight: 700; }
+.essay figure { margin: 1.6rem 0; min-width: 0; display: block; }
+.essay figcaption { font-size: .9em; margin-top: .5rem; max-width: 68ch; }
+.essay .fig { background: var(--plot); border: 1px solid var(--rule); border-radius: 6px; padding: 1rem; min-width: 0; }
+.essay .fig svg { display: block; width: 100%; height: auto; }
+.essay .fig[style*="overflow-x"] svg { min-width: 0; }
+.essay .controls { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: end; margin-bottom: .8rem; font-family: var(--font-display); font-size: .95em; }
+.essay .controls label { display: flex; flex-direction: column; gap: .15rem; color: var(--muted); font-weight: 600; }
+.essay .controls output { font-family: var(--font-mono); font-weight: 400; color: var(--ink); font-variant-numeric: tabular-nums; }
+.essay input[type=range] { width: 9rem; height: 24px; }
+.essay select { font: inherit; font-size: .95em; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: .25rem .3rem; }
+.essay button {
+  font-family: var(--font-display); font-weight: 600; font-size: .95em;
+  background: transparent; color: var(--ink); border: 1.5px solid var(--ink); border-radius: 6px;
+  padding: .4rem .8rem; cursor: pointer;
+}
+.essay button:hover { background: var(--note-bg); }
+.essay button:disabled { cursor: default; opacity: .6; }
+.essay button.ghost { border-color: var(--rule); color: var(--muted); }
+.essay button.ghost:hover { color: var(--ink); }
+.essay .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); gap: 1rem; }
+.essay .charts > div { min-width: 0; }
+.essay .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; font-family: var(--font-display); font-size: .85em; color: var(--muted); margin-top: .4rem; }
+.essay .legend span::before { content: ""; display: inline-block; width: 22px; height: 3px; margin-right: 6px; vertical-align: middle; background: var(--sw); }
+.essay .legend span.dash::before { background: repeating-linear-gradient(90deg, var(--sw) 0 6px, transparent 6px 11px); }
+.essay .legend span.d2::before { background: repeating-linear-gradient(90deg, var(--sw) 0 9px, transparent 9px 14px); }
+.essay .legend span.d3::before { background: repeating-linear-gradient(90deg, var(--sw) 0 2px, transparent 2px 6px); }
+.essay .legend span.d4::before { background: repeating-linear-gradient(90deg, var(--sw) 0 9px, transparent 9px 13px, var(--sw) 13px 15px, transparent 15px 19px); }
+.essay .legend span.dot::before { width: 8px; height: 8px; border-radius: 50%; }
+.essay .legend span.ring::before { width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 2px solid var(--sw); }
+.essay .readout { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-family: var(--font-display); font-size: .9em; margin-top: .6rem; border: 0; }
+.essay .readout b { font-family: var(--font-mono); font-weight: 500; }
+.essay .tbl { overflow-x: auto; margin: 1rem 0; max-width: 100%; }
+.essay table { border-collapse: collapse; font-size: .9em; font-variant-numeric: tabular-nums; }
+.essay th, .essay td { padding: .35rem .8rem; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+.essay th:first-child, .essay td:first-child { text-align: left; }
+.essay th { font-family: var(--font-display); font-weight: 600; color: var(--muted); }
+.essay .books { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.essay .books li { display: grid; grid-template-columns: 4.2rem 1fr; gap: .6rem; max-width: 72ch; }
+.essay .books .tag { font-family: var(--font-display); font-weight: 600; font-size: .75em; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: .35em; }
+.essay .books b { font-family: var(--font-display); font-size: 1.05em; }
+.essay svg text { fill: var(--muted); font-family: var(--font-display); font-size: 13px; }
+.essay svg .axis { stroke: var(--rule); stroke-width: 1; }
+.essay svg .gridl { stroke: var(--grid); stroke-width: 1; }
+.essay .takeaway-links { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+.essay-wrap .foot { max-width: 46rem; margin-inline: auto; }
+.essay-wrap .foot span { max-width: 68ch; }
+
+/* ---------- math (self-hosted KaTeX, loaded only by pages that have it) ---------- */
+.katex { font-size: 1.06em; }
+.katex-display { overflow-x: auto; overflow-y: hidden; margin: 1em 0; padding: .15em 0; }
+.katex-display > .katex { white-space: nowrap; }
+/* A few long one-line equations have a two-line `aligned` twin for narrow screens (same TeX,
+   split with & and \\). Only one of the pair shows; below 520 px it is the narrow one. */
+.eq-wide, .eq-narrow { display: block; }
+.eq-narrow { display: none; }
+@media (max-width: 519px) {
+  .eq-wide { display: none; }
+  .eq-narrow { display: block; }
+  /* The §1 line diagram (720-unit viewBox) scrolls inside its box instead of shrinking its text. */
+  .essay .fig[style*="overflow-x"] svg { min-width: 620px; }
+}
+
+/* ---------- all-books page and book pages ---------- */
+.book-list { list-style: none; margin: 0; padding: 0; }
+.book-list li { border-bottom: 1px solid var(--rule); }
+.book-row {
+  display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline;
+  padding: 16px 4px; text-decoration: none; color: inherit;
+}
+a.book-row:hover { background: var(--note-bg); color: inherit; }
+a.book-row:hover .b-title { color: var(--fix); }
+.b-num { font-family: var(--font-mono); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.b-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.15; }
+.b-title i { font-style: normal; }
+.b-meta, .b-about { grid-column: 2 / 3; font-size: 16px; color: var(--muted); }
+.b-count { grid-row: 1; grid-column: 3; font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
+.b-count.has { border-color: var(--fix); color: var(--fix); }
+.book-row.is-soon .b-title { color: var(--muted); font-weight: 600; }
+@media (max-width: 520px) {
+  .book-row { grid-template-columns: 2.4em minmax(0, 1fr); }
+  .b-count { grid-row: auto; grid-column: 2; justify-self: start; }
+}
+.book-head { padding-block: 36px 8px; border-bottom: 1px solid var(--rule); display: grid; gap: 10px; }
+.book-head .lead { color: var(--muted); }
+.book-section { padding-block: 32px 0; display: grid; gap: 18px; }
+.foot .license { flex-basis: 100%; }
+:root[data-readability] .b-meta, :root[data-readability] .b-about { font-size: 18px; }
+:root[data-readability] .b-count { font-size: 13px; }

@@ -4,9 +4,11 @@ A living roadmap for the Learning section. Update it as modules ship or decision
 Claude Code: read this file, CLAUDE.md → "/learning" and learning/README.md before working in
 learning/. The main site's roadmap is plan.md at the repo root; it only points here.
 
-> Unlisted teaching pages at gideonong.me/learning/. A separate track from the main site's
-> plan.md (which only points here). Rules: CLAUDE.md → "/learning". Working manual + Fable
-> review prompt: learning/README.md.
+> Unlisted teaching pages at gideonong.me/learning/: a hub with two sections, Reading Your Fits
+> (the six modules below) and Reflections (see its part further down). A separate track from the
+> main site's plan.md (which only points here). Rules: CLAUDE.md → "/learning". Working manual +
+> Fable review prompt: learning/README.md; series manuals: learning/fits/README.md and
+> learning/reflections/README.md.
 > Workshop (slide sources, figures, dev tools): `learning/workshop/`, tracked in git but never
 > deployed (.vercelignore).
 > Decisions: see the Decisions log at the end of this file.
@@ -243,6 +245,113 @@ https://github.com/gidgo130/gideonong.me/releases/tag/offline-v1.0.0 (commit 47a
 - [ ] Offline readers can't reach About → Viewing settings (the site's localStorage is a
   different origin from file:); only the OS dark mode applies. A settings UI on /learning
   would go against the current rule, so it's Gideon's call.
+
+## Reflections — a second section of /learning (2026-10-13, built 2026-10-15)
+
+Gideon's reflections on the 11 books Professor Donnell (manufacturing / industrial engineering)
+recommends to industrial engineers. Built as he goes: each reflection answers one question he had
+while reading, as a short essay or a full interactive explainer; a book can have several over
+time. Working title: **Reflections on Professor Donnell's 11 recommended IE books**. Gideon still
+has to confirm with Professor Donnell that he's OK being named; the name is in two places per
+language (the hub's `refIntro` strings; the all-books page's title, h1, description and og tags),
+so "a professor's" is a two-minute change. Series manual: `learning/reflections/README.md`.
+
+URLs: `learning/reflections/` (all books) → `learning/reflections/<book>/` (one book) →
+`learning/reflections/<book>/<reflection>/` (one reflection).
+
+| # | slug | Title | Author(s) | Year | Status |
+| --- | --- | --- | --- | --- | --- |
+| 1 | the-goal | The Goal: A Process of Ongoing Improvement | Eliyahu M. Goldratt & Jeff Cox | 1984 | 1 reflection: **The Balanced Plant Theorem** (balanced-plant, 2026-10-13) |
+| 2 | machine-that-changed-the-world | The Machine That Changed the World | James P. Womack, Daniel T. Jones & Daniel Roos | 1990 | — |
+| 3 | good-to-great | Good to Great | Jim Collins | 2001 | — |
+| 4 | you-already-know-how-to-be-great | You Already Know How to Be Great | Alan Fine with Rebecca R. Merrill | 2010 | — |
+| 5 | how-the-mighty-fall | How the Mighty Fall | Jim Collins | 2009 | — |
+| 6 | reengineering-the-corporation | Reengineering the Corporation | Michael Hammer & James Champy | 1993 | — |
+| 7 | practice-of-management | The Practice of Management | Peter F. Drucker | 1954 | — |
+| 8 | functions-of-the-executive | The Functions of the Executive | Chester I. Barnard | 1938 | — |
+| 9 | human-side-of-enterprise | The Human Side of Enterprise | Douglas McGregor | 1960 | — |
+| 10 | strategic-technology-management | Strategic Technology Management | Frederick Betz | 1993 | — |
+| 11 | new-economics | The New Economics for Industry, Government, Education | W. Edwards Deming | 1993 | — |
+
+The book table lives in `learning/assets/reflections.js` (with optional `edition`, the copy
+Gideon read, and `about`, a line he writes; The Goal: "2nd revised edition"). A book without
+reflections has no page yet and shows "Not yet" on the all-books page.
+
+**Decisions (2026-10-13)**
+- **R1. /learning is a hub of sections.** Each section sets its own language and design
+  extensions; the hub-wide rules (noindex, unlisted, relative links, viewing settings, series
+  bar, learning.css base, link previews) apply to all. No existing URL changed: the hub keeps the
+  Reading Your Fits block and gets the Reflections block below it.
+- **R2. URL scheme.** `reflections/` → `reflections/<book>/` → `reflections/<book>/<slug>/`.
+  Slugs, never numbers.
+- **R3. English only.** Reflection pages don't get `data-es-ready` and don't load
+  learning-i18n.js; their text lives in the HTML (and in main.js for redrawn readouts). The hub
+  stays bilingual, so its Reflections block has EN/ES strings (`refTitle`, `refIntro`, `refAll`,
+  `refListAria`); book and reflection titles stay English in both languages, marked `lang="en"`.
+- **R4. One registry.** `learning/assets/reflections.js` (`window.LEARN_BOOKS`): the 11 books in
+  Professor Donnell's order, each with its reflections (slug, title, date, summary, ready). The
+  hub block, the all-books page and each book page render from it. The renderers live in the
+  same file (`LEARN_REFLECTIONS.hubList / bookList / bookPage`), so learning.js is untouched.
+- **R5. Look.** learning.css is the chrome; `learning/reflections/reflections.css` adds the
+  essay pieces (section numbers, theorem blocks, "from a probability course" asides, figures
+  with controls, tables, reading list). Charts never use --fit / --fix; they use the reflection
+  series tokens --s1..--s4 (light, dark, and an Okabe–Ito set under data-colorblind), and every
+  line in a shared chart has its own dash pattern or marker (series 1 solid, then "9 5", "2 4",
+  "9 4 2 4"; dots; a hollow ring for the §10 optimum), so they read in grayscale.
+- **R6. Math: self-hosted KaTeX 0.19.0** (MIT; published 2026-10-01, the newest version at
+  least two weeks old on build day) in `learning/assets/vendor/katex/`: katex.min.js,
+  katex.min.css, auto-render.min.js, the woff2 fonts only, and its LICENSE. Auto-render is
+  configured with exactly two delimiter pairs, `\( \)` inline and `$$ $$` display (no single
+  `$`), throwOnError off, and KaTeX's unknownSymbol warning ignored (the approved text has a
+  "×" inside `\text{}`). Loaded only by pages that have math. Display math wider than the
+  column scrolls inside its own box. Self-hosting keeps "Google Fonts is the only external
+  resource" and works from disk. `.vercelignore` re-includes the LICENSE (`LICENSE*` would have
+  dropped it) because MIT requires the notice to ship with the code.
+- **R7. The offline app excludes Reflections.** `learning/reflections/*`,
+  `learning/assets/reflections.js` and `learning/assets/vendor/*` are in build.ps1's `$Exclude`.
+  The hub loads reflections.js only when `window.LEARN_OFFLINE` is unset (so the installed copy
+  never requests a missing file) and keeps the block hidden when the file is missing. The
+  installers stay "Reading Your Fits" only.
+- **R8. License line.** CC BY-SA 4.0 covers Gideon's text, figures and code; quotations from the
+  books remain their authors' and publishers'. The line is in every Reflections page footer and
+  in the READMEs. Quotes stay short and cite edition and page.
+- **R9. Same plumbing as the rest of /learning**: noindex, static OG + Twitter tags (og:image
+  `assets/og/reflections.png` for the all-books and book pages, `assets/og/<book>-<slug>.png` per
+  reflection, drawn by make-og-cards.py from a `chart` function since there is no workshop
+  figure), trailing-slash head script, viewing-settings snippet, relative links only, slider-driven
+  redraws only, simulated data with the model stated. Dates in the registry are "YYYY-MM-DD" and
+  are formatted from their parts with timeZone UTC (never `new Date(string)`).
+- **R10. Python companions.** A reflection with code ships `<slug>.py` (percent cell markers) and
+  a generated `<slug>.ipynb`; make-ipynb.py takes `reflections/<book>/<slug>` and includes ready
+  reflections in `all`, `--check` included. The "Take it with you" row after the reading list
+  links the .py and "Open in Colab". No marimo `play/` for reflections.
+
+**Status (2026-10-15)**
+- [X] Registry, hub block (EN/ES, newest first, "All 11 books"), all-books page, The Goal's
+  book page, reflections.css, KaTeX vendored, the first reflection ported from the approved
+  explainer (text byte-identical; styling and plumbing only), balanced-plant.py + .ipynb
+  (`--check` passes: 18 cells, stdout identical), two cards, build.ps1 exclusions, docs.
+- [X] Checked with Playwright over HTTP (own server on :5599, Vercel-style folder URLs):
+  no-slash URLs land on the slashed ones; hub EN/ES with the Reading Your Fits block
+  byte-identical to HEAD's render; dates right in America/Chicago; the offline-copy and
+  missing-registry cases hide the block; 11 books in order with only The Goal linked; the
+  reflection page has no raw delimiters and no KaTeX error spans (\boxed, \underbrace,
+  \operatorname render); every slider, select and button changes its chart or readout; §13 link,
+  .py and Colab links resolve; 4 pages × 375/768/1280 × light/dark × plain/readability/
+  colorblind/both: no sideways scroll, console clean; dash patterns distinct under achromatopsia
+  and deuteranopia emulation; noindex + OG on every new page; from file: the links are rewritten
+  and the math renders locally. 284 checks.
+- [X] Phone fixes (2026-10-15, after Gideon's review): chart viewBoxes follow the container
+  width under 820 px and redraw on resize (tick text ≈ 13 px at 375 instead of 6; desktop
+  unchanged), the §1 diagram scrolls in its box, and the three longest display equations (§4
+  E[T] chain, §8 boxed TH line, §8 TH < d) have two-line `aligned` twins shown under 520 px.
+  106 more checks, including the rendered tick-label size at 375 and 768 in every viewing mode.
+- [ ] Gideon: confirm with Professor Donnell that he's OK being named.
+- [ ] Redraw learning.png for the hub: it still shows only Reading Your Fits (the hub's
+  og:description now covers both sections; the card was left as is on 2026-10-15).
+- [ ] Gideon: deploy, then run the new URLs through LinkedIn Post Inspector.
+- [ ] The `about` lines per book, when Gideon writes them.
+- [ ] Once this part is in, `staging/reflections/` can be deleted (the spec's decisions are here).
 
 ## Optional later
 - [X] marimo "Play with the code" notebooks per module (served from the site over HTTP).

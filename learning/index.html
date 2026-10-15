@@ -6,13 +6,13 @@
   <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
   <meta name="robots" content="noindex">
   <title data-i18n-title="pageTitle">Learning · Gideon A. Ong</title>
-  <meta name="description" content="Interactive notes for engineering students, starting with Reading Your Fits: how to check a line fit against lab data.">
+  <meta name="description" content="Interactive notes and essays for engineering students: Reading Your Fits (checking a line fit against lab data) and Reflections on the books Professor Donnell recommends to industrial engineers.">
   <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Gideon A. Ong">
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Learning · Gideon A. Ong">
-  <meta property="og:description" content="Six short interactive modules on checking a line fit against lab data. Each one runs in your browser on simulated data, so you can push the sliders, break things and see what happens.">
+  <meta property="og:description" content="Interactive notes and essays for engineering students. The interactive pages run in your browser on simulated data, so you can push the sliders, break things and see what happens.">
   <meta property="og:url" content="https://gideonong.me/learning/">
   <meta property="og:image" content="https://gideonong.me/learning/assets/og/learning.png">
   <meta property="og:image:width" content="1200">
@@ -61,7 +61,7 @@
   <header class="top">
     <div class="eyebrow" data-i18n="eyebrow">Gideon A. Ong · Learning</div>
     <h1 data-i18n="h1">Learning</h1>
-    <p class="lead" data-i18n="lead">Interactive notes I [told Claude to] build for engineering students. Each one runs in your browser on simulated data, so you can push the sliders, break things and see what happens.</p>
+    <p class="lead" data-i18n="lead">Interactive notes and essays I [told Claude to] build for engineering students. The interactive pages run in your browser on simulated data, so you can push the sliders, break things and see what happens.</p>
   </header>
 
   <section class="series" id="reading-your-fits">
@@ -78,6 +78,16 @@
     </div>
   </section>
 
+  <!-- Reflections (learning/reflections/). Rendered from assets/reflections.js, which the script
+       below loads only when this is not the installed offline copy (R7); the block stays hidden
+       until the registry has loaded, so a missing file hides it too. English titles, lang="en". -->
+  <section class="series" id="reflections" hidden>
+    <h2 data-i18n="refTitle">Reflections</h2>
+    <p data-i18n="refIntro">Notes on the 11 books Professor Donnell recommends to industrial engineers, written as I read them and as questions come up. Some are short essays; some work the math out with interactive charts. In English only.</p>
+    <ol class="module-list" id="ref-list" data-i18n-aria="refListAria" aria-label="Reflections so far"></ol>
+    <p class="ref-all"><a href="reflections/" data-i18n="refAll">All 11 books</a></p>
+  </section>
+
   <p class="foot">
     <span data-i18n="footBuilt">Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
     <span data-i18n="footMistake">Found a mistake? gao9819@utulsa.edu</span>
@@ -92,9 +102,23 @@
 <script>
   (function () {
     var list = document.getElementById("module-list"), foot = document.querySelector(".foot");
+    var refs = document.getElementById("reflections"), refList = document.getElementById("ref-list");
     LF.moduleList(list);
     LF.offlineNote(foot);   // installed copy only
-    document.addEventListener("learnlangchange", function () { LF.moduleList(list); LF.offlineNote(foot); });
+    function reflections() {
+      if (!window.LEARN_REFLECTIONS) return;
+      LEARN_REFLECTIONS.hubList(refList, LI18N.lang, LI18N.t);
+      refs.hidden = false;
+    }
+    // The Reflections registry is not in the offline app, so the installed copy never asks for
+    // it (no failed request in its console); elsewhere a missing file just leaves the block hidden.
+    if (!window.LEARN_OFFLINE) {
+      var s = document.createElement("script");
+      s.src = "assets/reflections.js";
+      s.onload = reflections;
+      document.body.appendChild(s);
+    }
+    document.addEventListener("learnlangchange", function () { LF.moduleList(list); LF.offlineNote(foot); reflections(); });
   }());
 </script>
 </body>

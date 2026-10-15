@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
+  <meta name="robots" content="noindex">
+  <!-- Professor Donnell's name is in this file (title, h1, og tags) and in the hub's refIntro strings only. -->
+  <title>Reflections on Professor Donnell's 11 recommended IE books · Gideon A. Ong</title>
+  <meta name="description" content="Notes on the 11 books Professor Donnell recommends to industrial engineers, written as I read them and as questions come up. Some are short essays; some work the math out with interactive charts.">
+  <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gideon A. Ong">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Reflections on Professor Donnell's 11 recommended IE books">
+  <meta property="og:description" content="Notes on the 11 books Professor Donnell recommends to industrial engineers, written as I read them and as questions come up. Some are short essays; some work the math out with interactive charts.">
+  <meta property="og:url" content="https://gideonong.me/learning/reflections/">
+  <meta property="og:image" content="https://gideonong.me/learning/assets/og/reflections.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Reflections: a queue-length curve that shoots up as utilization nears 1, beside the title, on lab-notebook paper.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (/learning/reflections/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Viewing settings: follow the main site's saved choices (About → Viewing settings) before first
+       paint. Same keys and <html> attributes as the main site's head snippet (see js/about.js §6);
+       learning.css styles data-theme, data-readability and data-colorblind. No settings UI here. */
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
+        if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+      } catch (e) { /* storage blocked: the OS theme and the default view */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../assets/learning.css">
+  <link rel="stylesheet" href="reflections.css">
+</head>
+<body>
+
+<nav class="series-bar" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../">Learning</a><span aria-hidden="true">/</span>
+    <span>Reflections</span>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Gideon A. Ong · Learning</div>
+    <h1>Reflections on Professor Donnell's 11 recommended IE books</h1>
+    <p class="lead">Notes on the 11 books Professor Donnell recommends to industrial engineers, written as I read them and as questions come up. Some are short essays; some work the math out with interactive charts. In English only.</p>
+  </header>
+
+  <section class="book-section" id="books">
+    <ol class="book-list" id="book-list" aria-label="The 11 books, in Professor Donnell's order"></ol>
+    <noscript><p class="note">The book list needs JavaScript turned on.</p></noscript>
+  </section>
+
+  <p class="foot">
+    <span>Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
+    <span>Found a mistake? gao9819@utulsa.edu</span>
+    <span class="license">Text, figures and code here are CC BY-SA 4.0. Quotations from the books remain their authors' and publishers'.</span>
+  </p>
+</div>
+
+<script src="../assets/learning.js"></script>
+<script src="../assets/reflections.js"></script>
+<script>
+  LEARN_REFLECTIONS.bookList(document.getElementById("book-list"));
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@
 const fs = require("fs"), path = require("path"), vm = require("vm");
 const root = process.argv[2] || path.join(__dirname, "..", "..");
 const files = ["assets/strings-common.js", "strings.js",
-  ...fs.readdirSync(path.join(root, "fits")).map(s => `fits/${s}/strings.js`)];
+  ...fs.readdirSync(path.join(root, "fits")).filter(s => fs.statSync(path.join(root, "fits", s)).isDirectory()).map(s => `fits/${s}/strings.js`)];
 let problems = 0;
 const bad = (f, msg) => { problems++; console.log(`  FAIL ${msg}`); };
 const count = (s, re) => (s.match(re) || []).sort().join(",");

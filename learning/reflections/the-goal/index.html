@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
+  <meta name="robots" content="noindex">
+  <title>The Goal · Reflections · Gideon A. Ong</title>
+  <meta name="description" content="Reflections on The Goal by Eliyahu M. Goldratt and Jeff Cox (1984), one question at a time.">
+  <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gideon A. Ong">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="The Goal · Reflections">
+  <meta property="og:description" content="Reflections on The Goal by Eliyahu M. Goldratt and Jeff Cox (1984), one question at a time.">
+  <meta property="og:url" content="https://gideonong.me/learning/reflections/the-goal/">
+  <meta property="og:image" content="https://gideonong.me/learning/assets/og/reflections.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Reflections: a queue-length curve that shoots up as utilization nears 1, beside the title, on lab-notebook paper.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/the-goal/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Viewing settings: follow the main site's saved choices (About → Viewing settings) before first
+       paint. Same keys and <html> attributes as the main site's head snippet (see js/about.js §6);
+       learning.css styles data-theme, data-readability and data-colorblind. No settings UI here. */
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
+        if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+      } catch (e) { /* storage blocked: the OS theme and the default view */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+  <link rel="stylesheet" href="../reflections.css">
+</head>
+<body data-book="the-goal">
+
+<nav class="series-bar" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../">Learning</a><span aria-hidden="true">/</span>
+    <a href="../">Reflections</a><span aria-hidden="true">/</span>
+    <span>The Goal</span>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="top book-head">
+    <div class="eyebrow">Reflections · Book 1 of 11</div>
+    <h1>The Goal: A Process of Ongoing Improvement</h1>
+    <p class="lead">Eliyahu M. Goldratt &amp; Jeff Cox, 1984. The copy I read: 2nd revised edition.</p>
+    <p id="book-about" hidden></p>
+  </header>
+
+  <section class="book-section" id="reflections">
+    <h2>Reflections</h2>
+    <ol class="module-list" id="ref-list" aria-label="Reflections on The Goal"></ol>
+    <noscript><p class="note">The list of reflections needs JavaScript turned on.</p></noscript>
+    <p class="ref-all"><a href="../">All 11 books</a></p>
+  </section>
+
+  <p class="foot">
+    <span>Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
+    <span>Found a mistake? gao9819@utulsa.edu</span>
+    <span class="license">Text, figures and code here are CC BY-SA 4.0. Quotations from the books remain their authors' and publishers'.</span>
+  </p>
+</div>
+
+<script src="../../assets/learning.js"></script>
+<script src="../../assets/reflections.js"></script>
+<script>
+  LEARN_REFLECTIONS.bookPage(document.getElementById("ref-list"), document.body.getAttribute("data-book"));
+</script>
+</body>
+</html>

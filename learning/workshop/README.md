@@ -17,8 +17,10 @@ tools/
   check-es.js                Checks the ES strings against EN
   figures-es.py              Makes figures-es/ from the unchanged public script (see below)
   export-play.py             Exports notebook.py to learning/fits/<slug>/play/ (adds noindex etc.)
-  make-ipynb.py              Turns learning/fits/<slug>/<slug>.py into the Colab notebook <slug>.ipynb
-  make-og-cards.py           Makes the link-preview cards in learning/assets/og/ (fonts/ it fetches is git-ignored)
+  make-ipynb.py              Turns learning/fits/<slug>/<slug>.py into the Colab notebook <slug>.ipynb;
+                             also reflections/<book>/<slug> (learning/reflections/…/<slug>.py)
+  make-og-cards.py           Makes the link-preview cards in learning/assets/og/ (fonts/ it fetches is git-ignored);
+                             Reflections cards draw their own chart (no workshop figure)
 .gitignore                   Keeps build output out of git (rendered slides.html, installer builds)
 ```
 

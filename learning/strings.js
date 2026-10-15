@@ -5,7 +5,7 @@ window.LEARN_STRINGS = {
     pageTitle: "Learning · Gideon A. Ong",
     eyebrow: "Gideon A. Ong · Learning",
     h1: "Learning",
-    lead: "Interactive notes I [told Claude to] build for engineering students. Each one runs in your browser on simulated data, so you can push the sliders, break things and see what happens.",
+    lead: "Interactive notes and essays I [told Claude to] build for engineering students. The interactive pages run in your browser on simulated data, so you can push the sliders, break things and see what happens.",
     seriesIntro: "Six short modules on checking a line fit against lab data: what the leftovers tell you, what they can't, and what to do about it. No statistics background needed; some Excel or MATLAB helps.",
     listAria: "Modules in Reading Your Fits",
     howTitle: "Every module comes with",
@@ -23,13 +23,17 @@ window.LEARN_STRINGS = {
     offlineGetZip: "zip for other systems",
     offlineGetZipOnly: "zip with all modules",
     offlineGetNote: "Not signed yet, so Windows may ask you to confirm: More info → Run anyway.",
-    offlineGetNotes: "About the offline copy"
+    offlineGetNotes: "About the offline copy",
+    refTitle: "Reflections",
+    refIntro: "Notes on the 11 books Professor Donnell recommends to industrial engineers, written as I read them and as questions come up. Some are short essays; some work the math out with interactive charts. In English only.",
+    refAll: "All 11 books",
+    refListAria: "Reflections so far"
   },
   es: {
     pageTitle: "Aprendizaje · Gideon A. Ong",
     eyebrow: "Gideon A. Ong · Aprendizaje",
     h1: "Aprendizaje",
-    lead: "Notas interactivas que [le pedí a Claude que] hiciera para estudiantes de ingeniería. Cada una corre en tu navegador con datos simulados, así que puedes mover los deslizadores, romper cosas y ver qué pasa.",
+    lead: "Notas interactivas y ensayos que [le pedí a Claude que] hiciera para estudiantes de ingeniería. Las páginas interactivas corren en tu navegador con datos simulados, así que puedes mover los deslizadores, romper cosas y ver qué pasa.",
     seriesIntro: "Seis módulos cortos sobre cómo revisar una recta ajustada a datos de laboratorio: qué te dicen los residuos, qué no te pueden decir y qué hacer al respecto. No necesitas saber estadística; ayuda saber algo de Excel o MATLAB.",
     listAria: "Módulos de la serie Cómo leer tus ajustes de curvas",
     howTitle: "Cada módulo incluye",
@@ -47,6 +51,10 @@ window.LEARN_STRINGS = {
     offlineGetZip: "zip para otros sistemas",
     offlineGetZipOnly: "zip con todos los módulos",
     offlineGetNote: "Todavía no está firmada, así que Windows puede pedirte que confirmes: Más información → Ejecutar de todas formas.",
-    offlineGetNotes: "Sobre la copia sin conexión"
+    offlineGetNotes: "Sobre la copia sin conexión",
+    refTitle: "Reflexiones",
+    refIntro: "Notas sobre los 11 libros que el profesor Donnell recomienda a los ingenieros industriales, escritas a medida que los leo y que me surgen preguntas. Algunas son ensayos cortos; otras desarrollan las matemáticas con gráficas interactivas. Solo en inglés.",
+    refAll: "Los 11 libros",
+    refListAria: "Reflexiones hasta ahora"
   }
 };

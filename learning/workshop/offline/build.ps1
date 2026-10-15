@@ -7,6 +7,8 @@
 # 1. Copies <repo>\learning\ into stage\learning\ (git-tracked and new-but-not-ignored files
 #    only, so the gitignored papers never ship), minus the dev-only paths in $Exclude, plus the
 #    favicon the pages point at (..\assets\glogo.ico), LICENSE, LICENSE-CONTENT and a NOTICE.
+#    The Reflections section (learning\reflections\, its registry and the vendored KaTeX) is
+#    excluded: the app is Reading Your Fits only.
 # 2. Writes stage\modules.iss and stage\modules-code.iss from learning\assets\modules.js and
 #    strings-common.js: one component per ready module with optional Slides and Python parts,
 #    and the Pascal that lists what is missing on disk after an install. A new module shows up
@@ -31,7 +33,10 @@ $Exclude = @(
   "*.md",                     # README.md, learning-plan.md
   "*.pdf",                    # papers are never hosted (gitignored anyway; belt and braces)
   "learning/assets/og/*",     # link-preview cards: only scrapers of the live site use them
-  "learning/fits/*/play/*"    # marimo notebooks need HTTP and a CDN; the pages hide the link from disk
+  "learning/fits/*/play/*",   # marimo notebooks need HTTP and a CDN; the pages hide the link from disk
+  "learning/reflections/*",   # Reflections stay online-only (learning-plan.md, Reflections R7):
+  "learning/assets/reflections.js",   # the installers are "Reading Your Fits"; the hub hides the
+  "learning/assets/vendor/*"          # block when LEARN_OFFLINE is set and never asks for this file
 )
 # Files outside learning\ that ship too (and so must be committed for a release).
 $Extra = @("assets/glogo.ico", "LICENSE", "LICENSE-CONTENT")

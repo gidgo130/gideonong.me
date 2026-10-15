@@ -15,7 +15,8 @@ analytics (see Analytics below).
 api/ holds Vercel serverless functions (since 2026-10-13): Node built-ins + fetch only, no
 package.json, no npm, no build step. Vercel compiles their `export` syntax to CommonJS.
 /learning is the one exception: it also loads Barlow Semi Condensed, Source Serif 4 and
-JetBrains Mono (see /learning below).
+JetBrains Mono, and its Reflections pages render math with a self-hosted, pinned KaTeX
+(learning/assets/vendor/katex/, no CDN; see /learning below).
 
 ## File structure
 index.html          Home page
@@ -102,13 +103,18 @@ learning/           UNLISTED Learning section (own design, noindex) — see /lea
                     learning/README.md. No link from the site since 2026-09-29 (its About →
                     Interesting sites entry was replaced); reached by URL and shared cards.
 learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, learning-i18n.js,
-                    strings-common.js, modules.js) and og/ (link-preview cards, generated)
+                    strings-common.js, modules.js, reflections.js), vendor/katex/ (self-hosted
+                    KaTeX, pinned, with its LICENSE) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
                     slides.html, slides.es.html, <slug>.py, and two GENERATED files:
                     <slug>.ipynb (Colab, from the .py by workshop/tools/make-ipynb.py) and
                     play/index.html (marimo, by workshop/tools/export-play.py). Papers are
-                    never hosted: chips link DOIs
+                    never hosted: chips link DOIs. Series manual: learning/fits/README.md
+learning/reflections/  The Reflections series (English-only essays on the 11 books Professor
+                    Donnell recommends): index.html (all books), reflections.css, README.md
+                    (series manual), <book>/index.html, and <book>/<slug>/ (index.html,
+                    main.js, <slug>.py, GENERATED <slug>.ipynb). Registry: assets/reflections.js
 CLAUDE.md           This file
 plan.md             Development roadmap
 README.md           Public front page of the repo (what it is, layout, licensing)
@@ -676,20 +682,65 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
   prefer using CSS vars to avoid this need in future additions.
 - IEL chip: uses rgba(0,0,0,0.06) in light mode; rgba(255,255,255,0.10) in dark.
 
-## /learning — Learning section (EXCEPTION to main-site styling, 2026-09-28)
-gideonong.me/learning/ hosts interactive teaching pages, starting with the series "Reading
-Your Fits" (how to check a line fit against lab data). Build plan, status and decisions:
-learning/learning-plan.md (plan.md only points there). Working manual (structure, strings,
-adding a module, checks, Fable review prompt): learning/README.md. Slide sources, figures and dev tools live in
-learning/workshop/ (tracked in git, never deployed: listed in .vercelignore); the site loads only
-the rendered slides.html copied into learning/fits/<slug>/.
+## /learning — Learning section (EXCEPTION to main-site styling, 2026-09-28; hub of sections since 2026-10-15)
+gideonong.me/learning/ is a hub with two sections: the series "Reading Your Fits" (how to check a
+line fit against lab data, six bilingual interactive modules at learning/fits/<slug>/) and
+"Reflections" (English-only essays on the 11 books Professor Donnell recommends to industrial
+engineers, at learning/reflections/). Build plan, status and decisions: learning/learning-plan.md
+(plan.md only points there). Working manuals: learning/README.md (hub-wide), learning/fits/README.md
+and learning/reflections/README.md (one per series; each holds that series' "adding a page" steps
+and checks; the Fable review prompt is in learning/README.md). Slide sources, figures and dev tools
+live in learning/workshop/ (tracked in git, never deployed: listed in .vercelignore); the site loads
+only the rendered slides.html copied into learning/fits/<slug>/.
 
-Rules for /learning (these replace the main-site rules where they conflict):
+### Hub-wide rules (these replace the main-site rules where they conflict; every section follows them)
 - Own design, deliberately different from the main site: the "lab notebook" look in
   learning/assets/learning.css. Fonts Barlow Semi Condensed (display), Source Serif 4 (body),
-  JetBrains Mono (numbers). Uppercase eyebrows and "Trial 1 of 4" / module numbers ARE allowed
-  here because they mark a real sequence. No main-site navbar, banner or footer; each page has
-  the thin series bar (gideonong.me / Learning / series) and prev / all / next links.
+  JetBrains Mono (numbers). Uppercase eyebrows and "Trial 1 of 4" / module numbers / "§4" ARE
+  allowed here because they mark a real sequence. No main-site navbar, banner or footer; each
+  page has the thin series bar (gideonong.me / Learning / series / …). A series may add its own
+  stylesheet on top (reflections.css) but never replaces learning.css.
+- Unlisted: NOT in the main nav, sitemap or project list. Since 2026-09-29 there is no link
+  from the site at all: the Learning entry in about.html's Interesting sites was replaced when
+  that block was unhidden. /learning is reached by URL and by its shared link-preview cards.
+  To link it again, add an entry to ABOUT_SITES in js/about-data.js (`url: "learning/",
+  internal: true` = same tab) through the editor's Content › About sub-tab.
+- noindex, permanently: every /learning page (and each deck, via `include-in-header` in
+  slides.qmd) has `<meta name="robots" content="noindex">`. Do not remove it: /learning is
+  reached by link, not by search (learning-plan.md Phase C, 2026-09-28). Do not use robots.txt.
+- Link previews: every page and deck carries static Open Graph + Twitter-card meta (title and
+  lead in EN, absolute og:url with a trailing slash, og:image = a 1200×630 card in
+  learning/assets/og/, made by learning/workshop/tools/make-og-cards.py: learning.png for the
+  hub, <slug>.png per module, reflections.png for the all-books and book pages,
+  <book>-<slug>.png per reflection). Scrapers don't run JS, so they stay in the HTML.
+- Viewing settings follow the main site's saved choices (About → Viewing settings) through the
+  head snippet on every page, with the same localStorage keys and <html> attributes as
+  js/about.js §6: `viewTheme` → data-theme (else prefers-color-scheme), `viewReadability` → data-
+  readability, `viewColorblind` → data-colorblind. learning.css styles all three (section
+  "Viewing settings" at the end); a series stylesheet adds its own tokens under the same
+  attributes. Readability enlarges page text only; SVG charts scale with their viewBox and are
+  left alone. No settings UI or toggle on /learning pages.
+- Relative links only, so pages work on the site, on previews and from disk (offline app).
+  Each page's head adds the trailing slash to folder URLs; LF.fixFileLinks (learning.js) points
+  folder links at index.html when opened from disk. Anything that needs a server or a CDN gets
+  `data-http-only` on its link.
+- External resources: Google Fonts, and nothing else. Libraries are self-hosted under
+  learning/assets/vendor/, pinned to one exact version, shipped with their LICENSE.
+- Simulated data only; each page states its true model.
+- Cited papers and books: a quiet `a.ref-chip` (modules, via the page's `chips` table) or a
+  plain link (reflections). Never host a paper in the repo or on the site: link its DOI, the
+  publisher's page, or a catalog page for a book. Sources stay in the gitignored references/.
+  No author byline on module decks.
+- Motion: slider-driven redraws only. No page-load or scroll animation.
+- The hub (learning/index.html) renders the Reading Your Fits block from assets/modules.js
+  (LF.moduleList) and the Reflections block from assets/reflections.js, which it loads only when
+  `window.LEARN_OFFLINE` is unset (the installed copy never requests it) and keeps hidden until
+  the file has loaded. The hub's lead and both blocks are bilingual (learning/strings.js).
+- Files outside learning/ that /learning touches: js/about-data.js (a Learning entry in
+  ABOUT_SITES, when one exists), .vercelignore (the one line that re-includes the KaTeX
+  LICENSE) and these docs. Anything else outside learning/ needs Gideon's OK first.
+
+### Reading Your Fits (learning/fits/<slug>/)
 - Color meaning is fixed across every module: dashed ink = the truth, solid red (--fit) = what
   an ordinary fit reports, dotted blue (--fix) = a corrected estimate, grey dots = measured
   points. The dots on --fix (.fix, .fix-curve, .ci-bar-fix, the .sw.fix legend swatch, the
@@ -702,17 +753,6 @@ Rules for /learning (these replace the main-site rules where they conflict):
   a non-color cue to the red/grey distinctions: highlighted or missed points (.pt-hi) and
   flagged bars (.bar-hi) wear an ink ring; .v.bad readouts are marked ✕ and .v.good ✓ besides
   bold. New charts must reuse those class names so the cues apply without touching JS.
-- Unlisted: NOT in the main nav, sitemap or project list. Since 2026-09-29 there is no link
-  from the site at all: the Learning entry in about.html's Interesting sites was replaced when
-  that block was unhidden. /learning is reached by URL and by its shared link-preview cards.
-  To link it again, add an entry to ABOUT_SITES in js/about-data.js (`url: "learning/",
-  internal: true` = same tab) through the editor's Content › About sub-tab.
-- noindex, permanently: every /learning page (and each deck, via `include-in-header` in
-  slides.qmd) has `<meta name="robots" content="noindex">`. Do not remove it: /learning is
-  reached by link, not by search (learning-plan.md Phase C, 2026-09-28). Do not use robots.txt.
-- Link previews: every page and deck carries static Open Graph + Twitter-card meta (title and
-  lead in EN, absolute og:url, og:image = learning/assets/og/<slug>.png, 1200×630, made by
-  learning/workshop/tools/make-og-cards.py). Scrapers don't run JS, so they stay in the HTML.
 - Bilingual is REQUIRED; English ships first. All display text lives in strings files
   (learning/assets/strings-common.js + each page's strings.js), never hard-coded in JS.
   learning-i18n.js shares the main site's localStorage "lang" key and default rule. The EN/ES
@@ -720,32 +760,58 @@ Rules for /learning (these replace the main-site rules where they conflict):
   page's `<html>` gets `data-es-ready` (after its `es` strings are complete). Keys ending in
   "Html" may hold <b>/<i>/<code> (the translations.js no-HTML rule does not apply here).
   Numbers go through LF.num so ES gets a decimal comma.
-- Viewing settings follow the main site's saved choices (About → Viewing settings) through the
-  head snippet on every page, with the same localStorage keys and <html> attributes as
-  js/about.js §6: `viewTheme` → data-theme (else prefers-color-scheme), `viewReadability` → data-
-  readability, `viewColorblind` → data-colorblind. learning.css styles all three (section
-  "Viewing settings" at the end). Readability enlarges page text only; SVG charts scale with
-  their viewBox and are left alone. No settings UI or toggle on /learning pages.
 - Module registry: learning/assets/modules.js is the ONE list (order, slug, ready). Titles and
   descriptions: mod<Key>Title / mod<Key>Desc in strings-common.js. URLs use slugs, never
-  numbers, so reordering never breaks links.
-- Relative links only, so pages work on the site, on previews and from disk (offline app).
-  Each page's head adds the trailing slash to folder URLs; LF.fixFileLinks points folder links
-  at index.html when opened from disk.
-- Simulated data only; each page states its true model.
-- Cited papers: a quiet `a.ref-chip` via the page's `chips` table in strings.js (see
-  learning/README.md). Never host a paper in the repo or on the site: link its DOI, the
-  publisher's page, or a catalog page for a book. Sources stay in the gitignored references/.
-  No author byline on module decks.
-- Motion: slider-driven redraws only. No page-load or scroll animation.
+  numbers, so reordering never breaks links. Each page has prev / all / next links.
 - Two ways to run each module's code, both linked beside Slides / Python script: "Play with
   the code" (the marimo notebook at play/, HTTP only, `data-http-only`) and "Open in Colab"
   (<slug>.ipynb from the public GitHub repo). learning.js sets `data-lite` on <html> for
   phones / save-data / low-memory devices; learning.css then lists Colab first as the primary
   link, otherwise marimo. Both always visible; the rule lives only in learning.js.
-- Files outside learning/ that /learning touches: js/about-data.js (a Learning entry in
-  ABOUT_SITES, when one exists) and these docs. Anything else outside learning/ needs
-  Gideon's OK first.
+- The offline Windows app (learning/workshop/offline/) ships this series only.
+
+### Reflections (learning/reflections/, 2026-10-13; decisions R1–R10 in learning-plan.md)
+- R1 hub of sections: no existing URL changed; the hub got a second block under Reading Your
+  Fits. R2 URLs: reflections/ (all 11 books) → reflections/<book>/ (one book, only once it has a
+  ready reflection) → reflections/<book>/<slug>/ (one reflection). Slugs, never numbers.
+- R3 English only: reflection, book and all-books pages carry their text in the HTML (and in
+  main.js for redrawn readouts), load no learning-i18n.js or strings files, have no
+  `data-es-ready` and no EN/ES toggle. Only the hub's Reflections block is bilingual
+  (refTitle / refIntro / refAll / refListAria); book and reflection titles stay English in both
+  languages, marked `lang="en"`. Professor Donnell's name lives in exactly two places per
+  language: the hub's refIntro strings and the all-books page (title, h1, description, og tags).
+  Cards never carry the name.
+- R4 one registry: learning/assets/reflections.js (`window.LEARN_BOOKS`: the 11 books in
+  Professor Donnell's order, each with reflections {slug, title, date "YYYY-MM-DD", summary,
+  ready}; optional `edition` and `about` per book, empty `about` renders nothing) plus the three
+  renderers (LEARN_REFLECTIONS.hubList / bookList / bookPage). Dates are formatted from their
+  parts with timeZone UTC, never `new Date(string)`.
+- R5 look: learning.css is the chrome; learning/reflections/reflections.css adds the essay
+  pieces (§n labels, theorem blocks, "from a probability course" asides, figures with controls,
+  tables, reading list, the book lists), sized in em so readability scales them. Charts NEVER
+  use --fit / --fix; they use the series tokens --s1..--s4 (light, dark, Okabe–Ito under
+  data-colorblind), and every line in a shared chart also has its own dash pattern or marker
+  (series 1 solid, then "9 5", "2 4", "9 4 2 4"; dots; hollow ring), with matching legend
+  classes .dash / .d2 / .d3 / .d4 / .dot / .ring.
+- R6 math: self-hosted KaTeX 0.19.0 (MIT) in learning/assets/vendor/katex/ (katex.min.js,
+  katex.min.css, auto-render.min.js, fonts/*.woff2, LICENSE), loaded only by pages with math.
+  Auto-render has exactly two delimiter pairs, `\( \)` inline and `$$ $$` display, never a
+  single `$`; throwOnError off; unknownSymbol ignored. Display math wider than the column
+  scrolls inside its own box. Upgrading = a new pinned version, verified against the npm
+  registry's integrity hash, same five parts, version updated in the page comment and the docs.
+- R7 offline app excludes Reflections: build.ps1 `$Exclude` has learning/reflections/*,
+  learning/assets/reflections.js and learning/assets/vendor/*; the hub hides the block in the
+  installed copy and when reflections.js is missing.
+- R8 license line in every Reflections footer: text, figures and code CC BY-SA 4.0; quotations
+  from the books remain their authors' and publishers'. Quotes short, with edition and page.
+- R9 same plumbing as everything else here (noindex, static OG tags, trailing-slash script,
+  viewing-settings snippet, relative links, slider-driven redraws only, simulated data stated).
+- R10 Python companions: `<slug>.py` with percent cell markers and a GENERATED `<slug>.ipynb`
+  (make-ipynb.py takes `reflections/<book>/<slug>`, `--check` included; `all` covers ready
+  reflections). "Take it with you" after the reading list: Python script + Open in Colab. No
+  marimo play/ for reflections.
+- Content is ported from approved explainers in the gitignored staging/reflections/: change
+  styling and plumbing, never wording, equations or numbers.
 
 ## What NOT to do
 (Main site. /learning follows its own rules in the section above.)

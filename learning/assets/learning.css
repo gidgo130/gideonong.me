@@ -203,6 +203,18 @@ a.module-row:hover .m-title { color: var(--fix); }
 .howto { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
 .howto div { border-top: 3px solid var(--ink); padding-top: 10px; display: grid; gap: 4px; font-size: 16px; }
 .howto h4 { font-family: var(--font-display); font-size: 20px; font-weight: 600; line-height: 1.15; margin: 0; }
+/* Hub: the Reflections block (learning/reflections/, rendered by assets/reflections.js). Rows reuse
+   .module-row with the book title in place of the number and the date in place of the status. */
+.ref-row { grid-template-columns: minmax(0, 1fr) auto; }
+.ref-book { font-family: var(--font-display); font-size: 15px; color: var(--muted); font-style: italic; }
+.ref-row .m-title { grid-column: 1; }
+.ref-date { grid-row: 2; grid-column: 2; font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+.ref-row .m-desc { grid-column: 1; }
+.ref-all { font-family: var(--font-display); font-size: 16px; }
+.ref-all a { font-weight: 600; }
+@media (max-width: 520px) { .ref-date { grid-row: auto; grid-column: 1; } }
+:root[data-readability] .ref-book, :root[data-readability] .ref-all { font-size: 17px; }
+:root[data-readability] .ref-date { font-size: 14px; }
 
 /* ---------- SVG charts (styled through the tokens) ---------- */
 .chart .gridline { stroke: var(--grid); stroke-width: 1; }

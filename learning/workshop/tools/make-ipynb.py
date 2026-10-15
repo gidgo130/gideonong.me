@@ -1,11 +1,15 @@
-"""make-ipynb.py — turn a module's companion script into its Colab notebook.
+"""make-ipynb.py — turn a companion script into its Colab notebook.
 
-    python learning/workshop/tools/make-ipynb.py <slug> [--check]
-    python learning/workshop/tools/make-ipynb.py all [--check]
+    python learning/workshop/tools/make-ipynb.py <slug> [--check]                       a module
+    python learning/workshop/tools/make-ipynb.py reflections/<book>/<slug> [--check]    a reflection
+    python learning/workshop/tools/make-ipynb.py all [--check]                          every module
+                                                                      and every ready reflection
 
 Reads   learning/fits/<slug>/<slug>.py      (the script, with "percent" cell markers)
 Writes  learning/fits/<slug>/<slug>.ipynb   (tracked; the module page's "Open in Colab" link
                                              opens it from GitHub, so the repo must be public)
+A reflection reads learning/reflections/<book>/<slug>/<slug>.py and writes <slug>.ipynb beside
+it; "all" takes the ready reflections from learning/assets/reflections.js (R10).
 
 The script stays an ordinary Python file that runs top to bottom. The markers are comments:
     # %% [markdown]      a markdown cell: every following line is "# text" (or a bare "#")
@@ -38,6 +42,31 @@ MARKER = re.compile(r"^# %%(?P<md> \[markdown\])?(?P<title>.*)$")
 def slugs():
     text = (ROOT / "learning" / "assets" / "modules.js").read_text(encoding="utf-8")
     return re.findall(r'slug:\s*"([a-z0-9-]+)"', text)
+
+
+def reflection_targets():
+    """reflections/<book>/<slug> for every ready reflection in learning/assets/reflections.js."""
+    text = (ROOT / "learning" / "assets" / "reflections.js").read_text(encoding="utf-8")
+    out = []
+    for book in re.finditer(r'slug:\s*"([a-z0-9-]+)".*?reflections:\s*\[(.*?)\]\s*\}', text, re.S):
+        for ref in re.finditer(r'\{[^{}]*?slug:\s*"([a-z0-9-]+)"[^{}]*?\}', book.group(2), re.S):
+            if re.search(r'ready:\s*true', ref.group(0)):
+                out.append(f"reflections/{book.group(1)}/{ref.group(1)}")
+    return out
+
+
+def locate(target):
+    """(script path, notebook path, slug) for a module slug or reflections/<book>/<slug>."""
+    parts = target.strip("/").split("/")
+    if parts[0] == "reflections":
+        if len(parts) != 3:
+            raise SystemExit(f"{target}: expected reflections/<book>/<slug>")
+        folder, slug = ROOT / "learning" / "reflections" / parts[1] / parts[2], parts[2]
+    elif len(parts) == 1:
+        folder, slug = FITS / parts[0], parts[0]
+    else:
+        raise SystemExit(f"{target}: expected <slug> or reflections/<book>/<slug>")
+    return folder / f"{slug}.py", folder / f"{slug}.ipynb", slug
 
 
 def split_cells(source, name):
@@ -142,9 +171,8 @@ def check(slug, source, cells, path):
     print(f"  stdout identical ({len(a.splitlines())} lines); {n_md} markdown cells")
 
 
-def build(slug, do_check):
-    script = FITS / slug / f"{slug}.py"
-    out = FITS / slug / f"{slug}.ipynb"
+def build(target, do_check):
+    script, out, slug = locate(target)
     if not script.is_file():
         raise SystemExit(f"no script at {script}")
     source = script.read_text(encoding="utf-8")
@@ -163,5 +191,5 @@ if __name__ == "__main__":
     if len(args) != 1:
         print(__doc__)
         sys.exit(2)
-    for s in (slugs() if args[0] == "all" else [args[0]]):
+    for s in (slugs() + reflection_targets() if args[0] == "all" else [args[0]]):
         build(s, do_check)

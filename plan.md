@@ -833,7 +833,8 @@ Goal: site evolves from career tool to broader personal site.
 ## Learning section — /learning
 
 A separate track, not planned in this file. The unlisted teaching pages at
-gideonong.me/learning/ have their own plan, status and decisions log in
+gideonong.me/learning/ (Reading Your Fits, and since 2026-10-15 the Reflections essays at
+/learning/reflections/) have their own plan, status and decisions log in
 `learning/learning-plan.md`, their rules in CLAUDE.md → "/learning", and their working manual
 in `learning/README.md`.
 
