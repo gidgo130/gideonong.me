@@ -735,11 +735,14 @@ Features:
   that stores event-level data Gideon owns and can analyze in Colab. It runs **alongside**
   GoatCounter, which stays as the reference count. It's also the first backend code in the repo.
   Build in this order:
-  - **A1 — "Exclude me" flag (do first, small).** Visiting `?notrack=1` sets
+  - [X] **A1 — "Exclude me" flag (do first, small). Built 2026-10-13.** Visiting `?notrack=1` sets
     `localStorage.noTrack = "1"` (`?notrack=0` clears it). js/analytics.js then skips all three
     tools: Vercel, GoatCounter (also set GoatCounter's own `skipgc` key) and the collector.
     Gideon sets it once per browser/device he uses.
-  - **A2 — Collector `api/hit.js`** (Vercel serverless function).
+  - [X] **A2 — Collector `api/hit.js`** (Vercel serverless function). **Built 2026-10-13.**
+    Tested against a stand-in Upstash, under `vercel dev` against the real Upstash database,
+    and on a `vercel deploy` preview with real geo and the real preview Origin (all
+    2026-10-15).
     - Code rules: Node built-ins + `fetch` only. No package.json, no npm, no build step.
     - Upstash Redis through its REST API.
     - Env vars are set in the Vercel dashboard. Local copies go in `.env.local`, which is
@@ -1122,3 +1125,100 @@ A1–A5). Reasons:
 - $0 cost
 Sheets was rejected because Apps Script can't see the IP or headers (no geo, no uniques, weak
 bot filtering). Self-hosting was rejected because of cost and upkeep.
+
+[2026-10-13] Analytics A1, the "exclude me" flag, in js/analytics.js. `?notrack=1` sets
+`localStorage.noTrack = "1"` plus GoatCounter's own `skipgc = "t"` (key and value read from
+the live count.js, which also toggles it with `#toggle-goatcounter`). `?notrack=0` clears both,
+and any other value changes nothing. The param is always stripped with `history.replaceState`,
+keeping the other params and the #hash. That part runs before the dev-host check, so it works on
+Live Server too. With the flag set, no tracker loads and no click listener is attached; the A2
+collector will sit behind the same check. Every localStorage access is wrapped in try/catch.
+Verified with Playwright (Edge channel, scratchpad) on Live Server and on a fake non-dev host
+mapped to it (GoatCounter / Vercel requests stubbed):
+- the flag sets, clears and ignores other values
+- `?tag=`, `?part=` and the #hash survive; the tag chip still shows
+- with the flag set, no tracker requests go out, including on the visit that sets it
+- with storage blocked, analytics.js throws nothing
+- the console stays clean
+Found in passing, not fixed: js/main.js reads and writes the `lang` key without try/catch, so with
+storage blocked it throws.
+
+[2026-10-13] Analytics A2: the collector. api/hit.js (Vercel function, `export default { fetch }`,
+Node built-ins + fetch, no package.json) plus the client in js/analytics.js. Fields, rejects and
+privacy rules as specified above; the details are in CLAUDE.md → Analytics. Checked against the
+current docs first:
+- Vercel Hobby: 1M function invocations, 4 active-CPU hours and 360 GB-hrs per month;
+  12 functions per deploy; 300 s max duration. Over the limit, the function pauses for up to
+  30 days.
+- Upstash Free: 500K commands, 256 MB and 10 GB bandwidth per month. A stored event costs
+  4 commands and ~300 B, so storage (about 50K events/month at 13 months' retention) is the
+  tighter limit.
+Decisions (Gideon, 2026-10-13):
+- Upstash through the Vercel Marketplace, in region us-east-1 next to the functions' iad1,
+  with eviction off.
+- A dev-only override, `?collectortest=1|0`: collector only, on any host.
+- Non-production data goes under `preview:` / `dev:` key prefixes with a 7-day expiry, chosen
+  by VERCEL_ENV; production keys stay `hits:<date>`.
+- Rate limit of 60 events per visitor hash per minute. It's generous because students on campus
+  wifi can share one IP and the same browser.
+- Testing: `vercel dev` plus one CLI `vercel deploy` preview, with no git branch.
+Other choices:
+- The bot regex matches link-preview bots only by their bot names, so in-app browsers such as
+  LinkedInApp count as visitors.
+- Each function is self-contained; there's no shared helper in api/, because the docs don't say
+  whether a `_`-prefixed file would be left out of the function list.
+- .vercelignore gained `.env*` and `.vercel/`.
+Verified:
+- A harness called the handler directly against a stand-in Upstash, in all three stages: every
+  reject path gives 204 with nothing stored; pageview, click and leave each write one correct
+  record; no IP or UA appears in storage; bad fields are blanked; 60 events/min are stored and
+  the 61st rejected; TTLs are right; Upstash down or env missing still gives 204.
+- Under `vercel dev` (CLI 59.15.1) with curl, the same rejects behave the same way, and 70
+  parallel hits stored 60.
+- A real browser on :3000 with `?collectortest=1`: three beacons answered 204, three correct
+  records, console clean.
+- Playwright on Live Server: no beacons and a clean console. On a fake production host: all three
+  tools load, the payloads are right, `leave` excludes hidden time, `sid` stays the same per tab,
+  and notrack blocks the collector too.
+- With the collector down (500 or connection refused) the site keeps working, but the browser
+  logs its own "Failed to load resource" line; JS can't suppress that.
+
+[2026-10-15] Analytics A2, tested against the real Upstash database (Marketplace, KV_* vars),
+under `vercel dev` (CLI 64.2.0):
+- The 13 reject cases (GET, PUT, no / wrong / production Origin, 3 KB body, no / curl /
+  Googlebot / LinkedInBot UA, bad JSON, unknown type, click without an event) each gave 204
+  with nothing stored.
+- A pageview, a click, a leave and a LinkedIn in-app pageview each stored one correct record.
+- 70 parallel hits from one visitor stored 60.
+- A real browser with `?collectortest=1`: three beacons, three records, console clean.
+- Of 67 records, 0 contained IP or User-Agent text.
+- TTLs: the list 7 days (dev:), the rate counters 60 s.
+- The dev: keys were deleted afterwards; the database was empty again.
+Found: `vercel dev` does not pass ANALYTICS_SALT_SECRET from .env.local to the function (it
+uses the project's Development env vars, where that secret isn't set). The first run therefore
+stored nothing ("hit: missing env vars"). The workaround is to start `vercel dev` with the salt
+exported (command in CLAUDE.md → Analytics).
+Same day, follow-up (Gideon):
+- He added a separate, non-secret ANALYTICS_SALT_SECRET to the Development environment and
+  re-pulled .env.local. A plain `vercel dev` now stores events, and the export workaround is
+  gone from CLAUDE.md.
+- In-app browser names in api/hit.js: LinkedIn (LinkedInApp), Instagram, and Facebook
+  (FBAN / FBAV / FB_IAB / FBIOS), checked before the regular browsers. They were "Other"
+  before.
+- Rerun on a plain `vercel dev`: the 13 rejects stored nothing; 6 valid events stored (Chrome
+  pageview / click / leave, plus LinkedIn / iOS, Instagram / Android and Facebook / iOS
+  pageviews); no "hit:" log lines; 0 records with IP or UA text. The offline harness passed
+  42/42 in each stage. The dev: keys were deleted afterwards.
+Preview check, same day (CLI `vercel deploy`, gideonong-c702qbq2h-gidgo130-main.vercel.app, opened
+without `?collectortest`, so all three tools loaded):
+- 21 records in `preview:hits:2026-10-15`, with a 7-day TTL.
+- The preview's own Origin was accepted.
+- Real geo arrived: US / OK / Tulsa.
+- Paths were normalized: /, /projects, /about, /experience, /projects/eagle-pathway,
+  /projects/pump-cylinder-failure.
+- The click was `doc-transcript-en`.
+- The leaves added up visible time, and scroll reached 100 on short pages.
+- `sid` and the visitor hash stayed the same across the visit; the internal ref showed the
+  preview host.
+- 0 records contained IP or UA text.
+- The preview: keys were deleted afterwards. A2 is complete.

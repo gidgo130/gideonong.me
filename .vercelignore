@@ -9,3 +9,7 @@ scripts/
 references/
 staging/
 learning/workshop/
+# Local secrets and CLI state. A `vercel deploy` uploads from disk, so without
+# these lines .env.local (Upstash token, salt) would be published as a file.
+.env*
+.vercel/

@@ -12,6 +12,8 @@ Domain: gideonong.me. See plan.md for the development roadmap.
 Plain HTML + CSS + vanilla JavaScript. No frameworks, no build tools, no npm.
 External resources: Google Fonts only (Lora + DM Sans), plus GoatCounter's count.js for
 analytics (see Analytics below).
+api/ holds Vercel serverless functions (since 2026-10-13): Node built-ins + fetch only, no
+package.json, no npm, no build step. Vercel compiles their `export` syntax to CommonJS.
 /learning is the one exception: it also loads Barlow Semi Condensed, Source Serif 4 and
 JetBrains Mono (see /learning below).
 
@@ -25,7 +27,9 @@ css/style.css       All styles (single file, organized by section)
 js/chips.js         The one phrase auto-linker (IEL, Zohaib Sheikh, …) — see Phrase chips
 js/site-config.js   Author-side switches (home featured side-by-side flag); index.html only
 js/main.js          Nav behavior, language toggle, document links
-js/analytics.js     Vercel Web Analytics + GoatCounter loader and click events (see Analytics)
+js/analytics.js     Vercel Web Analytics + GoatCounter loader, the collector client, click
+                    events, the notrack / collectortest flags (see Analytics)
+api/hit.js          Analytics collector (Vercel function → Upstash Redis; see Analytics)
 js/translations.js  All EN and ES text strings for the bilingual toggle (plain text, no HTML)
 js/tags-data.js     The one shared tag vocabulary (id + i18n key)
 js/projects-data.js Project entries (feeds projects.html and the home featured block)
@@ -309,6 +313,76 @@ swap the file or the src there.
   markup attributes, so JS-rendered links are covered: doc-<type>-<lang> (data-doc-link
   buttons), email (mailto:), out-<host> (links to other sites), lang-<en|es> (the toggle).
   Do not add data-goatcounter-click attributes; extend the listener instead.
+- "Exclude me" flag (2026-10-13): any page with `?notrack=1` sets localStorage `noTrack` = "1"
+  and GoatCounter's own `skipgc` = "t"; `?notrack=0` removes both; any other value changes
+  nothing. The param is always stripped (history.replaceState; other params and the #hash stay).
+  This runs before the dev-host check, so it works on Live Server. While `noTrack` is set, no
+  tool loads and no click listener is attached; any new tracker goes behind the same check.
+  Every localStorage access in the file is wrapped in try/catch. Gideon sets it once per
+  browser/device.
+- Self-built collector (2026-10-13, plan.md Phase 3 A2). It runs alongside the two tools above,
+  and GoatCounter stays the reference count. js/analytics.js sends
+  `navigator.sendBeacon("/api/hit", JSON)` (text/plain, same-origin) for three events:
+  - `pageview` on load
+  - `click`, with the same names GoatCounter gets (one sendEvent feeds both)
+  - `leave` on every visibilitychange → hidden, with `ms` (visible time so far) and `scroll`
+    (max % so far); one page view can send several, and analysis keeps the last
+  Client fields on every event:
+  - `type`, `path` (normalized: `/`, `/index.html`, `/portfolio` → `/`; `.html` dropped; no
+    trailing slash), `ref` (referrer host only), `lang` (site language), `nav`
+    (navigator.language), `vw` (bucket `<480` / `480-767` / `768-1023` / `1024-1439` /
+    `1440+`), `tz`, `sid` (random per tab, sessionStorage `aSid`), `utm` (utm_source)
+  - plus `event` on clicks, and `ms` / `scroll` on leaves
+  api/hit.js adds:
+  - `t` (ISO UTC)
+  - `country` / `region` / `city` (x-vercel-ip-* headers)
+  - coarse `browser` / `os` / `device` (family names, no versions). The in-app browsers are
+    named first, as LinkedIn / Instagram / Facebook; then Edge, Opera, Samsung, Firefox,
+    Chrome, Safari, Other
+  - `visitor` = first 16 hex of SHA-256(daily salt + IP + UA), where daily salt =
+    HMAC-SHA256(ANALYTICS_SALT_SECRET, UTC date): unique per day, not linkable across days
+- Privacy rules (collector): NEVER store or log the IP or the raw User-Agent; they are used in
+  memory only, for the hash and the UA families. Fields are allow-listed, type-checked and
+  length-capped server-side; unknown fields are dropped. Its log lines carry only the
+  function's own error messages.
+- Rejects: every response is an empty 204, whether stored or not. Nothing is stored for:
+  - a non-POST request
+  - an Origin other than https://gideonong.me / www, or (on a preview) that deploy's own
+    VERCEL_URL / VERCEL_BRANCH_URL, or (under `vercel dev`) http://localhost
+  - a body over 2048 bytes
+  - a bot UA, or none (regex list in the file; link-preview bots only by their bot names, so
+    in-app browsers like LinkedInApp count)
+  - bad JSON, an unknown type, or a click without a valid event name
+  - more than 60 events per visitor hash per minute (fixed one-minute window)
+- Storage: Upstash Redis via its REST API. `RPUSH <prefix>hits:<UTC YYYY-MM-DD>`, one JSON
+  record per event; rate counters live at `<prefix>rl:<visitor>:<minute>` (60 s TTL).
+  Production has no prefix and its keys expire after 397 days (~13 months); preview deploys
+  use `preview:` and `vercel dev` uses `dev:`, with a 7-day expiry. The prefix comes from
+  VERCEL_ENV.
+- Env vars (Vercel dashboard, Production + Preview; local copies in the gitignored
+  .env.local):
+  - UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN, falling back to the Marketplace names
+    KV_REST_API_URL / KV_REST_API_TOKEN
+  - ANALYTICS_SALT_SECRET
+  - ANALYTICS_EXPORT_TOKEN (A3)
+  If one is missing, the function stores nothing and still answers 204 (the Vercel log says
+  "hit: missing env vars").
+  `vercel dev` (CLI 64.2) takes the project's Development environment variables, not the
+  hand-written lines of .env.local. So the Development environment carries its own
+  ANALYTICS_SALT_SECRET (2026-10-15). It's a separate, non-secret value: dev hashes only label
+  dev: test data. The Production / Preview salt stays a Sensitive secret. With it, a plain
+  `vercel dev --listen 3000` stores events. After changing a Development variable, re-pull
+  with `vercel env pull .env.local`.
+- `?collectortest=1` / `0` (dev-only override): sets or clears localStorage `collectorTest`
+  and is stripped like notrack. While set, that browser loads ONLY the collector, on any host
+  (dev hosts included, noTrack ignored), never Vercel or GoatCounter. Use it with `vercel dev`
+  (http://localhost:3000) or a preview deploy. On Live Server there is no /api/hit, so the
+  browser logs a 405 per beacon; never leave it set on gideonong.me.
+- If /api/hit fails at the network level (Vercel outage, ad blocker), the browser logs its own
+  "Failed to load resource" line. That is not a JS error, and the page keeps working.
+  Upstash outages never reach the browser: the function still answers 204.
+- .vercelignore lists `.env*` and `.vercel/`: a CLI `vercel deploy` uploads from disk, and
+  without them .env.local would be published.
 
 ## Home page (index.html) structure
 1. Sticky white navbar
