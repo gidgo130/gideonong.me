@@ -9,3 +9,16 @@ __pycache__/
 learning/fits/*/*.pdf
 # Fonts that scripts/make-og-cards.py fetches on first run (link-preview cards).
 scripts/.og-fonts/
+# Analytics data never goes in the repo (it's public). scripts/analytics/ holds only
+# these four files; downloads, exports and GoatCounter CSVs stay out. The pre-commit
+# hook (scripts/check-staged-data.js) also blocks them, even with `git add -f`.
+scripts/analytics/*
+!scripts/analytics/analytics.py
+!scripts/analytics/analytics.ipynb
+!scripts/analytics/make-notebook.py
+!scripts/analytics/README.md
+*.ndjson
+*.jsonl
+goatcounter*.csv
+goatcounter*.csv.gz
+.ipynb_checkpoints/

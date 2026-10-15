@@ -1,9 +1,38 @@
 #!/bin/sh
-# pre-commit — regenerate js/docs-data.js from assets/pdfs/ and stage it.
-# Dev-side tooling only (the site deploys as plain static files). Never blocks
-# a commit: if node is missing, warn and continue.
+# pre-commit — two jobs. Dev-side tooling only (the site deploys as plain
+# static files).
 #
 # One-time setup per clone:  git config core.hooksPath .githooks
+#
+# 1. Data / secret guard — BLOCKS the commit on a hit. The repo is public, so
+#    analytics data (collector records, GoatCounter CSVs), notebook outputs and
+#    tokens must never be committed. Rules: scripts/check-staged-data.js. Without
+#    node, a name-only fallback runs. For a genuine false positive:
+#    git commit --no-verify
+# 2. Regenerate js/docs-data.js from assets/pdfs/ and stage it. Never blocks:
+#    if node is missing, warn and continue.
+
+if command -v node >/dev/null 2>&1; then
+  node scripts/check-staged-data.js || exit 1
+else
+  bad=""
+  files=$(git diff --cached --name-only --diff-filter=ACMR)
+  # rule a (by name)
+  bad=$(printf '%s\n' "$files" | grep -iE '\.(ndjson|jsonl)$|^scripts/analytics/.*\.(csv|csv\.gz|tsv)$|(^|/)goatcounter[^/]*\.csv(\.gz)?$')
+  # rule b (GoatCounter header in a plain CSV)
+  for f in $(printf '%s\n' "$files" | grep -iE '\.csv$' | tr ' ' '?'); do
+    f=$(printf '%s' "$f" | tr '?' ' ')
+    if git show ":$f" 2>/dev/null | head -n 1 | grep -qE '^[0-9]+,?Path,Title,Event,'; then bad="$bad
+$f"; fi
+  done
+  if [ -n "$(printf '%s' "$bad" | tr -d '[:space:]')" ]; then
+    echo "pre-commit: blocked — analytics data file(s) staged (the repo is public):" >&2
+    printf '%s\n' "$bad" | sed '/^$/d; s/^/  /' >&2
+    echo "Unstage with: git restore --staged <file>   (false positive: git commit --no-verify)" >&2
+    exit 1
+  fi
+  echo "pre-commit: node not found on PATH — record / notebook-output / token checks skipped (name checks ran)" >&2
+fi
 
 if command -v node >/dev/null 2>&1; then
   if node scripts/build-docs-manifest.js; then

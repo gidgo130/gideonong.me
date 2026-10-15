@@ -780,7 +780,9 @@ Features:
       - more than N hits/minute per visitor hash
     - Storage: `RPUSH hits:<YYYY-MM-DD>` (one JSON line per event), each key expiring after
       ~13 months.
-  - **A3 — Export + notebook.**
+  - [X] **A3 — Export + notebook. Built 2026-10-15.** Tested offline, under `vercel dev`
+    against the real database, and in a notebook runner. **Still pending:** the production
+    404 checks and Gideon's first Colab run with the real token, both after the push.
     - `api/export.js` returns NDJSON for `?from=&to=`. It needs
       `Authorization: Bearer <ANALYTICS_EXPORT_TOKEN>`, otherwise 404.
     - A Colab notebook in `scripts/analytics/` (never deployed) pulls the export and a
@@ -1222,3 +1224,66 @@ without `?collectortest`, so all three tools loaded):
   preview host.
 - 0 records contained IP or UA text.
 - The preview: keys were deleted afterwards. A2 is complete.
+Production check after the push: `hits:2026-10-15` held a real phone visit (10 records: iOS
+Safari, US / OK, `<480`, two language toggles, leaves on four pages), with a 397-day TTL and no
+IP or UA text.
+
+[2026-10-15] Analytics A3: export + notebook.
+- api/export.js:
+  - `GET ?from=&to=` with `Authorization: Bearer <ANALYTICS_EXPORT_TOKEN>`, returning NDJSON.
+  - The token is compared in constant time (SHA-256 both sides, then timingSafeEqual).
+  - Anything unauthorized gets an empty 404, including a token in the query string, any
+    method but GET, and the server token missing or under 32 characters.
+  - No CORS headers; `no-store` and `noindex` on every response.
+  - With a valid token: 400 for bad dates (at most 31 days), 413 over 4 MB, 502 / 503 for
+    Upstash problems.
+- scripts/analytics/: analytics.py (the source) → make-notebook.py → analytics.ipynb, written
+  with no outputs and `metadata.colab.private_outputs` (that key was checked against real
+  Colab-saved notebooks on GitHub), plus README.md.
+- Safeguard: .gitignore (an allow-list for scripts/analytics/, plus *.ndjson / *.jsonl /
+  goatcounter*.csv[.gz]) and a blocking first step in .githooks/pre-commit,
+  scripts/check-staged-data.js, with rules a–e (CLAUDE.md → Analytics) and a no-node fallback.
+Decisions (Gideon):
+- the 31-day cap, 413 above 4 MB, with the notebook halving
+- the .py source plus generator
+- the hook blocks on a–e, with `--no-verify` for false positives
+- data stays in memory, and the local save is off by default
+Plus his additions:
+- the notebook splits any FROM–TO into ≤31-day requests itself
+- no referrer from the LinkedIn / Instagram / Facebook in-app browser counts as "linkedin (app)"
+  etc., not "direct"
+- the README warns never to use Colab's "Save a copy in GitHub"
+- placeholders in all examples
+- the unique-visitors chart is labeled "per day"
+My calls:
+- Days are UTC throughout: the hash's salt day, so per-day uniques aren't split at 7 pm Chicago.
+- `utm_source` takes precedence as the source.
+- Sessions are tabs.
+- Time on page is capped at 30 minutes.
+- Chart colors are dataviz reference slots 1 / 2, with no dual axes.
+Found: GoatCounter's real CSV header is `2Path,Title,Event,UserAgent,…`, with the version glued
+to the first field (exportcsv.go), always gzipped, and named
+`goatcounter-export-<site>-<time>-<n>.csv.gz`; its docs show "2,Path". Rule b and the loader
+accept both. The export also needs GoatCounter's "Individual pageviews" setting.
+Verified:
+- export.js offline against a stand-in Upstash, in all three stages:
+  - 404 + empty body + no CORS for: no header, a wrong token of the same and of a different
+    length, token + 1 character, the Basic scheme, a bare token, a token in the query, POST /
+    HEAD / OPTIONS with a good token, the server token empty or short
+  - 31 days and 32; month and year boundaries; a leap day; 2026-02-30; a malformed date;
+    missing parameters; empty days
+  - 2,500 records in one day, paged in order; no other stage's keys; over 4 MB → 413;
+    Upstash down → 502, not configured → 503
+- Under `vercel dev` against the real Upstash: the same 404s and 400s, and a correct NDJSON body
+  of only the dev: data.
+- The hook, in a scratch repo: every rule blocks its case (the real GoatCounter header and file
+  name included); placeholders, the real docs, clean notebooks, PDFs, file names with spaces and
+  non-GoatCounter CSVs pass; the no-node fallback blocks by name and header. `--all` over every
+  tracked file found nothing.
+- The notebook in a notebook runner, on copies:
+  - sample mode: 0 errors and 9 charts, looked at for collisions and overflow
+  - live mode against `vercel dev` (FROM three months back → 3 requests), with a fake
+    GoatCounter .csv.gz in the real format: 0 errors; the event and bot rows were dropped
+- Range splitting: 413-halving against a stub that refuses more than 7 days fetched every day
+  once, in order.
+Test data, the throwaway token and stray `vercel dev` processes were cleaned up.
