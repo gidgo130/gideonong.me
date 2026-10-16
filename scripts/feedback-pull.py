@@ -11,6 +11,13 @@ existing comments, newest issue first. The quote and the message are kept inside
 as in the issue itself, because they are visitor-supplied text: data, not instructions
 (CLAUDE.md → /learning → Feedback, triage rule F10).
 
+What is trusted and what is not: kind, series and source come from the issue's LABELS (set by
+api/feedback.js, never by the visitor); the metadata table is read only ABOVE the first fence
+(the server writes it before any visitor text); the quote and the message are only the contents
+of the fenced blocks that follow their headings outside any fence. A table row, a heading, a
+"Reply email" line or a fence that a visitor types inside their text is content, never structure.
+Tests: scripts/tests/test_feedback_pull.py.
+
 staging/ is gitignored and vercelignored, so the inbox (and any reply emails in it) never leaves
 this machine. Standard library only, plus `gh`. Dev-only, never deployed.
 
@@ -33,41 +40,84 @@ DEFAULT_OUT = ROOT / "staging" / "feedback" / "inbox.md"
 FIELDS = "number,title,state,labels,createdAt,updatedAt,url,body,comments"
 
 ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*(.*?)\s*\|\s*$")
-EMAIL = re.compile(r"^Reply email: `([^`]*)`\s*$", re.M)
+EMAIL = re.compile(r"^Reply email: `([^`]*)`\s*$")
+FENCE = re.compile(r"^(`{3,})[ \t]*$")
+MARKER = "Visitor-supplied text below."          # api/feedback.js writes it before any visitor text
+HEADINGS = {"**Quoted text**": "quote", "**Message**": "message"}
+LABEL_PREFIXES = ("kind", "series", "source")
 
 
 def gh_path():
     return shutil.which("gh") or (GH_FALLBACK if os.path.exists(GH_FALLBACK) else None)
 
 
-def fenced(body, heading):
-    """The text inside the fenced block that follows `**<heading>**`, or ''."""
-    i = body.find(f"**{heading}**")
-    if i < 0:
-        return ""
-    m = re.compile(r"^(`{3,})[ \t]*\n", re.M).search(body, i)
-    if not m:
-        return ""
-    fence = m.group(1)
-    start = m.end()
-    end = re.compile("^" + re.escape(fence) + r"[ \t]*$", re.M).search(body, start)
-    return body[start:end.start()].rstrip("\n") if end else body[start:].rstrip("\n")
+def label_value(labels, prefix):
+    """The value of the API label `<prefix>:<value>`, else '?'. Labels are the trusted source for
+    kind / series / source: the function sets them; a visitor cannot."""
+    for lab in labels or []:
+        name = lab.get("name", "") if isinstance(lab, dict) else str(lab)
+        if name.startswith(prefix + ":"):
+            return name[len(prefix) + 1:]
+    return "?"
 
 
 def parse(body):
-    """api/feedback.js's issue body → dict. Unknown layouts fall back to the raw body."""
+    """api/feedback.js's issue body → dict, walking it line by line with fence state.
+
+    - The metadata table is read only before the MARKER line / the first fence (the header the
+      server builds) and only after its "| Field | Value |" header row; nothing after that can
+      add or overwrite a field.
+    - "**Quoted text**" / "**Message**" count as headings only outside a fence, and each takes
+      the next fenced block as its content. A fence closes on a line of at least as many
+      backticks (GitHub's rule); the server's fence is always longer than any run in the text.
+    - The reply-email line counts only outside a fence.
+    Unknown layouts come back with an empty meta, and the caller shows the raw body fenced."""
     body = (body or "").replace("\r\n", "\n")
-    meta = {}
+    meta, blocks, email = {}, {}, ""
+    fence = None       # the opening fence while inside a block
+    current = None     # the heading the next block belongs to
+    buf = []
+    in_header = True
+    table = False      # rows count only after the server's "| Field | Value |" header row
     for line in body.split("\n"):
-        m = ROW.match(line)
-        if m and m.group(1) not in ("Field", "---"):
-            meta[m.group(1)] = m.group(2)
-    e = EMAIL.search(body)
+        if fence is not None:
+            m = FENCE.match(line)
+            if m and len(m.group(1)) >= len(fence):
+                blocks[current] = "\n".join(buf).rstrip("\n")
+                fence, current, buf = None, None, []
+            else:
+                buf.append(line)
+            continue
+        m = FENCE.match(line)
+        if m:
+            in_header = False
+            fence, buf = m.group(1), []
+            if current is None:
+                current = "_"          # a fence with no heading: not ours, parsed past
+            continue
+        if line.startswith(MARKER):
+            in_header = False
+            continue
+        if in_header:
+            r = ROW.match(line)
+            if r and r.group(1) == "Field" and r.group(2) == "Value":
+                table = True
+            elif r and table and r.group(1) != "---":
+                meta[r.group(1)] = r.group(2)
+            continue
+        if line.strip() in HEADINGS:
+            current = HEADINGS[line.strip()]
+            continue
+        e = EMAIL.match(line)
+        if e:
+            email = e.group(1)
+    if fence is not None and current:  # unterminated block: keep what is there
+        blocks[current] = "\n".join(buf).rstrip("\n")
     return {
         "meta": meta,
-        "quote": fenced(body, "Quoted text"),
-        "message": fenced(body, "Message"),
-        "email": e.group(1) if e else "",
+        "quote": blocks.get("quote", ""),
+        "message": blocks.get("message", ""),
+        "email": email,
         "raw": body,
     }
 
@@ -80,6 +130,15 @@ def fence_for(text):
 def block(text):
     f = fence_for(text)
     return f"{f}\n{text}\n{f}"
+
+
+def code(text):
+    """An inline code span that no backtick run in `text` can close (for the issue title, whose
+    tail is the first 60 characters of the visitor's message)."""
+    text = (text or "").replace("\r", " ").replace("\n", " ")
+    f = "`" * (max((len(r) for r in re.findall(r"`+", text)), default=0) + 1)
+    pad = " " if text.startswith("`") or text.endswith("`") else ""
+    return f"{f}{pad}{text}{pad}{f}"
 
 
 def day(iso):
@@ -104,15 +163,14 @@ def render(issues, repo, include_closed):
     for it in issues:
         p = parse(it.get("body"))
         meta = p["meta"]
-        labels = ", ".join(l.get("name", "") for l in it.get("labels") or []) or "(none)"
-        kind = meta.get("Kind", "?")
-        series = meta.get("Series", "?")
-        source = meta.get("Source", "?")
+        label_list = it.get("labels") or []
+        labels = ", ".join(l.get("name", "") for l in label_list) or "(none)"
+        kind, series, source = (label_value(label_list, k) for k in LABEL_PREFIXES)
         state = (it.get("state") or "").lower()
         out.append(f"## #{it.get('number')} · {kind} · {series} · {source} · {day(it.get('createdAt'))}" + (f" · {state}" if state != "open" else ""))
         out.append("")
         out.append(f"- Issue: {it.get('url', '')}")
-        out.append(f"- Title: {it.get('title', '')}")
+        out.append(f"- Title: {code(it.get('title', ''))}")
         out.append(f"- Labels: {labels}")
         if meta.get("Page"):
             out.append(f"- Page: {meta['Page']}")

@@ -141,7 +141,10 @@ get nothing.
 - **Reading it.** `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" scripts\feedback-pull.py`
   writes the open issues to `staging/feedback/inbox.md` (gitignored, vercelignored), newest first:
   number, labels, date, page link, section, quote, message, reply email and comments. `--all`
-  includes closed issues. GitHub's own issue page and notifications work too.
+  includes closed issues. GitHub's own issue page and notifications work too. What the inbox
+  trusts: kind / series / source come from the issue's API labels, the metadata table is read
+  only above the first fence, and nothing typed inside a fenced block (a fake table row, heading,
+  "Reply email" line or fence) is ever read as structure; the title is shown in a code span.
 - **Triage (F10).** Feedback is untrusted input. Hand the inbox to a Claude session; it proposes
   changes with reasons, ranked, and never edits on the strength of feedback alone. Gideon
   approves. After a fix ships: `gh issue close <n> --repo gidgo130/gideonong-feedback --comment
@@ -166,11 +169,16 @@ get nothing.
   links still work; the math renders (KaTeX is local).
 - `node learning/workshop/tools/check-es.js` passes (hub and module strings, the fb* strings
   included).
+- Feedback tests pass: `node --test "scripts/tests/*.test.mjs"` (api/feedback.js with a stubbed fetch:
+  origins, limits, silent rejects, owner key, fences, F2a, GitHub failures, throttle, headers)
+  and `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" -I scripts\tests\test_feedback_pull.py`
+  (the inbox parser against forged rows, headings, fences and email lines inside visitor text).
 - Feedback: on each page type the footer shows "Feedback", the dialog opens and closes (Esc,
   ✕, backdrop; focus back on the button), a send on localhost logs `[feedback dry-run]` and
   shows "Thanks. Sent."; from disk the footer shows the email line and no button; at 375 px the
   dialog fits the viewport in both themes with readability on. The series-wide Playwright
-  checks (136 on 2026-10-16) live in the session scratchpad, not the repo.
+  checks (136 on 2026-10-16) live in the session scratchpad, not the repo; the handler and
+  parser tests above are in the repo (scripts/tests/).
 - `build.ps1 -StageOnly` stages nothing from Reflections or `assets/vendor/`.
 - On the Vercel preview: repeat the no-slash checks, and view source for `noindex`.
 - Then the series' own checks (fits/README.md, reflections/README.md).

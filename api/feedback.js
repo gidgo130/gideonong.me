@@ -287,5 +287,5 @@ async function github(token, method, path, payload) {
     signal: AbortSignal.timeout(GITHUB_TIMEOUT),
   });
   if (!res.ok) throw new Error("github " + res.status);
-  return res.json();
+  try { return await res.json(); } catch (e) { throw new Error("github bad json"); }   // never e.message: it quotes the body
 }

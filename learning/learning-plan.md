@@ -544,6 +544,14 @@ The spec lived in the gitignored `staging/feedback/SPEC.md`; its decisions are h
   ES strings and the toggle, 375 / 768 / 1280 × light / dark × readability with no sideways
   scroll and the dialog inside the viewport, console clean, trigger and dialog text ≥ 4.5:1 in
   every page × theme × readability, no selection button on touch); check-es.js clean.
+- [X] Hardening after the 2026-10-16 audit (batch D): feedback-pull.py reads kind / series /
+  source from the API labels and the table only above the first fence, walks the body with
+  fence state so nothing a visitor types (a fake table row, heading, "Reply email" line or
+  fence) is read as structure, and shows the title in a code span; api/feedback.js turns a
+  non-JSON 2xx from GitHub into "github bad json" instead of logging a fragment of the body;
+  rule e of the pre-commit guard also catches bare GitHub tokens. The handler checks moved from
+  the scratchpad into the repo as scripts/tests/feedback-api.test.mjs (node:test) and the parser
+  got scripts/tests/test_feedback_pull.py (unittest), both listed in learning/README.md → Checks.
 - [ ] Gideon: create the repo and token, set the three env vars (Production + Preview), run
   feedback-labels.py, then on a preview deploy: one visitor test and one owner test (the
   "Labels: direct" line confirms F2a's first path); `#owner-setup` on each browser and the phone.

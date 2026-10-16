@@ -9,8 +9,8 @@
 //   c  a collector record in any text file: "visitor" followed by a 16-hex value
 //   d  a notebook under scripts/ with any cell output or execution count
 //   e  a token-looking value: a Bearer header with a literal token, one of the
-//      secret env names set to a 20+ character literal, or a redis:// URL with
-//      a password in it
+//      secret env names set to a 20+ character literal, a redis:// URL with
+//      a password in it, or a bare GitHub token (github_pat_… / ghp_… and kin)
 //
 // Docs and comments use placeholders (<16 hex>, <ANALYTICS_EXPORT_TOKEN>), which
 // these rules skip. For a genuine false positive: git commit --no-verify.
@@ -32,6 +32,9 @@ const SECRET_RULES = [
   { re: /Bearer\s+[A-Za-z0-9._~+\/=-]{20,}/, what: "a Bearer header with a literal token" },
   { re: /\b(ANALYTICS_EXPORT_TOKEN|ANALYTICS_SALT_SECRET|KV_REST_API_TOKEN|KV_REST_API_READ_ONLY_TOKEN|UPSTASH_REDIS_REST_TOKEN|FEEDBACK_TOKEN|FEEDBACK_OWNER_KEY)\b["']?\s*[:=]\s*["']?[A-Za-z0-9_\-]{20,}/, what: "a secret env var set to a literal value" },
   { re: /rediss?:\/\/[^\s:@\/]*:[^\s@\/<]{20,}@/, what: "a redis:// URL with a password" },
+  // GitHub tokens: fine-grained github_pat_ (82 characters after the prefix), classic ghp_ /
+  // gho_ / ghu_ / ghs_ / ghr_ (36). Thresholds sit under the real lengths and above placeholders.
+  { re: /\b(github_pat_[A-Za-z0-9_]{30,}|gh[pousr]_[A-Za-z0-9]{30,})\b/, what: "a GitHub token" },
 ];
 
 function git(args, asBuffer) {

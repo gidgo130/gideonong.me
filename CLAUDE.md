@@ -58,6 +58,8 @@ scripts/make-og-cards.py  Dev-side generator for the link-preview cards in asset
                      (Python + Pillow; see Link previews below)
 scripts/feedback-labels.py  Creates the /learning feedback labels once in the private repo
                      (standard library + the gh CLI; see /learning → Feedback widget)
+scripts/tests/       Tests for api/feedback.js (`node --test "scripts/tests/*.test.mjs"`) and for
+                     scripts/feedback-pull.py's parser (unittest); see learning/README.md → Checks
 scripts/feedback-pull.py  Exports the feedback issues to the gitignored
                      staging/feedback/inbox.md (`--all` adds closed ones; gh CLI)
 scripts/transcript/  Dev-side transcript PDF generator (Python; see its README) — never deployed
@@ -445,7 +447,7 @@ swap the file or the src there.
     - c: a collector record (`"visitor"` + 16 hex)
     - d: a notebook under scripts/ with outputs or execution counts
     - e: a token-looking literal (Bearer + 20+ characters, a secret env name = a literal, a
-      redis:// URL with a password)
+      redis:// URL with a password, a bare GitHub token: github_pat_… or ghp_… and kin)
   - Without node, a shell fallback checks a and b by name and header.
   - Docs, comments and examples use placeholders (`<16 hex>`, `<ANALYTICS_EXPORT_TOKEN>`,
     `<token>`), which the rules skip.
