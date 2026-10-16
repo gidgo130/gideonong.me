@@ -95,7 +95,9 @@ learning/
    `tools/figures-es.py <slug> --list`).
 2. Repo: `learning/fits/<slug>/` with `index.html`, `strings.js`, `main.js`, `slides.html`,
    `slides.es.html`, `<slug>.py`. Copy the head block (noindex, OG tags, trailing-slash fix, viewing-settings snippet, fonts) from an
-   existing module.
+   existing module, and the footer's `<span class="fb-slot" data-i18n="footMistake">` line plus
+   the `../../assets/feedback.js` script tag after main.js (the feedback widget; see
+   learning/README.md → Feedback).
 3. Title and description: `mod<Key>Title` / `mod<Key>Desc` in `assets/strings-common.js`.
 4. Link preview: fill in the `og:` tags (title, lead, URL, image) in index.html and in the
    qmd's `include-in-header`; add the module to CARDS in `workshop/tools/make-og-cards.py` and

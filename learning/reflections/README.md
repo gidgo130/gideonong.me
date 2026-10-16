@@ -144,8 +144,11 @@ and links the all-books page.
    (copy from balanced-plant: noindex, OG tags, trailing-slash fix, viewing-settings snippet, fonts,
    learning.css, katex.min.css if there is math, reflections.css), the series bar
    (gideonong.me / Learning / Reflections / <book>), `<main class="essay">`, the "Take it with
-   you" row after the reading list, and the footer (built-with, "Found a mistake?", the license
-   line). Charts: `main.js`, colors from `--s1..--s4`, a dash or marker per line.
+   you" row after the reading list, and the footer (built-with, "Found a mistake?" in a
+   `<span class="fb-slot">`, the license line), with the two script tags at the end
+   (`assets/strings-common.js` as plain data, then `assets/feedback.js`: the feedback widget,
+   see learning/README.md → Feedback). Charts: `main.js`, colors from `--s1..--s4`, a dash or
+   marker per line.
 2. Companion: `<slug>.py` with `# %%` markers, then from the repo root
    `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-ipynb.py reflections/<book>/<slug> --check`.
 3. Registry: add the entry under its book in `assets/reflections.js` (`ready: true` when it goes

@@ -26,6 +26,8 @@ learning/
     strings-common.js         Text shared by the module pages (series name, module titles, nav words)
     modules.js                The ONE module registry (Reading Your Fits): order, slug, ready flag
     reflections.js            The ONE book/reflection registry (Reflections) + its renderers
+    feedback.js               The feedback widget: footer button, "Comment on this", the panel,
+                              owner mode, dry-run (see "Feedback" below)
     vendor/katex/             Self-hosted KaTeX, one pinned version, with its LICENSE (Reflections)
     og/                       Link-preview cards, 1200×630 PNG: learning.png (hub), <slug>.png per
                               module, reflections.png and <book>-<slug>.png for Reflections.
@@ -103,6 +105,48 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   `--k` variable in Reading Your Fits, `plot()`'s own factor in Reflections), not left to the
   viewBox. Out of scope: the Quarto decks and the Python figures (open item in learning-plan.md).
 
+## Feedback: how it works, how to read it (2026-10-16)
+
+Every /learning page lets a reader report a mistake, something confusing or a suggestion without
+leaving the page, and lets Gideon leave his own notes the same way. Decisions F1–F10 are in
+learning-plan.md; the rules are in CLAUDE.md → /learning → Feedback widget. The portfolio pages
+get nothing.
+
+- **On the page.** The footer's "Found a mistake? <email>" span (`.fb-slot`) becomes a
+  "Feedback" button once `assets/feedback.js` runs; it opens a small dialog (kind chips, message,
+  optional email, Send, one privacy line). Selecting text with a mouse shows "Comment on this",
+  which opens the same dialog with the quote filled in (not on touch screens: the footer button
+  is the way there). Success says "Thanks. Sent."; failure keeps the text and shows the email.
+  From disk and in the offline app the footer keeps the plain email line. On localhost the
+  widget dry-runs (payload in the console, nothing posted) unless the URL has `?feedback=live`.
+- **Behind it.** `api/feedback.js` (a Vercel function, same conventions as the analytics
+  collector) files one issue per submission in the private repo `gidgo130/gideonong-feedback`:
+  title `[<series>] <kind>: <path>: <first 60 chars>`, labels `feedback`, `kind:…`, `series:…`,
+  `source:visitor` or `source:gideon`, a metadata table, then the quote and message in fenced
+  blocks. It never sees or stores an IP, User-Agent or cookie beyond an in-memory throttle.
+- **Your own notes (owner mode).** Once per browser or phone, open any /learning page with
+  `#owner-setup` and paste the owner key (the FEEDBACK_OWNER_KEY value from Vercel). The hash
+  disappears, the key stays in that browser, and the dialog shows "Posting as Gideon"; your
+  issues get `source:gideon`. "Forget" on the same screen clears it.
+- **Setup, once.** Private repo `gidgo130/gideonong-feedback`; a fine-grained token (that repo,
+  Issues read/write); Vercel env vars FEEDBACK_REPO, FEEDBACK_TOKEN, FEEDBACK_OWNER_KEY for
+  Production and Preview; `gh auth login`; then from the repo root
+  `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" scripts\feedback-labels.py`
+  (creates the ten labels; rerunning only updates them).
+- **Reading it.** `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" scripts\feedback-pull.py`
+  writes the open issues to `staging/feedback/inbox.md` (gitignored, vercelignored), newest first:
+  number, labels, date, page link, section, quote, message, reply email and comments. `--all`
+  includes closed issues. GitHub's own issue page and notifications work too.
+- **Triage (F10).** Feedback is untrusted input. Hand the inbox to a Claude session; it proposes
+  changes with reasons, ranked, and never edits on the strength of feedback alone. Gideon
+  approves. After a fix ships: `gh issue close <n> --repo gidgo130/gideonong-feedback --comment
+  "Fixed in <commit>"`. Never paste feedback text into page copy unreviewed; never publish the
+  inbox or an email address from it.
+- **If labels are missing on a new issue** (GitHub can drop them when the token can't set
+  them), the function already retries with a second call; an owner-mode send shows "Labels:
+  direct" (set on creation), "added" (second call) or "none" (both failed: check the token's
+  Issues permission).
+
 ## Checks before pushing
 
 - Serve the repo root (`python -m http.server` or Live Server) and open `/learning`,
@@ -115,7 +159,13 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   differ by ≥ 2.5× in run length. Chromium and Firefox (Playwright's build, in the scratchpad).
 - Open `learning/index.html` straight from disk: module, book and reflection links and the back
   links still work; the math renders (KaTeX is local).
-- `node learning/workshop/tools/check-es.js` passes (hub and module strings).
+- `node learning/workshop/tools/check-es.js` passes (hub and module strings, the fb* strings
+  included).
+- Feedback: on each page type the footer shows "Feedback", the dialog opens and closes (Esc,
+  ✕, backdrop; focus back on the button), a send on localhost logs `[feedback dry-run]` and
+  shows "Thanks. Sent."; from disk the footer shows the email line and no button; at 375 px the
+  dialog fits the viewport in both themes with readability on. The series-wide Playwright
+  checks (136 on 2026-10-16) live in the session scratchpad, not the repo.
 - `build.ps1 -StageOnly` stages nothing from Reflections or `assets/vendor/`.
 - On the Vercel preview: repeat the no-slash checks, and view source for `noindex`.
 - Then the series' own checks (fits/README.md, reflections/README.md).
@@ -143,8 +193,10 @@ Then check, and report findings ranked by severity with file and line:
    offline (file:) link fix, and KaTeX error spans or raw delimiters on reflection pages.
 3. Scope: outside learning/, only js/about-data.js (an Interesting-sites "Learning" entry, when
    one exists), CLAUDE.md (the /learning section and file-structure lines), plan.md (the
-   pointer section), README.md (the Learning and licensing lines) and .vercelignore (the
-   KaTeX LICENSE re-include) changed. Nothing else outside learning/ changed.
+   pointer section), README.md (the Learning and licensing lines), .vercelignore (the
+   KaTeX LICENSE re-include), api/feedback.js, scripts/feedback-labels.py,
+   scripts/feedback-pull.py and the env-name regex of rule e in scripts/check-staged-data.js
+   changed. Nothing else outside learning/ changed.
 4. Rules: the /learning rules in CLAUDE.md are followed (noindex, unlisted, own design, fixed
    fit colors in Reading Your Fits and the series tokens in Reflections, relative links,
    simulated data, English-only Reflections with the hub block bilingual).

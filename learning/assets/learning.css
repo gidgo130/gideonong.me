@@ -464,3 +464,78 @@ table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
 :root[data-colorblind] .chart .bar-hi { stroke: var(--ink); stroke-width: calc(1.25px * var(--k, 1)); }
 :root[data-colorblind] .v.bad::before { content: "✕\00a0" / ""; }
 :root[data-colorblind] .v.good::before { content: "✓\00a0" / ""; }
+
+/* ==========================================================================
+   Feedback widget (assets/feedback.js; CLAUDE.md → /learning → Feedback, decisions F5–F8)
+   Tokens only, so it follows each series' theme, both themes and readability. On the hub the
+   dialog also carries .hub-frame (main-site tokens and faces). Sizes in em inside the panel.
+   ========================================================================== */
+/* The footer line: static "Found a mistake? <email>" (no JS, file:, offline); the script
+   swaps in the button. Inherits the footer's color, so it reads on the hub's dark band too. */
+.fb-slot { overflow-wrap: anywhere; }
+.fb-open { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.fb-open:hover { color: var(--accent); }
+.hub-foot .fb-open:hover { color: var(--footer-accent); }
+/* "Comment on this", beside a text selection (fine pointers only) */
+.fb-sel {
+  position: absolute; z-index: 20; font-family: var(--font-display); font-size: 14px; font-weight: 600;
+  padding: 5px 10px; border: 1px solid var(--ink); border-radius: 6px; background: var(--paper); color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .18); cursor: pointer; white-space: nowrap;
+}
+.fb-sel[hidden] { display: none; }
+.fb-sel:hover { background: var(--note-bg); }
+/* The panel: a native dialog */
+.fb-panel {
+  width: min(460px, calc(100vw - 24px)); max-width: none; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px);
+  margin: auto; padding: 18px 20px 20px; box-sizing: border-box; overflow: auto;
+  border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5; box-shadow: 0 8px 32px rgba(0, 0, 0, .25);
+}
+.fb-panel::backdrop { background: rgba(0, 0, 0, .4); }
+.fb-panel [hidden] { display: none !important; }
+.fb-form { display: grid; gap: 12px; margin: 0; }
+.fb-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fb-head h2 { margin: 0; font-family: var(--font-display); font-size: 1.35em; font-weight: 600; line-height: 1.2; }
+.fb-setup h3 { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.1em; font-weight: 600; }
+.fb-close { flex: none; width: 32px; height: 32px; border: 1px solid var(--rule); border-radius: 6px; background: transparent; color: var(--ink); font-size: 15px; cursor: pointer; }
+.fb-close:hover { background: var(--note-bg); }
+.fb-owner { margin: -4px 0 0; font-family: var(--font-mono); font-size: .85em; color: var(--accent); }
+.fb-fields, .fb-setup { display: grid; gap: 12px; }
+.fb-kinds { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.fb-kinds legend { padding: 0; margin-bottom: 6px; font-family: var(--font-display); font-weight: 600; font-size: .95em; }
+.fb-chip { position: relative; display: inline-block; }
+.fb-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.fb-chip span { display: inline-block; padding: 5px 11px; border: 1px solid var(--rule); border-radius: 999px; font-family: var(--font-display); font-size: .95em; font-weight: 500; color: var(--muted); cursor: pointer; }
+.fb-chip input:checked + span { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.fb-chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fb-quote { display: grid; gap: 4px; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--note-bg); border-radius: 0 6px 6px 0; font-size: .95em; }
+.fb-quote-label { font-family: var(--font-display); font-weight: 600; font-size: .9em; color: var(--muted); }
+.fb-quote-text { quotes: "“" "”"; color: var(--ink); overflow-wrap: anywhere; }
+.fb-link { justify-self: start; font: inherit; font-size: .9em; background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; }
+.fb-field { display: grid; gap: 4px; font-family: var(--font-display); font-weight: 600; font-size: .95em; }
+.fb-panel textarea, .fb-panel input[type=email], .fb-panel input[type=password] {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px;
+  background: var(--plot); color: var(--ink); font-family: var(--font-body); font-size: 1em; font-weight: 400; line-height: 1.45;
+}
+.fb-panel textarea { resize: vertical; min-height: 6em; }
+.fb-panel textarea:focus-visible, .fb-panel input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fb-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.fb-privacy, .fb-hint { margin: 0; font-size: .9em; color: var(--muted); }
+.fb-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.fb-status { font-family: var(--font-mono); font-size: .85em; color: var(--muted); }
+.fb-fail { margin: 0; font-size: .95em; color: var(--emph); }
+.fb-email { user-select: all; -webkit-user-select: all; font-family: var(--font-mono); font-size: .95em; color: var(--ink); background: var(--note-bg); padding: 1px 5px; border-radius: 3px; }
+.fb-sent { margin: 0; font-family: var(--font-display); font-size: 1.15em; font-weight: 600; }
+.fb-done { display: grid; gap: 6px; }
+/* the main-site frame on the hub: its button border and surface */
+.fb-panel.hub-frame { background: var(--paper); --plot: var(--nav-bg); --note-bg: rgba(0, 0, 0, .06); --emph: #8b3a2a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fb-panel.hub-frame { --note-bg: rgba(255, 255, 255, .08); --emph: #e0876f; } }
+:root[data-theme="dark"] .fb-panel.hub-frame { --note-bg: rgba(255, 255, 255, .08); --emph: #e0876f; }
+/* readability: larger panel text; the page already scales the footer line */
+:root[data-readability] .fb-panel { font-size: 17px; line-height: 1.65; }
+:root[data-readability] .fb-sel { font-size: 16px; }
+@media (max-width: 479px) {
+  .fb-panel { padding: 14px 14px 16px; }
+  .fb-kinds { gap: 5px; }
+  .fb-chip span { padding: 5px 9px; }
+}

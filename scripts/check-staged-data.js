@@ -30,7 +30,7 @@ const RECORD = /"visitor"\s*:\s*"[0-9a-f]{16}"/;
 const GC_HEADER = /^﻿?\d+,?Path,Title,Event,/;
 const SECRET_RULES = [
   { re: /Bearer\s+[A-Za-z0-9._~+\/=-]{20,}/, what: "a Bearer header with a literal token" },
-  { re: /\b(ANALYTICS_EXPORT_TOKEN|ANALYTICS_SALT_SECRET|KV_REST_API_TOKEN|KV_REST_API_READ_ONLY_TOKEN|UPSTASH_REDIS_REST_TOKEN)\b["']?\s*[:=]\s*["']?[A-Za-z0-9_\-]{20,}/, what: "a secret env var set to a literal value" },
+  { re: /\b(ANALYTICS_EXPORT_TOKEN|ANALYTICS_SALT_SECRET|KV_REST_API_TOKEN|KV_REST_API_READ_ONLY_TOKEN|UPSTASH_REDIS_REST_TOKEN|FEEDBACK_TOKEN|FEEDBACK_OWNER_KEY)\b["']?\s*[:=]\s*["']?[A-Za-z0-9_\-]{20,}/, what: "a secret env var set to a literal value" },
   { re: /rediss?:\/\/[^\s:@\/]*:[^\s@\/<]{20,}@/, what: "a redis:// URL with a password" },
 ];
 

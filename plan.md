@@ -845,6 +845,7 @@ gideonong.me/learning/ (Reading Your Fits, and since 2026-10-15 the Reflections 
 /learning/reflections/) have their own plan, status and decisions log in
 `learning/learning-plan.md`, their rules in CLAUDE.md → "/learning", and their working manual
 in `learning/README.md`.
+Feedback widget (2026-10-16): api/feedback.js files /learning feedback as issues in a private GitHub repo; decisions F1–F10 and the deferred persistent rate limit are in learning/learning-plan.md.
 
 ---
 
