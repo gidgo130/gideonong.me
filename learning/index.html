@@ -6,13 +6,13 @@
   <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
   <meta name="robots" content="noindex">
   <title data-i18n-title="pageTitle">Learning · Gideon A. Ong</title>
-  <meta name="description" content="Interactive notes and essays for engineering students: Reading Your Fits (checking a line fit against lab data) and Reflections on the books Professor Donnell recommends to industrial engineers.">
+  <meta name="description" content="Interactive notes and essays built with Claude, mostly for engineering students. Each series has its own format.">
   <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Gideon A. Ong">
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Learning · Gideon A. Ong">
-  <meta property="og:description" content="Interactive notes and essays for engineering students. The interactive pages run in your browser on simulated data, so you can push the sliders, break things and see what happens.">
+  <meta property="og:description" content="Interactive notes and essays built with Claude, mostly for engineering students. Each series has its own format.">
   <meta property="og:url" content="https://gideonong.me/learning/">
   <meta property="og:image" content="https://gideonong.me/learning/assets/og/learning.png">
   <meta property="og:image:width" content="1200">
@@ -42,11 +42,16 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <!-- Barlow / Source Serif / JetBrains: the Reading Your Fits band. Lora + DM Sans: the hub's frame
+       (series bar, header, footer) in the main site's design. The Reflections faces load on demand. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&family=Lora:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="assets/learning.css">
 </head>
-<body>
-
+<body class="hub">
+<!-- Layout (2026-10-15): a main-site frame (series bar, header, footer: .hub-frame) around one
+     full-bleed band per series (.hub-band), each with its content in the centered .hub-col column.
+     Styles: learning.css → "Hub: main-site frame and series bands". -->
+<div class="hub-frame hub-bar">
 <nav class="series-bar" data-i18n-aria="navSiteAria" aria-label="Site">
   <div class="crumbs">
     <a href="../" data-i18n="siteHome">gideonong.me</a><span aria-hidden="true">/</span>
@@ -56,17 +61,20 @@
     <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
   </button>
 </nav>
+</div>
 
-<div class="wrap">
-  <header class="top">
+<header class="hub-frame hub-head">
+  <div class="hub-col">
     <div class="eyebrow" data-i18n="eyebrow">Gideon A. Ong · Learning</div>
     <h1 data-i18n="h1">Learning</h1>
-    <p class="lead" data-i18n="lead">Interactive notes and essays I [told Claude to] build for engineering students. The interactive pages run in your browser on simulated data, so you can push the sliders, break things and see what happens.</p>
-  </header>
+    <p class="lead" data-i18n="lead">Interactive notes and essays I [told Claude to] build, mostly for engineering students. Each series has its own format.</p>
+  </div>
+</header>
 
-  <section class="series" id="reading-your-fits">
+<section class="hub-band" id="reading-your-fits">
+  <div class="hub-col series">
     <h2 data-i18n="seriesName">Reading Your Fits</h2>
-    <p data-i18n="seriesIntro">Six short modules on checking a line fit against lab data: what the leftovers tell you, what they can't, and what to do about it. No statistics background needed; some Excel or MATLAB helps.</p>
+    <p data-i18n="seriesIntro">Six short modules on checking a line fit against lab data: what the leftovers tell you, what they can't, and what to do about it. No statistics background needed; some Excel or MATLAB helps. Each one runs in your browser on simulated data, so you can push the sliders, break things and see what happens.</p>
     <ol class="module-list" id="module-list" data-i18n-aria="listAria" aria-label="Modules in Reading Your Fits"></ol>
     <p class="offline-get" id="offline-get" hidden></p>
     <noscript><p class="note" data-i18n="noscript">The module list and the interactive pages need JavaScript turned on.</p></noscript>
@@ -76,23 +84,28 @@
       <div><h4 data-i18n="how2Title">Slides</h4><p data-i18n="how2Body">A short deck for presenting it or reviewing it quickly.</p></div>
       <div><h4 data-i18n="how3Title">A Python script</h4><p data-i18n="how3Body">Reproduces every plot. Runs as-is in Google Colab.</p></div>
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- Reflections (learning/reflections/). Rendered from assets/reflections.js, which the script
        below loads only when this is not the installed offline copy (R7); the block stays hidden
-       until the registry has loaded, so a missing file hides it too. English titles, lang="en". -->
-  <section class="series" id="reflections" hidden>
+       until the registry has loaded, so a missing file hides it too. English titles, lang="en".
+       .ref-panel previews the Reflections theme (learning.css → "Hub: the Reflections panel"). -->
+<section class="hub-band ref-panel" id="reflections" hidden>
+  <div class="hub-col series">
     <h2 data-i18n="refTitle">Reflections</h2>
-    <p data-i18n="refIntro">Notes on the 11 books Professor Donnell recommends to industrial engineers, written as I read them and as questions come up. Some are short essays; some work the math out with interactive charts. In English only.</p>
+    <p data-i18n="refIntro">Notes on the 11 industrial engineering and management books Professor Donnell recommends, written as I read them and as questions come up. Some are short essays; others work through the math with interactive charts. In English only.</p>
     <ol class="module-list" id="ref-list" data-i18n-aria="refListAria" aria-label="Reflections so far"></ol>
     <p class="ref-all"><a href="reflections/" data-i18n="refAll">All 11 books</a></p>
-  </section>
+  </div>
+</section>
 
-  <p class="foot">
+<footer class="hub-frame hub-foot">
+  <p class="foot hub-col">
     <span data-i18n="footBuilt">Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
     <span data-i18n="footMistake">Found a mistake? gao9819@utulsa.edu</span>
   </p>
-</div>
+</footer>
 
 <script src="assets/strings-common.js"></script>
 <script src="assets/modules.js"></script>
@@ -105,9 +118,21 @@
     var refs = document.getElementById("reflections"), refList = document.getElementById("ref-list");
     LF.moduleList(list);
     LF.offlineNote(foot);   // installed copy only
+    // The panel previews the Reflections type: Archivo, IBM Plex Serif, IBM Plex Mono. They are
+    // requested only here, once the registry has loaded and just before the panel is shown, so the
+    // installed copy (no registry) and visitors without JavaScript never fetch them. display=swap:
+    // the panel renders at once in the fallback faces and swaps when the fonts arrive.
+    var REF_FONTS = "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112.5,600;112.5,700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400&display=swap";
+    function refFonts() {
+      if (document.getElementById("ref-fonts")) return;
+      var l = document.createElement("link");
+      l.id = "ref-fonts"; l.rel = "stylesheet"; l.href = REF_FONTS;
+      document.head.appendChild(l);
+    }
     function reflections() {
       if (!window.LEARN_REFLECTIONS) return;
       LEARN_REFLECTIONS.hubList(refList, LI18N.lang, LI18N.t);
+      refFonts();
       refs.hidden = false;
     }
     // The Reflections registry is not in the offline app, so the installed copy never asks for

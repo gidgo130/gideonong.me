@@ -55,15 +55,16 @@ window.LEARN_BOOKS = [
   function ready(b) { return b.reflections.filter(function (r) { return r.ready; }); }
   function fix(el) { if (window.LF && LF.fixFileLinks) LF.fixFileLinks(el); }
 
-  // Hub block (learning/index.html): every ready reflection, newest first, then nothing else
+  // Hub block (learning/index.html): the HUB_MAX newest ready reflections, then nothing else
   // (the "All 11 books" link is static markup). `t` = LI18N.t for the hub's words.
+  var HUB_MAX = 3;
   function hubList(el, lang, t) {
     var rows = [];
     BOOKS.forEach(function (b) {
       ready(b).forEach(function (r) { rows.push({ b: b, r: r }); });
     });
     rows.sort(function (x, y) { return x.r.date < y.r.date ? 1 : x.r.date > y.r.date ? -1 : 0; });
-    el.innerHTML = rows.map(function (x) {
+    el.innerHTML = rows.slice(0, HUB_MAX).map(function (x) {
       return '<li><a class="module-row ref-row" href="reflections/' + x.b.slug + '/' + x.r.slug + '/">' +
         '<span class="ref-book" lang="en">' + esc(x.b.title) + '</span>' +
         '<span class="m-title" lang="en">' + esc(x.r.title) + '</span>' +

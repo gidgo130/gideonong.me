@@ -35,11 +35,23 @@ learning/
 - **English first, Spanish required.** Every visible word goes through a strings file. A page
   turns Spanish on by adding `data-es-ready` to its `<html>` once its `es` strings are complete;
   that also un-hides its EN/ES toggle. The toggle shares the main site's `lang` key.
+- **Own design, deliberately different from the main site:** the "lab notebook" look that
+  learning.css's base tokens define is this series' look. Module pages carry
+  `<html data-series="fits">`; there is no fits stylesheet because the base palette and fonts
+  are the Reading Your Fits ones (the hub shares them).
 - **Colors mean the same thing everywhere:** dashed ink = the truth, solid red = what an ordinary fit
   reports, dotted blue = a corrected estimate, grey dots = measured points. The dots are a
   permanent second cue (legend swatch and `.lbl-fix` label underline follow). Charts must use the
   shared class names (fit / fix / fix-curve / ci-bar-fix / pt-hi / bar-hi / lbl-fix / v bad /
   v good) so the colorblind cues apply.
+- **Line geometry is constant on screen (2026-10-15).** Charts are authored at 420 or 560 units
+  wide and render smaller, so learning.js sets `--k` (viewBox width ÷ rendered width) on every
+  `svg.chart` after each draw, on resize and when a `<details>` opens, and learning.css multiplies
+  the stroke widths and dash lengths by it: the truth 2 px with 10 px dashes and 6 px gaps, the
+  fit 2.75 px solid, the corrected estimate 3.25 px round dots every 6 px, reference limits
+  (`.thresh`) 1.25 px dashed. Three forms per chart at most. The legend swatches (`.sw.truth`,
+  `.sw.fix`) are gradients with the same geometry. Verified in Chromium and Firefox. Don't put a
+  bare `stroke-width` or `stroke-dasharray` on a chart class: wrap it in `calc(… * var(--k, 1))`.
 - **Offline downloads.** On the live site learning.js adds a "Use it offline" line under the
   hub's module list and an "Offline (Windows)" link to each module's "Take it with you" row,
   pointing at the GitHub release (`releases/latest/download/<name>`, names from

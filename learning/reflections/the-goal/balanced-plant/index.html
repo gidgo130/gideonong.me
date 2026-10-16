@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-series="reflections">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -42,7 +42,9 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+  <!-- Reflections type (learning-plan.md → Reflections, design rule 2026-10-15): Archivo (headings,
+       width axis for a slightly expanded cut), IBM Plex Serif (body), IBM Plex Mono (figures). -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112.5,600;112.5,700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="../../../assets/learning.css">
   <!-- KaTeX 0.19.0, self-hosted (learning/assets/vendor/katex/, MIT): no CDN, works from disk. -->
   <link rel="stylesheet" href="../../../assets/vendor/katex/katex.min.css">
@@ -307,7 +309,7 @@ $$\text{TH}=\mu_2\,(1-\pi_0),\qquad \pi_0=\frac{1-r}{1-r^{K+1}}\;(r\ne1).$$
 
 <figure class="wide"><div class="fig">
 <svg id="bc" viewBox="0 0 640 340" aria-label="Exact throughput of balanced exponential lines versus buffer size, for 2 to 5 stations"></svg>
-<div class="legend"><span style="--sw:var(--s1)">2 stations</span><span style="--sw:var(--s2)" class="d2">3 stations</span><span style="--sw:var(--s3)" class="d3">4 stations</span><span style="--sw:var(--s4)" class="d4">5 stations</span></div>
+<div class="legend"><span style="--sw:var(--s1)">2 stations</span><span style="--sw:var(--s2)" class="dash">3 stations</span><span style="--sw:var(--s3)" class="dotted">4 stations</span><span style="--sw:var(--s4)" class="sq">5 stations</span></div>
 </div>
 <figcaption>Exact values from solving the full Markov chain (the solver is in the Python script; it reproduces (b+2)/(b+3) for two stations exactly, and gives 22/39 ≈ 0.564 for three stations with no buffers, which a simulation confirms). Longer lines lose more, and each extra buffer slot buys less throughput than the one before while adding WIP.</figcaption></figure>
 
@@ -319,7 +321,7 @@ $$\text{TH}=\mu_2\,(1-\pi_0),\qquad \pi_0=\frac{1-r}{1-r^{K+1}}\;(r\ne1).$$
 
 <figure class="wide"><div class="fig">
 <svg id="wc" viewBox="0 0 640 340" aria-label="Throughput of a three-station line versus the middle station's share of work"></svg>
-<div class="legend"><span style="--sw:var(--s1)">buffer b = 0</span><span style="--sw:var(--s2)" class="d2">b = 1</span><span style="--sw:var(--s3)" class="d3">b = 3</span><span style="--sw:var(--s4)" class="dot">optimum</span></div>
+<div class="legend"><span style="--sw:var(--s1)">buffer b = 0</span><span style="--sw:var(--s2)" class="dash">b = 1</span><span style="--sw:var(--s3)" class="dotted">b = 3</span><span style="--sw:var(--s4)" class="dot">optimum</span></div>
 </div>
 <figcaption>Three exponential stations, total mean work 3. The middle station's mean time is on the x-axis; the two end stations split the rest equally. Exact values. The best middle time is about 0.83–0.93, and the gain over a balanced line is small (about 0.3–0.6%).</figcaption></figure>
 <p>The size matters as much as the direction. Unbalancing <i>work</i> recovers half a percent. Adding <i>capacity</i> (§10) is where the real gain is, which is Goldratt's actual recommendation.</p>
@@ -337,7 +339,7 @@ $$C(\mu)=c\,\mu+h\,\frac{\lambda}{\mu-\lambda},\qquad C'(\mu)=c-\frac{h\lambda}{
   <label for="cM">Current capacity μ <output id="cMo">16</output><input id="cM" type="range" min="2.5" max="80" step="0.5" value="16"></label>
 </div>
 <svg id="cc" viewBox="0 0 640 340" aria-label="Total cost versus capacity"></svg>
-<div class="legend"><span style="--sw:var(--s1)">total cost / c</span><span style="--sw:var(--s2)" class="d2">capacity part</span><span style="--sw:var(--s3)" class="d3">inventory part</span><span style="--sw:var(--s4)" class="ring">optimum μ*</span><span style="--sw:var(--ink)" class="dot">current μ</span></div>
+<div class="legend"><span style="--sw:var(--s1)">total cost / c</span><span style="--sw:var(--s2)" class="dash">capacity part</span><span style="--sw:var(--s3)" class="dotted">inventory part</span><span style="--sw:var(--s4)" class="ring">optimum μ*</span><span style="--sw:var(--ink)" class="dot">current μ</span></div>
 <div class="readout" id="cRead"></div>
 </div>
 <figcaption>Cost is shown divided by c, so only the ratio h/c matters. A finite-buffer line adds a third term, the margin lost on throughput below demand, which pushes μ* higher still.</figcaption></figure>

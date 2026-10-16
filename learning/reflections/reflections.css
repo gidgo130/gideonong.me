@@ -1,28 +1,69 @@
-/* reflections.css — the essay pieces for learning/reflections/ (R5), on top of learning.css,
-   which provides the chrome (series bar, fonts, tokens, dark mode, readability, colorblind).
-   Sizes are in em so About's readability setting (bigger body text) scales everything here.
+/* reflections.css — the Reflections series on top of learning.css.
+   learning.css is the shared base (series bar, layout, spacing, footer, viewing settings and the
+   token NAMES every component uses). This file does two things, both under
+   <html data-series="reflections">:
+     1. the series THEME, "engineering computation pad": industrial engineering's own paper and
+        shop-floor vernacular. Blue-grey steel paper and neutrals, graphite ink, brass accent,
+        steel blue, and ANSI safety colors used sparingly for emphasis. Related to the main site's
+        warm bronze but not the same. Decided 2026-10-15 (learning-plan.md → Reflections).
+     2. the essay pieces: §n labels, theorem blocks, "from a probability course" asides, figures
+        with controls, time-study tables, the reading list, and the book lists.
+   Charts never use --fit / --fix (Reading Your Fits meanings): series tokens --s1..--s4 below, and
+   every line in a shared chart is told apart by shape (solid / dashed / dotted, at most three) or
+   by a marker, with legend swatches that repeat the chart's exact geometry. */
 
-   Chart colors: reflections never use --fit / --fix (those mean "ordinary fit" and "corrected
-   estimate" across Reading Your Fits). Series tokens --s1..--s4 below, light and dark, with a
-   colorblind set (Okabe–Ito) under data-colorblind. Every chart line is also told apart by dash
-   or marker (legend classes .dash / .d2 / .d3 / .d4 / .dot / .ring match main.js), so the series
-   read in grayscale too. */
+/* ---------- theme tokens (light) ---------- */
+:root[data-series="reflections"] {
+  --paper: #f1f3f5;      /* the pad */
+  --plot: #e4e8ed;       /* surface: figure panels, asides */
+  --grid: #ced6df;       /* chart gridlines and the random-walk sample paths */
+  --rule: #c2cbd5;
+  --ink: #1f252b;        /* graphite */
+  --muted: #56606a;
+  --pt: #56606a;
+  --note-bg: #e4e8ed;
+  --accent: #7e5b17;     /* brass: links, focus, status, small labels */
+  --emph: #ad4414;       /* safety orange: only where it means "attention" */
+  --s1: #7e5b17;         /* chart 1 brass */
+  --s2: #2c6390;         /* chart 2 steel blue */
+  --s3: #ad4414;         /* chart 3 safety orange */
+  --s4: #3a6d32;         /* chart 4 safety green */
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+/* dark */
+@media (prefers-color-scheme: dark) {
+  :root[data-series="reflections"]:not([data-theme="light"]) {
+    --paper: #151a1f; --plot: #1d242b; --grid: #29313a; --rule: #333d47; --ink: #e3e8ed; --muted: #a0aab5; --pt: #a0aab5; --note-bg: #1d242b;
+    --accent: #d9a441; --emph: #f08a4b; --s1: #d9a441; --s2: #8db6d4; --s3: #f08a4b; --s4: #9cc27a;
+  }
+}
+:root[data-series="reflections"][data-theme="dark"] {
+  --paper: #151a1f; --plot: #1d242b; --grid: #29313a; --rule: #333d47; --ink: #e3e8ed; --muted: #a0aab5; --pt: #a0aab5; --note-bg: #1d242b;
+  --accent: #d9a441; --emph: #f08a4b; --s1: #d9a441; --s2: #8db6d4; --s3: #f08a4b; --s4: #9cc27a;
+}
+/* readability: the darker muted text, in this palette */
+:root[data-series="reflections"][data-readability] { --muted: #3f4851; --pt: #3f4851; }
+@media (prefers-color-scheme: dark) {
+  :root[data-series="reflections"][data-readability]:not([data-theme="light"]) { --muted: #b7c1cb; --pt: #b7c1cb; }
+}
+:root[data-series="reflections"][data-readability][data-theme="dark"] { --muted: #b7c1cb; --pt: #b7c1cb; }
+/* colorblind: the Okabe–Ito set for the four series (shape and markers carry the rest) */
+:root[data-series="reflections"][data-colorblind] { --s1: #c7780a; --s2: #0072b2; --s3: #cc5a99; --s4: #009e73; }
+@media (prefers-color-scheme: dark) {
+  :root[data-series="reflections"][data-colorblind]:not([data-theme="light"]) { --s1: #ffb347; --s2: #63b3f0; --s3: #f0a0cc; --s4: #4fd1a5; }
+}
+:root[data-series="reflections"][data-colorblind][data-theme="dark"] { --s1: #ffb347; --s2: #63b3f0; --s3: #f0a0cc; --s4: #4fd1a5; }
 
-:root {
-  --s1: #9a6a12;   /* amber: the main series */
-  --s2: #2d6a9f;   /* blue */
-  --s3: #b0565c;   /* rose */
-  --s4: #5f7a3a;   /* green */
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --s1: #d9a957; --s2: #7fb0d0; --s3: #e0989c; --s4: #b8c27e; }
-}
-:root[data-theme="dark"] { --s1: #d9a957; --s2: #7fb0d0; --s3: #e0989c; --s4: #b8c27e; }
-:root[data-colorblind] { --s1: #c7780a; --s2: #0072b2; --s3: #cc5a99; --s4: #009e73; }
-@media (prefers-color-scheme: dark) {
-  :root[data-colorblind]:not([data-theme="light"]) { --s1: #ffb347; --s2: #63b3f0; --s3: #f0a0cc; --s4: #4fd1a5; }
-}
-:root[data-colorblind][data-theme="dark"] { --s1: #ffb347; --s2: #63b3f0; --s3: #f0a0cc; --s4: #4fd1a5; }
+/* ---------- type ---------- */
+:root[data-series="reflections"] h1,
+:root[data-series="reflections"] h2,
+:root[data-series="reflections"] h3,
+:root[data-series="reflections"] h4 { font-stretch: 112.5%; letter-spacing: 0; }
+:root[data-series="reflections"] .eyebrow,
+:root[data-series="reflections"] .series-bar { font-stretch: 112.5%; }
+:root[data-series="reflections"] input[type=range] { accent-color: var(--accent); }
 
 /* ---------- essay column ---------- */
 main.essay { max-width: 46rem; margin-inline: auto; min-width: 0; }
@@ -33,35 +74,44 @@ main.essay { max-width: 46rem; margin-inline: auto; min-width: 0; }
 .essay p { margin: .6em 0; max-width: 68ch; }
 .essay li { max-width: 68ch; }
 .essay ul, .essay ol { padding-left: 1.3em; }
-.essay a { color: inherit; text-decoration-color: var(--s2); text-decoration-thickness: 1.5px; }
-.essay a:hover { color: var(--fix); }
+.essay a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; }
+.essay a:hover { color: var(--accent); }
 .essay .sec { font-family: var(--font-display); font-weight: 600; font-size: .8em; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: .5rem; }
 .essay h2 .sec { font-size: .55em; letter-spacing: .12em; }
 .essay header.top { padding-block: 2.4rem 1rem; border-bottom: 0; display: block; }
 .essay header.top .sec i { font-style: normal; }
 .essay .dek { font-size: 1.2em; line-height: 1.4; color: var(--muted); margin: .8rem 0 0; }
-.essay .answer { background: var(--note-bg); border-radius: 6px; padding: 1rem 1.2rem; margin: 1.6rem 0; }
+.essay .answer { background: var(--note-bg); border-radius: 4px; padding: 1rem 1.2rem; margin: 1.6rem 0; }
 .essay .answer p { margin: .4rem 0; }
 .essay nav.toc ol { columns: 2 14rem; padding-left: 1.2rem; margin: .5rem 0; font-size: .9em; }
 .essay nav.toc li { break-inside: avoid; margin: .15rem 0; }
-.essay .thm { border-left: 3px solid var(--ink); padding: .2rem 0 .2rem 1rem; margin: 1.2rem 0; }
+/* Theorem block: safety orange means "attention" here, and nowhere decorative. */
+.essay .thm { border-left: 3px solid var(--emph); padding: .2rem 0 .2rem 1rem; margin: 1.2rem 0; }
 .essay .thm b.lab { font-family: var(--font-display); font-weight: 700; }
 .essay .note { background: transparent; padding: 0; border-radius: 0; font-size: .9em; color: var(--muted); }
-.essay .tie { border: 1px dashed var(--rule); border-radius: 6px; padding: .6rem .9rem; margin: 1rem 0; font-size: .9em; max-width: 68ch; }
-.essay .tie b { font-family: var(--font-display); font-weight: 700; }
+.essay .tie { border: 1px dashed var(--rule); background: var(--note-bg); border-radius: 4px; padding: .6rem .9rem; margin: 1rem 0; font-size: .9em; max-width: 68ch; }
+.essay .tie b { font-family: var(--font-display); font-weight: 700; color: var(--accent); }
 .essay figure { margin: 1.6rem 0; min-width: 0; display: block; }
-.essay figcaption { font-size: .9em; margin-top: .5rem; max-width: 68ch; }
-.essay .fig { background: var(--plot); border: 1px solid var(--rule); border-radius: 6px; padding: 1rem; min-width: 0; }
+/* Captions: body face, small, muted, normal weight (headings and labels keep their faces). */
+.essay figcaption { font-family: var(--font-body); font-size: .875rem; font-weight: 400; line-height: 1.5; color: var(--muted); margin-top: .5rem; max-width: 68ch; }
+.essay figcaption b { font-weight: 600; color: var(--ink); }
+/* Figure and control panels: the surface color offset from the paper, no decorative grid
+   (removed 2026-10-15). Each chart draws a paper sheet behind its plot area. */
+.essay .fig {
+  background-color: var(--plot);
+  border: 1px solid var(--rule); border-radius: 4px; padding: 1rem; min-width: 0;
+}
 .essay .fig svg { display: block; width: 100%; height: auto; }
 .essay .fig[style*="overflow-x"] svg { min-width: 0; }
-.essay .controls { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: end; margin-bottom: .8rem; font-family: var(--font-display); font-size: .95em; }
-.essay .controls label { display: flex; flex-direction: column; gap: .15rem; color: var(--muted); font-weight: 600; }
-.essay .controls output { font-family: var(--font-mono); font-weight: 400; color: var(--ink); font-variant-numeric: tabular-nums; }
+.essay svg .plot-bg { fill: var(--paper); }
+.essay .controls { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: end; margin-bottom: .8rem; font-family: var(--font-mono); font-size: .85em; }
+.essay .controls label { display: flex; flex-direction: column; gap: .15rem; color: var(--muted); font-weight: 500; }
+.essay .controls output { font-family: var(--font-mono); font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .essay input[type=range] { width: 9rem; height: 24px; }
 .essay select { font: inherit; font-size: .95em; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: .25rem .3rem; }
 .essay button {
-  font-family: var(--font-display); font-weight: 600; font-size: .95em;
-  background: transparent; color: var(--ink); border: 1.5px solid var(--ink); border-radius: 6px;
+  font-family: var(--font-display); font-stretch: 112.5%; font-weight: 600; font-size: 1em;
+  background: var(--paper); color: var(--ink); border: 1.5px solid var(--ink); border-radius: 4px;
   padding: .4rem .8rem; cursor: pointer;
 }
 .essay button:hover { background: var(--note-bg); }
@@ -70,26 +120,29 @@ main.essay { max-width: 46rem; margin-inline: auto; min-width: 0; }
 .essay button.ghost:hover { color: var(--ink); }
 .essay .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); gap: 1rem; }
 .essay .charts > div { min-width: 0; }
-.essay .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; font-family: var(--font-display); font-size: .85em; color: var(--muted); margin-top: .4rem; }
-.essay .legend span::before { content: ""; display: inline-block; width: 22px; height: 3px; margin-right: 6px; vertical-align: middle; background: var(--sw); }
-.essay .legend span.dash::before { background: repeating-linear-gradient(90deg, var(--sw) 0 6px, transparent 6px 11px); }
-.essay .legend span.d2::before { background: repeating-linear-gradient(90deg, var(--sw) 0 9px, transparent 9px 14px); }
-.essay .legend span.d3::before { background: repeating-linear-gradient(90deg, var(--sw) 0 2px, transparent 2px 6px); }
-.essay .legend span.d4::before { background: repeating-linear-gradient(90deg, var(--sw) 0 9px, transparent 9px 13px, var(--sw) 13px 15px, transparent 15px 19px); }
+/* Legend swatches repeat the chart geometry exactly: solid 2.2 px; dashed 10 px / 6 px at 2 px;
+   dotted 3.25 px round dots every 6 px; markers as drawn (dot, hollow ring, hollow square). */
+.essay .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; font-family: var(--font-mono); font-size: .8em; color: var(--muted); margin-top: .4rem; }
+.essay .legend span::before { content: ""; display: inline-block; width: 26px; height: 2.2px; margin-right: 6px; vertical-align: middle; background: var(--sw); }
+.essay .legend span.dash::before { height: 2px; background: repeating-linear-gradient(90deg, var(--sw) 0 10px, transparent 10px 16px); }
+.essay .legend span.dotted::before { height: 3.25px; background: radial-gradient(circle at 1.625px 50%, var(--sw) 1.5px, transparent 1.75px) 0 0 / 6px 3.25px repeat-x; }
 .essay .legend span.dot::before { width: 8px; height: 8px; border-radius: 50%; }
-.essay .legend span.ring::before { width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 2px solid var(--sw); }
-.essay .readout { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-family: var(--font-display); font-size: .9em; margin-top: .6rem; border: 0; }
-.essay .readout b { font-family: var(--font-mono); font-weight: 500; }
+.essay .legend span.ring::before { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); border: 2.5px solid var(--sw); box-sizing: border-box; }
+.essay .legend span.sq::before { width: 9px; height: 9px; background: var(--paper); border: 2px solid var(--sw); box-sizing: border-box; }
+.essay .readout { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-family: var(--font-mono); font-size: .85em; margin-top: .6rem; border: 0; }
+.essay .readout b { font-family: var(--font-mono); font-weight: 600; color: var(--ink); }
+/* Tables like a time-study sheet: mono tabular figures, ruled rows, a heavier rule under the header. */
 .essay .tbl { overflow-x: auto; margin: 1rem 0; max-width: 100%; }
 .essay table { border-collapse: collapse; font-size: .9em; font-variant-numeric: tabular-nums; }
-.essay th, .essay td { padding: .35rem .8rem; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
-.essay th:first-child, .essay td:first-child { text-align: left; }
-.essay th { font-family: var(--font-display); font-weight: 600; color: var(--muted); }
+.essay th, .essay td { padding: .4rem .8rem; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; font-family: var(--font-mono); }
+.essay th:first-child, .essay td:first-child { text-align: left; font-family: var(--font-body); }
+.essay thead th { border-bottom: 2px solid var(--ink); color: var(--ink); font-weight: 600; }
+.essay tbody th { font-family: var(--font-display); font-weight: 600; color: var(--muted); }
 .essay .books { list-style: none; padding: 0; display: grid; gap: 1rem; }
 .essay .books li { display: grid; grid-template-columns: 4.2rem 1fr; gap: .6rem; max-width: 72ch; }
-.essay .books .tag { font-family: var(--font-display); font-weight: 600; font-size: .75em; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: .35em; }
-.essay .books b { font-family: var(--font-display); font-size: 1.05em; }
-.essay svg text { fill: var(--muted); font-family: var(--font-display); font-size: 13px; }
+.essay .books .tag { font-family: var(--font-mono); font-weight: 600; font-size: .72em; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); padding-top: .4em; }
+.essay .books b { font-family: var(--font-display); font-stretch: 112.5%; font-size: 1.05em; }
+.essay svg text { fill: var(--muted); font-family: var(--font-mono); font-size: 13px; }
 .essay svg .axis { stroke: var(--rule); stroke-width: 1; }
 .essay svg .gridl { stroke: var(--grid); stroke-width: 1; }
 .essay .takeaway-links { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
@@ -119,13 +172,13 @@ main.essay { max-width: 46rem; margin-inline: auto; min-width: 0; }
   padding: 16px 4px; text-decoration: none; color: inherit;
 }
 a.book-row:hover { background: var(--note-bg); color: inherit; }
-a.book-row:hover .b-title { color: var(--fix); }
+a.book-row:hover .b-title { color: var(--accent); }
 .b-num { font-family: var(--font-mono); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.b-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.15; }
+.b-title { font-family: var(--font-display); font-stretch: 112.5%; font-size: 22px; font-weight: 700; line-height: 1.15; }
 .b-title i { font-style: normal; }
 .b-meta, .b-about { grid-column: 2 / 3; font-size: 16px; color: var(--muted); }
 .b-count { grid-row: 1; grid-column: 3; font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
-.b-count.has { border-color: var(--fix); color: var(--fix); }
+.b-count.has { border-color: var(--accent); color: var(--accent); }
 .book-row.is-soon .b-title { color: var(--muted); font-weight: 600; }
 @media (max-width: 520px) {
   .book-row { grid-template-columns: 2.4em minmax(0, 1fr); }

@@ -79,6 +79,29 @@ installed copy never asks for it) and whose block stays hidden until the file ha
 - **Cited papers and books** are linked (DOI, publisher, catalog page), never hosted.
 - **External resources:** Google Fonts, and nothing else. Libraries are self-hosted and pinned
   (KaTeX under `assets/vendor/`).
+- **One base, a theme per series (2026-10-15).** learning.css is the shared base: series bar,
+  layout, spacing, footer, viewing settings and the token NAMES every component uses (`--paper`,
+  `--plot`, `--grid`, `--rule`, `--ink`, `--muted`, `--pt`, `--note-bg`, `--accent`, `--emph`,
+  `--font-display` / `-body` / `-mono`, plus the chart tokens). Each series sets
+  `data-series="fits" | "reflections"` on `<html>` and overrides only tokens in its own CSS.
+  Non-chart UI (links, focus rings, status pills, flagged readouts, slider thumbs) uses
+  `--accent` / `--emph`, never `--fit` / `--fix` directly.
+- **The hub is a main-site frame with one band per series (2026-10-16).** learning/index.html
+  (`body.hub`, no `data-series`): the series bar, header and footer are `.hub-frame` in the main
+  site's design (Palette B and its §6 dark palette, Lora + DM Sans, sentence-case eyebrow, white
+  bar, dark footer), with token values COPIED from css/style.css because the offline copy
+  doesn't ship it: keep in step. Each series is a full-bleed `.hub-band` (1px rule along the
+  top edge, 4.5rem padding) whose content sits in `.hub-col`, the frame's centered column. The
+  Reading Your Fits band sets no tokens and inherits the base lab look; the Reflections band
+  is the `.ref-panel` (tokens copied from reflections.css). A new series gets its own band the
+  same way. `.hub [hidden]` forces `display: none`, because bands set their own display.
+- **Dashed and dotted lines stay readable.** On every chart, at the rendered size: data lines
+  2 px or more; dashes 10 px with 6 px gaps; dots as round-capped zero-length dashes, 3.25 px,
+  every 6 px (dash length ≥ 3× the dot diameter, dots heavier than dashes); at most three forms
+  per chart (solid, dashed, dotted), a fourth series gets markers or a direct label instead;
+  legends repeat the chart's geometry. The geometry is computed from the current scale (the
+  `--k` variable in Reading Your Fits, `plot()`'s own factor in Reflections), not left to the
+  viewBox. Out of scope: the Quarto decks and the Python figures (open item in learning-plan.md).
 
 ## Checks before pushing
 
@@ -87,6 +110,9 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   should land on the slashed URL.
 - Each page at 375, 768 and 1280 px, light and dark, plus readability on, colorblind on, and
   both: no sideways scroll (wide math and figures scroll in their own containers), console clean.
+- Every chart at 375 px: data strokes ≥ 2 px, dashes ≥ 6 px with gaps ≥ 4 px, dots ≥ 3 px every
+  ≥ 5 px, measured as CSS value × the SVG's screen scale; in grayscale, dashed and dotted lines
+  differ by ≥ 2.5× in run length. Chromium and Firefox (Playwright's build, in the scratchpad).
 - Open `learning/index.html` straight from disk: module, book and reflection links and the back
   links still work; the math renders (KaTeX is local).
 - `node learning/workshop/tools/check-es.js` passes (hub and module strings).

@@ -6,8 +6,11 @@
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
-/* Dash patterns for lines that share a chart: series 1 solid, then d2 / d3 / d4 (legend classes in reflections.css). */
-const DASH={2:undefined,3:"9 5",4:"2 4",5:"9 4 2 4"};const BOWL_DASH={0:undefined,1:"9 5",3:"2 4"};
+/* Line forms for lines that share a chart (at most three, told apart by shape alone):
+   solid, "dashed" (10 px dashes, 6 px gaps) and "dotted" (round 3.25 px dots every 6 px). A fourth
+   series gets a second cue instead: hollow square markers plus a direct label at the line's end.
+   The legend classes .dash / .dotted / .sq in reflections.css use the same geometry. */
+const DASH={2:undefined,3:"dashed",4:"dotted",5:undefined};const BOWL_DASH={0:undefined,1:"dashed",3:"dotted"};
 const DATA={"bufsweep":{"2":[0.66667,0.75,0.8,0.83333,0.85714,0.875,0.88889,0.9,0.90909],"3":[0.5641,0.67047,0.73402,0.77671,0.80749,0.83076,0.84899,0.86367,0.87573],"4":[0.51478,0.63115,0.70071,0.74771,0.78178,0.80766,0.82803,0.84447,0.85804],"5":[0.4858,0.60758,0.68049,0.72995,0.76593,0.79337,0.815]},
 "bowl":{"0":[0.56709,0.56718,0.56713,0.56695,0.56664,0.5662,0.56563,0.56493,0.5641,0.56315,0.56208,0.56089,0.55959,0.55817,0.55664,0.555,0.55326],"1":[0.6722,0.67301,0.67352,0.67375,0.67368,0.67331,0.67266,0.67171,0.67047,0.66894,0.66714,0.66506,0.66271,0.66011,0.65726,0.65417,0.65085],"3":[0.77105,0.77379,0.77601,0.77767,0.77874,0.77919,0.77901,0.77819,0.77671,0.77459,0.77182,0.76843,0.76443,0.75986,0.75474,0.74911,0.74301]},
 "bowlx":[0.8,0.825,0.85,0.875,0.9,0.925,0.95,0.975,1,1.025,1.05,1.075,1.1,1.125,1.15,1.175,1.2]};
@@ -24,32 +27,68 @@ function chartSize(svg){
   if(!svg.dataset.vb)svg.dataset.vb=svg.getAttribute("viewBox");
   const [,,w0,h0]=svg.dataset.vb.split(/\s+/).map(Number);
   const cw=svg.getBoundingClientRect().width||svg.parentNode.clientWidth;
-  if(window.innerWidth>=820||!cw||cw>=w0)return{w:w0,h:h0};
+  if(!cw)return{w:w0,h:h0};
+  /* One user unit = one CSS pixel at every width, so 13-unit text is 13 px on screen whether the
+     chart is a 309 px phone column or a 896 px desktop figure. Height keeps the authored ratio,
+     between 220 and 1.25× the authored height. */
   const w=Math.max(Math.round(cw),300);
-  return{w,h:Math.max(Math.round(h0*w/w0),220)};
+  return{w,h:Math.min(Math.max(Math.round(h0*w/w0),220),Math.round(h0*1.25))};
 }
 function plot(svg,o){
   svg._plot=o;   /* kept so a resize can redraw the same data at the new size */
   const VB=chartSize(svg),W=VB.w,H=VB.h,m={l:58,r:18,t:14,b:46};
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  /* k converts screen pixels to user units, so strokes, dashes and markers keep their size on
+     screen whatever the viewBox scale (the SVG is width:100%, so its rendered width is known). */
+  const k=W/(svg.getBoundingClientRect().width||W),px=v=>+(v*k).toFixed(2);
+  /* Axis titles: 13 px, or 12 px when that does not fit, and two lines at 12 px when even that
+     is too long (never below 12 px on screen). The bottom or left margin grows for a two-line title. */
+  const title=(txt,room)=>{txt=txt||"";const u=Math.max(1,k),est=f=>0.62*f*u*txt.length;
+    if(est(13)<=room)return{fs:13*u,lines:[txt]};if(est(12)<=room)return{fs:12*u,lines:[txt]};
+    const w=txt.split(" "),mid=Math.ceil(w.length/2);return{fs:12*u,lines:[w.slice(0,mid).join(" "),w.slice(mid).join(" ")]};};
+  const lineH=f=>Math.round(f*1.15);
+  const xT=title(o.xl,W-m.l-m.r),yT=title(o.yl,H-m.t-m.b);
+  if(xT.lines.length>1)m.b+=lineH(xT.fs);
+  if(yT.lines.length>1)m.l+=lineH(yT.fs);
+  /* Direct labels (series with `label`) go in a right margin reserved for them, at each line's
+     final y. If that margin would leave less than 200 px of plot, the labels are dropped and the
+     legend carries the names; dash forms and markers stay. */
+  const fsL=13*Math.max(1,k),labeled=(o.series||[]).filter(se=>se.label&&!se.dots);
+  let useLabels=labeled.length>0;
+  if(useLabels){const mr=18+Math.ceil(Math.max(...labeled.map(se=>0.62*fsL*se.label.length)))+8;if(W-m.l-mr<200)useLabels=false;else m.r=mr;}
   const sx=x=>m.l+(x-o.x[0])/(o.x[1]-o.x[0])*(W-m.l-m.r);
   const sy=y=>H-m.b-(y-o.y[0])/(o.y[1]-o.y[0])*(H-m.t-m.b);
-  let s="";
+  let s=`<rect class="plot-bg" x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}"/>`;
   const xt=o.xticks||nice(o.x[0],o.x[1],6), yt=o.yticks||nice(o.y[0],o.y[1],5);
   yt.forEach(v=>{const y=sy(v);s+=`<line class="gridl" x1="${m.l}" x2="${W-m.r}" y1="${y}" y2="${y}"/><text x="${m.l-8}" y="${y+4}" text-anchor="end">${(o.yf||fmt)(v)}</text>`;});
   xt.forEach(v=>{const x=sx(v);s+=`<text x="${x}" y="${H-m.b+18}" text-anchor="middle">${(o.xf||fmt)(v)}</text>`;});
   s+=`<line class="axis" x1="${m.l}" x2="${W-m.r}" y1="${H-m.b}" y2="${H-m.b}"/><line class="axis" x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${H-m.b}"/>`;
-  s+=`<text x="${(m.l+W-m.r)/2}" y="${H-8}" text-anchor="middle">${o.xl||""}</text>`;
-  s+=`<text transform="translate(14 ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle">${o.yl||""}</text>`;
+  s+=`<text x="${(m.l+W-m.r)/2}" y="${H-8-(xT.lines.length-1)*lineH(xT.fs)}" text-anchor="middle" style="font-size:${xT.fs.toFixed(1)}px">`+xT.lines.map((l,i)=>`<tspan x="${(m.l+W-m.r)/2}" dy="${i?lineH(xT.fs):0}">${l}</tspan>`).join("")+`</text>`;
+  s+=`<text transform="translate(14 ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" style="font-size:${yT.fs.toFixed(1)}px">`+yT.lines.map((l,i)=>`<tspan x="0" dy="${i?lineH(yT.fs):0}">${l}</tspan>`).join("")+`</text>`;
   s+=`<clipPath id="${svg.id}cp"><rect x="${m.l}" y="${m.t-2}" width="${W-m.l-m.r}" height="${H-m.t-m.b+4}"/></clipPath><g clip-path="url(#${svg.id}cp)">`;
   (o.areas||[]).forEach(a=>{s+=`<path d="M${a.pts.map(p=>sx(p[0])+","+sy(p[1])).join(" L")} Z" style="fill:${a.c};opacity:${a.op||.25}"/>`;});
+  const labels=[];
   (o.series||[]).forEach(se=>{
-    if(se.dots){se.pts.forEach(p=>{if(isFinite(p[1]))s+=`<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="${se.r||4}" style="${se.ring?`fill:var(--plot);stroke:${se.c};stroke-width:2.5`:`fill:${se.c};stroke:var(--plot);stroke-width:1.5`}"/>`;});return;}
-    let d="",pen=false;se.pts.forEach(p=>{if(!isFinite(p[1])){pen=false;return;}d+=(pen?" L":" M")+sx(p[0]).toFixed(1)+","+sy(p[1]).toFixed(1);pen=true;});
-    s+=`<path d="${d}" style="fill:none;stroke:${se.c};stroke-width:${se.w||2.2};${se.dash?"stroke-dasharray:"+(se.dash===true?"6 5":se.dash)+";":""}stroke-linejoin:round;stroke-linecap:round"/>`;
+    if(se.dots){const r=px(se.r||4);se.pts.forEach(p=>{if(!isFinite(p[1]))return;const cx=sx(p[0]),cy=sy(p[1]);
+      if(se.marker==="square")s+=`<rect x="${(cx-r).toFixed(1)}" y="${(cy-r).toFixed(1)}" width="${(2*r).toFixed(1)}" height="${(2*r).toFixed(1)}" style="fill:var(--paper);stroke:${se.c};stroke-width:${px(2)}"/>`;
+      else s+=`<circle cx="${cx}" cy="${cy}" r="${r}" style="${se.ring?`fill:var(--paper);stroke:${se.c};stroke-width:${px(2.5)}`:`fill:${se.c};stroke:var(--paper);stroke-width:${px(1.5)}`}"/>`;});return;}
+    let d="",pen=false,last=null;se.pts.forEach(p=>{if(!isFinite(p[1])){pen=false;return;}d+=(pen?" L":" M")+sx(p[0]).toFixed(1)+","+sy(p[1]).toFixed(1);pen=true;last=p;});
+    const dotted=se.dash==="dotted",w=px(dotted?3.25:(se.w||2.2));
+    const dash=dotted?`stroke-dasharray:0 ${px(6)};`:se.dash?`stroke-dasharray:${px(10)} ${px(6)};`:"";
+    s+=`<path d="${d}" style="fill:none;stroke:${se.c};stroke-width:${w};${dash}stroke-linejoin:round;stroke-linecap:round"/>`;
+    if(useLabels&&se.label&&last)labels.push({y:sy(last[1]),c:se.c,text:se.label});
   });
-  (o.vlines||[]).forEach(v=>{const x=sx(v.x);s+=`<line x1="${x}" x2="${x}" y1="${m.t}" y2="${H-m.b}" style="stroke:${v.c};stroke-width:1.2;stroke-dasharray:3 4"/>${v.label?`<text x="${x+5}" y="${m.t+12}">${v.label}</text>`:""}`;});
+  /* Direct labels at line ends, nudged apart so neighbours never overlap. */
+  (o.vlines||[]).forEach(v=>{const x=sx(v.x);s+=`<line x1="${x}" x2="${x}" y1="${m.t}" y2="${H-m.b}" style="stroke:${v.c};stroke-width:${px(1.5)};stroke-dasharray:${px(10)} ${px(6)}"/>${v.label?`<text x="${x+5}" y="${m.t+12}">${v.label}</text>`:""}`;});
   s+="</g>";
+  /* The direct labels, outside the clip: in the margin at the line's final y, nudged apart to
+     1.2× the label height and kept inside the plot's vertical span, so none touches a line, a
+     point or another label. */
+  /* A label's rendered box is about 1.31× its font size tall, so 1.2× the box is ~1.6× the size. */
+  if(labels.length){const gap=fsL*1.6,top=m.t+fsL*0.7,bot=H-m.b-fsL*0.7;labels.sort((p,q)=>p.y-q.y);
+    for(let i=0;i<labels.length;i++)labels[i].y=Math.max(labels[i].y,i?labels[i-1].y+gap:top);
+    for(let i=labels.length-1;i>=0;i--)labels[i].y=Math.min(labels[i].y,i<labels.length-1?labels[i+1].y-gap:bot);
+    labels.forEach(l=>{s+=`<text x="${(W-m.r+8).toFixed(1)}" y="${(l.y+fsL*0.35).toFixed(1)}" style="fill:${l.c};font-size:${fsL}px;font-weight:600">${l.text}</text>`;});}
   svg.innerHTML=s;
 }
 
@@ -67,9 +106,9 @@ function game(N,R,mode){const inv=new Array(N).fill(0);let out=0;const cum=[0],w
   return{cum,wip};}
 function drawDice(res,avg,N,R){
   const t=res.cum.map((_,i)=>i);
-  plot($("dc1"),{x:[0,R],y:[0,3.5*R*1.02],xl:"round",yl:"matches out (cumulative)",series:[{pts:t.map(i=>[i,3.5*i]),c:"var(--muted)",dash:true,w:1.6},{pts:t.map(i=>[i,res.cum[i]]),c:"var(--s1)"}]});
+  plot($("dc1"),{x:[0,R],y:[0,3.5*R*1.02],xl:"round",yl:"matches out (cumulative)",series:[{pts:t.map(i=>[i,3.5*i]),c:"var(--muted)",dash:true,w:2},{pts:t.map(i=>[i,res.cum[i]]),c:"var(--s1)"}]});
   const series=[{pts:t.map(i=>[i,res.wip[i]]),c:"var(--s2)"}];let cfit=null;
-  if(avg){let num=0,den=0;t.forEach(i=>{num+=res.wip[i]*Math.sqrt(i);den+=i;});cfit=num/den;series.push({pts:t.map(i=>[i,cfit*Math.sqrt(i)]),c:"var(--s3)",dash:true,w:1.8});}
+  if(avg){let num=0,den=0;t.forEach(i=>{num+=res.wip[i]*Math.sqrt(i);den+=i;});cfit=num/den;series.push({pts:t.map(i=>[i,cfit*Math.sqrt(i)]),c:"var(--s3)",dash:true,w:2});}
   const ymax=Math.max(4,...res.wip)*1.1;
   plot($("dc2"),{x:[0,R],y:[0,ymax],xl:"round",yl:"matches in bowls (WIP)",series});
   const short=3.5*R-res.cum[R];
@@ -114,7 +153,7 @@ let kPts=null;
 function drawKing(){const ca=+$("kA").value,cs=+$("kS").value;$("kAo").textContent=ca.toFixed(2);$("kSo").textContent=cs.toFixed(2);
   const xs=[];for(let x=0.02;x<=0.975;x+=0.005)xs.push(x);
   const V=(ca+cs)/2,ymax=Math.max(4,Math.min(40,Math.max(V,1)*0.95/0.05*1.05));
-  const ser=[{pts:xs.map(u=>[u,u/(1-u)]),c:"var(--muted)",dash:true,w:1.5},{pts:xs.map(u=>[u,V*u/(1-u)]),c:"var(--s1)"}];
+  const ser=[{pts:xs.map(u=>[u,u/(1-u)]),c:"var(--muted)",dash:true,w:2},{pts:xs.map(u=>[u,V*u/(1-u)]),c:"var(--s1)"}];
   if(kPts&&kPts.ca===ca&&kPts.cs===cs)ser.push({pts:kPts.pts,dots:true,c:"var(--s3)"});
   plot($("kc"),{x:[0,1],y:[0,ymax],xl:"utilization u",yl:"mean wait in queue (× mean process time)",xticks:[0,.2,.4,.6,.8,1],series:ser});
   let txt=`<span>V = (c²ₐ + c²ₛ)/2 = <b>${V.toFixed(2)}</b></span><span>At u = 0.9: Wq ≈ <b>${(V*9).toFixed(1)}</b> × tₑ</span>`;
@@ -133,18 +172,18 @@ function runWalk(){const T=1000,G=200,P=300,grid=[];for(let i=0;i<=G;i++)grid.pu
   for(let p=0;p<P;p++){let t=0,n=0,gi=0;const path=new Array(G+1);
     while(gi<=G){const dt=-Math.log(rnd())/2;while(gi<=G&&grid[gi]<t+dt){path[gi]=n;gi++;}t+=dt;if(rnd()<0.5)n++;else if(n>0)n--;}
     for(let i=0;i<=G;i++)mean[i]+=path[i]/P;if(p<4)samples.push(path);}
-  const ser=samples.map(s=>({pts:grid.map((g,i)=>[g,s[i]]),c:"var(--grid)",w:1.4}));
+  const ser=samples.map(s=>({pts:grid.map((g,i)=>[g,s[i]]),c:"var(--grid)",w:1.5}));
   ser.push({pts:grid.map((g,i)=>[g,mean[i]]),c:"var(--s1)",w:2.6});
-  ser.push({pts:grid.map(g=>[g,2*Math.sqrt(g/Math.PI)]),c:"var(--s3)",dash:true,w:2});
+  ser.push({pts:grid.map(g=>[g,2*Math.sqrt(g/Math.PI)]),c:"var(--s3)",dash:true,w:2.2});
   const ymax=Math.max(...samples.flat(),40)*1.05;
   plot($("rc"),{x:[0,T],y:[0,ymax],xl:"time (mean service times)",yl:"jobs in system",series:ser});}
 $("rRun").addEventListener("click",runWalk);
 
 /* ---------- §8 buffers ---------- */
 function drawBuf(){const cols={2:"var(--s1)",3:"var(--s2)",4:"var(--s3)",5:"var(--s4)"};const ser=[];
-  Object.keys(DATA.bufsweep).forEach(n=>{const pts=DATA.bufsweep[n].map((v,b)=>[b,v]);ser.push({pts,c:cols[n],dash:DASH[n]});ser.push({pts,dots:true,c:cols[n],r:3.5});});
+  Object.keys(DATA.bufsweep).forEach(n=>{const pts=DATA.bufsweep[n].map((v,b)=>[b,v]);ser.push({pts,c:cols[n],dash:DASH[n],label:n+" stations"});ser.push({pts,dots:true,c:cols[n],r:3.5,marker:n==="5"?"square":undefined});});
   plot($("bc"),{x:[0,8],y:[0.4,1],xl:"buffer slots b between each pair of stations",yl:"throughput ÷ demand",xticks:[0,1,2,3,4,5,6,7,8],yticks:[.4,.5,.6,.7,.8,.9,1],
-    series:ser.concat([{pts:[[0,1],[8,1]],c:"var(--muted)",dash:true,w:1.2}])});}
+    series:ser.concat([{pts:[[0,1],[8,1]],c:"var(--muted)",dash:true,w:1.5}])});}
 
 /* ---------- §9 bowl ---------- */
 function drawBowl(){const cols={0:"var(--s1)",1:"var(--s2)",3:"var(--s3)"};const ser=[],opt=[];const xs=DATA.bowlx;
@@ -162,7 +201,7 @@ function drawCost(){const lam=+$("cL").value,hc=+$("cH").value;const cm=$("cM");
   const hi=+cm.max,xs=[];for(let x=lam+0.02;x<=hi;x+=(hi-lam)/300)xs.push(x);
   const ymax=C(mus)*2.2;
   plot($("cc"),{x:[lam,hi],y:[0,ymax],xl:"capacity μ (units per hour)",yl:"cost per hour ÷ c",
-    series:[{pts:xs.map(x=>[x,x]),c:"var(--s2)",dash:DASH[3],w:1.8},{pts:xs.map(x=>[x,hc*lam/(x-lam)]),c:"var(--s3)",dash:DASH[4],w:1.8},{pts:xs.map(x=>[x,C(x)]),c:"var(--s1)"},
+    series:[{pts:xs.map(x=>[x,x]),c:"var(--s2)",dash:"dashed",w:2},{pts:xs.map(x=>[x,hc*lam/(x-lam)]),c:"var(--s3)",dash:"dotted"},{pts:xs.map(x=>[x,C(x)]),c:"var(--s1)"},
       {pts:[[mus,C(mus)]],dots:true,ring:true,c:"var(--s4)",r:6},{pts:[[mu,C(mu)]],dots:true,c:"var(--ink)",r:5}],
     vlines:[{x:lam,c:"var(--muted)",label:"μ = λ"}]});
   const trim=lam+0.1*ms;

@@ -295,9 +295,57 @@ reflections has no page yet and shows "Not yet" on the all-books page.
 - **R5. Look.** learning.css is the chrome; `learning/reflections/reflections.css` adds the
   essay pieces (section numbers, theorem blocks, "from a probability course" asides, figures
   with controls, tables, reading list). Charts never use --fit / --fix; they use the reflection
-  series tokens --s1..--s4 (light, dark, and an Okabe–Ito set under data-colorblind), and every
-  line in a shared chart has its own dash pattern or marker (series 1 solid, then "9 5", "2 4",
-  "9 4 2 4"; dots; a hollow ring for the §10 optimum), so they read in grayscale.
+  series tokens --s1..--s4 (light, dark, and an Okabe–Ito set under data-colorblind), and lines
+  that share a chart are told apart by shape (solid / dashed / dotted, see R11) or by a marker.
+  **Superseded in part by R11 (2026-10-15):** the series got its own theme and the dash forms
+  were standardized.
+- **R11. Series themes and readable dashes (2026-10-15).** Decided after Gideon's review of the
+  first build.
+  - *Structure.* learning.css stays the shared base (series bar, layout, spacing, footer, viewing
+    settings, and the token NAMES every component uses). Each series sets `data-series="fits" |
+    "reflections"` on `<html>` and overrides only tokens in its own CSS. Non-chart UI now uses two
+    semantic tokens, `--accent` (links, focus, status pills, slider thumbs) and `--emph` (flagged
+    readouts); in Reading Your Fits they equal the fit/fix pair, so nothing there changed. The hub
+    keeps the base look with no `data-series`; its Reflections block carries the brass accent.
+    "Own design, deliberately different from the main site" is now a Reading Your Fits rule, and
+    the --fit / --fix meanings stay a Reading Your Fits rule.
+  - *Reflections theme, "engineering computation pad".* Industrial engineering's own paper and
+    shop-floor vernacular: blue-grey steel paper and neutrals, graphite ink, brass, steel blue,
+    and ANSI safety colors used sparingly for emphasis; related to the main site's warm bronze
+    but not the same. Tokens (light / dark): paper #F1F3F5 / #151A1F, surface #E4E8ED / #1D242B,
+    grid #CED6DF / #29313A, rule #C2CBD5 / #333D47, ink #1F252B / #E3E8ED, muted #56606A /
+    #A0AAB5, accent brass #7E5B17 / #D9A441, emphasis safety orange #AD4414 / #F08A4B (light
+    darkened from #B54A17: 4.43:1 on the surface was short of 4.5), chart 1 brass, chart 2 steel
+    blue #2C6390 / #8DB6D4, chart 3 safety orange, chart 4 safety green #3A6D32 / #9CC27A. Type:
+    Archivo (headings, width axis 112.5), IBM Plex Serif (body), IBM Plex Mono (figures), with
+    fallback stacks. Surface color offset on figure panels; no decorative grid (the faint
+    computation-pad squares on figure and control panels were removed the same day, Gideon's
+    call; --grid stays for the charts' own gridlines); a paper sheet behind each plot area;
+    time-study tables; safety orange only for "attention" (theorem
+    border, a flagged readout); no stencil fonts, hazard stripes or fake textures. Rendered
+    contrast (Chromium): light body 13.9:1, muted 5.8, brass on surface 5.0, orange on paper 5.2
+    and on surface 4.7, chart labels 5.8, steel blue 5.7 on the sheet and 5.2 on the surface;
+    dark everything 6.3:1 or better.
+  - *Dash forms, both series.* On screen, whatever the viewBox scale: data lines ≥ 2 px; dashed =
+    10 px dashes / 6 px gaps at 2 px; dotted = round 3.25 px dots every 6 px (zero-length dashes,
+    round caps). Rule of thumb: dash length ≥ 3× the dot diameter, dots heavier than dashes. At
+    most three forms per chart; a fourth series gets a second cue (hollow square markers + direct
+    labels at the line ends in §8). Legends repeat the chart geometry. Reading Your Fits keeps its
+    meanings and class names; learning.js sets `--k` (viewBox width ÷ rendered width) on every
+    svg.chart and learning.css multiplies widths and dash lengths by it (`calc(10px * var(--k))`),
+    chosen over `vector-effect: non-scaling-stroke` so the result does not depend on a browser's
+    dash semantics. Both approaches were probed: in Chromium 1248 and Firefox (Playwright's
+    build) non-scaling-stroke also keeps dashes constant, but calc is explicit. Verified by
+    reading pixels: 10/6 dashes at 2 px and 3 px dots every 6 px in both browsers at 375 px.
+  - *Before.* The authored 7/5 dashes and 0.1/5.5 dots rendered at 0.61 to 0.88 scale: truth
+    lines 1.6 px with 5.7/4.1 dashes at 375 px, dots every 4.5 px, 1.0 px reference lines; in
+    Module 5's two 560-wide charts 1.2 px with 4.3/3.1 dashes. Reflections' two-column charts at
+    1280 rendered at 0.54 scale (0.86 px strokes, 3.2/2.7 dashes).
+  - *Screenshot diff (Reading Your Fits, 375 and 1280, before vs after).* Every differing region
+    is a chart's lines, dots or bars (thicker strokes, longer dashes, heavier dots, the dotted
+    corrected-estimate bars), the two legend-key swatches in each module's header (now gradients
+    with the chart geometry), or the hub's Reflections block (brass rule, +13 px). No text,
+    layout or color outside those regions changed.
 - **R6. Math: self-hosted KaTeX 0.19.0** (MIT; published 2026-10-01, the newest version at
   least two weeks old on build day) in `learning/assets/vendor/katex/`: katex.min.js,
   katex.min.css, auto-render.min.js, the woff2 fonts only, and its LICENSE. Auto-render is
@@ -346,6 +394,58 @@ reflections has no page yet and shows "Not yet" on the all-books page.
   unchanged), the §1 diagram scrolls in its box, and the three longest display equations (§4
   E[T] chain, §8 boxed TH line, §8 TH < d) have two-line `aligned` twins shown under 520 px.
   106 more checks, including the rendered tick-label size at 375 and 768 in every viewing mode.
+  Superseded the same day for desktop: viewBoxes now follow the container at every width, so
+  chart text is 12–13 px at 1280 too (the two-column dice charts were ~9 px).
+- [X] Hub restyle (2026-10-16): learning/index.html is a main-site frame (series bar, header,
+  footer: Palette B and the main site's §6 dark palette, copied from css/style.css; Lora + DM
+  Sans; sentence-case eyebrow by CSS; white bar; dark footer band) around one full-bleed band
+  per series (1px top rule, 4.5rem padding, content in the frame's centered column). The
+  Reading Your Fits band inherits the base lab tokens (equal to a module page's in every
+  viewing mode); the Reflections band is the ref-panel, no longer a card. Decided on the way:
+  the frame mirrors §6 for OS dark too, because every main-site page's head script sets
+  data-theme from the OS (style.css's media-query dark palette only applies with JavaScript
+  off; noted in plan.md, not a contrast bug). Fixed on the way: `.series` / `.hub-band` set
+  display, which overrode `[hidden]`, so the "hidden" Reflections block rendered (heading,
+  intro and a dead "All 11 books" link) in the installed copy, with the registry missing and
+  without JavaScript; `.hub [hidden]` now wins, and the test checks rendering, not the
+  property. No installer had shipped it (v1.0.0 predates Reflections). Checked: 375 / 768 /
+  1280 × light / dark × plain / readability / colorblind / both × EN / ES, every text element
+  ≥ 4.5:1 against its own band (smallest: frame 5.25, Reading Your Fits 4.71, Reflections
+  5.21, footer 11.1), frame tokens = about.html's in every theme / mode, the offline stage
+  from disk online and with the network cut (no missing file, no 404; only the Google Fonts
+  requests fail offline), 3156 checks.
+- [X] Hub polish (2026-10-15): the Reflections block became a `.ref-panel` previewing the
+  Reflections theme (surface background, Archivo / Plex Serif / Plex Mono, brass rule and
+  hover), 4.5rem below Reading Your Fits, padding clamp(16px, 3vw, 32px); at most the 3 newest
+  ready reflections. Token values copied from reflections.css into learning.css (reflections.css
+  can't load on the hub), checked equal on rendered values in light / dark / readability /
+  colorblind. The three faces are injected only when the panel is shown (display=swap): no
+  request from the installed copy or without JavaScript. Copy: new hub lead ("…each series has
+  its own format"), the browser sentence moved into the Reading Your Fits intro, a new refIntro
+  (EN/ES) also used on the all-books page; hub and all-books meta / og descriptions follow.
+  Checked: hub at 375 / 768 / 1280 × light / dark × plain / readability / colorblind / both ×
+  EN / ES (panel text ≥ 5.2:1, brass hover ≥ 5.0:1, console and i18n check clean); the Reading
+  Your Fits section identical to before except its intro (48 configurations, element by
+  element); the cap with 5 injected entries; 1025 checks.
+- [X] Label and caption fixes (2026-10-15, after Gideon's review): §8 direct labels moved to a
+  reserved right margin at each line's final y, 1.2× their box height apart, dropped when the
+  plot would fall under 200 px (phones); axis titles never below 12 px (two lines if needed);
+  captions in IBM Plex Serif 0.875 rem, normal weight, muted. New check: no two text boxes
+  overlap in any chart, and all chart text is 12–13 px, at 375 / 768 / 1280, light and dark
+  (136 checks).
+- [X] Series themes and readable dashes (2026-10-15, R11): Reflections "computation pad" theme,
+  `data-series` on every series page, `--accent` / `--emph` in the base, constant-on-screen dash
+  geometry in both series, §8 square markers + direct labels. Checked: screenshot diff of the hub
+  and six modules at 375/1280 (only chart lines, legend swatches and the hub's Reflections block
+  differ); strokes/dashes measured on every chart at 375/768/1280; grayscale run lengths in
+  Chromium and Firefox; rendered contrast light/dark/readability; 10 pages × 375/768/1280 ×
+  light/dark × plain/readability/colorblind/both, console clean; deuteranopia and achromatopsia
+  crops of §8, §9, §10 and two Reading Your Fits charts.
+- [ ] Python figures (and so the Quarto decks) draw their dashed truth lines at 1 to 1.8 pt
+  with matplotlib's default short dashes, the same problem the pages had: r-squared.py:167 and
+  175, residual-plots.py:215, uneven-scatter.py:129, 187 and 196, time-order.py:110, 150, 166
+  and 215, invisible-bias.py:73, 145, 250 and 266, reporting.py:93. Out of scope on 2026-10-15;
+  fixing them means re-rendering 12 decks and the ES figures.
 - [ ] Gideon: confirm with Professor Donnell that he's OK being named.
 - [ ] Redraw learning.png for the hub: it still shows only Reading Your Fits (the hub's
   og:description now covers both sections; the card was left as is on 2026-10-15).

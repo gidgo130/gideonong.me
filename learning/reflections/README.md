@@ -45,24 +45,63 @@ and links the all-books page.
 - **Professor Donnell's name** lives in exactly two places per language: the hub's `refIntro`
   strings, and the all-books page (its `<title>`, `<h1>`, meta description and og tags, all in
   that one file). Cards never carry the name. If the name has to change, those are the edits.
-- **Design (R5).** learning.css is the chrome; `reflections.css` adds the essay pieces: `§n`
-  section labels (`.sec`), theorem blocks (`.thm`), "from a probability course" asides (`.tie`),
-  figures with controls (`.fig`, `.controls`, `.legend`, `.readout`), tables (`.tbl`), the
-  reading list (`.books`), the all-books and book-page lists. Sizes are in em so About's
-  readability setting scales them.
-- **Chart colors (R5).** Never `--fit` / `--fix`: across Reading Your Fits those mean "what an
-  ordinary fit reports" and "a corrected estimate". Reflections use the series tokens
-  `--s1..--s4` (reflections.css: light, dark, and an Okabe–Ito set under `data-colorblind`), and
-  every line that shares a chart also has its own dash pattern or marker: series 1 solid, then
-  `9 5`, `2 4`, `9 4 2 4` (legend classes `.d2` / `.d3` / `.d4`, generic `.dash` = `6 5`), dots
-  `.dot`, a hollow ring `.ring`. main.js's `plot()` takes `dash: "<pattern>"` and `ring: true`.
-- **Chart text on phones.** Charts are authored with a 640-wide viewBox. main.js's `plot()`
-  keeps it at desktop, but below the 820 px one-column breakpoint it sizes the viewBox from the
-  container's width (at least 300 units; height keeps the authored ratio, never under 220), so
-  13-unit text renders at about 13 px on a phone instead of 6. Each SVG remembers its authored
-  viewBox in `data-vb` and its last plot options, and a debounced resize handler redraws every
-  chart (same data, no re-simulation). A static diagram that is not drawn by `plot()` scrolls in
-  its box under 520 px instead (`.fig[style*="overflow-x"] svg { min-width }`).
+- **The hub panel copies the theme.** learning.css's `.ref-panel` (the hub's Reflections block)
+  repeats the paper, surface, rule, ink, muted, accent and font tokens below, light, dark and
+  readability, because reflections.css can't load on the hub (the offline app excludes it).
+  Change a token here and there together; the hub test compares the two on rendered values.
+  The panel's `--note-bg` is the paper color on purpose (its row hover).
+- **Theme: "engineering computation pad" (decided 2026-10-15).** Every page has
+  `<html data-series="reflections">`; `reflections.css` overrides learning.css's token NAMES
+  under that selector and adds nothing structural. Industrial engineering's own paper and
+  shop-floor vernacular: blue-grey steel paper and neutrals, graphite ink, brass accent, steel
+  blue, and ANSI safety colors used sparingly for emphasis. Related to the main site's warm
+  bronze but not the same. Tokens (light / dark): paper `#F1F3F5` / `#151A1F`; surface (figure
+  panels, asides) `#E4E8ED` / `#1D242B`; grid `#CED6DF` / `#29313A`; rule `#C2CBD5` / `#333D47`;
+  ink `#1F252B` / `#E3E8ED`; muted `#56606A` / `#A0AAB5`; accent brass `#7E5B17` / `#D9A441`;
+  emphasis safety orange `#AD4414` / `#F08A4B` (light darkened from `#B54A17` to clear 4.5:1 on
+  the surface); chart 1 brass, chart 2 steel blue `#2C6390` / `#8DB6D4`, chart 3 safety orange,
+  chart 4 safety green `#3A6D32` / `#9CC27A`. Type: Archivo (headings, width axis at 112.5 for
+  a slightly expanded cut), IBM Plex Serif (body), IBM Plex Mono (numbers, readouts, labels,
+  legends, table figures), each with a real fallback stack. Details, kept restrained: surface
+  color offset on figure panels; no decorative grid (the computation-pad squares were removed
+  on 2026-10-15; the grid token now colors only the charts' own gridlines), with a
+  paper-colored sheet drawn behind each plot area; tables like a time-study
+  sheet (mono tabular figures, ruled rows, a heavier rule under the header); safety orange only
+  where it means "attention" (the theorem box border, a flagged readout), never decoration or a
+  large fill; no stencil fonts, hazard stripes or fake textures. Contrast: body text and chart
+  labels at least 4.5:1 in both themes (checked on rendered colors, see the checks below).
+- **Essay pieces (R5).** `reflections.css` also holds the essay components: `§n` section labels
+  (`.sec`), theorem blocks (`.thm`), "from a probability course" asides (`.tie`), figures with
+  controls (`.fig`, `.controls`, `.legend`, `.readout`), tables (`.tbl`), the reading list
+  (`.books`), the all-books and book-page lists. Sizes are in em so About's readability setting
+  scales them.
+- **Chart colors and line forms (R5).** Never `--fit` / `--fix`: across Reading Your Fits those
+  mean "what an ordinary fit reports" and "a corrected estimate". Reflections use the series
+  tokens `--s1..--s4` (light, dark, and an Okabe–Ito set under `data-colorblind`). Lines that
+  share a chart are told apart by shape, at most three forms: solid (2.2 px), dashed (10 px
+  dashes, 6 px gaps, 2 px) and dotted (round 3.25 px dots every 6 px). Rule of thumb: dash
+  length at least 3× the dot diameter, and dots heavier than dashes. A fourth series gets a
+  second cue instead of a fourth form: hollow square markers plus direct labels in the right
+  margin (§8; dropped on phones, see "Direct labels"). main.js's `plot()` takes `dash: "dashed" | "dotted"` (`true` = dashed), `dots: true`
+  with `ring: true` or `marker: "square"`, and `label: "…"`; it converts screen pixels to user
+  units with its own scale factor so strokes, dashes and markers keep their size on screen at
+  any viewBox scale. Legend classes repeat the same geometry: `.dash`, `.dotted`, `.dot`, `.ring`,
+  `.sq`.
+- **Chart text at every width (2026-10-15).** main.js's `plot()` sizes each viewBox from the
+  container's width at every screen size (at least 300 units; height keeps the authored 640-wide
+  ratio, between 220 and 1.25× the authored height), so one user unit is one CSS pixel and chart
+  text renders at 12 to 13 px on a phone, a tablet and a desktop alike. Axis titles are 13 px,
+  12 px if that does not fit, and two lines at 12 px if even that is too long (the margin grows to
+  match); never smaller. Each SVG remembers its authored viewBox in `data-vb` and its last plot
+  options, and a debounced resize handler redraws every chart (same data, no re-simulation). A
+  static diagram that is not drawn by `plot()` scrolls in its box under 520 px instead
+  (`.fig[style*="overflow-x"] svg { min-width }`).
+- **Direct labels.** A series with `label: "…"` gets its name in a right margin reserved for it,
+  at the line's final y, nudged apart to 1.2× the label's box height (about 1.6× its font size)
+  and kept inside the plot's vertical span, so it never sits on a line, a point or another label.
+  When that margin would leave less than 200 px of plot (phones), the labels are dropped and the
+  legend carries the names; line forms and markers stay.
+- **Captions** are IBM Plex Serif at 0.875 rem, normal weight, muted; a `<b>` lead-in stays ink.
 - **Long equations on phones.** A one-line display equation that would scroll sideways on a
   phone gets a two-line twin: `<span class="eq-wide">$$…$$</span>` with the original TeX,
   byte-identical, and `<span class="eq-narrow">$$\begin{aligned}…\\…\end{aligned}$$</span>`
@@ -118,7 +157,10 @@ and links the all-books page.
    `learning/assets/og/<book>-<slug>.png`.
 5. Checks: the hub-wide list in `learning/README.md`, plus: no raw `\(` or `$$` in the rendered
    text and no `.katex-error` spans; every control changes its chart or readout; the dash/marker
-   cues hold in dark mode and with colorblind on; at 375 px every chart's tick text renders at
-   11 px or more (CSS font-size × the SVG's screen scale) and no equation scrolls sideways
-   unless it has to; `build.ps1 -StageOnly` stages nothing from Reflections; the page opens
-   from disk with the math rendered.
+   cues hold in dark mode and with colorblind on (and under deuteranopia / achromatopsia
+   emulation); at 375, 768 and 1280 px every chart's text renders at 12 to 13 px (CSS font-size
+   × the SVG's screen scale) and no two text boxes in a chart overlap; data lines at 2 px or
+   more, dashes at 10/6 and dots at 3.25 px every 6 px, and no equation scrolls sideways unless
+   it has to; body, muted, chart-label and brass
+   text at 4.5:1 or better on the rendered colors in both themes; `build.ps1 -StageOnly` stages
+   nothing from Reflections; the page opens from disk with the math rendered.

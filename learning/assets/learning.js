@@ -245,7 +245,20 @@
     if (o.over) g += o.over(sx, sy, { m: m, pw: pw, ph: ph });
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
     svg.innerHTML = g;
+    strokeScale(svg);
   }
+  // Line geometry stays constant on screen: learning.css multiplies stroke widths and dash
+  // lengths by --k = viewBox width / rendered width. Set after every draw, on resize, and when a
+  // <details> opens (a chart inside a closed one has no width yet).
+  function strokeScale(svg) {
+    var w = svg.clientWidth, vb = svg.viewBox.baseVal;
+    if (w && vb && vb.width) svg.style.setProperty("--k", (vb.width / w).toFixed(4));
+  }
+  function strokeScales() { document.querySelectorAll("svg.chart").forEach(strokeScale); }
+  var rsz;
+  window.addEventListener("resize", function () { clearTimeout(rsz); rsz = setTimeout(strokeScales, 100); });
+  document.addEventListener("toggle", strokeScales, true);
+  document.addEventListener("DOMContentLoaded", strokeScales);
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
   function line(cls, sx, sy, b0, b1, x0, x1) {
     return '<line class="' + cls + '" x1="' + sx(x0) + '" y1="' + sy(b0 + b1 * x0) + '" x2="' + sx(x1) + '" y2="' + sy(b0 + b1 * x1) + '"/>';

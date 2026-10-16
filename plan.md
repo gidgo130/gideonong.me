@@ -666,6 +666,14 @@ Goal: site works cleanly on phone and tablet; typography and visual polish compl
 - [ ] Optimize all images (compress, correct dimensions, add alt text to every image)
 - [ ] Add real project photos, diagrams, and embedded PDFs where available
 - [ ] Cross-browser test (Chrome, Firefox, Safari desktop + mobile)
+- [ ] Dark palettes in css/style.css (found 2026-10-16 while building the /learning hub frame):
+  there are two dark token sets. The `prefers-color-scheme` block (`--bg` #1C1914, `--muted`
+  #9A948D) applies only with JavaScript off, because every page's head script sets
+  `data-theme` from the OS when nothing is saved; the §6 `:root[data-theme="dark"]` block
+  (#16130E, muted #E4DCCE) is what visitors actually see. Align the media-query block with §6,
+  or drop it, so visitors without JavaScript get the same palette. Not a contrast bug:
+  readability is switched on by JavaScript too, so OS dark + readability always resolves to
+  §6's #C4BBAC. The /learning hub frame mirrors §6 (learning/assets/learning.css).
 - [X] Review "under development" banner — hidden before the 2026-09-30 career fair (`display: none`
   on `.dev-banner` in css/style.css; the markup stays until Phase 4 removes it)
 

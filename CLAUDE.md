@@ -694,12 +694,32 @@ live in learning/workshop/ (tracked in git, never deployed: listed in .vercelign
 only the rendered slides.html copied into learning/fits/<slug>/.
 
 ### Hub-wide rules (these replace the main-site rules where they conflict; every section follows them)
-- Own design, deliberately different from the main site: the "lab notebook" look in
-  learning/assets/learning.css. Fonts Barlow Semi Condensed (display), Source Serif 4 (body),
-  JetBrains Mono (numbers). Uppercase eyebrows and "Trial 1 of 4" / module numbers / "§4" ARE
-  allowed here because they mark a real sequence. No main-site navbar, banner or footer; each
-  page has the thin series bar (gideonong.me / Learning / series / …). A series may add its own
-  stylesheet on top (reflections.css) but never replaces learning.css.
+- One base, a theme per series (2026-10-15). learning/assets/learning.css is the shared base:
+  series bar, layout, spacing, footer, viewing settings and the token NAMES every component
+  uses (--paper, --plot, --grid, --rule, --ink, --muted, --pt, --note-bg, --accent, --emph,
+  --font-display / -body / -mono, the chart tokens). Each series sets `data-series="fits" |
+  "reflections"` on <html> and overrides only tokens (colors, fonts, chart series colors,
+  surface textures) in its own CSS; it never replaces learning.css. The base tokens ARE the
+  Reading Your Fits look (no fits stylesheet). The hub (2026-10-16) carries no data-series: it
+  is a main-site frame (series bar, header, footer: `.hub-frame`, the main site's Palette B and
+  §6 dark tokens COPIED from css/style.css, Lora + DM Sans, sentence-case eyebrow, the dark
+  main-site footer) around one full-bleed band per series (`.hub-band`, 1px rule on its top
+  edge, 4.5rem padding, content in the frame's centered `.hub-col`): the Reading Your Fits band
+  inherits the base lab tokens, the Reflections band is the `.ref-panel`. Non-chart UI
+  (links, focus rings, status pills, flagged readouts, slider thumbs) uses --accent / --emph,
+  never --fit / --fix directly. Uppercase eyebrows and "Trial 1 of 4" / module numbers / "§4"
+  ARE allowed here because they mark a real sequence. No main-site navbar, banner or footer;
+  each page has the thin series bar (gideonong.me / Learning / series / …).
+- Dashed and dotted chart lines stay readable, in every series (2026-10-15). At the rendered
+  size, at 375 px and up: data lines ≥ 2 px; dashed = 10 px dashes / 6 px gaps at 2 px; dotted =
+  round 3.25 px dots every 6 px (zero-length dashes, round caps). Rule of thumb: dash length ≥
+  3× the dot diameter, and dots heavier than dashes. At most three forms per chart (solid,
+  dashed, dotted); a fourth series gets a second cue (markers every N points or a direct label
+  at the line's end; prefer direct labels). Legends show the same geometry at the same rendered
+  size. Geometry is computed from the current scale, never left to the viewBox: Reading Your
+  Fits through `--k` on each svg.chart (learning.js) and `calc(… * var(--k, 1))` in
+  learning.css; Reflections through plot()'s own factor. Out of scope: Quarto decks and Python
+  figures (open item in learning-plan.md).
 - Unlisted: NOT in the main nav, sitemap or project list. Since 2026-09-29 there is no link
   from the site at all: the Learning entry in about.html's Interesting sites was replaced when
   that block was unhidden. /learning is reached by URL and by its shared link-preview cards.
@@ -713,6 +733,10 @@ only the rendered slides.html copied into learning/fits/<slug>/.
   learning/assets/og/, made by learning/workshop/tools/make-og-cards.py: learning.png for the
   hub, <slug>.png per module, reflections.png for the all-books and book pages,
   <book>-<slug>.png per reflection). Scrapers don't run JS, so they stay in the HTML.
+  Exception (2026-10-15): the hub's meta description and og:description read "Interactive notes
+  and essays built with Claude, mostly for engineering students. Each series has its own
+  format." The on-page lead keeps "I [told Claude to] build"; the bracket stays out of the
+  link-preview card.
 - Viewing settings follow the main site's saved choices (About → Viewing settings) through the
   head snippet on every page, with the same localStorage keys and <html> attributes as
   js/about.js §6: `viewTheme` → data-theme (else prefers-color-scheme), `viewReadability` → data-
@@ -736,11 +760,23 @@ only the rendered slides.html copied into learning/fits/<slug>/.
   (LF.moduleList) and the Reflections block from assets/reflections.js, which it loads only when
   `window.LEARN_OFFLINE` is unset (the installed copy never requests it) and keeps hidden until
   the file has loaded. The hub's lead and both blocks are bilingual (learning/strings.js).
+  The Reflections band is a `.ref-panel` (2026-10-15; a full-bleed band since 2026-10-16) in
+  the Reflections theme: surface background, Archivo / IBM Plex Serif / IBM Plex Mono, brass
+  rule and hover, the 3 newest ready reflections then "All 11 books". Its token values are
+  COPIES of reflections.css in learning.css (reflections.css can't load on the hub; the offline
+  app excludes it): change both. Its three faces are injected by the hub script only when the
+  band is shown (display=swap), never in the installed copy or without JS. The frame's tokens
+  are likewise COPIES of css/style.css (Palette B + §6 dark + readability muted): keep in step.
+  `.hub [hidden]` is `display: none !important`, because the bands set display and would
+  otherwise show a hidden block.
 - Files outside learning/ that /learning touches: js/about-data.js (a Learning entry in
   ABOUT_SITES, when one exists), .vercelignore (the one line that re-includes the KaTeX
   LICENSE) and these docs. Anything else outside learning/ needs Gideon's OK first.
 
 ### Reading Your Fits (learning/fits/<slug>/)
+- Own design, deliberately different from the main site: the "lab notebook" look that the base
+  tokens of learning.css define. Fonts Barlow Semi Condensed (display), Source Serif 4 (body),
+  JetBrains Mono (numbers). Module pages carry `<html data-series="fits">`.
 - Color meaning is fixed across every module: dashed ink = the truth, solid red (--fit) = what
   an ordinary fit reports, dotted blue (--fix) = a corrected estimate, grey dots = measured
   points. The dots on --fix (.fix, .fix-curve, .ci-bar-fix, the .sw.fix legend swatch, the
@@ -786,13 +822,27 @@ only the rendered slides.html copied into learning/fits/<slug>/.
   ready}; optional `edition` and `about` per book, empty `about` renders nothing) plus the three
   renderers (LEARN_REFLECTIONS.hubList / bookList / bookPage). Dates are formatted from their
   parts with timeZone UTC, never `new Date(string)`.
-- R5 look: learning.css is the chrome; learning/reflections/reflections.css adds the essay
-  pieces (§n labels, theorem blocks, "from a probability course" asides, figures with controls,
-  tables, reading list, the book lists), sized in em so readability scales them. Charts NEVER
-  use --fit / --fix; they use the series tokens --s1..--s4 (light, dark, Okabe–Ito under
-  data-colorblind), and every line in a shared chart also has its own dash pattern or marker
-  (series 1 solid, then "9 5", "2 4", "9 4 2 4"; dots; hollow ring), with matching legend
-  classes .dash / .d2 / .d3 / .d4 / .dot / .ring.
+- R5 / R11 look (design rule decided 2026-10-15): the "engineering computation pad". Every
+  Reflections page has `<html data-series="reflections">`; learning/reflections/reflections.css
+  overrides the base tokens under that selector and adds the essay pieces (§n labels, theorem
+  blocks, "from a probability course" asides, figures with controls, time-study tables,
+  reading list, the book lists), sized in em so readability scales them. Palette: industrial
+  engineering's own paper and shop-floor vernacular, related to the main site's warm bronze
+  but not the same: blue-grey steel paper #F1F3F5 / #151A1F and surface #E4E8ED / #1D242B, grid
+  #CED6DF / #29313A, rule #C2CBD5 / #333D47, graphite ink #1F252B / #E3E8ED, muted #56606A /
+  #A0AAB5, brass accent #7E5B17 / #D9A441, safety-orange emphasis #AD4414 / #F08A4B, chart
+  series brass / steel blue #2C6390 / #8DB6D4 / safety orange / safety green #3A6D32 /
+  #9CC27A. Type: Archivo (headings, width axis 112.5), IBM Plex Serif (body), IBM Plex Mono
+  (numbers, readouts, labels, table figures), with real fallback stacks. Restraint: surface
+  color offset on figure panels; no decorative grid (removed 2026-10-15; --grid is only the
+  charts' own gridlines), with a paper sheet behind each plot area; tables like a time-study sheet (mono tabular
+  figures, ruled rows, heavier header rule); safety orange only where it means "attention"
+  (theorem border, a flagged readout), never decoration or a large fill; no stencil fonts,
+  hazard stripes or fake textures. Body text and chart labels ≥ 4.5:1 in both themes. Charts
+  NEVER use --fit / --fix; they use --s1..--s4 (light, dark, Okabe–Ito under data-colorblind),
+  the hub-wide line forms (solid / dashed / dotted, at most three), markers or direct labels
+  for a fourth series, and legend classes .dash / .dotted / .dot / .ring / .sq with the same
+  geometry.
 - R6 math: self-hosted KaTeX 0.19.0 (MIT) in learning/assets/vendor/katex/ (katex.min.js,
   katex.min.css, auto-render.min.js, fonts/*.woff2, LICENSE), loaded only by pages with math.
   Auto-render has exactly two delimiter pairs, `\( \)` inline and `$$ $$` display, never a

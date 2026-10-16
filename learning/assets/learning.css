@@ -16,6 +16,11 @@
   --fit: #c93a22;
   --fix: #1d5ea6;
   --note-bg: #e7ede4;
+  /* Non-chart UI (links, focus rings, status pills, flagged readouts, slider thumbs) uses these two,
+     not --fit / --fix directly, so a series can restyle them without touching chart meanings. In
+     Reading Your Fits they are the fit/fix pair (and follow it under data-colorblind). */
+  --accent: var(--fix);
+  --emph: var(--fit);
   --font-display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
   --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
@@ -43,7 +48,7 @@ body {
   margin: 0; padding-inline: 16px; padding-block: 0 64px;
 }
 a { color: inherit; text-underline-offset: 3px; }
-a:hover { color: var(--fix); }
+a:hover { color: var(--accent); }
 /* Reference chip: a quiet tinted link on a cited name or title (see learning-i18n.js). */
 a.ref-chip { text-decoration: none; padding: 1px 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
 a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%, transparent); }
@@ -57,7 +62,7 @@ a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%
 }
 .series-bar .crumbs { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--muted); }
 .series-bar .crumbs a { color: var(--ink); font-weight: 600; text-decoration: none; }
-.series-bar .crumbs a:hover { color: var(--fix); }
+.series-bar .crumbs a:hover { color: var(--accent); }
 .lang-toggle {
   display: inline-flex; flex: none; /* never squeezed by long crumbs; they wrap instead */
   border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
@@ -82,9 +87,11 @@ p { margin: 0; max-width: 65ch; }
 .legend-key { display: flex; flex-wrap: wrap; gap: 8px 22px; font-family: var(--font-display); font-size: 15px; color: var(--muted); padding-block: 14px 0; }
 .legend-key span { display: inline-flex; align-items: center; gap: 8px; }
 .sw { width: 28px; height: 0; border-top: 3px solid; display: inline-block; }
-.sw.truth { border-top: 2px dashed var(--ink); }
+/* Dashed and dotted swatches are drawn with gradients so they show exactly the chart's geometry
+   (see the chart classes below): dashes 10 px / gaps 6 px at 2 px; round dots 3.25 px every 6 px. */
+.sw.truth { border: 0; height: 2px; background: repeating-linear-gradient(90deg, var(--ink) 0 10px, transparent 10px 16px); }
 .sw.fit { border-color: var(--fit); }
-.sw.fix { border-color: var(--fix); border-top-style: dotted; }
+.sw.fix { border: 0; height: 3.25px; background: radial-gradient(circle at 1.625px 50%, var(--fix) 1.5px, transparent 1.75px) 0 0 / 6px 3.25px repeat-x; }
 .sw.dot { width: 9px; height: 9px; border: 0; border-radius: 50%; background: var(--pt); }
 
 .takeaway-links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--font-display); font-size: 16px; padding-block: 6px 0; }
@@ -99,7 +106,7 @@ p { margin: 0; max-width: 65ch; }
 :root[data-lite] .takeaway-links .take-colab { order: 1; }
 :root[data-lite] .takeaway-links .take-play { order: 2; }
 .takeaway-links .take-play,
-:root[data-lite] .takeaway-links .take-colab { font-weight: 700; text-decoration-color: var(--fix); text-decoration-thickness: 2px; }
+:root[data-lite] .takeaway-links .take-colab { font-weight: 700; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
 :root[data-lite] .takeaway-links .take-play { font-weight: 600; text-decoration-color: currentColor; text-decoration-thickness: auto; }
 
 /* ---------- trials ---------- */
@@ -120,28 +127,28 @@ svg.chart { width: 100%; height: auto; display: block; background: var(--plot); 
 .ctl label, .ctl .lbl { font-family: var(--font-display); font-weight: 600; font-size: 16px; display: flex; justify-content: space-between; gap: 8px; }
 .ctl output { font-family: var(--font-mono); font-weight: 400; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ctl small { font-size: 14px; color: var(--muted); line-height: 1.4; }
-input[type=range] { width: 100%; margin-inline: 0; accent-color: var(--fit); height: 28px; } /* no default 2px side margin: the track lines up with its label */
+input[type=range] { width: 100%; margin-inline: 0; accent-color: var(--emph); height: 28px; } /* no default 2px side margin: the track lines up with its label */
 .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .seg label { flex: 1 1 auto; text-align: center; padding: 7px 10px; font-family: var(--font-mono); font-size: 13px; cursor: pointer; border-left: 1px solid var(--rule); color: var(--muted); display: block; font-weight: 400; }
 .seg label:first-of-type { border-left: 0; }
 .seg input:checked + label { background: var(--ink); color: var(--paper); }
-.seg input:focus-visible + label { outline: 2px solid var(--fix); outline-offset: -2px; }
+.seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -2px; }
 button.btn {
   font-family: var(--font-display); font-weight: 600; font-size: 16px;
   background: transparent; color: var(--ink); border: 1.5px solid var(--ink); border-radius: 6px;
   padding: 8px 14px; cursor: pointer; justify-self: start;
 }
 button.btn:hover { background: var(--note-bg); }
-button:focus-visible, input[type=range]:focus-visible, a:focus-visible { outline: 2px solid var(--fix); outline-offset: 2px; }
+button:focus-visible, input[type=range]:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .readout { display: grid; gap: 0; border-top: 1px solid var(--rule); margin: 0; }
 .readout div { display: flex; justify-content: space-between; gap: 12px; padding-block: 7px; border-bottom: 1px solid var(--rule); font-family: var(--font-display); font-size: 16px; }
 .readout dt { color: var(--muted); }
 .readout dd { margin: 0; }
 .readout .v { font-family: var(--font-mono); font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; }
-.v.bad { color: var(--fit); font-weight: 600; }
-.v.good { color: var(--fix); font-weight: 600; }
+.v.bad { color: var(--emph); font-weight: 600; }
+.v.good { color: var(--accent); font-weight: 600; }
 
 .note { background: var(--note-bg); border-radius: 6px; padding: 14px 16px; font-size: 16px; line-height: 1.5; max-width: 72ch; }
 .note b { font-weight: 600; }
@@ -184,12 +191,12 @@ pre { font-family: var(--font-mono); font-size: 13px; line-height: 1.5; overflow
   padding: 16px 4px; text-decoration: none; color: inherit;
 }
 a.module-row:hover { background: var(--note-bg); color: inherit; }
-a.module-row:hover .m-title { color: var(--fix); }
+a.module-row:hover .m-title { color: var(--accent); }
 .m-num { font-family: var(--font-mono); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .m-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.15; }
 .m-desc { grid-column: 2 / 3; font-size: 16px; color: var(--muted); }
 .m-status { grid-row: 1; grid-column: 3; font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
-.m-status.ready { border-color: var(--fix); color: var(--fix); }
+.m-status.ready { border-color: var(--accent); color: var(--accent); }
 .module-row.is-soon .m-title { color: var(--muted); }
 @media (max-width: 520px) {
   .module-row { grid-template-columns: 2.4em minmax(0, 1fr); }
@@ -210,26 +217,131 @@ a.module-row:hover .m-title { color: var(--fix); }
 .ref-row .m-title { grid-column: 1; }
 .ref-date { grid-row: 2; grid-column: 2; font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
 .ref-row .m-desc { grid-column: 1; }
+/* ---------- Hub: the Reflections panel (.ref-panel) ----------
+   A preview of the Reflections theme. reflections.css can't load on the hub (the offline app
+   excludes it), so the token VALUES below are COPIES of learning/reflections/reflections.css:
+   keep the two in step (the hub test compares the panel's rendered colors and fonts with a
+   Reflections page's). --note-bg is the one deliberate difference: here it is the paper color,
+   the row hover on the surface. The three faces are requested by learning/index.html's script
+   only when the panel is shown; until they arrive the fallback stacks render (display=swap). */
+.ref-panel {
+  --paper: #f1f3f5; --plot: #e4e8ed; --rule: #c2cbd5; --ink: #1f252b; --muted: #56606a;
+  --accent: #7e5b17; --note-bg: #f1f3f5;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  background: var(--plot); color: var(--ink); font-family: var(--font-body);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ref-panel { --paper: #151a1f; --plot: #1d242b; --rule: #333d47; --ink: #e3e8ed; --muted: #a0aab5; --accent: #d9a441; --note-bg: #151a1f; }
+}
+:root[data-theme="dark"] .ref-panel { --paper: #151a1f; --plot: #1d242b; --rule: #333d47; --ink: #e3e8ed; --muted: #a0aab5; --accent: #d9a441; --note-bg: #151a1f; }
+/* readability: the Reflections palette's darker muted text */
+:root[data-readability] .ref-panel { --muted: #3f4851; }
+@media (prefers-color-scheme: dark) {
+  :root[data-readability]:not([data-theme="light"]) .ref-panel { --muted: #b7c1cb; }
+}
+:root[data-readability][data-theme="dark"] .ref-panel { --muted: #b7c1cb; }
+.ref-panel h2, .ref-panel .m-title, .ref-panel .ref-all { font-stretch: 112.5%; }
+.ref-panel h2::after { content: ""; display: block; width: 56px; height: 3px; margin-top: 10px; background: var(--accent); }
+.ref-panel .ref-book { font-family: var(--font-body); }
+.ref-panel .ref-date { font-family: var(--font-mono); }
 .ref-all { font-family: var(--font-display); font-size: 16px; }
+
+/* ---------- Hub: main-site frame and series bands (2026-10-15) ----------
+   The hub (body.hub, learning/index.html only) is a main-site frame (.hub-frame: series bar,
+   header, footer) around one full-bleed band per series (.hub-band). Each band's content sits in
+   .hub-col, the same centered column as the frame (the old .wrap width: 1080px + a 16px gutter).
+   - Frame tokens: the main site's Palette B and its dark palette, COPIED from css/style.css
+     (which the offline copy doesn't ship): KEEP IN STEP WITH css/style.css → Palette B (:root)
+     and §6 Viewing settings (:root[data-theme="dark"], readability). Every main-site page's head
+     script sets data-theme from the OS when nothing is saved, so §6's dark palette is what a
+     dark-mode visitor sees there; the hub's head script doesn't, so the OS-dark rule below
+     carries the same §6 values. (style.css's prefers-color-scheme palette, #1C1914, applies
+     only with JavaScript off and is not mirrored; see plan.md.)
+   - Reading Your Fits band: no tokens of its own; it inherits this file's base (lab-notebook)
+     tokens, exactly as the module pages do.
+   - Reflections band: .ref-panel above (tokens copied from reflections.css).
+   The eyebrow is sentence case here (the main site has no ALL CAPS labels); markup unchanged. */
+body.hub { padding: 0; }
+.hub-col { max-width: 1080px; margin-inline: auto; padding-inline: 16px; box-sizing: content-box; }
+.hub [hidden] { display: none !important; }   /* .series / .hub-band set display; hidden must win */
+
+.hub-frame {
+  --paper: #fafaf8; --ink: #1a1a17; --muted: #6b6963; --rule: #ddd5c8; --accent: #6b4f1a;
+  --nav-bg: #ffffff; --footer-bg: #1a1510; --footer-text: #d4c9bb; --footer-accent: #d4a060;
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink); font-family: var(--font-body);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hub-frame {
+    --paper: #16130e; --ink: #ece6da; --muted: #e4dcce; --rule: #38301f; --accent: #ce9e4f;
+    --nav-bg: #1b1710; --footer-bg: #0e0b07; --footer-text: #d4c9bb;
+  }
+}
+:root[data-theme="dark"] .hub-frame {
+  --paper: #16130e; --ink: #ece6da; --muted: #e4dcce; --rule: #38301f; --accent: #ce9e4f;
+  --nav-bg: #1b1710; --footer-bg: #0e0b07; --footer-text: #d4c9bb;
+}
+:root[data-readability] .hub-frame { --muted: #4f4d48; }
+@media (prefers-color-scheme: dark) {
+  :root[data-readability]:not([data-theme="light"]) .hub-frame { --muted: #c4bbac; }   /* = §6 dark + readability */
+}
+:root[data-readability][data-theme="dark"] .hub-frame { --muted: #c4bbac; }
+
+/* series bar: the main navbar's surface (white in light mode), full width, thin rule below */
+.hub-bar { background: var(--nav-bg); border-bottom: 1px solid var(--rule); }
+.hub .series-bar { max-width: 1080px; padding-inline: 16px; box-sizing: content-box; border-bottom: 0; font-family: var(--font-body); font-size: 14px; }
+.hub .series-bar .crumbs a { font-weight: 600; }
+.hub .series-bar .crumbs a:hover { color: var(--accent); }
+.hub .lang-toggle { font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+
+/* header: Lora title, DM Sans lead, sentence-case eyebrow */
+.hub-head { background: var(--paper); }
+.hub-head .hub-col { padding-block: clamp(40px, 7vw, 64px) clamp(36px, 6vw, 56px); display: grid; gap: 12px; }
+.hub-head .eyebrow { font-family: var(--font-body); font-weight: 500; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.hub-head h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(38px, 6vw, 58px); line-height: 1.1; letter-spacing: -0.01em; }
+.hub-head .lead { font-family: var(--font-body); font-size: 19px; line-height: 1.55; max-width: 60ch; }
+
+/* series bands: edge to edge, a 1px rule along the top edge, generous padding */
+.hub-band { border-top: 1px solid var(--rule); padding-block: 4.5rem; }
+.hub-band#reading-your-fits { background: var(--paper); }
+.hub-band .series { padding-block: 0; }
+
+/* footer: the main site's dark footer band */
+.hub-foot { background: var(--footer-bg); color: var(--footer-text); --accent: var(--footer-accent); }
+.hub-foot .foot { padding-block: 24px; color: var(--footer-text); font-family: var(--font-body); font-size: 13px; }
+.hub-foot a { color: var(--footer-text); }
+.hub-foot a:hover { color: var(--footer-accent); }
+:root[data-readability] .hub-foot .foot { font-size: 15px; }
 .ref-all a { font-weight: 600; }
 @media (max-width: 520px) { .ref-date { grid-row: auto; grid-column: 1; } }
 :root[data-readability] .ref-book, :root[data-readability] .ref-all { font-size: 17px; }
 :root[data-readability] .ref-date { font-size: 14px; }
 
-/* ---------- SVG charts (styled through the tokens) ---------- */
+/* ---------- SVG charts (styled through the tokens) ----------
+   Line geometry is constant ON SCREEN whatever the viewBox scale: learning.js sets --k on every
+   svg.chart (= viewBox width / rendered width, refreshed on resize), and the widths and dash
+   lengths below are multiplied by it. Three line forms, told apart by shape alone:
+     solid    data lines, 2 to 3 px
+     dashed   10 px dashes, 6 px gaps, 2 px (the truth, and reference limits)
+     dotted   round 3.25 px dots every 6 px (zero-length dashes, round caps): the corrected estimate
+   Rule of thumb: dash length at least 3x the dot diameter, and dots heavier than dashes. The
+   legend swatches above use the same numbers. Decided 2026-10-15. */
 .chart .gridline { stroke: var(--grid); stroke-width: 1; }
 .chart .axis { stroke: var(--rule); stroke-width: 1; }
 .chart .tick { fill: var(--muted); font-family: var(--font-mono); font-size: 12px; }
 .chart .axlabel { fill: var(--muted); font-family: var(--font-display); font-size: 14px; }
 .chart .pt { fill: var(--pt); fill-opacity: .72; }
 .chart .pt-time { fill: var(--ink); }
-.chart .truth { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
-.chart .fit { stroke: var(--fit); stroke-width: 2.75; fill: none; }
-.chart .fix { stroke: var(--fix); stroke-width: 2.75; fill: none; stroke-dasharray: 0.1 5.5; stroke-linecap: round; } /* dotted: see the note at the top */
-.chart .zero { stroke: var(--muted); stroke-width: 1.25; }
+.chart .truth { stroke: var(--ink); stroke-width: calc(2px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(6px * var(--k, 1)); fill: none; }
+.chart .fit { stroke: var(--fit); stroke-width: calc(2.75px * var(--k, 1)); fill: none; }
+.chart .fix { stroke: var(--fix); stroke-width: calc(3.25px * var(--k, 1)); fill: none; stroke-dasharray: 0 calc(6px * var(--k, 1)); stroke-linecap: round; } /* dotted: see the note at the top */
+.chart .zero { stroke: var(--muted); stroke-width: calc(1.25px * var(--k, 1)); }
 .chart .bar { fill: var(--pt); fill-opacity: .55; }
-.chart .vline-truth { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; }
-.chart .vline-fit { stroke: var(--fit); stroke-width: 2.5; }
+.chart .vline-truth { stroke: var(--ink); stroke-width: calc(2px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(6px * var(--k, 1)); }
+.chart .vline-fit { stroke: var(--fit); stroke-width: calc(2.5px * var(--k, 1)); }
 .chart .lbl-fit { fill: var(--fit); font-family: var(--font-display); font-weight: 600; font-size: 13px; }
 .chart .lbl-truth { fill: var(--ink); font-family: var(--font-display); font-weight: 600; font-size: 13px; }
 .chart .lbl-fix { fill: var(--fix); font-family: var(--font-display); font-weight: 600; font-size: 13px; text-decoration: underline dotted; text-underline-offset: 3px; }
@@ -239,13 +351,13 @@ a.module-row:hover .m-title { color: var(--fix); }
 .quiz .plots { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .quiz-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
 .quiz-score { font-family: var(--font-mono); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.chart .pt-ring { fill: none; stroke: var(--ink); stroke-width: 2; }
+.chart .pt-ring { fill: none; stroke: var(--ink); stroke-width: calc(2px * var(--k, 1)); }
 .chart .pt-mark { fill: var(--ink); }
 .chart .bar-hi { fill: var(--fit); fill-opacity: .85; }
-.chart .thresh { stroke: var(--muted); stroke-width: 1.25; stroke-dasharray: 5 4; }
-.chart .fit-curve { stroke: var(--fit); stroke-width: 2.75; fill: none; }
-.chart .fix-curve { stroke: var(--fix); stroke-width: 2.75; fill: none; stroke-dasharray: 0.1 5.5; stroke-linecap: round; }
-.chart .truth-curve { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
+.chart .thresh { stroke: var(--muted); stroke-width: calc(1.25px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(6px * var(--k, 1)); }
+.chart .fit-curve { stroke: var(--fit); stroke-width: calc(2.75px * var(--k, 1)); fill: none; }
+.chart .fix-curve { stroke: var(--fix); stroke-width: calc(3.25px * var(--k, 1)); fill: none; stroke-dasharray: 0 calc(6px * var(--k, 1)); stroke-linecap: round; }
+.chart .truth-curve { stroke: var(--ink); stroke-width: calc(2px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(6px * var(--k, 1)); fill: none; }
 .quiz .opts button:disabled { cursor: default; opacity: .55; }
 .quiz .opts button[aria-pressed="true"]:disabled { opacity: 1; }
 .ctl-note { font-size: 14px; color: var(--muted); line-height: 1.4; }
@@ -254,25 +366,25 @@ a.module-row:hover .m-title { color: var(--fix); }
 .chart .band-pi-fix { fill: var(--fix); fill-opacity: .14; }
 .chart .shade { fill: var(--grid); fill-opacity: .6; }
 .chart .lbl-muted { fill: var(--muted); font-family: var(--font-display); font-size: 13px; }
-.chart .ln-muted { stroke: var(--pt); stroke-width: 2; fill: none; }
+.chart .ln-muted { stroke: var(--pt); stroke-width: calc(2px * var(--k, 1)); fill: none; }
 .chart .pt-hi { fill: var(--fit); }
 .chart .pt-fix { fill: var(--fix); }
-.chart .ci-bar { stroke: var(--fit); stroke-width: 3; }
-.chart .ci-bar-fix { stroke: var(--fix); stroke-width: 3; stroke-dasharray: 0.1 5.5; stroke-linecap: round; }
+.chart .ci-bar { stroke: var(--fit); stroke-width: calc(3px * var(--k, 1)); }
+.chart .ci-bar-fix { stroke: var(--fix); stroke-width: calc(3.25px * var(--k, 1)); stroke-dasharray: 0 calc(6px * var(--k, 1)); stroke-linecap: round; }
 .report { display: grid; gap: 8px; max-width: 100%; }
 .report-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--font-display); font-weight: 600; font-size: 16px; }
 .report pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--plot); border: 1px solid var(--rule); font-size: 14px; }
 .copy-status { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
 .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-width: 72ch; }
 .checks label { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; cursor: pointer; }
-.checks input { margin-top: 5px; accent-color: var(--fix); width: 16px; height: 16px; flex: none; }
+.checks input { margin-top: 5px; accent-color: var(--accent); width: 16px; height: 16px; flex: none; }
 .table-wrap { overflow-x: auto; max-width: 100%; }
 table.tools { border-collapse: collapse; font-size: 14px; min-width: 720px; }
 table.tools th, table.tools td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
 table.tools thead th { font-family: var(--font-display); font-size: 15px; }
 table.tools tbody th { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
 table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
-.chart .mean-tick { stroke: var(--ink); stroke-width: 3; }
+.chart .mean-tick { stroke: var(--ink); stroke-width: calc(3px * var(--k, 1)); }
 
 /* ==========================================================================
    Viewing settings shared with the main site (About → Viewing settings)
@@ -349,6 +461,6 @@ table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
 }
 :root[data-colorblind][data-theme="dark"] { --fit: #ff9a4a; --fix: #63b3f0; }
 :root[data-colorblind] .chart .pt-hi,
-:root[data-colorblind] .chart .bar-hi { stroke: var(--ink); stroke-width: 1.25; }
+:root[data-colorblind] .chart .bar-hi { stroke: var(--ink); stroke-width: calc(1.25px * var(--k, 1)); }
 :root[data-colorblind] .v.bad::before { content: "✕\00a0" / ""; }
 :root[data-colorblind] .v.good::before { content: "✓\00a0" / ""; }

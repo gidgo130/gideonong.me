@@ -40,7 +40,7 @@ FRAME = (PAD + COL_W + 40, PAD, W - PAD, H - PAD)   # figure frame (x0, y0, x1, 
 # learning.css tokens (light theme)
 PAPER, PLOT, GRID, RULE = "#f2f5f0", "#fbfcfa", "#dde5da", "#c5d0c3"
 INK, MUTED, PT, FIT, FIX = "#1c2420", "#56645b", "#6b7b70", "#c93a22", "#1d5ea6"
-S1, S2, S3, S4 = "#9a6a12", "#2d6a9f", "#b0565c", "#5f7a3a"     # reflections.css series tokens
+S1, S2, S3, S4 = "#7e5b17", "#2c6390", "#ad4414", "#3a6d32"     # reflections.css series tokens (light)
 
 SITE = "gideonong.me/learning"
 
@@ -248,12 +248,15 @@ def buffers_chart(size: tuple[int, int]) -> Image.Image:
         4: [0.51478, 0.63115, 0.70071, 0.74771, 0.78178, 0.80766, 0.82803, 0.84447, 0.85804],
         5: [0.4858, 0.60758, 0.68049, 0.72995, 0.76593, 0.79337, 0.815],
     }
-    styles = {2: (S1, "solid"), 3: (S2, (0, (6, 3))), 4: (S3, (0, (1.5, 3))), 5: (S4, (0, (6, 3, 1.5, 3)))}
-    ax.axhline(1, color=MUTED, lw=1.2, ls=(0, (4, 3)))
+    # The page's three line forms (solid / dashed / dotted) and a hollow square for the 4th series.
+    styles = {2: (S1, "solid", "o"), 3: (S2, (0, (4, 2.4)), "o"), 4: (S3, (0, (0.01, 1.85)), "o"), 5: (S4, "solid", "s")}
+    ax.axhline(1, color=MUTED, lw=1.5, ls=(0, (4, 2.4)))
     ax.text(7.9, 1.012, "demand", color=MUTED, fontsize=11, ha="right", va="bottom")
     for n, ys in data.items():
-        c, ls = styles[n]
-        ax.plot(range(len(ys)), ys, color=c, lw=2.4, ls=ls, marker="o", ms=5, label=f"{n} stations")
+        c, ls, mk = styles[n]
+        lw = 3.0 if n == 4 else 2.2
+        kw = dict(marker=mk, ms=6, mfc=PLOT, mec=c, mew=1.8) if mk == "s" else dict(marker=mk, ms=5)
+        ax.plot(range(len(ys)), ys, color=c, lw=lw, ls=ls, solid_capstyle="round", dash_capstyle="round", label=f"{n} stations", **kw)
     ax.set_xlim(-0.3, 8.3)
     ax.set_ylim(0.4, 1.04)
     ax.set_xlabel("buffer slots between stations", color=MUTED, fontsize=12)
