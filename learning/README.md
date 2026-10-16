@@ -124,10 +124,15 @@ get nothing.
   title `[<series>] <kind>: <path>: <first 60 chars>`, labels `feedback`, `kind:…`, `series:…`,
   `source:visitor` or `source:gideon`, a metadata table, then the quote and message in fenced
   blocks. It never sees or stores an IP, User-Agent or cookie beyond an in-memory throttle.
+  The request goes out with `credentials: "same-origin"`: the site sets no cookies, so in
+  production nothing extra is sent, and on a preview deploy the browser sends Vercel's
+  Deployment Protection cookie (with "omit" the preview answered 401 before the function ran).
+  If you aren't logged in to Vercel in that browser, a preview send shows the failure state.
 - **Your own notes (owner mode).** Once per browser or phone, open any /learning page with
   `#owner-setup` and paste the owner key (the FEEDBACK_OWNER_KEY value from Vercel). The hash
   disappears, the key stays in that browser, and the dialog shows "Posting as Gideon"; your
-  issues get `source:gideon`. "Forget" on the same screen clears it.
+  issues get `source:gideon`. "Forget key" on the same screen clears it, so a visitor test and an
+  owner test can run in one browser.
 - **Setup, once.** Private repo `gidgo130/gideonong-feedback`; a fine-grained token (that repo,
   Issues read/write); Vercel env vars FEEDBACK_REPO, FEEDBACK_TOKEN, FEEDBACK_OWNER_KEY for
   Production and Preview; `gh auth login`; then from the repo root

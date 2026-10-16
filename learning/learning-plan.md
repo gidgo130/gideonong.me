@@ -479,7 +479,11 @@ The spec lived in the gitignored `staging/feedback/SPEC.md`; its decisions are h
   with an id), series (`fits` | `reflections` | `hub`), page language, width bucket (`<480`,
   `<1024`, `≥1024`), optional reply email, elapsed ms and the honeypot. The build commit comes
   from the function (`VERCEL_ENV` + short `VERCEL_GIT_COMMIT_SHA`), not the client. **Never** IP
-  addresses, User-Agent strings, cookies or fingerprints: the analytics privacy rule.
+  addresses, User-Agent strings, cookies or fingerprints: the analytics privacy rule. The fetch
+  uses `credentials: "same-origin"` (changed from "omit" on 2026-10-16): the site sets no cookies
+  of its own, so in production nothing is sent, and on a preview deploy the browser can send
+  Vercel's Deployment Protection cookie, without which the request gets a 401 before the
+  function runs.
 - **F4. The issue.** Title `[<series>] <kind>: <path>: <first 60 characters>`. Labels `feedback`,
   `kind:<kind>`, `series:<series>`, `source:visitor` | `source:gideon` (`scripts/feedback-labels.py`
   creates them once). Body: a metadata table whose every cell is allow-listed server-side (so `|`
@@ -512,7 +516,12 @@ The spec lived in the gitignored `staging/feedback/SPEC.md`; its decisions are h
   plain data for the fb* strings; feedback.js reads the EN table when LI18N is absent.
 - **F8. Where it doesn't send.** Offline app and `file:` pages: the footer keeps the email line.
   localhost: dry-run by default (payload in the console, success state shown), `?feedback=live`
-  posts to a function that `vercel dev` serves.
+  posts to a function that `vercel dev` serves. Preview deploys sit behind Deployment
+  Protection: the widget sends the request with `credentials: "same-origin"` so Vercel's own
+  login cookie goes along (see F3); if that layer still answers a non-JSON 401 / 403 (not logged
+  in to Vercel in that browser), the widget shows the normal failure state with the email.
+  `#owner-setup` has a "Forget key" button, so a visitor test and an owner test can run in the
+  same browser.
 - **F9. Reading it back.** `scripts/feedback-pull.py` (standard library + `gh`) exports open
   issues to `staging/feedback/inbox.md`, newest first (number, labels, date, page link, section,
   quote, message, reply email, comments; `--all` includes closed). `scripts/feedback-labels.py`

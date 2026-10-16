@@ -245,7 +245,11 @@
     var headers = { "Content-Type": "application/json" };
     var key = ownerKey();
     if (key) headers["X-Feedback-Owner"] = key;
-    fetch(API, { method: "POST", headers: headers, body: JSON.stringify(data), credentials: "omit" })
+    // credentials: "same-origin" (not "omit"): the site sets no cookies of its own, so in
+    // production nothing is sent; on a Vercel preview deploy it lets the browser send Vercel's
+    // Deployment Protection cookie, which otherwise answers 401 before the function runs.
+    // A non-JSON 401 / 403 from that layer (or any non-2xx) is the normal failure state.
+    fetch(API, { method: "POST", headers: headers, body: JSON.stringify(data), credentials: "same-origin" })
       .then(function (r) { return r.ok ? r.json().catch(function () { return { ok: true }; }) : { ok: false }; })
       .then(finish, function () { finish({ ok: false }); });
   });

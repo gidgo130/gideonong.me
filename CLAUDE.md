@@ -789,7 +789,10 @@ only the rendered slides.html copied into learning/fits/<slug>/.
   chars), quote (≤ 500), path, section (nearest heading or section with an id), series (fits |
   reflections | hub), lang, vw (`<480` / `<1024` / `≥1024`), email (optional), elapsed (ms since
   the panel opened) and the honeypot field `website`, and NOTHING else: no IP, User-Agent,
-  cookie or fingerprint, on either side (the analytics privacy rule applies). api/feedback.js
+  cookie or fingerprint, on either side (the analytics privacy rule applies). The fetch uses
+  `credentials: "same-origin"`: the site sets no cookies, so production sends nothing extra,
+  and a preview deploy can send Vercel's Deployment Protection cookie ("omit" got a 401 there);
+  a non-JSON 401 / 403 from that layer shows the normal failure state. api/feedback.js
   (Node built-ins + fetch, like hit.js) files one issue per submission in the private repo
   FEEDBACK_REPO with FEEDBACK_TOKEN (a fine-grained token: that repo, Issues read/write):
   title `[<series>] <kind>: <path>: <first 60 characters>`; labels feedback, kind:<kind>,
@@ -810,7 +813,7 @@ only the rendered slides.html copied into learning/fits/<slug>/.
     response carries `labels: "direct" | "added" | "none"`, shown under "Thanks. Sent.".
     Responses are JSON, Cache-Control no-store, X-Robots-Tag noindex, no CORS headers.
   - Owner mode (F5): open any /learning page with `#owner-setup` and paste FEEDBACK_OWNER_KEY
-    (kept in localStorage `learnFeedbackOwner`; the hash is removed from the URL; "Forget"
+    (kept in localStorage `learnFeedbackOwner`; the hash is removed from the URL; "Forget key"
     clears it). The widget then sends the key as the X-Feedback-Owner header and shows "Posting
     as Gideon"; the function compares it in constant time (SHA-256 both sides, then
     timingSafeEqual) and labels source:gideon. A wrong or missing key, or a server key under 16
