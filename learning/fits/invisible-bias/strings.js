@@ -73,7 +73,7 @@ window.LEARN_STRINGS = {
     lblTruth: "truth {v}",
     lblAvg: "average fit {v}",
     t2NoteExactHtml: "<b>No x noise: the repeats center on 2.00,</b> and adding points just narrows the pile around the truth. The error bars catch it about 95% of the time, as promised.",
-    t2NoteNoisyHtml: "<b>Click through 10, 100, 1000 points.</b> The pile gets narrower but stays centered near {mean}, not 2.00. ",
+    t2NoteNoisyHtml: "<b>Click through 10, 30, 100, 300 and 1000 points.</b> The pile gets narrower but stays centered near {mean}, not 2.00. ",
     t2NoteLowCoverHtml: "At {n} points the software's 95% error bars catch the true slope in only {cover}% of repeats. More data makes you more certain of the wrong answer.",
     t2NoteOkCoverHtml: "At {n} points the error bars still catch 2.00 in {cover}% of repeats, because the scatter is still wide next to the bias. Pick more points and watch that number fall.",
 
@@ -203,7 +203,7 @@ window.LEARN_STRINGS = {
     lblTruth: "verdad {v}",
     lblAvg: "ajuste promedio {v}",
     t2NoteExactHtml: "<b>Sin ruido en x, las repeticiones se centran en 2,00,</b> y agregar puntos solo angosta el montón alrededor de la verdad. Las barras de error la contienen alrededor del 95% de las veces, como prometen.",
-    t2NoteNoisyHtml: "<b>Prueba con 10, 100 y 1000 puntos.</b> El montón se angosta, pero sigue centrado cerca de {mean}, no de 2,00. ",
+    t2NoteNoisyHtml: "<b>Prueba con 10, 30, 100, 300 y 1000 puntos.</b> El montón se angosta, pero sigue centrado cerca de {mean}, no de 2,00. ",
     t2NoteLowCoverHtml: "Con {n} puntos, las barras de error del 95% del software contienen la pendiente verdadera solo en el {cover}% de las repeticiones. Más datos te dan más certeza en la respuesta equivocada.",
     t2NoteOkCoverHtml: "Con {n} puntos, las barras de error todavía contienen 2,00 en el {cover}% de las repeticiones, porque la dispersión sigue siendo grande al lado del sesgo. Elige más puntos y mira cómo baja ese número.",
 

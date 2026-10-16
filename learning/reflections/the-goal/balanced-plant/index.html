@@ -160,7 +160,7 @@ $$\text{Output}(t) \;=\; \text{Released}(t) \;-\; \big[\text{WIP}(t) - \text{WIP
 </div>
 <div class="readout" id="dRead"></div>
 </div>
-<figcaption>WIP here means matches waiting in bowls. The fitted √round curve appears in the averaged view. Switch variability to "None" to see condition (c).</figcaption>
+<figcaption>WIP here means matches waiting in bowls. In one game, Shortfall and WIP at end differ a little, because station 1 releases what it actually rolled rather than 3.5 a round; the two agree on average. The fitted √round curve appears in the averaged view. Switch variability to "None" to see condition (c).</figcaption>
 </figure>
 
 <p><b>Why output falls short, in one inequality.</b> Player \(k\) moves \(\min(X_k, Q_k)\), where \(X_k\) is his roll and \(Q_k\) what's in his bowl. The function \(\min(x, q)\) is concave, so Jensen's inequality gives</p>
@@ -217,7 +217,7 @@ $$L=\mathbb{E}[N]=G'(1)=\frac{\rho}{1-\rho},\qquad \operatorname{Var}(N)=G''(1)+
 <div class="legend"><span style="--sw:var(--s1)">L = ρ/(1−ρ)</span><span style="--sw:var(--s2)" class="dash">±1 standard deviation</span></div>
 <div class="readout" id="mRead"></div>
 </div>
-<figcaption>The hockey stick. Going from 80% to 90% utilization doubles the average queue, and 90% to 95% doubles it again.</figcaption></figure>
+<figcaption>The hockey stick. Going from 80% to 90% utilization roughly doubles the average queue, and 90% to 95% roughly doubles it again.</figcaption></figure>
 
 <div class="tbl"><table>
 <thead><tr><th>ρ</th><th>0.50</th><th>0.80</th><th>0.90</th><th>0.95</th><th>0.99</th><th>1.00</th></tr></thead>
@@ -268,7 +268,7 @@ $$\mathbb{E}[W_q]\;\approx\;\underbrace{\left(\frac{c_a^2+c_s^2}{2}\right)}_{V}\
 <div class="legend"><span style="--sw:var(--s1)">Kingman (VUT)</span><span style="--sw:var(--muted)" class="dash">M/M/1 for reference</span><span style="--sw:var(--s3)" class="dot">simulation (200,000 jobs each)</span></div>
 <div class="readout" id="kRead"></div>
 </div>
-<figcaption>Simulated with gamma-distributed times of the chosen SCV, using Lindley's recursion (below). With c²ₐ = 1 the curve is exact; try c²ₐ = c²ₛ = 0.25 to see the approximation sag slightly below simulation at low utilization.</figcaption></figure>
+<figcaption>Simulated with gamma-distributed times of the chosen SCV, using Lindley's recursion (below). With c²ₐ = 1 the curve is exact. Try c²ₐ = c²ₛ = 0.25: at low utilization the approximation overestimates the wait (about 4× at u = 0.3), and the gap closes as u → 1.</figcaption></figure>
 
 <h3>Lindley's recursion: the thread that ties it together</h3>
 <p>For a single first-in-first-out machine, job \(k+1\)'s wait follows from job \(k\)'s:</p>
@@ -330,7 +330,7 @@ $$\text{TH}=\mu_2\,(1-\pi_0),\qquad \pi_0=\frac{1-r}{1-r^{K+1}}\;(r\ne1).$$
 <h2 id="s10"><span class="sec">§10</span>Does the cost claim hold?</h2>
 <p>Jonah's last step says carrying cost rises, so trimming capacity may not even lower operating expense. That's an empirical claim, but a simple model shows when it's true. Let capacity cost \(c\) per unit of rate per hour and inventory cost \(h\) per unit per hour. For an M/M/1 station,</p>
 $$C(\mu)=c\,\mu+h\,\frac{\lambda}{\mu-\lambda},\qquad C'(\mu)=c-\frac{h\lambda}{(\mu-\lambda)^2}=0\;\Longrightarrow\;\mu^*=\lambda+\sqrt{\frac{h\lambda}{c}}.$$
-<p>The optimal capacity is demand plus a <b>square-root safety margin</b> (the same square-root rule shows up in call-center staffing and inventory safety stock). Trimming to \(\mu=\lambda\) sends cost to infinity. But if you start above \(\mu^*\), some trimming does save money. So "questionable" is the right word: the answer depends on where you start relative to \(\mu^*\).</p>
+<p>The optimal capacity is demand plus a <b>square-root safety margin</b> (the same square-root rule shows up in call-center staffing and inventory safety stock). Trimming to \(\mu=\lambda\) sends cost to infinity. But if you start above \(\mu^*\), some trimming does save money. So <i>questionable</i> is the right word: the answer depends on where you start relative to \(\mu^*\).</p>
 
 <figure class="wide"><div class="fig">
 <div class="controls">
@@ -365,7 +365,7 @@ $$C(\mu)=c\,\mu+h\,\frac{\lambda}{\mu-\lambda},\qquad C'(\mu)=c-\frac{h\lambda}{
 <li><span class="tag">Goldratt</span><div><b>Goldratt &amp; Fox, <i>The Race</i></b> (1986). Goldratt's own fuller argument for drum-buffer-rope and protective capacity, with diagrams instead of a novel.</div></li>
 <li><span class="tag">Lines</span><div><b>Gershwin, <i>Manufacturing Systems Engineering</i></b> (1994). The rigorous treatment of finite-buffer lines like §8, including decomposition methods for long lines.</div></li>
 <li><span class="tag">Classic</span><div><b>Kleinrock, <i>Queueing Systems, Vol. 1: Theory</i></b> (1975). The standard graduate reference. Dense, but complete.</div></li>
-<li><span class="tag">Papers</span><div>Little, "A proof for the queuing formula L = λW," <i>Operations Research</i> (1961), and Little's 50th-anniversary retrospective in the same journal (2011). Kingman, "The single server queue in heavy traffic," <i>Proc. Cambridge Phil. Soc.</i> (1961). Spearman, Woodruff &amp; Hopp, "CONWIP: a pull alternative to kanban," <i>IJPR</i> (1990).</div></li>
+<li><span class="tag">Papers</span><div>Little, "<a href="https://doi.org/10.1287/opre.9.3.383">A proof for the queuing formula L = λW</a>," <i>Operations Research</i> (1961), and <a href="https://doi.org/10.1287/opre.1110.0940">Little's 50th-anniversary retrospective</a> in the same journal (2011). Kingman, "<a href="https://doi.org/10.1017/S0305004100036094">The single server queue in heavy traffic</a>," <i>Proc. Cambridge Phil. Soc.</i> (1961). Spearman, Woodruff &amp; Hopp, "<a href="https://doi.org/10.1080/00207549008942761">CONWIP: a pull alternative to kanban</a>," <i>IJPR</i> (1990).</div></li>
 </ol>
 
 <div class="takeaway-links">

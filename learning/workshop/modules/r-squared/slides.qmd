@@ -54,7 +54,7 @@ Anscombe's quartet (1973). I: a line with scatter. II: a smooth curve. III: a pe
 ![](figures/t2_range.png){fig-align="center" width="100%"}
 
 ::: notes
-Same sensor, same noise. Test over 0–3 and R² is about 0.5; test over 0–30 and it's about 0.99. The residual SD stays near 2, the sensor's noise. R² is partly a grade on your test plan.
+Same sensor, same noise. Test over 0–3 and R² is about 0.43; test over 0–30 and it's about 0.99. The residual SD stays near 2, the sensor's noise. R² is partly a grade on your test plan.
 :::
 
 ## Report the residual SD, in units

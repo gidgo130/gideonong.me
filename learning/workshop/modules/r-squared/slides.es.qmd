@@ -55,7 +55,7 @@ El cuarteto de Anscombe (1973). I: una recta con dispersión. II: una curva suav
 ![](figures-es/t2_range.png){fig-align="center" width="100%"}
 
 ::: notes
-El mismo sensor, el mismo ruido. Si pruebas entre 0 y 3, R² es de alrededor de 0,5; entre 0 y 30, de alrededor de 0,99. La desviación estándar de los residuos se queda cerca de 2, el ruido del sensor. R² es en parte una calificación de tu plan de pruebas.
+El mismo sensor, el mismo ruido. Si pruebas entre 0 y 3, R² es de alrededor de 0,43; entre 0 y 30, de alrededor de 0,99. La desviación estándar de los residuos se queda cerca de 2, el ruido del sensor. R² es en parte una calificación de tu plan de pruebas.
 :::
 
 ## Reporta la desviación estándar de los residuos, en unidades

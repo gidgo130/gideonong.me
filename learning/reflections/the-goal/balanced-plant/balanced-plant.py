@@ -10,7 +10,8 @@ and why naive confidence intervals fail on queue output.
 Run it:
   * Google Colab: use "Open in Colab" on the page (or upload this file). Everything needed
     is preinstalled. Run the cells top to bottom (about 10 seconds).
-  * Your own PC:  pip install numpy scipy matplotlib   then   python balanced-plant.py
+  * Your own PC:  pip install numpy scipy matplotlib   then   python -X utf8 balanced-plant.py
+    (-X utf8 because the printouts use ≈, ± and −, which a Windows console may not encode)
 
 All data are simulated; each section states its model.
 """
@@ -27,7 +28,6 @@ plt.rcParams.update({'figure.dpi':110,'axes.grid':True,'grid.alpha':.3})
 finite buffers, blocking after service) and a discrete-event simulator for
 general (gamma) processing times. Used to verify the numbers in the explainer
 and as the core of the Colab notebook."""
-import numpy as np
 from scipy.sparse import lil_matrix, csr_matrix
 from scipy.sparse.linalg import spsolve
 
@@ -75,8 +75,6 @@ def exact_throughput(mu, b):
             nst = list(st)
             nst[i] = I if i == n - 1 else B
             t = _settle(nst, buf, b)
-            if i == n - 1:  # last station idle -> pulls; first station never idle
-                pass
             if t not in index:
                 index[t] = len(states)
                 states.append(t)
@@ -143,7 +141,7 @@ print("3 stations, b=0:", exact_throughput([1,1,1], 0)[0], "vs 22/39 =", 22/39)
 
 # %% [markdown]
 # ## 2. The dice game
-# Each station moves `min(roll, matches in its bowl)`; station 1 draws from an unlimited box. Material is conserved, so the output shortfall versus 3.5 per round equals the WIP left in bowls. We fit `WIP(t) = c·t^p` with **p free** to check the √t prediction instead of assuming it. Expect p a little above ½ over a few hundred rounds: with several stations in series the √t regime arrives slowly. Try `rounds=4000, games=1000`.
+# Each station moves `min(roll, matches in its bowl)`; station 1 draws from an unlimited box. Material is conserved, so on average the output shortfall versus 3.5 per round equals the WIP left in bowls (in one game the two differ by station 1's release noise). We fit `WIP(t) = c·t^p` with **p free** to check the √t prediction instead of assuming it. Expect p a little above ½ over a few hundred rounds: with several stations in series the √t regime arrives slowly. Try `rounds=4000, games=1000`.
 
 # %%
 rng = np.random.default_rng(1)

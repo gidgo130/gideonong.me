@@ -101,7 +101,7 @@
     $("t2-tlog").textContent = t("unitMin", { v: num(lg.tau, 2) }); $("t2-tlog").className = "v" + (Math.abs(lg.tau - T2.tau) / T2.tau > 0.08 ? " bad" : "");
     $("t2-tdir").textContent = t("unitMin", { v: num(ex.tau, 2) });
     $("t2-drop").textContent = t("droppedFmt", { d: lg.dropped, n: T2.n }); $("t2-drop").className = "v" + (lg.dropped ? " bad" : "");
-    $("t2-alog").textContent = t("unitMin", { v: num(avgL, 2) }); $("t2-alog").className = "v" + (Math.abs(avgL - T2.tau) / T2.tau > 0.05 ? " bad" : "");
+    $("t2-alog").textContent = t("unitMin", { v: num(avgL, 2) }) + (aL.length < T2.reps ? " · " + t("roKept", { n: aL.length, total: T2.reps }) : ""); $("t2-alog").className = "v" + (Math.abs(avgL - T2.tau) / T2.tau > 0.05 ? " bad" : "");
     $("t2-adir").textContent = t("unitMin", { v: num(avgD, 2) }); $("t2-adir").className = "v" + (Math.abs(avgD - T2.tau) / T2.tau > 0.05 ? " bad" : "");
     $("t2-true").textContent = t("unitMin", { v: num(T2.tau, 1) });
     var v = { tau: num(isD ? ex.tau : lg.tau, 2), avg: num(isD ? avgD : avgL, 2), tlog: num(lg.tau, 2), alog: num(avgL, 2) };
