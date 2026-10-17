@@ -156,8 +156,8 @@ async function settleFonts(page) {
     minHover = Math.min(minHover, cr1, cr2, cr3);
     c.ok(sameRGB(h1.color, r.refl.accent) && sameRGB(h2.color, r.refl.accent), `${label}: Reflections hover ${h1.color} / ${h2.color} = panel --accent ${r.refl.accent}`);
     c.ok(cr1 >= 4.5 && cr2 >= 4.5, `${label}: Reflections hover contrast ${cr1}:1 on ${h1.bg}, link ${cr2}:1 on ${h2.bg}`);
-    // the module title is 22px bold (WCAG large text: 3:1); the measured value is printed either way
-    c.ok(sameRGB(h3.color, r.fits.accent) && cr3 >= 3, `${label}: module row hover ${h3.color} = band --accent ${r.fits.accent}, ${cr3}:1 on ${h3.bg} (large text, 3:1)`);
+    // batch E (2026-10-17): colorblind light --accent is #006fad so this clears 4.5 like the rest
+    c.ok(sameRGB(h3.color, r.fits.accent) && cr3 >= 4.5, `${label}: module row hover ${h3.color} = band --accent ${r.fits.accent}, ${cr3}:1 on ${h3.bg}`);
     if ((w === 375 || w === 1280) && !mode) { await page.mouse.move(0, 0); await page.screenshot({ path: path.join(L.out, `hub-${w}-${dark ? "dark" : "light"}-${lang}.png`), fullPage: true }); }
     await ctx.close();
   }

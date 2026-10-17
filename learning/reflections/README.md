@@ -177,8 +177,12 @@ reference for every copy below is `the-goal/balanced-plant/` (page, main.js, scr
 2. **Charts and readouts** `main.js`: start from balanced-plant's `plot()` helper. Colors from
    `--s1..--s4` only; each line told apart by `dash: "dashed" | "dotted"` or a marker; a fourth
    series gets `label:`; every SVG keeps its authored viewBox in `data-vb`; every control redraws
-   on input and nothing animates on load. A readout that changes should sit in a container with
-   `aria-live="polite"`.
+   on input and nothing animates on load. Readouts need no live region of their own: learning.js
+   adds a debounced, visually hidden live mirror beside every `.readout`. Headings keep a space
+   after the `§N` label (`<span class="sec">§N</span> Heading`) so the accessible name does not
+   read as one word; table header cells carry `scope`; the Colab link has
+   `aria-describedby="new-tab-note"` and the page a `<span id="new-tab-note" hidden>Opens in a new
+   tab</span>` after the "Take it with you" row.
 3. **Companion** `<slug>.py` with `# %%` cell markers (module docstring first, written as
    markdown; markdown cells as `# text`; a knobs cell per figure), then from the repo root
    `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-ipynb.py reflections/<book>/<slug> --check`,

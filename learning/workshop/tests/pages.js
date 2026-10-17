@@ -62,9 +62,16 @@ const A11Y = () => {
   out.dupIds = [...new Set(ids.filter((v, i) => ids.indexOf(v) !== i))];
   out.newTabNoNoopener = [...document.querySelectorAll('a[target="_blank"]')].filter((a) => !/noopener|noreferrer/.test(a.rel)).map((a) => a.getAttribute("href"));
   out.readouts = document.querySelectorAll(".readout").length;
-  out.readoutsLive = [...document.querySelectorAll(".readout")].filter((r) => r.closest("[aria-live]") || r.getAttribute("aria-live")).length;
+  // a readout counts as live when it is a live region, sits in one, or has learning.js's mirror beside it
+  out.readoutsLive = [...document.querySelectorAll(".readout")].filter((r) => r.closest("[aria-live]") || r.getAttribute("aria-live") || (r.nextElementSibling && r.nextElementSibling.getAttribute("aria-live"))).length;
   const lt = document.querySelector(".lang-toggle");
-  out.langToggle = lt ? { hidden: lt.hidden, pressed: lt.getAttribute("aria-pressed") } : null;
+  out.langToggle = lt ? { hidden: lt.hidden, pressed: lt.getAttribute("aria-pressed"), label: lt.getAttribute("aria-label") } : null;
+  out.thNoScope = [...document.querySelectorAll("th")].filter((t) => !t.getAttribute("scope")).length;
+  out.newTabNoHint = [...document.querySelectorAll('a[target="_blank"]')].filter((a) => { const d = a.getAttribute("aria-describedby"); const el = d && document.getElementById(d); return !(el && el.textContent.trim()); }).map((a) => a.getAttribute("href"));
+  out.newTabNote = (document.getElementById("new-tab-note") || {}).textContent || "";
+  out.newTabLinks = document.querySelectorAll('a[target="_blank"]').length;
+  // "§1What…": a section label glued to its heading reads as one word
+  out.gluedHeadings = [...document.querySelectorAll("h2")].filter((h) => /§\d+[^\d\s]/.test(h.textContent.replace(/\s+/g, " ").trim())).map((h) => h.textContent.trim().slice(0, 30));
   out.skipLink = !!document.querySelector('a[href^="#"][class*="skip"], a.skip-link, a[href="#main"], a[href="#content"]');
   out.hasMain = !!document.querySelector("main");
   return out;
@@ -233,12 +240,56 @@ const DISK = () => ({
     c.ok(a.chartsBad.length === 0, `${pg.name}: every svg.chart has role="img" and an aria-label (${a.chartsBad.join(", ")})`);
     c.ok(a.newTabNoNoopener.length === 0, `${pg.name}: every target=_blank link has rel noopener (${a.newTabNoNoopener.join(", ")})`);
     c.ok(log.length === 0, `${pg.name}: console clean on load: ${log.join(" | ")}`);
-    const notes = [];
-    if (a.svgLabelNoRole.length) notes.push(`${a.svgLabelNoRole.length} svg with aria-label but no role (${a.svgLabelNoRole.join(", ")})`);
-    if (a.readouts) notes.push(`.readout with aria-live: ${a.readoutsLive}/${a.readouts}`);
-    if (a.langToggle && !a.langToggle.hidden && a.langToggle.pressed === null) notes.push("lang toggle has no aria-pressed");
-    notes.push(`skip link: ${a.skipLink}, <main>: ${a.hasMain}`);
-    console.log(`  note ${pg.name}: ${notes.join("; ")}`);
+    // batch E (2026-10-17): these were report-only notes; they count now
+    c.ok(a.svgLabelNoRole.length === 0, `${pg.name}: every labelled svg has role="img" (${a.svgLabelNoRole.join(", ")})`);
+    if (a.readouts) c.ok(a.readoutsLive === a.readouts, `${pg.name}: every .readout is live or has a live mirror (${a.readoutsLive}/${a.readouts})`);
+    if (a.langToggle && !a.langToggle.hidden) c.ok(a.langToggle.pressed === "false" && same(a.langToggle.label, R.common.en.langToggleAria), `${pg.name}: lang toggle aria-pressed="false" in EN with the registry label (${a.langToggle.pressed}, "${a.langToggle.label}")`);
+    c.ok(a.thNoScope === 0, `${pg.name}: every <th> has a scope (${a.thNoScope} without)`);
+    if (a.newTabLinks) c.ok(a.newTabNoHint.length === 0 && same(a.newTabNote, R.common.en.newTabNote), `${pg.name}: every target=_blank link is described by the "${R.common.en.newTabNote}" note (${a.newTabNoHint.join(", ")}; note "${a.newTabNote}")`);
+    c.ok(a.gluedHeadings.length === 0, `${pg.name}: section labels are not glued to their headings (${a.gluedHeadings.join("; ")})`);
+    console.log(`  note ${pg.name}: skip link: ${a.skipLink}, <main>: ${a.hasMain}`);
+    await ctx.close();
+  }
+
+  // ---------- 4b. live readouts and the toggle state (batch E) ----------
+  c.section("4b. live mirrors announce settled values; the toggle's pressed state follows the language");
+  const READ = () => [...document.querySelectorAll(".readout")].map((ro) => {
+    const walker = document.createTreeWalker(ro, NodeFilter.SHOW_TEXT), parts = []; let n;
+    while ((n = walker.nextNode())) { const s = n.data.replace(/\s+/g, " ").trim(); if (s) parts.push(s); }
+    const m = ro.nextElementSibling && ro.nextElementSibling.getAttribute("aria-live") ? ro.nextElementSibling : null;
+    return { id: ro.id || "", text: parts.join(" "), mirror: m ? m.textContent : null, atomic: m ? m.getAttribute("aria-atomic") : null };
+  });
+  for (const pg of PAGES.filter((p) => p.kind === "module" || p.kind === "reflection")) {
+    const ctx = await L.context(browser, { lang: "en" }); const page = await ctx.newPage(); const log = []; L.watch(page, log, { ignore: IGNORE });
+    await page.goto(base + pg.url); await settle(page, pg, 400); await page.waitForTimeout(1300);
+    const before = await page.evaluate(READ);
+    c.ok(before.length > 0 && before.every((r) => r.mirror === "" && r.atomic === "true"), `${pg.name}: mirrors exist, are atomic and stay silent on load (${before.map((r) => r.id + ":" + JSON.stringify(r.mirror)).join(", ")})`);
+    // move the first slider that has a readout in its figure / trial, then wait past the debounce
+    const moved = await page.evaluate(() => {
+      const ranges = [...document.querySelectorAll('input[type="range"]')];
+      for (const el of ranges) {
+        const box = el.closest(".trial, .fig, section, figure") || document;
+        if (!box.querySelector(".readout")) continue;
+        const v = +el.value === +el.max ? el.min : el.max;
+        el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true }));
+        return el.id || el.name || "range";
+      }
+      return null;
+    });
+    await page.waitForTimeout(250);
+    const mid = await page.evaluate(READ);
+    await page.waitForTimeout(900);
+    const after = await page.evaluate(READ);
+    const changed = after.filter((r, i) => r.text !== before[i].text);
+    c.ok(moved && changed.length > 0, `${pg.name}: moving ${moved} changed a readout`);
+    c.ok(changed.every((r) => r.mirror === r.text), `${pg.name}: after the debounce every changed readout's mirror equals its text (${changed.map((r) => r.id + " mirror=" + JSON.stringify(r.mirror && r.mirror.slice(0, 30))).join("; ")})`);
+    c.ok(mid.filter((r, i) => r.text !== before[i].text).every((r) => r.mirror === ""), `${pg.name}: 250 ms after the move the mirrors are still silent (debounced)`);
+    if (pg.kind === "module") {
+      await page.click(".lang-toggle"); await page.waitForTimeout(200);
+      const t = await page.evaluate(() => { const b = document.querySelector(".lang-toggle"); return { pressed: b.getAttribute("aria-pressed"), label: b.getAttribute("aria-label"), lang: document.documentElement.lang }; });
+      c.ok(t.lang === "es" && t.pressed === "true" && same(t.label, R.common.es.langToggleAria), `${pg.name}: after the toggle aria-pressed="true" and the ES label (${JSON.stringify(t)})`);
+    }
+    c.ok(log.length === 0, `${pg.name}: console clean: ${log.join(" | ")}`);
     await ctx.close();
   }
 

@@ -22,7 +22,9 @@
   --note-bg: #e7ede4;
   /* Non-chart UI (links, focus rings, status pills, flagged readouts, slider thumbs) uses these two,
      not --fit / --fix directly, so a series can restyle them without touching chart meanings. In
-     Reading Your Fits they are the fit/fix pair (and follow it under data-colorblind). */
+     Reading Your Fits they are the fit/fix pair and follow it under data-colorblind, with one
+     exception: in colorblind light mode --accent is #006fad, a hair darker than --fix #0072b2, so
+     hover text on the row tint (--note-bg) clears 4.5:1 (batch E, 2026-10-17); charts keep --fix. */
   --accent: var(--fix);
   --emph: var(--fit);
   --font-display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
@@ -56,6 +58,8 @@ a:hover { color: var(--accent); }
 /* Reference chip: a quiet tinted link on a cited name or title (see learning-i18n.js). */
 a.ref-chip { text-decoration: none; padding: 1px 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
 a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%, transparent); }
+/* Visually hidden, still read by screen readers: the live mirrors learning.js adds beside readouts. */
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .wrap { max-width: 1080px; margin: 0 auto; }
 
 /* ---------- series bar (top of every page) ---------- */
@@ -470,11 +474,11 @@ table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
    The corrected estimate is dotted in every mode (base rules above), as is its legend swatch
    and its label underline. Meaning is unchanged: orange = what an ordinary fit reports or a
    miss, blue = corrected. */
-:root[data-colorblind] { --fit: #b85000; --fix: #0072b2; }
+:root[data-colorblind] { --fit: #b85000; --fix: #0072b2; --accent: #006fad; }   /* --accent: see the note at the top */
 @media (prefers-color-scheme: dark) {
-  :root[data-colorblind]:not([data-theme="light"]) { --fit: #ff9a4a; --fix: #63b3f0; }
+  :root[data-colorblind]:not([data-theme="light"]) { --fit: #ff9a4a; --fix: #63b3f0; --accent: var(--fix); }
 }
-:root[data-colorblind][data-theme="dark"] { --fit: #ff9a4a; --fix: #63b3f0; }
+:root[data-colorblind][data-theme="dark"] { --fit: #ff9a4a; --fix: #63b3f0; --accent: var(--fix); }
 :root[data-colorblind] .chart .pt-hi,
 :root[data-colorblind] .chart .bar-hi { stroke: var(--ink); stroke-width: calc(1.25px * var(--k, 1)); }
 :root[data-colorblind] .v.bad::before { content: "✕\00a0" / ""; }

@@ -53,7 +53,7 @@
     <a href="../../" data-i18n="learningHome">Learning</a><span aria-hidden="true">/</span>
     <span data-i18n="seriesName">Reading Your Fits</span>
   </div>
-  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Toggle language (EN/ES)" hidden>
+  <button type="button" class="lang-toggle" data-i18n-aria="langToggleAria" aria-label="Language: English. Switch to Spanish" aria-pressed="false" hidden>
     <span class="lang-btn" data-lang="en">EN</span><span class="lang-btn" data-lang="es">ES</span>
   </button>
 </nav>
@@ -75,8 +75,9 @@
       <a href="slides.html" data-i18n="takeSlides">Slides</a>
       <a href="reporting.py" download data-i18n="takePy">Python script</a>
       <a class="take-play" href="play/" data-i18n="takePlay" data-http-only>Play with the code</a>
-      <a class="take-colab" href="https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/fits/reporting/reporting.ipynb" target="_blank" rel="noopener" data-i18n="takeColab">Open in Colab</a>
+      <a class="take-colab" aria-describedby="new-tab-note" href="https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/fits/reporting/reporting.ipynb" target="_blank" rel="noopener" data-i18n="takeColab">Open in Colab</a>
     </div>
+    <span id="new-tab-note" hidden data-i18n="newTabNote">Opens in a new tab</span>
   </header>
 
   <section class="trial" id="trial1">
@@ -178,7 +179,7 @@
     <h3 data-i18n="toolsTitle">The same steps in Excel, MATLAB and Python</h3>
     <div class="table-wrap">
       <table class="tools">
-        <thead><tr><th data-i18n="colTask">Task</th><th>Excel</th><th>MATLAB</th><th>Python</th></tr></thead>
+        <thead><tr><th scope="col" data-i18n="colTask">Task</th><th scope="col">Excel</th><th scope="col">MATLAB</th><th scope="col">Python</th></tr></thead>
         <tbody>
           <tr><th scope="row" data-i18n="rowFit">Fit a line</th><td><code>=SLOPE(y,x), =INTERCEPT(y,x); LINEST</code></td><td><code>mdl = fitlm(x, y)</code></td><td><code>smf.ols("y ~ x", df).fit()</code></td></tr>
           <tr><th scope="row" data-i18n="rowResid">Residual plots</th><td data-i18n="tExcelResid">Fitted column = slope·x + intercept; residual = y − fitted; scatter plot</td><td><code>plotResiduals(mdl, "fitted")</code></td><td><code>plt.scatter(res.fittedvalues, res.resid)</code></td></tr>

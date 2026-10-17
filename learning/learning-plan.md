@@ -563,6 +563,15 @@ in it was here or in learning/README.md.
   corrupted make-ipynb command; the fonts line in CLAUDE.md's Stack; the push checklist's dash
   thresholds; bare `python` in doc commands; the duplicate decision number 17); staging/feedback/
   deleted. The decisions below keep the values they fixed at the time, as history.
+- [X] Accessibility after the audit (batch E, 2026-10-17): learning.js adds a debounced live
+  mirror beside every `.readout` (600 ms after the last change, silent on load) in both series;
+  the invisible-bias quiz answer got `aria-live`; the nine Reflections charts got `role="img"`;
+  the EN/ES toggle carries `aria-pressed` (true = Spanish) and a label that names the language
+  and the switch; new-tab links (Colab, chips, release links) are described by a hidden "Opens in
+  a new tab" note; `§N` heading labels are followed by a space; table header cells have `scope`;
+  colorblind light `--accent` is #006fad (from --fix #0072b2) so the hub's module-row hover
+  clears 4.5:1 on the row tint. The browser suites count all of these as failures now (skip
+  link and <main> stay report-only: Gideon's call, audit L33).
 - [X] Gideon: repo, token (no expiration; rotation steps in learning/README.md → Feedback →
   Setup), the three env vars, feedback-labels.py, and the two production tests (issues #1
   visitor and #2 owner, both labelled on creation, 2026-10-16). Still his: `#owner-setup` on

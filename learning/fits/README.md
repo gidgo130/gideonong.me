@@ -44,6 +44,14 @@ learning/
   permanent second cue (legend swatch and `.lbl-fix` label underline follow). Charts must use the
   shared class names (fit / fix / fix-curve / ci-bar-fix / pt-hi / bar-hi / lbl-fix / v bad /
   v good) so the colorblind cues apply.
+- **Screen readers (2026-10-17).** Every chart `svg.chart` carries `role="img"` and an `aria-label`
+  that says what it shows. Readouts are not live regions themselves: learning.js puts a visually
+  hidden mirror (`.vh`, `aria-live="polite"`, `aria-atomic`) beside every `.readout` and rewrites it
+  600 ms after the last change, so a slider announces its settled value once. Quiz answers carry
+  `aria-live="polite"` in the markup. The EN/ES toggle is one two-state button: `aria-pressed`
+  is "true" when Spanish is on and its label (`langToggleAria`) names the current language and
+  the switch. Links that open a new tab (Colab, the reference chips, the release links) are
+  described by the page's hidden `<span id="new-tab-note" data-i18n="newTabNote">`.
 - **Line geometry is constant on screen (2026-10-15).** Charts are authored at 420 or 560 units
   wide and render smaller, so learning.js sets `--k` (viewBox width ÷ rendered width) on every
   `svg.chart` after each draw, on resize and when a `<details>` opens, and learning.css multiplies

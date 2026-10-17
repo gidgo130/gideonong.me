@@ -295,6 +295,7 @@
     if (!span) { span = document.createElement("span"); span.className = "offline-copy"; el.appendChild(span); }
     span.innerHTML = esc(t("offlineCopy", { v: OFFLINE.version || "?", c: OFFLINE.commit || "?" })) +
       ' · <a href="' + RELEASES + '" target="_blank" rel="noopener">' + esc(t("offlineUpdates")) + '</a>';
+    newTabHints(span);
   }
 
   // ---------- series navigation ----------
@@ -393,6 +394,7 @@
         '<a href="' + DOWNLOAD + 'ReadingYourFits.zip">' + esc(t(win ? "offlineGetZip" : "offlineGetZipOnly")) + '</a>' +
         (win ? '<small>' + esc(t("offlineGetNote")) + ' <a href="' + RELEASES + '" target="_blank" rel="noopener">' +
           esc(t("offlineGetNotes")) + '</a></small>' : "");
+      newTabHints(hub);
       hub.hidden = false;
     }
     // A module page (learning/fits/<slug>/): its own installer in the "Take it with you" row.
@@ -412,8 +414,45 @@
       a.title = t("takeOfflineTitle");
     }
   }
-  document.addEventListener("DOMContentLoaded", function () { fixFileLinks(); hideHttpOnly(); offlineLinks(); });
-  document.addEventListener("learnlangchange", offlineLinks);
+  // ---------- accessibility helpers (both series load this file) ----------
+  // Readouts change on every slider tick, so the readout itself is not a live region (a screen
+  // reader would announce every intermediate value). Instead each .readout gets a visually hidden
+  // mirror (aria-live="polite", aria-atomic) that is rewritten LIVE_DELAY ms after the last change
+  // with the readout's labels and values in reading order: one announcement per settled value.
+  // Observation starts a second after load, so the initial fill is not announced.
+  var LIVE_DELAY = 600;
+  function readoutText(el) {
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), parts = [], n;
+    while ((n = walker.nextNode())) { var s = n.data.replace(/\s+/g, " ").trim(); if (s) parts.push(s); }
+    return parts.join(" ");
+  }
+  function liveReadouts() {
+    document.querySelectorAll(".readout").forEach(function (ro) {
+      if (ro.getAttribute("aria-live") || ro.closest("[aria-live]")) return;
+      if (ro.nextElementSibling && ro.nextElementSibling.hasAttribute("data-live-for")) return;
+      var mirror = document.createElement("div");
+      mirror.className = "vh";
+      mirror.setAttribute("aria-live", "polite");
+      mirror.setAttribute("aria-atomic", "true");
+      mirror.setAttribute("data-live-for", ro.id || "readout");
+      ro.parentNode.insertBefore(mirror, ro.nextSibling);
+      var timer = null, last = "";
+      var push = function () { timer = null; var s = readoutText(ro); if (s !== last) { last = s; mirror.textContent = s; } };
+      setTimeout(function () {
+        last = readoutText(ro);
+        new MutationObserver(function () { clearTimeout(timer); timer = setTimeout(push, LIVE_DELAY); })
+          .observe(ro, { childList: true, characterData: true, subtree: true });
+      }, 1000);
+    });
+  }
+  // Links that open a new tab point screen readers at the page's hidden "Opens in a new tab" note
+  // (<span id="new-tab-note" hidden>, data-i18n="newTabNote" on bilingual pages).
+  function newTabHints(scope) {
+    if (!document.getElementById("new-tab-note")) return;
+    (scope || document).querySelectorAll('a[target="_blank"]:not([aria-describedby])').forEach(function (a) { a.setAttribute("aria-describedby", "new-tab-note"); });
+  }
+  document.addEventListener("DOMContentLoaded", function () { fixFileLinks(); hideHttpOnly(); offlineLinks(); liveReadouts(); newTabHints(); });
+  document.addEventListener("learnlangchange", function () { offlineLinks(); newTabHints(); });
 
   window.LF = {
     mulberry32: mulberry32, normals: normals, uniforms: uniforms, newSeed: newSeed,

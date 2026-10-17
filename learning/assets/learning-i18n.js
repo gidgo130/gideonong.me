@@ -87,6 +87,7 @@
           a.href = todo[i].href;
           a.target = "_blank";
           a.rel = "noopener";
+          if (document.getElementById("new-tab-note")) a.setAttribute("aria-describedby", "new-tab-note");
           hit.parentNode.replaceChild(a, hit);
           a.appendChild(hit);
           todo.splice(i, 1);
@@ -118,6 +119,9 @@
     document.querySelectorAll(".lang-toggle .lang-btn").forEach(function (b) {
       b.classList.toggle("is-active", b.getAttribute("data-lang") === lang);
     });
+    // The toggle is one two-state button: pressed = Spanish is on. Its aria-label (langToggleAria,
+    // set above) names the current language and the one a press switches to.
+    document.querySelectorAll(".lang-toggle").forEach(function (b) { b.setAttribute("aria-pressed", lang === "es" ? "true" : "false"); });
   }
 
   function setLang(next) {
