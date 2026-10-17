@@ -9,3 +9,5 @@ offline/stage/
 offline/dist/
 # Fonts fetched by tools/make-og-cards.py
 tools/fonts/
+# Browser-suite output (learning/workshop/tests/): screenshots, synthetic pages, stage copies
+tests/out/

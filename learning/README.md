@@ -36,6 +36,8 @@ learning/
   reflections/                The Reflections series (see reflections/README.md)
   workshop/                   Slide sources, figures, dev tools, the offline installer build
                               (tracked, never deployed: .vercelignore)
+  workshop/tests/             The browser suites (Playwright, installed outside the repo): run.js,
+                              lib.js, one file per suite, README.md with the install and the command
 ```
 
 Pages are plain HTML/CSS/JS with relative links, so they work on the site, on a Vercel
@@ -265,22 +267,52 @@ get nothing.
 - Every chart at 375 px (and 768, 1280): the Hub-wide numbers hold on screen, measured as CSS
   value × the SVG's screen scale: data strokes ≥ 2 px, dashes 10 px with 6 px gaps, dots 3.25 px
   every 6 px (±0.5 px for rounding), the legend swatches the same; in grayscale, dashed and
-  dotted lines differ by ≥ 2.5× in run length. Chromium and Firefox (Playwright's build, in the
-  scratchpad).
+  dotted lines differ by ≥ 2.5× in run length. Chromium and Firefox: the `theme-dashes` suite
+  below measures this.
 - Open `learning/index.html` straight from disk: module, book and reflection links and the back
   links still work; the math renders (KaTeX is local).
-- `node learning/workshop/tools/check-es.js` passes (hub and module strings, the fb* strings
-  included).
-- Feedback tests pass: `node --test "scripts/tests/*.test.mjs"` (api/feedback.js with a stubbed fetch:
-  origins, limits, silent rejects, owner key, fences, F2a, GitHub failures, throttle, headers)
-  and `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" -I scripts\tests\test_feedback_pull.py`
-  (the inbox parser against forged rows, headings, fences and email lines inside visitor text).
+- **Tests in the repo** (Node and the dev Python, no packages; run from the repo root):
+  - `node learning/workshop/tools/check-es.js`: every strings file (hub, modules, strings-common
+    with the fb* strings) has the same keys, placeholders and tag counts in EN and ES, and every
+    chip an ES phrase.
+  - `node --test "scripts/tests/*.test.mjs"` runs two suites:
+    - `feedback-api.test.mjs`: api/feedback.js with a stubbed fetch. Origins (exact list, none,
+      null, http, a preview URL in production, a look-alike host), methods, both 8 KB paths, bad
+      JSON, required-field 400s, optional fields dropped to "—", the silent honeypot and too-fast
+      200s, the owner key right and wrong (never logged), the issue body (allow-listed cells, the
+      warning line, fence lengths, email code span), the labels fallback (F2a), GitHub 4xx / bad
+      JSON / network failure logging only the function's own message, the per-sender throttle,
+      the 503 with no token, and the response headers (no-store, noindex, no CORS).
+    - `tokens.test.mjs`: the two copied token blocks in learning.css have not drifted:
+      `.hub-frame` against css/style.css (the live `:root` palette, the LAST
+      `:root[data-theme="dark"]` block, the readability muteds) and `.ref-panel` against
+      reflections.css (light, both dark rules, readability, the three font stacks), plus each
+      copy's OS-dark and data-theme-dark rules agreeing with each other. Change a value in one
+      file and this fails until the copy follows.
+  - `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" -I scripts\tests\test_feedback_pull.py`:
+    the inbox parser and renderer against forged rows, headings, fences and "Reply email" lines
+    inside visitor text; labels from the API win over the body; the title's code span; the
+    unknown-layout fallback.
+  - `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-ipynb.py all --check`:
+    every generated notebook prints what its script prints (slow: it runs every script twice).
+  - `node learning\workshop\tests\run.js` (a few minutes; needs the one-time Playwright install
+    outside the repo described in learning/workshop/tests/README.md): the six browser suites.
+    `pages`: every page the registries imply (no-slash URL, noindex + OG with a real 1200×630
+    card, the feedback slot and script order, registry text rendered in EN and ES, a11y, the
+    375 px matrix, opened from disk). `hub`: the hub's matrix with contrast, faces, geometry,
+    token sync by rendered values, the hidden band, the three-newest cap, the sticky bar.
+    `reflections`: every book and reflection page (math, chart text 12–13 px, overlaps, twins,
+    resize, every control, contrast) plus balanced-plant's own checks. `theme-dashes`: dash and
+    dot geometry on screen in Chromium and Firefox and per chart on every page.
+    `feedback-widget`: the widget end to end against a mocked /api/feedback, every page's layout
+    and contrast. `offline-stage`: the staged offline copy from file://, online and offline.
+    `run.js --list` prints the same; `run.js <name> …` runs a subset. Expected text comes from
+    the strings files and registries, never from literals, so a copy edit does not break them.
 - Feedback: on each page type the footer shows "Feedback", the dialog opens and closes (Esc,
   ✕, backdrop; focus back on the button), a send on localhost logs `[feedback dry-run]` and
   shows "Thanks. Sent."; from disk the footer shows the email line and no button; at 375 px the
-  dialog fits the viewport in both themes with readability on. The series-wide Playwright
-  checks (136 on 2026-10-16) live in the session scratchpad, not the repo; the handler and
-  parser tests above are in the repo (scripts/tests/).
+  dialog fits the viewport in both themes with readability on. The `feedback-widget` suite
+  above does all of this; the handler and parser tests are in scripts/tests/.
 - `build.ps1 -StageOnly` stages nothing from Reflections or `assets/vendor/`.
 - On the Vercel preview: repeat the no-slash checks, and view source for `noindex`.
 - Then the series' own checks (fits/README.md, reflections/README.md).
