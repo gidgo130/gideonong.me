@@ -106,7 +106,13 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   Reflections block from assets/reflections.js, which it loads only when `window.LEARN_OFFLINE`
   is unset and keeps hidden until the file has loaded; the band's three faces are requested by
   the hub script only when the band is shown. A new series gets its own band the same way.
-  `.hub [hidden]` forces `display: none`, because bands set their own display.
+  `.hub [hidden]` forces `display: none`, because bands set their own display. The hub's bar is
+  STICKY (2026-10-16; hub only, module and Reflections pages keep a static bar): `position:
+  sticky; top: env(safe-area-inset-top, 0px)`, always opaque (`--nav-bg`), the 1px bottom rule,
+  z-index 10 (below `.fb-sel`'s 20; the feedback `<dialog>` is modal and sits above everything).
+  Every `[id]` on the hub has `scroll-margin-top` of the bar's height (`--hub-bar-h`, 55 px, 58 px
+  under readability) plus 8 px, so anchor jumps land below the bar. If the bar's padding or font
+  changes, re-measure and update `--hub-bar-h` in the same rule.
 - **Dashed and dotted lines stay readable.** On every chart, at the rendered size: data lines
   2 px or more; dashes 10 px with 6 px gaps; dots as round-capped zero-length dashes, 3.25 px,
   every 6 px (dash length ≥ 3× the dot diameter, dots heavier than dashes); at most three forms

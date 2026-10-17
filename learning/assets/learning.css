@@ -294,8 +294,19 @@ body.hub { padding: 0; }
 }
 :root[data-readability][data-theme="dark"] .hub-frame { --muted: #c4bbac; }
 
-/* series bar: the main navbar's surface (white in light mode), full width, thin rule below */
-.hub-bar { background: var(--nav-bg); border-bottom: 1px solid var(--rule); }
+/* series bar: the main navbar's surface (white in light mode), full width, thin rule below.
+   Sticky on the hub only (2026-10-16), like the main site's navbar: pinned at the top (below a
+   phone's notch through the safe-area inset), always opaque (--nav-bg: white; the main site's
+   dark value in dark mode), z-index 10: above the page, below the "Comment on this" button
+   (.fb-sel, z-index 20). The feedback <dialog> is modal (the browser's top layer), so no z-index
+   competes with it. --hub-bar-h is the bar's rendered height (14 px text: 55 px; readability's
+   16 px: 58 px); every in-page anchor target gets that as scroll-margin-top, plus a little air,
+   so #reading-your-fits and #reflections never land under the bar. Module and Reflections pages
+   keep their static bar. */
+.hub { --hub-bar-h: 55px; }
+:root[data-readability] .hub { --hub-bar-h: 58px; }
+.hub-bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--nav-bg); border-bottom: 1px solid var(--rule); }
+.hub [id] { scroll-margin-top: calc(var(--hub-bar-h) + env(safe-area-inset-top, 0px) + 8px); }
 .hub .series-bar { max-width: 1080px; padding-inline: 16px; box-sizing: content-box; border-bottom: 0; font-family: var(--font-body); font-size: 14px; }
 .hub .series-bar .crumbs a { font-weight: 600; }
 .hub .series-bar .crumbs a:hover { color: var(--accent); }
