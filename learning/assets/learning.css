@@ -64,6 +64,7 @@ a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%
 
 /* ---------- series bar (top of every page) ---------- */
 .series-bar {
+  position: relative;   /* the View popover hangs from it */
   max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;
   gap: 12px; padding-block: 14px; border-bottom: 1px solid var(--rule);
   font-family: var(--font-display); font-size: 15px;
@@ -71,7 +72,7 @@ a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%
 .series-bar .crumbs { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--muted); }
 .series-bar .crumbs a { color: var(--ink); font-weight: 600; text-decoration: none; }
 .series-bar .crumbs a:hover { color: var(--accent); }
-.lang-toggle {
+.lang-toggle, .view-toggle {
   display: inline-flex; flex: none; /* never squeezed by long crumbs; they wrap instead */
   border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
   padding: 0; background: transparent; cursor: pointer; font-family: var(--font-mono); font-size: 12px;
@@ -79,6 +80,35 @@ a.ref-chip:hover { color: inherit; background: color-mix(in srgb, var(--ink) 12%
 .lang-toggle[hidden] { display: none; }
 .lang-toggle span { padding: 4px 8px; color: var(--muted); }
 .lang-toggle span.is-active { background: var(--ink); color: var(--paper); }
+/* The View button (assets/view-settings.js) is the toggle's sibling: same box, font, border and
+   padding, so it takes each page's bar styling (the hub's .hub .lang-toggle rule covers both). */
+.view-toggle { padding: 4px 8px; color: var(--muted); line-height: normal; }   /* line-height normal = the toggle spans, so both boxes are 26 px */
+.view-toggle:hover, .view-toggle[aria-expanded="true"] { background: var(--ink); color: var(--paper); }
+.view-pop {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  width: min(300px, calc(100vw - 32px)); padding: 12px 14px; display: grid; gap: 10px;
+  background: var(--plot); color: var(--ink); border: 1px solid var(--rule); border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .12); font-family: var(--font-body); font-size: 14px; line-height: 1.4; text-align: left;
+}
+.view-pop[hidden] { display: none; }
+.view-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+.view-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.view-seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.view-seg button { padding: 4px 9px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.view-seg button + button { border-left: 1px solid var(--rule); }
+.view-seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.view-check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.view-check input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.view-note { margin: 0; font-size: 12.5px; color: var(--muted); }
+.view-close { justify-self: end; padding: 3px 10px; border: 1px solid var(--rule); border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+.view-close:hover { background: var(--note-bg); }
+/* Skip link: the first tab stop on every page, visible only while focused, above the sticky bar. */
+.skip-link { position: absolute; left: 16px; top: -200px; z-index: 40; padding: 8px 12px; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; font-family: var(--font-display); font-size: 15px; text-decoration: none; }
+.skip-link:focus { top: 8px; outline: 2px solid var(--accent); outline-offset: 2px; }
+/* The colorblind hint under the first chart legend (view-settings.js). */
+.cb-hint { margin: 6px 0 0; font-family: var(--font-display); font-size: 14px; color: var(--muted); }
+.cb-hint-btn { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.cb-hint-btn:hover { color: var(--ink); }
 
 /* ---------- type ---------- */
 header.top { padding-block: 36px 8px; border-bottom: 1px solid var(--rule); display: grid; gap: 10px; }
@@ -314,7 +344,9 @@ body.hub { padding: 0; }
 .hub .series-bar { max-width: 1080px; padding-inline: 16px; box-sizing: content-box; border-bottom: 0; font-family: var(--font-body); font-size: 14px; }
 .hub .series-bar .crumbs a { font-weight: 600; }
 .hub .series-bar .crumbs a:hover { color: var(--accent); }
-.hub .lang-toggle { font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+.hub .lang-toggle, .hub .view-toggle { font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+.hub .view-pop { font-family: var(--font-body); right: 16px; }   /* the hub bar has a 16px padding box */
+.hub .cb-hint, .hub .skip-link, .hub .view-title { font-family: var(--font-body); }
 
 /* header: Lora title, DM Sans lead, sentence-case eyebrow */
 .hub-head { background: var(--paper); }
@@ -372,7 +404,7 @@ body.hub { padding: 0; }
 .quiz-score { font-family: var(--font-mono); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .chart .pt-ring { fill: none; stroke: var(--ink); stroke-width: calc(2px * var(--k, 1)); }
 .chart .pt-mark { fill: var(--ink); }
-.chart .bar-hi { fill: var(--fit); fill-opacity: .85; }
+.chart .bar-hi { fill: var(--fit); fill-opacity: .85; stroke: var(--ink); stroke-width: calc(1px * var(--k, 1)); }   /* flagged bar: thin ink outline, always */
 .chart .thresh { stroke: var(--muted); stroke-width: calc(1.25px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(6px * var(--k, 1)); }
 .chart .fit-curve { stroke: var(--fit); stroke-width: calc(2.75px * var(--k, 1)); fill: none; }
 .chart .fix-curve { stroke: var(--fix); stroke-width: calc(3.25px * var(--k, 1)); fill: none; stroke-dasharray: 0 calc(6px * var(--k, 1)); stroke-linecap: round; }
@@ -386,7 +418,7 @@ body.hub { padding: 0; }
 .chart .shade { fill: var(--grid); fill-opacity: .6; }
 .chart .lbl-muted { fill: var(--muted); font-family: var(--font-display); font-size: 13px; }
 .chart .ln-muted { stroke: var(--pt); stroke-width: calc(2px * var(--k, 1)); fill: none; }
-.chart .pt-hi { fill: var(--fit); }
+.chart .pt-hi { fill: var(--fit); stroke: var(--ink); stroke-width: calc(1px * var(--k, 1)); }   /* highlighted point: 1.5 px larger (learning.js) with a thin ink outline, always */
 .chart .pt-fix { fill: var(--fix); }
 .chart .ci-bar { stroke: var(--fit); stroke-width: calc(3px * var(--k, 1)); }
 .chart .ci-bar-fix { stroke: var(--fix); stroke-width: calc(3.25px * var(--k, 1)); stroke-dasharray: 0 calc(6px * var(--k, 1)); stroke-linecap: round; }
@@ -468,8 +500,9 @@ table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
 
 /* ---- Colorblind: orange/blue in place of red/blue (the pair that stays apart under protan,
    deutan and tritan vision), plus a non-color cue on the remaining red/grey distinctions:
-     points   a miss / highlighted point (.pt-hi) wears an ink ring; plain points don't
-     bars     a flagged bar (.bar-hi) wears an ink outline
+     points   a miss / highlighted point (.pt-hi) wears a full ink ring (the thin outline it
+              always has, doubled); plain points don't
+     bars     a flagged bar (.bar-hi) wears a heavier ink outline
      readouts a failed check (.v.bad) is marked ✕, a passed one (.v.good) ✓, besides bold
    The corrected estimate is dotted in every mode (base rules above), as is its legend swatch
    and its label underline. Meaning is unchanged: orange = what an ordinary fit reports or a
@@ -479,8 +512,17 @@ table.tools code { font-family: var(--font-mono); font-size: 12.5px; }
   :root[data-colorblind]:not([data-theme="light"]) { --fit: #ff9a4a; --fix: #63b3f0; --accent: var(--fix); }
 }
 :root[data-colorblind][data-theme="dark"] { --fit: #ff9a4a; --fix: #63b3f0; --accent: var(--fix); }
-:root[data-colorblind] .chart .pt-hi,
-:root[data-colorblind] .chart .bar-hi { stroke: var(--ink); stroke-width: calc(1.25px * var(--k, 1)); }
+:root[data-colorblind] .chart .pt-hi { stroke-width: calc(2px * var(--k, 1)); }
+:root[data-colorblind] .chart .bar-hi { stroke-width: calc(1.75px * var(--k, 1)); }
+
+/* Forced colors (Windows High Contrast): charts keep their own colors and background, so lines,
+   points and legend swatches never vanish into the forced canvas; each chart already paints its
+   own panel (svg.chart background, the Reflections .plot-bg sheet). Everything else follows the
+   system palette as usual. */
+@media (forced-colors: active) {
+  svg.chart, .essay .fig svg, .legend-key .sw, .essay .legend span::before { forced-color-adjust: none; }
+  .essay .fig svg { background: var(--paper); }
+}
 :root[data-colorblind] .v.bad::before { content: "✕\00a0" / ""; }
 :root[data-colorblind] .v.good::before { content: "✓\00a0" / ""; }
 

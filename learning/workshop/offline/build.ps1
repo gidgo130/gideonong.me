@@ -65,6 +65,11 @@ if ($dirty) {
   if ($Release) { Fail ("-Release needs a clean tree; uncommitted:`n" + ($dirty -join "`n")) }
   $Commit += "-dirty"
 }
+if ($Release) {
+  # A published release is never replaced (offline README -> Release): a new build needs a new version.
+  $tagged = (& git -C $RepoRoot tag -l "offline-v$Version") -join ""
+  if ($tagged) { Fail "tag offline-v$Version already exists: bump AppVersion in ReadingYourFits.iss before another -Release" }
+}
 Write-Host "Reading Your Fits $Version ($Commit)"
 
 # ---- 1. Stage ----------------------------------------------------------------------------
@@ -107,6 +112,7 @@ Licenses
   credit to "Gideon A. Ong, gideonong.me/learning", and keep adaptations under the same
   license.
 - Not licensed, all rights reserved: Gideon A. Ong's name and likeness.
+- assets/glogo.ico (the site's logo, shipped as the favicon): not licensed, all rights reserved.
 - Cited papers are linked by DOI and are not included.
 "@
 [System.IO.File]::WriteAllText((Join-Path $Stage "NOTICE.txt"), ($notice -replace "`r?`n", "`r`n"), (New-Object System.Text.UTF8Encoding $false))

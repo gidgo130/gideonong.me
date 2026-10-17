@@ -36,7 +36,8 @@
         var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
         if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
         if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
-        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
       } catch (e) { /* storage blocked: the OS theme and the default view */ }
     })();
   </script>
@@ -51,6 +52,7 @@
   <link rel="stylesheet" href="../../reflections.css">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 
 <nav class="series-bar" aria-label="Series">
   <div class="crumbs">
@@ -62,7 +64,7 @@
 </nav>
 
 <div class="wrap essay-wrap">
-<main class="essay">
+<main class="essay" id="main">
 <header class="top">
   <span class="sec">Reflections · <i>The Goal</i>, Eliyahu M. Goldratt &amp; Jeff Cox (1984)</span>
   <h1>The Balanced Plant Theorem</h1>
@@ -408,6 +410,7 @@ $$C(\mu)=c\,\mu+h\,\frac{\lambda}{\mu-\lambda},\qquad C'(\mu)=c-\frac{h\lambda}{
 <script src="main.js"></script>
 <!-- Feedback widget (F7): strings-common.js is loaded as plain data for its fb* strings; no i18n engine, English only. -->
 <script src="../../../assets/strings-common.js"></script>
+<script src="../../../assets/view-settings.js"></script>
 <script src="../../../assets/feedback.js"></script>
 </body>
 </html>

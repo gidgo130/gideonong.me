@@ -246,6 +246,13 @@
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
     svg.innerHTML = g;
     strokeScale(svg);
+    // Highlighted points read as such without color: 1.5 px larger on screen than drawn (the
+    // thin ink outline is learning.css's). --k is viewBox units per screen pixel.
+    var k = parseFloat(svg.style.getPropertyValue("--k")) || 1;
+    svg.querySelectorAll("circle.pt-hi").forEach(function (c) {
+      var r = parseFloat(c.getAttribute("r"));
+      if (r) c.setAttribute("r", (r + 1.5 * k).toFixed(2));
+    });
   }
   // Line geometry stays constant on screen: learning.css multiplies stroke widths and dash
   // lengths by --k = viewBox width / rendered width. Set after every draw, on resize, and when a

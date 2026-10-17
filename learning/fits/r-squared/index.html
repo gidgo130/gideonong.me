@@ -36,7 +36,8 @@
         var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
         if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
         if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
-        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
       } catch (e) { /* storage blocked: the OS theme and the default view */ }
     })();
   </script>
@@ -46,6 +47,7 @@
   <link rel="stylesheet" href="../../assets/learning.css">
 </head>
 <body>
+<a class="skip-link" href="#main" data-i18n="skipLink">Skip to content</a>
 
 <nav class="series-bar" data-i18n-aria="navSeriesAria" aria-label="Series">
   <div class="crumbs">
@@ -59,6 +61,7 @@
 </nav>
 
 <div class="wrap">
+<main id="main">
   <header class="top">
     <div class="eyebrow" data-i18n="eyebrow">Reading Your Fits · Module 1</div>
     <h1 data-i18n="h1">Why R² Isn't Enough</h1>
@@ -221,6 +224,8 @@
     </div>
   </section>
 
+</main>
+
   <nav class="series-nav" id="series-nav" data-i18n-aria="navSeriesNavAria" aria-label="Series navigation"></nav>
   <p class="foot"><span data-i18n="footNote">Trial 1: Anscombe (1973), &quot;Graphs in Statistical Analysis&quot;, The American Statistician 27(1). Trials 2 and 3: simulated, y = 1 + 2x + error.</span>
     <span class="fb-slot" data-i18n="footMistake">Found a mistake? gao9819@utulsa.edu</span></p>
@@ -232,6 +237,7 @@
 <script src="../../assets/learning-i18n.js"></script>
 <script src="../../assets/learning.js"></script>
 <script src="main.js"></script>
+<script src="../../assets/view-settings.js"></script>
 <script src="../../assets/feedback.js"></script>
 </body>
 </html>

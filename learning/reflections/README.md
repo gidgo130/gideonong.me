@@ -173,7 +173,10 @@ reference for every copy below is `the-goal/balanced-plant/` (page, main.js, scr
    - Scripts, in this order: if there is math, `../../../assets/vendor/katex/katex.min.js`,
      `../../../assets/vendor/katex/auto-render.min.js` and the inline `renderMathInElement(...)`
      call with exactly the two delimiter pairs (copy it); then `../../../assets/learning.js`,
-     `main.js`, `../../../assets/strings-common.js` and `../../../assets/feedback.js` last.
+     `main.js`, `../../../assets/strings-common.js`, `../../../assets/view-settings.js` and
+     `../../../assets/feedback.js` last.
+   - The skip link `<a class="skip-link" href="#main">Skip to content</a>` as the first element in
+     `<body>`, and `<main class="essay" id="main">`.
 2. **Charts and readouts** `main.js`: start from balanced-plant's `plot()` helper. Colors from
    `--s1..--s4` only; each line told apart by `dash: "dashed" | "dotted"` or a marker; a fourth
    series gets `label:`; every SVG keeps its authored viewBox in `data-vb`; every control redraws

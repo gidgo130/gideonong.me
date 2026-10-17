@@ -51,7 +51,12 @@ learning/
   `aria-live="polite"` in the markup. The EN/ES toggle is one two-state button: `aria-pressed`
   is "true" when Spanish is on and its label (`langToggleAria`) names the current language and
   the switch. Links that open a new tab (Colab, the reference chips, the release links) are
-  described by the page's hidden `<span id="new-tab-note" data-i18n="newTabNote">`.
+  described by the page's hidden `<span id="new-tab-note" data-i18n="newTabNote">`. Every page
+  starts with the skip link (`skipLink`) and wraps its content in `<main id="main">`; the series
+  bar carries the View button (view-settings.js, see learning/README.md → Viewing settings).
+  Highlighted points (`.pt-hi`) are drawn 1.5 px larger than the chart asks (learning.js) with a
+  1 px ink outline, and flagged bars (`.bar-hi`) get the same outline, in every mode; colorblind
+  mode doubles them and adds the ✕ / ✓ marks.
 - **Line geometry is constant on screen (2026-10-15).** Charts are authored at 420 or 560 units
   wide and render smaller, so learning.js sets `--k` (viewBox width ÷ rendered width) on every
   `svg.chart` after each draw, on resize and when a `<details>` opens, and learning.css multiplies
@@ -128,7 +133,9 @@ runs from the repo root unless it says otherwise.
      reports); the footer with `<span class="fb-slot" data-i18n="footMistake">`; and the scripts
      in this order: `../../assets/strings-common.js`, `../../assets/modules.js`, `strings.js`,
      `../../assets/learning-i18n.js`, `../../assets/learning.js`, `main.js`,
-     `../../assets/feedback.js`.
+     `../../assets/view-settings.js`, `../../assets/feedback.js`; the skip link as the first
+     element in `<body>` and `<main id="main">` around the header and the trials (not the series
+     nav or the footer).
    - `strings.js`: `window.LEARN_STRINGS = { en: {…}, es: {…}, chips: […] }`. Every visible word,
      EN first (`pageTitle`, `eyebrow`, `h1`, the `tNNum` / readout / note keys main.js uses); the
      cited papers as chips with DOI hrefs; a `footRead` line.

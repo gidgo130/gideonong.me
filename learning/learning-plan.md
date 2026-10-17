@@ -243,9 +243,9 @@ elease, then published as latest.
 - [ ] Submit the .exe to Microsoft (microsoft.com/wdsi/filesubmission, "software developer")
   only if Defender or SmartScreen flags it as more than "unrecognized".
 - [ ] Bundle the three web fonts (OFL) in the app so it looks the same offline.
-- [ ] Offline readers can't reach About → Viewing settings (the site's localStorage is a
-  different origin from file:); only the OS dark mode applies. A settings UI on /learning
-  would go against the current rule, so it's Gideon's call.
+- [X] Offline readers can't reach About → Viewing settings: resolved 2026-10-17 by the "View"
+  button in every series bar (assets/view-settings.js; same keys and attributes as About, works
+  from file: and in the installed copy; ships from 1.1.0).
 
 ## Reflections — a second section of /learning (2026-10-13, built 2026-10-15)
 
@@ -572,6 +572,15 @@ in it was here or in learning/README.md.
   colorblind light `--accent` is #006fad (from --fix #0072b2) so the hub's module-row hover
   clears 4.5:1 on the row tint. The browser suites count all of these as failures now (skip
   link and <main> stay report-only: Gideon's call, audit L33).
+- [X] Final cleanup, phase 1 (2026-10-17): the decks' noindex + link-preview block moved to the
+  top of <head> by the new learning/workshop/tools/copy-deck.py (the workshop README's step 3);
+  the play pages carry the link-preview tags (export-play.py, with `--patch`); build.ps1 refuses
+  -Release when offline-v<version> is already tagged and NOTICE names the favicon as unlicensed;
+  a skip link and <main id="main"> on every page; the View settings button and popover in every
+  series bar with the colorblind hint under the first legend, `prefers-contrast: more` auto-on
+  (unless viewColorblind is "0"), charts kept legible under forced colors; highlighted points 1.5
+  px larger with a 1 px ink outline and flagged bars outlined in every mode (colorblind doubles
+  them); AppVersion 1.1.0 and its release notes. The suites check all of it.
 - [X] Gideon: repo, token (no expiration; rotation steps in learning/README.md → Feedback →
   Setup), the three env vars, feedback-labels.py, and the two production tests (issues #1
   visitor and #2 owner, both labelled on creation, 2026-10-16). Still his: `#owner-setup` on

@@ -28,6 +28,9 @@ learning/
     reflections.js            The ONE book/reflection registry (Reflections) + its renderers
     feedback.js               The feedback widget: footer button, "Comment on this", the panel,
                               owner mode, dry-run (see "Feedback" below)
+    view-settings.js          The "View" button and popover in every series bar (theme, colorblind
+                              charts, easier reading; the same keys as About) and the colorblind
+                              hint under the first chart legend
     vendor/katex/             Self-hosted KaTeX, one pinned version, with its LICENSE (Reflections)
     og/                       Link-preview cards, 1200×630 PNG: learning.png (hub), <slug>.png per
                               module, reflections.png and <book>-<slug>.png for Reflections.
@@ -79,8 +82,25 @@ installed copy never asks for it) and whose block stays hidden until the file ha
 - **Viewing settings** follow the main site's saved choices through the head snippet on every
   page: `viewTheme` (theme; else the OS setting), `viewReadability` (bigger, looser text; charts
   unchanged) and `viewColorblind`. Styled in learning.css → "Viewing settings"; a series'
-  own stylesheet adds its own tokens under the same attributes. No switches on /learning:
-  change them on About.
+  own stylesheet adds its own tokens under the same attributes. Since 2026-10-17 every series
+  bar also has a **View** button (`assets/view-settings.js`, loaded before feedback.js on every
+  page): the EN/ES toggle's sibling (same box and font, so it takes each bar's styling), opening a
+  small popover with the theme (System / Light / Dark as `aria-pressed` buttons), "Colorblind-
+  friendly charts", "Easier reading" and one note that the choice is saved in this browser and
+  shared with the rest of gideonong.me. It writes the SAME keys About writes (`viewTheme`
+  dark/light or removed, `viewReadability` "1" or removed, `viewColorblind` "1" or "0"), applies
+  them at once, closes on Esc with focus back on the button, and works from file: and in the
+  offline copy. "0" means turned off on purpose: `prefers-contrast: more` (head snippet and the
+  script) turns the colorblind cues on only while the key is absent. On pages with charts the
+  script adds one muted line under the first legend ("Hard to tell the colors apart? Turn on
+  colorblind-friendly charts" / "Colorblind-friendly charts are on · Turn off") that toggles the
+  mode in place. Under forced colors (Windows High Contrast) charts, legend swatches and the
+  Reflections plot sheet keep their own colors (`forced-color-adjust: none`), so no line or point
+  vanishes. Strings: `view*`, `cbHint*`, `cbTurn*`, `skipLink` in strings-common.js.
+- **Skip link and main landmark.** Every page starts with `<a class="skip-link" href="#main">`
+  (visually hidden until focused, the first tab stop; `data-i18n="skipLink"` on bilingual pages)
+  and wraps its content in `<main id="main">` (the hub: header and bands; modules and book
+  pages: header and sections, not the series nav or footer; the essay: `main.essay`).
 - **The series bar** (gideonong.me / Learning / <series> / …) tops every page, in learning.css.
   The EN/ES toggle sits in it only on bilingual pages (Reading Your Fits).
 - **No page-load or scroll animation.** Slider-driven redraws only.

@@ -36,7 +36,8 @@
         var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
         if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
         if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
-        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
       } catch (e) { /* storage blocked: the OS theme and the default view */ }
     })();
   </script>
@@ -49,6 +50,7 @@
   <link rel="stylesheet" href="../reflections.css">
 </head>
 <body data-book="the-goal">
+<a class="skip-link" href="#main">Skip to content</a>
 
 <nav class="series-bar" aria-label="Series">
   <div class="crumbs">
@@ -60,6 +62,7 @@
 </nav>
 
 <div class="wrap">
+<main id="main">
   <header class="top book-head">
     <div class="eyebrow">Reflections · Book 1 of 11</div>
     <h1>The Goal: A Process of Ongoing Improvement</h1>
@@ -73,6 +76,8 @@
     <noscript><p class="note">The list of reflections needs JavaScript turned on.</p></noscript>
     <p class="ref-all"><a href="../">All 11 books</a></p>
   </section>
+
+</main>
 
   <p class="foot">
     <span>Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
@@ -88,6 +93,7 @@
 </script>
 <!-- Feedback widget (F7): strings-common.js is loaded as plain data for its fb* strings; no i18n engine, English only. -->
 <script src="../../assets/strings-common.js"></script>
+<script src="../../assets/view-settings.js"></script>
 <script src="../../assets/feedback.js"></script>
 </body>
 </html>

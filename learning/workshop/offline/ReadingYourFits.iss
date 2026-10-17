@@ -14,7 +14,7 @@
 ; links to missing files.
 
 ; ---- The one place the version lives ------------------------------------------------------
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 ; -------------------------------------------------------------------------------------------
 #define AppName "Reading Your Fits"
 #ifndef OnlyModule

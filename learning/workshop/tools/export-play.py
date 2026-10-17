@@ -1,6 +1,7 @@
 """export-play.py — export a module's marimo notebook as its "Play with the code" page.
 
-    python learning/workshop/tools/export-play.py <slug>
+    python learning/workshop/tools/export-play.py <slug>            export, then apply the tweaks
+    python learning/workshop/tools/export-play.py <slug> --patch    re-apply the tweaks to the existing page
 
 Reads   learning/workshop/modules/<slug>/notebook.py
 Writes  learning/fits/<slug>/play/index.html   (ONE file, --single-file: marimo's editor is
@@ -12,6 +13,8 @@ here, after the export, not by hand:
   * the trailing-slash fix used by every /learning page (…/play → …/play/), so its URL
     matches the rest of /learning
   * the page title and description
+  * the link-preview tags (Open Graph + Twitter card), like every /learning page: the module's
+    card, og:url …/fits/<slug>/play/
   * three baked-in marimo settings: cells run on load, AI panels off, theme follows the OS
 
 Needs marimo and uv in the same Python (python -m pip install marimo uv). On this machine
@@ -31,6 +34,24 @@ NOINDEX = (
     '    <!-- /learning is unlisted on purpose: noindex is permanent (CLAUDE.md -> /learning). -->\n'
     '    <meta name="robots" content="noindex">\n'
 )
+DESCRIPTION = "The module's Python, editable and runnable in the browser (marimo + Pyodide)."
+OG_START, OG_END = "    <!-- link preview (Open Graph / Twitter), static: scrapers don't run JS -->\n", "    <!-- /link preview -->\n"
+
+
+def og_block(slug: str, title: str) -> str:
+    """The same tag set as the module page, for the play page's own URL."""
+    base = title.split(" · ")[0]
+    esc = lambda s: s.replace("&", "&amp;").replace('"', "&quot;")
+    tags = [("property", "og:type", "website"), ("property", "og:site_name", "Gideon A. Ong"), ("property", "og:locale", "en_US"),
+            ("property", "og:title", f"{title} · Reading Your Fits"), ("property", "og:description", DESCRIPTION),
+            ("property", "og:url", f"https://gideonong.me/learning/fits/{slug}/play/"),
+            ("property", "og:image", f"https://gideonong.me/learning/assets/og/{slug}.png"),
+            ("property", "og:image:width", "1200"), ("property", "og:image:height", "630"),
+            ("property", "og:image:alt", f"{base}: a plot from the module beside its title, on lab-notebook paper."),
+            ("name", "twitter:card", "summary_large_image")]
+    return OG_START + "".join(f'    <meta {k}="{n}" content="{esc(v)}">\n' for k, n, v in tags) + OG_END
+
+
 SLASH_FIX = (
     '    <script>\n'
     '      /* Relative links need a trailing slash on folder URLs (…/play/). Add it if missing. */\n'
@@ -42,6 +63,33 @@ SLASH_FIX = (
     '      })();\n'
     '    </script>\n'
 )
+
+
+def tweak_head(html: str, slug: str, title: str) -> str:
+    """noindex, the link-preview tags and the slash fix after <meta charset>, plus title and description.
+    Idempotent: a page that already carries them (a --patch run) gets them replaced."""
+    html = re.sub(r"[ \t]*<!-- /learning is unlisted on purpose[^\n]*\n[ \t]*<meta name=\"robots\" content=\"noindex\">\n", "", html, count=1)
+    html = re.sub(re.escape(OG_START) + r"[\s\S]*?" + re.escape(OG_END), "", html, count=1)
+    html = html.replace(SLASH_FIX, "", 1)
+    html, n = re.subn(r'(\s*<meta charset="utf-8" />\n)', lambda m: m.group(1) + NOINDEX + og_block(slug, title) + SLASH_FIX, html, count=1)
+    if n != 1:
+        raise SystemExit("could not find <meta charset> in index.html; marimo's template changed")
+    html = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", html, count=1)
+    html = re.sub(r'<meta name="description" content="[^"]*" />', f'<meta name="description" content="{DESCRIPTION}" />', html, count=1)
+    return html
+
+
+def patch(slug: str) -> int:
+    notebook = ROOT / "learning" / "workshop" / "modules" / slug / "notebook.py"
+    page = ROOT / "learning" / "fits" / slug / "play" / "index.html"
+    if not page.is_file():
+        print(f"No play page at {page}; export it first")
+        return 1
+    title = re.search(r'app_title="([^"]+)"', notebook.read_text(encoding="utf-8"))
+    title = title.group(1) if title else f"{slug} · play with the code"
+    page.write_text(tweak_head(page.read_text(encoding="utf-8"), slug, title), encoding="utf-8", newline="\n")
+    print(f"Patched {page.relative_to(ROOT)}: noindex, link-preview tags, slash fix, title, description")
+    return 0
 
 
 def main(slug: str) -> int:
@@ -76,12 +124,7 @@ def main(slug: str) -> int:
         raise SystemExit("expected the editor assets to come from jsDelivr; did --single-file change?")
     if "robots" in html:
         raise SystemExit("index.html already has a robots tag; check the export")
-    html, n = re.subn(r'(\s*<meta charset="utf-8" />\n)', lambda m: m.group(1) + NOINDEX + SLASH_FIX, html, count=1)
-    if n != 1:
-        raise SystemExit("could not find <meta charset> in index.html; marimo's template changed")
-    html = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", html, count=1)
-    html = html.replace('<meta name="description" content="a marimo app" />',
-                        '<meta name="description" content="The module\'s Python, editable and runnable in the browser (marimo + Pyodide)." />')
+    html = tweak_head(html, slug, title)
     # marimo's WASM export bakes its own defaults into __MARIMO_MOUNT_CONFIG__ and ignores the
     # user/project config except for `display`. Three of those defaults are wrong for a public
     # teaching page, so fix them in the baked JSON (each one must be found exactly once).
@@ -106,7 +149,8 @@ def main(slug: str) -> int:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) != 1:
         print(__doc__)
         sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    sys.exit(patch(args[0]) if "--patch" in sys.argv else main(args[0]))

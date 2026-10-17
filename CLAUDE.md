@@ -112,7 +112,7 @@ learning/           UNLISTED Learning section (own design, noindex) — see /lea
                     learning/README.md. No link from the site since 2026-09-29 (its About →
                     Interesting sites entry was replaced); reached by URL and shared cards.
 learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, learning-i18n.js,
-                    strings-common.js, modules.js, reflections.js, feedback.js), vendor/katex/ (self-hosted
+                    strings-common.js, modules.js, reflections.js, feedback.js, view-settings.js), vendor/katex/ (self-hosted
                     KaTeX, pinned, with its LICENSE) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
@@ -728,8 +728,11 @@ rest lives. One home per rule; don't restate a manual's content here.
   adds the trailing slash to folder URLs, LF.fixFileLinks handles file:, and anything that needs
   a server or a CDN carries `data-http-only`.
 - Viewing settings follow the main site's saved choices through the head snippet (viewTheme /
-  viewReadability / viewColorblind → data-theme / data-readability / data-colorblind). No
-  settings UI on /learning.
+  viewReadability / viewColorblind → data-theme / data-readability / data-colorblind). Since
+  2026-10-17 every series bar has a "View" button (assets/view-settings.js) that sets the same
+  keys and attributes, so a choice carries across the whole site and reaches offline readers;
+  `prefers-contrast: more` turns the colorblind cues on unless the visitor turned them off
+  ("0"). Charts keep their own colors under forced colors. Details: learning/README.md.
 - External resources: Google Fonts, and nothing else. Libraries are self-hosted under
   learning/assets/vendor/, pinned to one version, shipped with their LICENSE (which
   .vercelignore re-includes).

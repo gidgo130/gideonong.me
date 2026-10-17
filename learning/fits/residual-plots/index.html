@@ -36,7 +36,8 @@
         var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
         if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
         if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
-        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
       } catch (e) { /* storage blocked: the OS theme and the default view */ }
     })();
   </script>
@@ -46,6 +47,7 @@
   <link rel="stylesheet" href="../../assets/learning.css">
 </head>
 <body>
+<a class="skip-link" href="#main" data-i18n="skipLink">Skip to content</a>
 
 <nav class="series-bar" data-i18n-aria="navSeriesAria" aria-label="Series">
   <div class="crumbs">
@@ -59,6 +61,7 @@
 </nav>
 
 <div class="wrap">
+<main id="main">
   <header class="top">
     <div class="eyebrow" data-i18n="eyebrow">Reading Your Fits · Module 2</div>
     <h1 data-i18n="h1">Reading a Residual Plot</h1>
@@ -286,6 +289,8 @@ plt.figure(); plt.plot(resid, "o")           # run order (keep data in the order
     </div>
   </section>
 
+</main>
+
   <nav class="series-nav" id="series-nav" data-i18n-aria="navSeriesNavAria" aria-label="Series navigation"></nav>
   <p class="foot"><span data-i18n="footNote">Simulated data. Trials 1 and 3: y = 1 + 2x + error. Trial 2: T = 22 + 58·e^(−t/4) + error, in °C and minutes.</span>
     <span data-i18n="footRead">Further reading: Cook (1977), &quot;Detection of Influential Observation in Linear Regression&quot;; Cook and Weisberg (1982), Residuals and Influence in Regression; the NIST/SEMATECH e-Handbook of Statistical Methods.</span>
@@ -298,6 +303,7 @@ plt.figure(); plt.plot(resid, "o")           # run order (keep data in the order
 <script src="../../assets/learning-i18n.js"></script>
 <script src="../../assets/learning.js"></script>
 <script src="main.js"></script>
+<script src="../../assets/view-settings.js"></script>
 <script src="../../assets/feedback.js"></script>
 </body>
 </html>

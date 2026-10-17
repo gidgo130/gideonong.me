@@ -36,7 +36,8 @@
         var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
         if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
         if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
-        if (ls.getItem("viewColorblind") === "1") el.setAttribute("data-colorblind", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
       } catch (e) { /* storage blocked: the OS theme and the default view */ }
     })();
   </script>
@@ -48,6 +49,7 @@
   <link rel="stylesheet" href="assets/learning.css">
 </head>
 <body class="hub">
+<a class="skip-link" href="#main" data-i18n="skipLink">Skip to content</a>
 <!-- Layout (2026-10-15): a main-site frame (series bar, header, footer: .hub-frame) around one
      full-bleed band per series (.hub-band), each with its content in the centered .hub-col column.
      Styles: learning.css → "Hub: main-site frame and series bands". -->
@@ -63,6 +65,7 @@
 </nav>
 </div>
 
+<main id="main">
 <header class="hub-frame hub-head">
   <div class="hub-col">
     <div class="eyebrow" data-i18n="eyebrow">Gideon A. Ong · Learning</div>
@@ -100,6 +103,8 @@
     <p class="ref-all"><a href="reflections/" data-i18n="refAll">All 11 books</a></p>
   </div>
 </section>
+
+</main>
 
 <footer class="hub-frame hub-foot">
   <p class="foot hub-col">
@@ -147,6 +152,7 @@
     document.addEventListener("learnlangchange", function () { LF.moduleList(list); LF.offlineNote(foot); reflections(); });
   }());
 </script>
+<script src="assets/view-settings.js"></script>
 <script src="assets/feedback.js"></script>
 </body>
 </html>

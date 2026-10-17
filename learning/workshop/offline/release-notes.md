@@ -2,6 +2,20 @@ Reading Your Fits for offline use: the interactive modules, slides and Python sc
 [gideonong.me/learning](https://gideonong.me/learning/), on your own computer, no internet
 needed. *Español abajo.*
 
+### What's new in 1.1.0
+
+- The hub looks like the rest of gideonong.me (a main-site frame around the series band) and
+  its series bar stays at the top while you scroll.
+- Charts: dashed and dotted lines keep the same weight at every window size, so the truth, the
+  ordinary fit and the corrected estimate tell apart on a phone too; highlighted points and bars
+  carry a thin outline even without the colorblind mode.
+- Accessibility: a skip link, screen-reader announcements for the readouts that change with the
+  sliders, labelled charts, and a **View** button in the series bar for theme, colorblind-friendly
+  charts and easier reading (offline readers could not reach those settings before).
+- Content: the Module 1 slide note's R² figure, the Module 4 run-count readout and a Module 5
+  note were corrected.
+- The Reflections essays stay online only at gideonong.me/learning/reflections/.
+
 ### Which file?
 
 | File | What you get |
@@ -29,6 +43,21 @@ needed. *Español abajo.*
 Cómo leer tus ajustes de curvas, para usar sin conexión: los módulos interactivos, las
 diapositivas y los scripts de Python de [gideonong.me/learning](https://gideonong.me/learning/),
 en tu computadora, sin internet.
+
+### Novedades en 1.1.0
+
+- La portada se ve como el resto de gideonong.me (un marco del sitio alrededor de la serie) y su
+  barra se queda arriba al desplazarte.
+- Gráficas: las líneas discontinuas y punteadas conservan el mismo grosor a cualquier tamaño de
+  ventana, así que la verdad, el ajuste ordinario y la estimación corregida se distinguen también
+  en el teléfono; los puntos y barras resaltados llevan un contorno fino aun sin el modo para
+  daltonismo.
+- Accesibilidad: un enlace para saltar al contenido, anuncios para lectores de pantalla cuando
+  cambian las lecturas, gráficas etiquetadas y un botón **Vista** en la barra para el tema, las
+  gráficas aptas para daltonismo y la lectura más fácil (antes no se podían cambiar sin conexión).
+- Contenido: se corrigieron el R² de una nota de las diapositivas del módulo 1, la lectura del
+  número de corridas del módulo 4 y una nota del módulo 5.
+- Los ensayos de Reflections siguen solo en línea, en gideonong.me/learning/reflections/.
 
 ### ¿Qué archivo?
 

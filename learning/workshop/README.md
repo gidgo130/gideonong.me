@@ -31,11 +31,14 @@ From `learning\workshop\modules\<slug>\` in PowerShell:
 1. Make the figures (they land in `figures\` here):
    `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" ..\..\..\fits\<slug>\<slug>.py`
 2. `quarto render slides.qmd`
-3. Quarto marks the embedded interactive as an image (`role="img"`), which hides its controls
-   from screen readers. Remove it and copy the deck to the page folder (the tracked copy) in one
-   step. This writes UTF-8 without a byte-order mark; `Set-Content -Encoding utf8` in Windows
-   PowerShell 5.1 would add one:
-   `$h = [IO.File]::ReadAllText("$PWD\slides.html") -replace '<iframe role="img" ', '<iframe '; [IO.File]::WriteAllText("$PWD\..\..\..\fits\<slug>\slides.html", $h, (New-Object Text.UTF8Encoding $false))`
+3. Copy the deck to the page folder (the tracked copy) with the site's two fixes, from the repo
+   root: `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\copy-deck.py <slug>`.
+   It drops the `role="img"` Quarto puts on the embedded interactive (which hides its controls
+   from screen readers) and moves `<meta charset>` plus the include-in-header block (noindex, Open
+   Graph, Twitter) to the top of `<head>`: Quarto appends that block after its embedded CSS, about
+   3.6 MB in, where link-preview scrapers never see it. UTF-8 without a byte-order mark, line
+   endings kept. `--in-place` re-applies the fixes to a tracked copy; `all --in-place` does every
+   ready module, both languages.
 
 The `slides.html` left here is ignored by git. Its "Try it yourself" slide is blank here,
 because it loads the `index.html` next to it, which only exists in the page folder. Quarto
@@ -52,7 +55,7 @@ Same steps, with two differences: the figures come from `tools/figures-es.py`, a
 1. Make the Spanish figures (from the repo root; they land in `modules\<slug>\figures-es\`):
    `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\figures-es.py <slug>`
 2. From `learning\workshop\modules\<slug>\`: `quarto render slides.es.qmd`
-3. Step 3 above with `slides.es.html` in both places.
+3. `copy-deck.py <slug> --es` (step 3 above, for the Spanish deck).
 
 `figures-es.py` runs the module's public script (`learning/fits/<slug>/<slug>.py`) unchanged,
 so the data and seeds match the English figures exactly and the script stays English. It
@@ -92,11 +95,15 @@ patches that fresh `index.html`, because marimo regenerates it on every export:
   learning-plan.md; never remove the NOINDEX line)
 - the trailing-slash fix used by every /learning page, so `…/play` lands on `…/play/`
 - the page title (from `app_title` in the notebook) and description
+- the link-preview tags (Open Graph + Twitter card) every /learning page carries, pointing at the
+  module's card and the play page's own URL
 - three settings marimo bakes in from its own defaults and ignores from any config file:
   cells run on load (`auto_instantiate`, off by default in marimo 0.25), AI panels off, theme
   follows the OS
 
-Never edit `play/index.html` by hand; change the notebook or the script and re-export.
+Never edit `play/index.html` by hand; change the notebook or the script and re-export, or run
+`export-play.py <slug> --patch` to re-apply only the head tweaks to the existing page (no marimo
+export; use it when only the tags or the slash fix changed).
 Check the notebook first with `& $py -m marimo check --fix notebook.py` and a headless run
 (`$env:MPLBACKEND="Agg"; & $py notebook.py`), where `$py` is that same python.exe. To edit it
 live: `& $py -m marimo edit notebook.py`.
