@@ -1,8 +1,9 @@
 # gideonong.me
 
 Personal site of Gideon A. Ong, a Mechanical Engineering student at the University of
-Tulsa: projects, experience, an About page, and an unlisted teaching section,
-**Reading Your Fits** (`learning/`), on checking a line fit against lab data.
+Tulsa: projects, experience, an About page, and an unlisted teaching section (`learning/`)
+with two series: **Reading Your Fits**, on checking a line fit against lab data, and
+**Reflections**, essays on eleven industrial-engineering books.
 
 Plain HTML, CSS and vanilla JavaScript. No framework, no build step, no npm: the
 repository is exactly what Vercel serves. English and Spanish throughout.
@@ -14,7 +15,7 @@ repository is exactly what Vercel serves. English and Spanish throughout.
 | `index.html`, `about.html`, `experience.html`, `projects.html`, `projects/` | The site's pages |
 | `css/`, `js/` | Styles and scripts; the data files under `js/` feed every list on the site |
 | `assets/` | Images, videos, and the resume / CV / transcript PDFs |
-| `learning/` | The teaching section: modules, shared assets, and their editable notebooks |
+| `learning/` | The teaching section: the Reading Your Fits modules, the Reflections essays, shared assets, and their editable notebooks |
 | `learning/workshop/`, `scripts/` | Dev-side tooling: slide sources, exporters, the content editor. Never deployed |
 | `CLAUDE.md` | The working manual for the site (structure, conventions, rules) |
 

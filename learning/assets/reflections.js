@@ -56,7 +56,8 @@ window.LEARN_BOOKS = [
   function fix(el) { if (window.LF && LF.fixFileLinks) LF.fixFileLinks(el); }
 
   // Hub block (learning/index.html): the HUB_MAX newest ready reflections, then nothing else
-  // (the "All 11 books" link is static markup). `t` = LI18N.t for the hub's words.
+  // (the "All 11 books" link is static markup). `t` is accepted for symmetry with the other
+  // renderers; the hub's own words are static data-i18n markup, so it is not used here.
   var HUB_MAX = 3;
   function hubList(el, lang, t) {
     var rows = [];

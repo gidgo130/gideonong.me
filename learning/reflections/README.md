@@ -38,34 +38,32 @@ and links the all-books page.
 
 - **English only (R3).** Reflection pages, book pages and the all-books page carry their text in
   the HTML (and in main.js for redrawn readouts), not in strings files. They do not load
-  learning-i18n.js or strings-common.js, their `<html>` has no `data-es-ready`, and the series
-  bar has no EN/ES toggle. Only the hub's Reflections block is bilingual (hub strings.js:
+  learning-i18n.js (strings-common.js is loaded only as plain data, for the feedback widget's
+  fb* strings), their `<html>` has no `data-es-ready`, and the series bar has no EN/ES toggle. Only the hub's Reflections block is bilingual (hub strings.js:
   `refTitle`, `refIntro`, `refAll`, `refListAria`). Book and reflection titles stay English in
   both languages and are marked `lang="en"` on the hub.
 - **Professor Donnell's name** lives in exactly two places per language: the hub's `refIntro`
   strings, and the all-books page (its `<title>`, `<h1>`, meta description and og tags, all in
   that one file). Cards never carry the name. If the name has to change, those are the edits.
-- **The hub panel copies the theme.** learning.css's `.ref-panel` (the hub's Reflections block)
-  repeats the paper, surface, rule, ink, muted, accent and font tokens below, light, dark and
-  readability, because reflections.css can't load on the hub (the offline app excludes it).
-  Change a token here and there together; the hub test compares the two on rendered values.
-  The panel's `--note-bg` is the paper color on purpose (its row hover).
+- **The hub panel copies the theme.** learning.css's `.ref-panel` (the hub's Reflections band)
+  carries COPIES of this series' paper, surface, rule, ink, muted, accent and font tokens (light,
+  dark, readability), because reflections.css can't load on the hub (the offline app excludes
+  it). When a value changes in reflections.css, change the copy too; the comment above
+  `.ref-panel` in learning.css is the one place that documents the copy (its `--note-bg` is the
+  paper color on purpose: the row hover).
 - **Theme: "engineering computation pad" (decided 2026-10-15).** Every page has
   `<html data-series="reflections">`; `reflections.css` overrides learning.css's token NAMES
   under that selector and adds nothing structural. Industrial engineering's own paper and
-  shop-floor vernacular: blue-grey steel paper and neutrals, graphite ink, brass accent, steel
-  blue, and ANSI safety colors used sparingly for emphasis. Related to the main site's warm
-  bronze but not the same. Tokens (light / dark): paper `#F1F3F5` / `#151A1F`; surface (figure
-  panels, asides) `#E4E8ED` / `#1D242B`; grid `#CED6DF` / `#29313A`; rule `#C2CBD5` / `#333D47`;
-  ink `#1F252B` / `#E3E8ED`; muted `#56606A` / `#A0AAB5`; accent brass `#7E5B17` / `#D9A441`;
-  emphasis safety orange `#AD4414` / `#F08A4B` (light darkened from `#B54A17` to clear 4.5:1 on
-  the surface); chart 1 brass, chart 2 steel blue `#2C6390` / `#8DB6D4`, chart 3 safety orange,
-  chart 4 safety green `#3A6D32` / `#9CC27A`. Type: Archivo (headings, width axis at 112.5 for
-  a slightly expanded cut), IBM Plex Serif (body), IBM Plex Mono (numbers, readouts, labels,
-  legends, table figures), each with a real fallback stack. Details, kept restrained: surface
-  color offset on figure panels; no decorative grid (the computation-pad squares were removed
-  on 2026-10-15; the grid token now colors only the charts' own gridlines), with a
-  paper-colored sheet drawn behind each plot area; tables like a time-study
+  shop-floor vernacular: blue-grey steel paper and neutrals, graphite ink, a brass accent, steel
+  blue, and ANSI safety colors (orange, green) used sparingly for emphasis; related to the main
+  site's warm bronze but not the same. The values (light, dark, readability, colorblind) live
+  ONLY in reflections.css, each with its meaning in a comment; the decision record with the
+  numbers as fixed on 2026-10-15 is learning-plan.md → R11. Type: Archivo (headings, width axis
+  at 112.5 for a slightly expanded cut), IBM Plex Serif (body), IBM Plex Mono (numbers,
+  readouts, labels, legends, table figures), each with a real fallback stack. Details, kept
+  restrained: surface color offset on figure panels; no decorative grid (the computation-pad
+  squares were removed on 2026-10-15; the grid token now colors only the charts' own
+  gridlines), with a paper-colored sheet drawn behind each plot area; tables like a time-study
   sheet (mono tabular figures, ruled rows, a heavier rule under the header); safety orange only
   where it means "attention" (the theorem box border, a flagged readout), never decoration or a
   large fill; no stencil fonts, hazard stripes or fake textures. Contrast: body text and chart
@@ -115,7 +113,7 @@ and links the all-books page.
   its own box (`.katex-display`). Only the woff2 fonts ship (every current browser takes them
   first). To upgrade: download the npm tarball of the new version, verify its integrity hash
   against the registry, copy the same five parts, update the version in the page comment, this
-  file, learning-plan.md and CLAUDE.md, and rerun the checks. The LICENSE must stay; `.vercelignore`
+  file and learning-plan.md, and rerun the checks. The LICENSE must stay; `.vercelignore`
   re-includes it (`!learning/assets/vendor/katex/LICENSE`) so it deploys with the code.
 - **Plumbing (R9)** is the hub's: noindex (permanent), static OG + Twitter tags, the
   trailing-slash head script, the viewing-settings head snippet, relative links only (and
@@ -156,7 +154,8 @@ and links the all-books page.
    `the-goal/index.html` (title, authors, year, edition, `data-book`, og tags).
 4. Link preview: a CARDS entry `"<book>-<slug>"` in `workshop/tools/make-og-cards.py` with a
    `chart` function (reflections have no workshop figure), then
-   `python learning/workshop/tools/make-og-cards.py <book>-<slug>`; the page's og:image points at
+   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-og-cards.py <book>-<slug>`;
+   the page's og:image points at
    `learning/assets/og/<book>-<slug>.png`.
 5. Checks: the hub-wide list in `learning/README.md`, plus: no raw `\(` or `$$` in the rendered
    text and no `.katex-error` spans; every control changes its chart or readout; the dash/marker

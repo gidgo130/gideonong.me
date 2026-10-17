@@ -63,9 +63,14 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   (`og:title` / `og:description` = the EN page title and lead, absolute `og:url` with a trailing
   slash, `og:image` = a 1200×630 card in `learning/assets/og/`). Scrapers don't run JS, so the
   tags live in the HTML. If a title or lead changes, update the tags and re-run
-  `python learning/workshop/tools/make-og-cards.py <name>` (its CARDS table holds the card text
-  and either a figure crop or a `chart` function). noindex and OG are independent: a shared link
-  previews fine while the page stays out of search.
+  `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-og-cards.py <name>`
+  (its CARDS table holds the card text and either a figure crop or a `chart` function: learning.png
+  for the hub, `<slug>.png` per module, reflections.png for the all-books and book pages,
+  `<book>-<slug>.png` per reflection; every deck reuses its module's card). noindex and OG are
+  independent: a shared link previews fine while the page stays out of search. One exception
+  (2026-10-15): the hub's meta description and og:description read "Interactive notes and essays
+  built with Claude, mostly for engineering students. Each series has its own format." while the
+  on-page lead keeps "I [told Claude to] build"; the bracket stays out of the card.
 - **Relative links only.** Each page's head script adds the trailing slash to folder URLs
   (`/learning` → `/learning/`); `LF.fixFileLinks` points folder links at index.html when the page
   is opened from disk. Anything that needs a server or a CDN gets `data-http-only` on its link.
@@ -91,12 +96,17 @@ installed copy never asks for it) and whose block stays hidden until the file ha
 - **The hub is a main-site frame with one band per series (2026-10-16).** learning/index.html
   (`body.hub`, no `data-series`): the series bar, header and footer are `.hub-frame` in the main
   site's design (Palette B and its §6 dark palette, Lora + DM Sans, sentence-case eyebrow, white
-  bar, dark footer), with token values COPIED from css/style.css because the offline copy
-  doesn't ship it: keep in step. Each series is a full-bleed `.hub-band` (1px rule along the
-  top edge, 4.5rem padding) whose content sits in `.hub-col`, the frame's centered column. The
-  Reading Your Fits band sets no tokens and inherits the base lab look; the Reflections band
-  is the `.ref-panel` (tokens copied from reflections.css). A new series gets its own band the
-  same way. `.hub [hidden]` forces `display: none`, because bands set their own display.
+  bar, dark footer). Each series is a full-bleed `.hub-band` (1px rule along the top edge,
+  4.5rem padding) whose content sits in `.hub-col`, the frame's centered column. The Reading
+  Your Fits band sets no tokens and inherits the base lab look; the Reflections band is the
+  `.ref-panel`. The frame's and the panel's token values are COPIES (of css/style.css and of
+  reflections.css: the offline copy ships neither); the comments beside those two blocks in
+  learning.css say what to keep in step, and that is the only place the copies are documented.
+  The hub renders the Reading Your Fits block from assets/modules.js (LF.moduleList) and the
+  Reflections block from assets/reflections.js, which it loads only when `window.LEARN_OFFLINE`
+  is unset and keeps hidden until the file has loaded; the band's three faces are requested by
+  the hub script only when the band is shown. A new series gets its own band the same way.
+  `.hub [hidden]` forces `display: none`, because bands set their own display.
 - **Dashed and dotted lines stay readable.** On every chart, at the rendered size: data lines
   2 px or more; dashes 10 px with 6 px gaps; dots as round-capped zero-length dashes, 3.25 px,
   every 6 px (dash length ≥ 3× the dot diameter, dots heavier than dashes); at most three forms
@@ -112,13 +122,25 @@ leaving the page, and lets Gideon leave his own notes the same way. Decisions F1
 learning-plan.md; the rules are in CLAUDE.md → /learning → Feedback widget. The portfolio pages
 get nothing.
 
-- **On the page.** The footer's "Found a mistake? <email>" span (`.fb-slot`) becomes a
-  "Feedback" button once `assets/feedback.js` runs; it opens a small dialog (kind chips, message,
-  optional email, Send, one privacy line). Selecting text with a mouse shows "Comment on this",
-  which opens the same dialog with the quote filled in (not on touch screens: the footer button
-  is the way there). Success says "Thanks. Sent."; failure keeps the text and shows the email.
-  From disk and in the offline app the footer keeps the plain email line. On localhost the
-  widget dry-runs (payload in the console, nothing posted) unless the URL has `?feedback=live`.
+- **On the page.** Every page's footer carries `<span class="fb-slot">Found a mistake?
+  gao9819@utulsa.edu</span>` (`data-i18n="footMistake"` on bilingual pages) and loads
+  `assets/feedback.js` last; Reflections pages load `assets/strings-common.js` before it, as
+  plain data for the fb* strings. The script turns the span into a "Feedback" button that opens
+  a native `<dialog>` (kind chips, message, optional email, Send, one privacy line); Esc closes
+  it and focus returns to the button. Selecting text with a mouse shows "Comment on this", which
+  opens the same dialog with the quote filled in (not on touch screens: the footer button is the
+  way there). Success says "Thanks. Sent."; failure keeps the text and shows the email as
+  selectable text. From disk and in the offline app the footer keeps the plain email line and
+  nothing else runs. On localhost the widget dry-runs (payload in the console, nothing posted)
+  unless the URL has `?feedback=live` (for `vercel dev`; not persisted). Strings: fb* in
+  strings-common.js, EN and ES; styles: the "Feedback widget" section of learning.css, tokens
+  only (on the hub the dialog also carries `.hub-frame`).
+- **The request.** `POST /api/feedback`, JSON, `credentials: "same-origin"`, with exactly: kind
+  (mistake | confusing | suggestion | other), message (≤ 2000 characters), quote (≤ 500), path,
+  section (nearest heading or section with an id), series (fits | reflections | hub), lang, vw
+  (`<480` / `<1024` / `≥1024`), email (optional), elapsed (ms since the panel opened) and the
+  honeypot field `website`. The responses and rejects are listed in CLAUDE.md → /learning →
+  Feedback; a 429 or a GitHub failure shows the failure state with the email.
 - **Behind it.** `api/feedback.js` (a Vercel function, same conventions as the analytics
   collector) files one issue per submission in the private repo `gidgo130/gideonong-feedback`:
   title `[<series>] <kind>: <path>: <first 60 chars>`, labels `feedback`, `kind:…`, `series:…`,
@@ -130,14 +152,21 @@ get nothing.
   If you aren't logged in to Vercel in that browser, a preview send shows the failure state.
 - **Your own notes (owner mode).** Once per browser or phone, open any /learning page with
   `#owner-setup` and paste the owner key (the FEEDBACK_OWNER_KEY value from Vercel). The hash
-  disappears, the key stays in that browser, and the dialog shows "Posting as Gideon"; your
-  issues get `source:gideon`. "Forget key" on the same screen clears it, so a visitor test and an
-  owner test can run in one browser.
-- **Setup, once.** Private repo `gidgo130/gideonong-feedback`; a fine-grained token (that repo,
-  Issues read/write); Vercel env vars FEEDBACK_REPO, FEEDBACK_TOKEN, FEEDBACK_OWNER_KEY for
-  Production and Preview; `gh auth login`; then from the repo root
+  disappears, the key stays in that browser's localStorage (`learnFeedbackOwner`), and the
+  dialog shows "Posting as Gideon"; the widget sends it as the `X-Feedback-Owner` header and
+  your issues get `source:gideon`. A server key under 16 characters disables owner mode. The key
+  never goes in a URL or a log. "Forget key" on the same screen clears it, so a visitor test and
+  an owner test can run in one browser.
+- **Setup, once (done 2026-10-16).** Private repo `gidgo130/gideonong-feedback`; a fine-grained
+  token (resource owner gidgo130, repository access = only that repo, permission Issues: read and
+  write; Metadata read comes with it); Vercel env vars FEEDBACK_REPO, FEEDBACK_TOKEN,
+  FEEDBACK_OWNER_KEY (a long random string) for Production and Preview; `gh auth login`; then
+  from the repo root
   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" scripts\feedback-labels.py`
-  (creates the ten labels; rerunning only updates them).
+  (creates the ten labels; rerunning only updates them). The token was created with no
+  expiration. If it ever leaks: delete it on GitHub (Settings → Developer settings → Fine-grained
+  tokens), make a new one with the same scope and update FEEDBACK_TOKEN in Vercel. While the
+  token is invalid every send answers 502 and the visitor sees the failure state with the email.
 - **Reading it.** `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" scripts\feedback-pull.py`
   writes the open issues to `staging/feedback/inbox.md` (gitignored, vercelignored), newest first:
   number, labels, date, page link, section, quote, message, reply email and comments. `--all`
@@ -162,9 +191,11 @@ get nothing.
   should land on the slashed URL.
 - Each page at 375, 768 and 1280 px, light and dark, plus readability on, colorblind on, and
   both: no sideways scroll (wide math and figures scroll in their own containers), console clean.
-- Every chart at 375 px: data strokes ≥ 2 px, dashes ≥ 6 px with gaps ≥ 4 px, dots ≥ 3 px every
-  ≥ 5 px, measured as CSS value × the SVG's screen scale; in grayscale, dashed and dotted lines
-  differ by ≥ 2.5× in run length. Chromium and Firefox (Playwright's build, in the scratchpad).
+- Every chart at 375 px (and 768, 1280): the Hub-wide numbers hold on screen, measured as CSS
+  value × the SVG's screen scale: data strokes ≥ 2 px, dashes 10 px with 6 px gaps, dots 3.25 px
+  every 6 px (±0.5 px for rounding), the legend swatches the same; in grayscale, dashed and
+  dotted lines differ by ≥ 2.5× in run length. Chromium and Firefox (Playwright's build, in the
+  scratchpad).
 - Open `learning/index.html` straight from disk: module, book and reflection links and the back
   links still work; the math renders (KaTeX is local).
 - `node learning/workshop/tools/check-es.js` passes (hub and module strings, the fb* strings

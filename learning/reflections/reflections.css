@@ -1,4 +1,6 @@
-/* reflections.css — the Reflections series on top of learning.css.
+/* reflections.css — the Reflections series on top of learning.css. The token VALUES in this file
+   are their single home: the docs describe the palette in words and point here (the hub's
+   .ref-panel in learning.css carries copies; keep them in step).
    learning.css is the shared base (series bar, layout, spacing, footer, viewing settings and the
    token NAMES every component uses). This file does two things, both under
    <html data-series="reflections">:

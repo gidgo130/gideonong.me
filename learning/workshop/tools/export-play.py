@@ -8,7 +8,7 @@ Writes  learning/fits/<slug>/play/index.html   (ONE file, --single-file: marimo'
 
 marimo regenerates index.html on every export, so the tweaks the site needs are applied
 here, after the export, not by hand:
-  * <meta name="robots" content="noindex">  (every /learning page has it while in progress)
+  * <meta name="robots" content="noindex">  (permanent on every /learning page; never remove)
   * the trailing-slash fix used by every /learning page (…/play → …/play/), so its URL
     matches the rest of /learning
   * the page title and description
@@ -28,7 +28,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]          # tools → workshop → learning → repo
 NOINDEX = (
-    '    <!-- /learning is unlisted while in progress: remove this line to let search engines index the page. -->\n'
+    '    <!-- /learning is unlisted on purpose: noindex is permanent (CLAUDE.md -> /learning). -->\n'
     '    <meta name="robots" content="noindex">\n'
 )
 SLASH_FIX = (

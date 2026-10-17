@@ -29,7 +29,7 @@ tools/
 From `learning\workshop\modules\<slug>\` in PowerShell:
 
 1. Make the figures (they land in `figures\` here):
-   `python ..\..\..\fits\<slug>\<slug>.py`
+   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" ..\..\..\fits\<slug>\<slug>.py`
 2. `quarto render slides.qmd`
 3. Quarto marks the embedded interactive as an image (`role="img"`), which hides its controls
    from screen readers. Remove it and copy the deck to the page folder (the tracked copy) in one
@@ -83,13 +83,13 @@ Rebuild it from the repo root (the marimo Python, not `python`):
 & "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\export-play.py residual-plots
 ```
 
-One-time setup in that Python: `python -m pip install marimo uv` (marimo's export shells out
-to `uv`). The script wipes `play/`, runs `marimo export html-wasm ... --mode edit --single-file`
+One-time setup in that Python: `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" -m pip install marimo uv`
+(marimo's export shells out to `uv`). The script wipes `play/`, runs `marimo export html-wasm ... --mode edit --single-file`
 (one `index.html`; marimo's editor loads from jsDelivr, version-pinned, like Pyodide), then
 patches that fresh `index.html`, because marimo regenerates it on every export:
 
-- `<meta name="robots" content="noindex">` (every /learning page has it while in progress;
-  Phase C removes it here too: delete the NOINDEX line in the script and re-export)
+- `<meta name="robots" content="noindex">` (permanent on every /learning page, decision 2 in
+  learning-plan.md; never remove the NOINDEX line)
 - the trailing-slash fix used by every /learning page, so `…/play` lands on `…/play/`
 - the page title (from `app_title` in the notebook) and description
 - three settings marimo bakes in from its own defaults and ignores from any config file:
@@ -97,8 +97,9 @@ patches that fresh `index.html`, because marimo regenerates it on every export:
   follows the OS
 
 Never edit `play/index.html` by hand; change the notebook or the script and re-export.
-Check the notebook first with `python -m marimo check --fix notebook.py` and a headless run
-(`$env:MPLBACKEND="Agg"; python notebook.py`). To edit it live: `python -m marimo edit notebook.py`.
+Check the notebook first with `& $py -m marimo check --fix notebook.py` and a headless run
+(`$env:MPLBACKEND="Agg"; & $py notebook.py`), where `$py` is that same python.exe. To edit it
+live: `& $py -m marimo edit notebook.py`.
 
 Packages: only what Pyodide ships as wheels works in the browser. numpy and matplotlib are
 used; scipy also works but costs a 14 MB download, so the notebook fits the exponential with
@@ -112,7 +113,7 @@ straight from GitHub (so the repo must be public), and that file is GENERATED fr
 module's companion script by:
 
 ```powershell
-& "$env:LOCALAPPDATAPythonpythoncore-3.14-64python.exe" learningworkshop	oolsmake-ipynb.py all --check
+& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-ipynb.py all --check
 ```
 
 The script `<slug>.py` stays an ordinary Python file that runs top to bottom (the slide

@@ -1,5 +1,9 @@
-/* learning.css — shared look for every /learning page ("lab notebook").
-   This section is a deliberate exception to the main site's styling (see CLAUDE.md → /learning).
+/* learning.css — the shared base for every /learning page: series bar, layout, spacing, footer,
+   viewing settings and the token NAMES every component uses. The values in :root below ARE the
+   Reading Your Fits "lab notebook" look (a deliberate exception to the main site's styling);
+   Reflections overrides them in reflections.css under data-series="reflections", and the hub
+   (learning/index.html) wraps the series bands in a main-site frame (see the hub section).
+   Rules: CLAUDE.md → /learning; numbers and manual: learning/README.md.
    Layout: one notebook column; each trial = controls beside plots, stacking on phones.
    Color meaning is fixed across the series: dashed ink = the truth, red pencil (solid) = what
    an ordinary fit reports, blue pen (dotted) = a corrected estimate. The dots are a second cue,
@@ -220,8 +224,8 @@ a.module-row:hover .m-title { color: var(--accent); }
 /* ---------- Hub: the Reflections panel (.ref-panel) ----------
    A preview of the Reflections theme. reflections.css can't load on the hub (the offline app
    excludes it), so the token VALUES below are COPIES of learning/reflections/reflections.css:
-   keep the two in step (the hub test compares the panel's rendered colors and fonts with a
-   Reflections page's). --note-bg is the one deliberate difference: here it is the paper color,
+   keep the two in step (change a value there, change it here; compare the two blocks side by
+   side). --note-bg is the one deliberate difference: here it is the paper color,
    the row hover on the surface. The three faces are requested by learning/index.html's script
    only when the panel is shown; until they arrive the fallback stacks render (display=swap). */
 .ref-panel {

@@ -193,7 +193,8 @@ https://github.com/gidgo130/gideonong.me/releases/tag/offline-v1.0.0 (commit 47a
   manifest, footer "v1.0.0 (47a327f)" EN/ES, NOTICE without the logo; uninstall clean).
 - [X] Annotated tag `offline-v1.0.0` on 47a327f, pushed (protected by the ruleset from here on).
 - [X] Draft release with all 9 assets (full installer 8.4 MB, six module installers 3.8–4.9 MB,
-  zip 29 MB, SHA256SUMS.txt), sizes checked against distelease, then published as latest.
+  zip 29 MB, SHA256SUMS.txt), sizes checked against dist
+elease, then published as latest.
 - [X] `gh release download`: every file matches SHA256SUMS.txt, which is identical to the local
   one. `releases/latest/download/<name>` serves the right file for the full installer, a
   module installer and the zip (what section 4's buttons use); `releases/latest` resolves to
@@ -460,7 +461,8 @@ the page; Gideon can leave his own notes the same way, on any device. Everything
 private repo `gidgo130/gideonong-feedback`, which a Claude session can read (through
 `scripts/feedback-pull.py`) and propose fixes from. Only /learning; the portfolio pages get
 nothing. Rules: CLAUDE.md → /learning → Feedback widget; manual: learning/README.md → Feedback.
-The spec lived in the gitignored `staging/feedback/SPEC.md`; its decisions are here and it can go.
+The spec lived in the gitignored `staging/feedback/SPEC.md`, deleted on 2026-10-16 once everything
+in it was here or in learning/README.md.
 
 **Decisions**
 - **F1. Storage: issues in a private GitHub repo** (`gidgo130/gideonong-feedback`). Built-in
@@ -552,9 +554,19 @@ The spec lived in the gitignored `staging/feedback/SPEC.md`; its decisions are h
   rule e of the pre-commit guard also catches bare GitHub tokens. The handler checks moved from
   the scratchpad into the repo as scripts/tests/feedback-api.test.mjs (node:test) and the parser
   got scripts/tests/test_feedback_pull.py (unittest), both listed in learning/README.md → Checks.
-- [ ] Gideon: create the repo and token, set the three env vars (Production + Preview), run
-  feedback-labels.py, then on a preview deploy: one visitor test and one owner test (the
-  "Labels: direct" line confirms F2a's first path); `#owner-setup` on each browser and the phone.
+- [X] Docs consolidated after the audit (batches B + H, 2026-10-16): CLAUDE.md → /learning now
+  holds only invariants and pointers (one home per rule); learning/README.md is the normative
+  home for the hub-wide numbers and the feedback mechanics; token values live only in
+  learning.css and reflections.css (the hex lists left CLAUDE.md and reflections/README.md);
+  stale lines fixed (temporary-noindex wording in the workshop README, export-play.py and the
+  shipped play pages; the strings-common.js contradiction in reflections/README.md; the
+  corrupted make-ipynb command; the fonts line in CLAUDE.md's Stack; the push checklist's dash
+  thresholds; bare `python` in doc commands; the duplicate decision number 17); staging/feedback/
+  deleted. The decisions below keep the values they fixed at the time, as history.
+- [X] Gideon: repo, token (no expiration; rotation steps in learning/README.md → Feedback →
+  Setup), the three env vars, feedback-labels.py, and the two production tests (issues #1
+  visitor and #2 owner, both labelled on creation, 2026-10-16). Still his: `#owner-setup` on
+  each browser and the phone.
 - [ ] Deferred: a persistent rate limit. The in-memory throttle resets on every cold start and
   is per instance. If real spam shows up, add a counter on the Upstash Redis store that
   api/hit.js already uses (same REST pipeline, `<prefix>fbrl:<hash>:<window>` with a TTL, the
@@ -798,7 +810,7 @@ The spec lived in the gitignored `staging/feedback/SPEC.md`; its decisions are h
      module, every play page and every deck; the ten old PDF URLs 404; the eight DOIs resolve.
    - **Still Gideon's:** delete Vercel deployments older than 2dc3a4b (their URLs still serve
      the PDFs); branch protection on `main` (possible now that the repo is public).
-17. **Spanish slides** (2026-09-29). Gideon chose one deck per language per module over a
+20. **Spanish slides** (2026-09-29; numbered 17 by mistake until 2026-10-16). Gideon chose one deck per language per module over a
    bilingual deck.
    - **Files.** `learning/workshop/modules/<slug>/slides.es.qmd` → rendered, `role="img"`
      stripped, copied to `learning/fits/<slug>/slides.es.html`. Same YAML as slides.qmd plus
