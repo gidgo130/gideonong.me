@@ -160,7 +160,7 @@ const DISK = () => ({
   // ---------- 3. registry text rendered ----------
   c.section("3. registry text rendered on the page");
   const hubPage = byKind.hub;
-  for (const lang of ["en", "es"]) {
+  for (const lang of L.LANGS) {
     const H = R.hub[lang];
     const ctx = await L.context(browser, { lang }); const page = await ctx.newPage(); const log = []; L.watch(page, log, { ignore: IGNORE });
     await page.goto(base + hubPage.url); await settle(page, hubPage);
@@ -186,7 +186,7 @@ const DISK = () => ({
     await ctx.close();
   }
   for (const pg of PAGES.filter((p) => p.kind === "module")) {
-    for (const lang of ["en", "es"]) {
+    for (const lang of L.LANGS) {
       const S = pg.module.strings && pg.module.strings[lang];
       if (!S || !S.pageTitle || !S.h1) { console.log(`  note ${pg.name} [${lang}]: no pageTitle/h1 in strings.js, skipped`); continue; }
       const ctx = await L.context(browser, { lang }); const page = await ctx.newPage();
@@ -602,8 +602,8 @@ const DISK = () => ({
   // ---------- 11. 375 px matrix + 768/1280 ----------
   c.section("11. 375 px matrix (theme × readability × colorblind) and 768 / 1280 light/dark (every page)");
   const variants = [];
-  for (const theme of ["light", "dark"]) for (const read of [false, true]) for (const cb of [false, true]) variants.push({ width: 375, height: 740, theme, dark: theme === "dark", read, cb, mobile: true, tag: `375px ${theme}${read ? " +read" : ""}${cb ? " +cb" : ""}` });
-  for (const width of [768, 1280]) for (const dark of [false, true]) variants.push({ width, height: 900, theme: "", dark, read: false, cb: false, mobile: false, tag: `${width}px ${dark ? "dark" : "light"} (OS scheme)` });
+  for (const theme of L.THEMES) for (const read of L.READS) for (const cb of L.CBS) variants.push({ width: 375, height: 740, theme, dark: theme === "dark", read, cb, mobile: true, tag: `375px ${theme}${read ? " +read" : ""}${cb ? " +cb" : ""}` });
+  for (const width of L.DESKTOP_WIDTHS) for (const dark of L.DARKS) variants.push({ width, height: 900, theme: "", dark, read: false, cb: false, mobile: false, tag: `${width}px ${dark ? "dark" : "light"} (OS scheme)` });
   for (const v of variants) {
     const ctx = await L.context(browser, { width: v.width, height: v.height, dark: v.dark, theme: v.theme, read: v.read, cb: v.cb, lang: "en", ctx: v.mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {} });
     const page = await ctx.newPage(); const log = []; L.watch(page, log, { ignore: IGNORE });

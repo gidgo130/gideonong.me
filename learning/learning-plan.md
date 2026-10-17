@@ -581,6 +581,11 @@ in it was here or in learning/README.md.
   (unless viewColorblind is "0"), charts kept legible under forced colors; highlighted points 1.5
   px larger with a 1 px ink outline and flagged bars outlined in every mode (colorblind doubles
   them); AppVersion 1.1.0 and its release notes. The suites check all of it.
+- [X] Phase 2 (2026-10-17): `build.ps1 -Release` built 1.1.0 from 2249599 (eight assets +
+  SHA256SUMS verified: names, checksums, no Reflections in the zip, LEARN_OFFLINE 1.1.0, hub and
+  every module open from disk online and offline). run.js gained `--quick` (375 / light / plain /
+  EN) and `--parallel N`; About now stores viewColorblind "0" when the switch is turned off, so
+  prefers-contrast: more does not re-enable the cues on /learning.
 - [X] Gideon: repo, token (no expiration; rotation steps in learning/README.md → Feedback →
   Setup), the three env vars, feedback-labels.py, and the two production tests (issues #1
   visitor and #2 owner, both labelled on creation, 2026-10-16). Still his: `#owner-setup` on

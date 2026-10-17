@@ -25,6 +25,18 @@ const repo = path.resolve(__dirname, "..", "..", "..");
 const out = path.join(__dirname, "out");
 fs.mkdirSync(out, { recursive: true });
 const PORT = 5599;
+// --quick (or LEARN_QUICK=1): the smallest matrix, 375 px, light, plain, EN, with the same checks;
+// for iterating. The full matrix is the default and is what "run the full suite" means. Suites
+// take their loops from these constants instead of literal arrays.
+const quick = process.argv.includes("--quick") || process.env.LEARN_QUICK === "1";
+const WIDTHS = quick ? [375] : [375, 768, 1280];
+const DESKTOP_WIDTHS = quick ? [] : [768, 1280];
+const DARKS = quick ? [false] : [false, true];
+const THEMES = quick ? ["light"] : ["light", "dark"];
+const MODES = quick ? [""] : ["", "r", "c", "rc"];        // "", readability, colorblind, both
+const READS = quick ? [false] : [false, true];
+const CBS = quick ? [false] : [false, true];
+const LANGS = quick ? ["en"] : ["en", "es"];
 
 const PW_DIR = process.env.LEARN_PW || path.join(process.env.LOCALAPPDATA || os.homedir(), "pw", "node_modules");
 function external(name) {
@@ -178,4 +190,5 @@ const inPage = {
   layout: () => ({ sw: document.documentElement.scrollWidth, iw: innerWidth, series: document.documentElement.getAttribute("data-series"), attrs: [...document.documentElement.attributes].map((a) => a.name).join(" ") }),
 };
 
-module.exports = { repo, out, virtual, PORT, pw, pngjs, serve, Checker, watch, initScript, context, registries, pages, fmtDate, norm, CR, lum, inPage, MIME };
+module.exports = { repo, out, virtual, PORT, pw, pngjs, serve, Checker, watch, initScript, context, registries, pages, fmtDate, norm, CR, lum, inPage, MIME,
+  quick, WIDTHS, DESKTOP_WIDTHS, DARKS, THEMES, MODES, READS, CBS, LANGS };

@@ -90,8 +90,9 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   shared with the rest of gideonong.me. It writes the SAME keys About writes (`viewTheme`
   dark/light or removed, `viewReadability` "1" or removed, `viewColorblind` "1" or "0"), applies
   them at once, closes on Esc with focus back on the button, and works from file: and in the
-  offline copy. "0" means turned off on purpose: `prefers-contrast: more` (head snippet and the
-  script) turns the colorblind cues on only while the key is absent. On pages with charts the
+  offline copy. "0" means turned off on purpose (About writes it too since 2026-10-17):
+  `prefers-contrast: more` (head snippet and the script) turns the colorblind cues on only while
+  the key is absent. On pages with charts the
   script adds one muted line under the first legend ("Hard to tell the colors apart? Turn on
   colorblind-friendly charts" / "Colorblind-friendly charts are on · Turn off") that toggles the
   mode in place. Under forced colors (Windows High Contrast) charts, legend swatches and the
@@ -326,8 +327,10 @@ get nothing.
     dot geometry on screen in Chromium and Firefox and per chart on every page.
     `feedback-widget`: the widget end to end against a mocked /api/feedback, every page's layout
     and contrast. `offline-stage`: the staged offline copy from file://, online and offline.
-    `run.js --list` prints the same; `run.js <name> …` runs a subset. Expected text comes from
-    the strings files and registries, never from literals, so a copy edit does not break them.
+    `run.js --list` prints the same; `run.js <name> …` runs a subset; `--quick` shrinks every
+    matrix to 375 px / light / plain / EN for iterating; `--parallel 3` runs three suites at once.
+    Expected text comes from the strings files and registries, never from literals, so a copy edit
+    does not break them.
 - Feedback: on each page type the footer shows "Feedback", the dialog opens and closes (Esc,
   ✕, backdrop; focus back on the button), a send on localhost logs `[feedback dry-run]` and
   shows "Thanks. Sent."; from disk the footer shows the email line and no button; at 375 px the

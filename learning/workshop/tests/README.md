@@ -27,6 +27,9 @@ From the repo root (Live Server may keep :5500; the suites use :5599):
 node learning\workshop\tests\run.js                      # every suite, in order; exit 1 on any failure
 node learning\workshop\tests\run.js pages feedback-widget   # a subset
 node learning\workshop\tests\run.js --list               # names and coverage
+node learning\workshop\tests\run.js --quick              # the smallest matrix (375 px, light, plain, EN), same checks: for iterating
+node learning\workshop\tests\run.js --parallel 3         # run the suites three at a time, each in its own browser
+node learning\workshop\tests\run.js --quick --parallel 3 pages hub   # flags combine with a subset
 node learning\workshop\tests\hub.js                      # one suite on its own (it starts its own server)
 node learning\workshop\tests\offline-stage.js --no-build # skip build.ps1 -StageOnly and reuse offline/stage/
 ```
@@ -34,7 +37,14 @@ node learning\workshop\tests\offline-stage.js --no-build # skip build.ps1 -Stage
 `run.js` starts one static server for the repo (Vercel-style: a folder URL with or without the
 trailing slash serves its index.html, no redirect), passes it to each suite as `LEARN_BASE`, echoes
 their output and ends with a table. Each suite prints `N passed, M failed` as its last line. The
-whole run takes a few minutes; Firefox is used only by `theme-dashes`.
+whole run takes about nine minutes; Firefox is used only by `theme-dashes`.
+
+`--quick` (or `LEARN_QUICK=1`) shrinks every matrix loop to 375 px, light, plain, English, with
+the same checks, so a suite finishes in a fraction of the time while you iterate; the full run
+before reporting is the default without the flag. `--parallel N` runs up to N suites at once, each
+in its own browser against the one shared server; their output is printed when each one finishes,
+so the log stays readable. Suites read their matrices from `lib.js` (`L.WIDTHS`, `L.DARKS`,
+`L.MODES`, `L.LANGS`, `L.READS`, `L.CBS`, `L.THEMES`, `L.DESKTOP_WIDTHS`), never from literals.
 
 ## What each suite covers
 

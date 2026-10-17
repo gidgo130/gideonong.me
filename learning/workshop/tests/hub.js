@@ -95,7 +95,7 @@ async function settleFonts(page) {
   c.section("1. hub matrix: 375/768/1280 × light/dark × plain/read/cb/both × EN/ES");
   const minCR = { frame: 99, fits: 99, refl: 99, foot: 99 };
   let minHover = 99;
-  for (const w of [375, 768, 1280]) for (const dark of [false, true]) for (const mode of ["", "r", "c", "rc"]) for (const lang of ["en", "es"]) {
+  for (const w of L.WIDTHS) for (const dark of L.DARKS) for (const mode of L.MODES) for (const lang of L.LANGS) {
     const label = `${w} ${dark ? "dark" : "light"} ${mode || "plain"} ${lang}`;
     const ctx = await L.context(browser, { width: w, height: 900, dark, lang, read: mode.includes("r"), cb: mode.includes("c") });
     const page = await ctx.newPage(); const log = []; L.watch(page, log);
@@ -165,7 +165,7 @@ async function settleFonts(page) {
 
   // the toggle re-renders both blocks (America/Chicago: the date comes from its parts, never from the local midnight)
   c.section("1b. EN/ES toggle in an America/Chicago context");
-  for (const lang of ["en", "es"]) {
+  for (const lang of L.LANGS) {
     const other = lang === "en" ? "es" : "en";
     const ctx = await L.context(browser, { lang, ctx: { timezoneId: "America/Chicago", locale: "en-US" } });
     const page = await ctx.newPage(); const log = []; L.watch(page, log);
@@ -192,7 +192,7 @@ async function settleFonts(page) {
   // ---------------- 2. token sync by rendered values ----------------
   c.section("2. token sync: frame = main site, Reading Your Fits band = every module page, Reflections band = a reflection page");
   const MAP = { "--paper": "--bg", "--ink": "--ink", "--muted": "--muted", "--rule": "--border", "--accent": "--bronze", "--nav-bg": "--nav-bg", "--footer-bg": "--footer-bg", "--footer-text": "--footer-text", "--font-display": "--font-serif", "--font-body": "--font-sans" };
-  for (const [dark, theme] of [[false, ""], [true, ""], [false, "dark"], [true, "light"]]) for (const mode of ["", "r", "c", "rc"]) {
+  for (const [dark, theme] of (L.quick ? [[false, ""]] : [[false, ""], [true, ""], [false, "dark"], [true, "light"]])) for (const mode of L.MODES) {
     const label = `OS ${dark ? "dark" : "light"}${theme ? " + viewTheme " + theme : ""} ${mode || "plain"}`;
     const ctx = await L.context(browser, { dark, theme, read: mode.includes("r"), cb: mode.includes("c") });
     const page = await ctx.newPage();
@@ -206,7 +206,7 @@ async function settleFonts(page) {
   const REF_VARS = ["--paper", "--plot", "--rule", "--ink", "--muted", "--accent", "--font-display", "--font-body", "--font-mono"];
   const firstRef = R.readyReflections.slice().sort(byDateDesc)[0];
   c.ok(!!firstRef && R.readyModules.length > 0, `registries have ${R.readyModules.length} ready modules and ${R.readyReflections.length} ready reflections`);
-  for (const dark of [false, true]) for (const mode of ["", "r", "c", "rc"]) {
+  for (const dark of L.DARKS) for (const mode of L.MODES) {
     const label = `${dark ? "dark" : "light"} ${mode || "plain"}`;
     const ctx = await L.context(browser, { dark, read: mode.includes("r"), cb: mode.includes("c") });
     const page = await ctx.newPage();
@@ -339,7 +339,7 @@ async function settleFonts(page) {
     out.selZ = sel ? parseInt(getComputedStyle(sel).zIndex, 10) : null;
     return out;
   };
-  for (const w of [375, 768, 1280]) for (const dark of [false, true]) for (const read of [false, true]) {
+  for (const w of L.WIDTHS) for (const dark of L.DARKS) for (const read of L.READS) {
     const label = `${w} ${dark ? "dark" : "light"} ${read ? "read" : "plain"}`;
     const ctx = await L.context(browser, { width: w, height: 700, dark, theme: dark ? "dark" : "light", read, lang: "en", ctx: { hasTouch: w < 768 } });
     const page = await ctx.newPage(); const log = []; L.watch(page, log);

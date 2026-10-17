@@ -6,9 +6,9 @@
 //   viewTheme        "dark" | "light" | (absent = follow the OS)   → data-theme
 //   viewReadability  "1" | (absent)                               → data-readability
 //   viewColorblind   "1" | "0" | (absent)                         → data-colorblind
-// "0" is written only here: it means the visitor turned the colorblind cues OFF on purpose, so
-// `prefers-contrast: more` does not turn them back on (About removes the key instead, which
-// counts as "no choice"). Changes apply at once, without a reload.
+// "0" means the visitor turned the colorblind cues OFF on purpose (here or on About, which writes
+// the same "0" since 2026-10-17), so `prefers-contrast: more` does not turn them back on; an
+// absent key is "no choice". Changes apply at once, without a reload.
 //
 // Markup is built here, not in the pages: a <button class="view-toggle"> after the EN/ES toggle
 // (same box: learning.css styles both), and a small non-modal popover (role="dialog") with the

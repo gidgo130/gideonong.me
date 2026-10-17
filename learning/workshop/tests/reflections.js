@@ -143,7 +143,7 @@ async function open(ctx, url, log, settleMs) {
     // ---------------------------------------------------------------- charts and twins at 3 widths × 2 themes
     c.section(`3b. reflection ${name} — chart text, overlaps, twins at 375 / 768 / 1280 × light / dark`);
     const AUTH = {};
-    for (const w of [1280, 768, 375]) for (const dark of [false, true]) {
+    for (const w of [...L.WIDTHS].reverse()) for (const dark of L.DARKS) {
       const label = `${name} ${w}px ${dark ? "dark" : "light"}`;
       const ctx2 = await L.context(browser, { width: w, dark }); const log2 = []; const page2 = await open(ctx2, x.url, log2, 300);
       const charts = await page2.evaluate(L.inPage.chartText);
@@ -270,7 +270,7 @@ async function open(ctx, url, log, settleMs) {
 
     // ---------------------------------------------------------------- matrix
     c.section(`4. reflection ${name} — matrix 375 / 768 / 1280 × light / dark × plain / readability / colorblind / both`);
-    for (const w of [375, 768, 1280]) for (const dark of [false, true]) for (const mode of ["", "r", "c", "rc"]) {
+    for (const w of L.WIDTHS) for (const dark of L.DARKS) for (const mode of L.MODES) {
       const label = `${name} ${w}px ${dark ? "dark" : "light"} ${mode || "plain"}`;
       const ctx6 = await L.context(browser, { width: w, dark, read: mode.includes("r"), cb: mode.includes("c") }); const log6 = []; const page6 = await open(ctx6, x.url, log6, 250);
       const r = await page6.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: innerWidth, raw: /\\\(|\$\$/.test((document.querySelector("main.essay") || document.body).innerText), err: document.querySelectorAll(".katex-error").length, attrs: document.documentElement.getAttribute("data-readability") + "/" + document.documentElement.getAttribute("data-colorblind") }));
@@ -284,7 +284,7 @@ async function open(ctx, url, log, settleMs) {
 
     // ---------------------------------------------------------------- rendered contrast
     c.section(`5. reflection ${name} — rendered contrast, light / dark × readability`);
-    for (const dark of [false, true]) for (const read of [false, true]) {
+    for (const dark of L.DARKS) for (const read of L.READS) {
       const label = `${name} ${dark ? "dark" : "light"}${read ? " + readability" : ""}`;
       const ctx7 = await L.context(browser, { width: 1280, dark, read }); const page7 = await open(ctx7, x.url, null, 300);
       const r = await page7.evaluate((toRgbSrc) => {

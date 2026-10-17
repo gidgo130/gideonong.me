@@ -275,7 +275,7 @@ const txt = (page, sel) => page.locator(sel).first().textContent().then(L.norm);
 
   // ---------- H. layout matrix on every page ----------
   c.section("H. layout matrix (every page): 375/768/1280 × light/dark × readability — panel fits, no sideways scroll, console clean");
-  for (const w of [375, 768, 1280]) for (const dark of [false, true]) for (const read of [false, true]) {
+  for (const w of L.WIDTHS) for (const dark of L.DARKS) for (const read of L.READS) {
     const ctx = await L.context(browser, { width: w, height: w < 768 ? 740 : 900, dark, theme: dark ? "dark" : "light", read, lang: "en" });
     const page = await ctx.newPage(); const log = []; L.watch(page, log, { ignore: IGNORE });
     for (const pg of PAGES) {
@@ -297,7 +297,7 @@ const txt = (page, sel) => page.locator(sel).first().textContent().then(L.norm);
 
   // ---------- I. contrast on every page ----------
   c.section("I. contrast (every page): trigger, panel text, privacy, unselected chip, failure line ≥ 4.5:1");
-  for (const dark of [false, true]) for (const read of [false, true]) {
+  for (const dark of L.DARKS) for (const read of L.READS) {
     const ctx = await L.context(browser, { dark, theme: dark ? "dark" : "light", read, lang: "en" }); const page = await ctx.newPage();
     for (const pg of PAGES) {
       await open(page, pg.url); await page.waitForTimeout(pg.kind === "reflection" ? 300 : 100);

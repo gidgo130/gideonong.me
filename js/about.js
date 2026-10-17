@@ -503,7 +503,9 @@
 
     if (colorblind) colorblind.addEventListener("change", function () {
       if (colorblind.checked) { el.setAttribute("data-colorblind", "1"); store("viewColorblind", "1"); }
-      else                    { el.removeAttribute("data-colorblind"); store("viewColorblind", null); }
+      // "0", not removed: /learning turns the colorblind cues on under prefers-contrast: more
+      // only while this key is absent, so an explicit "off" here must stay an explicit "off".
+      else                    { el.removeAttribute("data-colorblind"); store("viewColorblind", "0"); }
     });
 
     if (darkMode) darkMode.addEventListener("change", function () {
