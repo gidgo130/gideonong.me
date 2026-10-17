@@ -90,24 +90,90 @@ learning/
 
 ## Adding a module
 
-1. Workshop: `learning/workshop/modules/<slug>/` with `slides.qmd` (copy an existing one for the YAML) and the
-   companion script; for Spanish, `slides.es.qmd` and `figures-es.json` (start the table with
-   `tools/figures-es.py <slug> --list`).
-2. Repo: `learning/fits/<slug>/` with `index.html`, `strings.js`, `main.js`, `slides.html`,
-   `slides.es.html`, `<slug>.py`. Copy the head block (noindex, OG tags, trailing-slash fix, viewing-settings snippet, fonts) from an
-   existing module, and the footer's `<span class="fb-slot" data-i18n="footMistake">` line plus
-   the `../../assets/feedback.js` script tag after main.js (the feedback widget; see
-   learning/README.md → Feedback).
-3. Title and description: `mod<Key>Title` / `mod<Key>Desc` in `assets/strings-common.js`.
-4. Link preview: fill in the `og:` tags (title, lead, URL, image) in index.html and in the
-   qmd's `include-in-header`; add the module to CARDS in `workshop/tools/make-og-cards.py` and
-   run it for the slug to make `assets/og/<slug>.png`.
-5. Flip `ready: true` for it in `assets/modules.js`. The hub list and every module's prev/next
-   links update from that one line.
-6. Run the hub-wide checks in `learning/README.md` plus these, then the Fable review:
-   - Every trial control changes its plot and readout; "Draw a new sample" changes the data.
-   - At 375 and 1280 with About's readability on, colorblind on, and both: readouts and sliders
-     still fit, charts keep their shape, the dotted --fix line and ✕ / ✓ marks show under
-     colorblind. Chrome DevTools → Rendering → Emulate vision deficiencies on a Module 3, 4 or 6
-     chart: every red/blue pair still tells apart without color.
-   - Slides: the "Try it yourself" slide loads the interactive.
+`<slug>` is lowercase and hyphenated, never a number; `<Key>` is its CamelCase form used in
+strings-common.js and modules.js (`r-squared` → `RSquared`). The hub list, the prev / next links,
+the installer's component tree and the live page's "Offline (Windows)" link all come from the
+registry entry, so add that line last (or with `ready: false`) and read step 8 before it goes
+live. `$py` below is `"$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe"`; every command
+runs from the repo root unless it says otherwise.
+
+1. **Workshop** `learning/workshop/modules/<slug>/`: `slides.qmd` (copy an existing one: the YAML
+   carries the deck's noindex and OG tags; set title, subtitle "Reading Your Fits · Module N",
+   og:title / og:description / og:url `…/fits/<slug>/slides.html` / og:image
+   `…/assets/og/<slug>.png` / og:image:alt), `custom.scss` (copy as is), `slides.es.qmd` (the
+   same YAML plus `lang: es`, the ES title and subtitle, `og:locale` es_LA, og:url
+   `…/slides.es.html`, the ES lead, the alt ending "(título en inglés)"), `figures-es.json`
+   (once the script of step 2 exists: `& $py learning\workshop\tools\figures-es.py <slug> --list`
+   prints the skeleton) and `notebook.py` (the marimo notebook: copy a module's and swap in the
+   trials). The rebuild commands are in `learning/workshop/README.md`.
+2. **Page folder** `learning/fits/<slug>/`:
+   - `index.html`, copied from a module: `<html lang="en" data-series="fits">` (add
+     `data-es-ready` at step 4); the noindex meta; `<title data-i18n-title="pageTitle">`; the meta
+     description; the OG block (og:url `https://gideonong.me/learning/fits/<slug>/`, og:image
+     `https://gideonong.me/learning/assets/og/<slug>.png`); the favicon; the trailing-slash
+     script (change the slug in its comment); the viewing-settings snippet; the fonts link and
+     `../../assets/learning.css`; the series bar; the header with the legend keys and the
+     "Take it with you" row: `slides.html`, `<slug>.py` (download), `play/` (`data-http-only`) and
+     the Colab link
+     `https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/fits/<slug>/<slug>.ipynb`;
+     the trials as `<section class="trial" id="trialN">` (those ids are what the feedback widget
+     reports); the footer with `<span class="fb-slot" data-i18n="footMistake">`; and the scripts
+     in this order: `../../assets/strings-common.js`, `../../assets/modules.js`, `strings.js`,
+     `../../assets/learning-i18n.js`, `../../assets/learning.js`, `main.js`,
+     `../../assets/feedback.js`.
+   - `strings.js`: `window.LEARN_STRINGS = { en: {…}, es: {…}, chips: […] }`. Every visible word,
+     EN first (`pageTitle`, `eyebrow`, `h1`, the `tNNum` / readout / note keys main.js uses); the
+     cited papers as chips with DOI hrefs; a `footRead` line.
+   - `main.js`: the trials on the LF engine (learning.js); numbers through `LF.num`; chart classes
+     from the fixed vocabulary (`truth` / `fit` / `fix` / `pt` / `pt-hi` / `bar-hi` / `lbl-fix` /
+     `v bad` / `v good`) so the dotted second cue and the colorblind rings apply; `role="img"` and
+     an `aria-label` on every chart; readouts in an `aria-live="polite"` container.
+   - `<slug>.py`: the companion script, `# %%` cell markers and a knobs cell per trial (workshop
+     README → "Build a module's Colab notebook"). Running it also draws the deck's figures into the
+     workshop folder.
+   - `<slug>.ipynb`: GENERATED by `& $py learning\workshop\tools\make-ipynb.py <slug> --check`.
+   - `slides.html` and `slides.es.html`: the rendered decks, copied from the workshop with the
+     `role="img"` strip (workshop README → "Rebuild a module's slides" and "…Spanish deck"; the
+     Spanish figures come from `figures-es.py <slug>`).
+   - `play/index.html`: GENERATED by `& $py learning\workshop\tools\export-play.py <slug>` (marimo
+     and uv installed in that Python).
+3. **Series strings** `learning/assets/strings-common.js`: `mod<Key>Title` and `mod<Key>Desc`, EN
+   and ES, sentence case like the others. The hub list, the prev / next cells and the installer's
+   component names read them.
+4. **Spanish**: the `es` block of strings.js complete (register and glossary: learning-plan.md,
+   decision 13), `node learning/workshop/tools/check-es.js` clean (it picks up every
+   `fits/*/strings.js` by itself), then `data-es-ready` on the page's `<html>`.
+5. **Link preview**: a CARDS entry `"<slug>"` in `learning/workshop/tools/make-og-cards.py`
+   (`eyebrow`, `title`, `lead` = the page's lead, `figure` = a file in the module's workshop
+   `figures/`, `crop` = the fractions of it that read best), then
+   `& $py learning\workshop\tools\make-og-cards.py <slug>` → `learning/assets/og/<slug>.png`, the
+   image the page and both decks name. The decks' own tags are in the qmd files (step 1).
+6. **Counts in prose**: `learning/strings.js` → `seriesIntro` says "Six short modules" / "Seis
+   módulos cortos", and the hub card's lead (`"learning"` in make-og-cards.py) says "Six": update
+   both and rerun `make-og-cards.py learning`. There is no other hard-coded count.
+7. **Registry** `learning/assets/modules.js`: one new line
+   `{ key: "<Key>", slug: "<slug>", ready: true }` in series order, in exactly that one-line shape
+   (build.ps1 parses the file with a regex; a module in any other shape is staged but left out of
+   the installer, with only a warning). From this line the hub, the prev / next links and the
+   installer know the module.
+8. **Offline installers**: the moment the module is `ready` on the live site, learning.js links
+   `ReadingYourFits-<slug>-Setup.exe` on its page and the full installer and zip are expected to
+   contain it, so a release must follow the deploy: bump `AppVersion` in
+   `learning/workshop/offline/ReadingYourFits.iss`, commit, `build.ps1 -Release`, the release
+   checks, tag and publish (`learning/workshop/offline/README.md` → Release). Until that release
+   is public the "Offline (Windows)" link on the new page 404s; if the release cannot follow at
+   once, deploy with `ready: false` (the module is then listed as "In progress" with no link).
+9. **Plan**: the module table and a status line in `learning/learning-plan.md`. Nothing changes in
+   CLAUDE.md, api/feedback.js (the series stays `fits`), check-es.js or build.ps1.
+10. **Checks**: the hub-wide list in `learning/README.md` → Checks, plus:
+    - Every trial control changes its plot and readout; "Draw a new sample" changes the data.
+    - At 375 and 1280 with About's readability on, colorblind on, and both: readouts and sliders
+      still fit, charts keep their shape, the dotted --fix line and ✕ / ✓ marks show under
+      colorblind. Chrome DevTools → Rendering → Emulate vision deficiencies on a chart with a
+      red / blue pair: it still tells apart without color.
+    - Both decks: the "Try it yourself" slide loads the interactive; view source shows noindex and
+      the OG tags.
+    - `make-ipynb.py <slug> --check` passes; the play page draws its figures over HTTP (about 20 s
+      on a good connection); after the push, the Colab link opens the notebook.
+    - `build.ps1 -StageOnly` lists the module and `stage\modules.iss` has its component.
+    Then the Fable review (prompt in learning/README.md).

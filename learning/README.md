@@ -121,6 +121,71 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   `--k` variable in Reading Your Fits, `plot()`'s own factor in Reflections), not left to the
   viewBox. Out of scope: the Quarto decks and the Python figures (open item in learning-plan.md).
 
+## Adding a series
+
+A series is a folder `learning/<series>/` with its own registry, theme and manual, plus a band on
+the hub. Nothing is generic yet: learning.js's `moduleList`, `seriesNav` and `offlineLinks` assume
+`fits/`, and three tools gate on the series name. `<slug>` is the `data-series` value, the folder
+name and the feedback label. In this order:
+
+1. **Decide** the slug, the language (bilingual like Reading Your Fits: strings files,
+   learning-i18n.js, the toggle, `data-es-ready`; or English-only like Reflections: text in the
+   HTML, strings-common.js loaded only as data for the feedback strings) and whether it ships in
+   the offline app (default: no).
+2. **Feedback gate** `api/feedback.js`: add the slug to `SERIES` (today
+   `["fits", "reflections", "hub"]`); anything else answers 400, so until this line changes every
+   send from the new series fails and the visitor sees the failure state. Add
+   `("series:<slug>", "<hex color>", "<description>")` to `LABELS` in
+   `scripts/feedback-labels.py` and run it once (it only updates existing labels). Extend the
+   series case in `scripts/tests/feedback-api.test.mjs` and run
+   `node --test "scripts/tests/*.test.mjs"`. The widget itself needs no change: it sends
+   `<html data-series>`, defaulting to `hub`.
+3. **Spanish check gate** `learning/workshop/tools/check-es.js`: its `files` list is
+   `assets/strings-common.js`, `strings.js` and every `fits/*/strings.js`. A bilingual series must
+   be added to that list (or the list made to walk every `*/strings.js` under learning/), or its
+   strings are never checked.
+4. **Offline build gate** `learning/workshop/offline/build.ps1`: `$Exclude` is opt-out, so a new
+   folder ships inside the Reading Your Fits installers by default. Either add
+   `"learning/<series>/*"` plus the series' registry and vendor files to `$Exclude`, as Reflections
+   did (then the hub must load the registry only when `LEARN_OFFLINE` is unset, step 7), or, to
+   ship it, give it its own component group in section 2 (the tree only knows `learning\fits`) and
+   its own `missing` entries in the LEARN_OFFLINE line. Run `build.ps1 -StageOnly` and read
+   `stage\`.
+5. **Theme** `learning/<series>/<series>.css`: under `:root[data-series="<slug>"]` override
+   learning.css's token NAMES only (light, dark, readability and colorblind blocks, the chart
+   series tokens, the three font stacks with real fallbacks), then the series' own components;
+   nothing structural. Every page: `<html data-series="<slug>">`, its Google Fonts link,
+   `learning.css`, then the series CSS. Charts follow the dash rule above; non-chart UI uses
+   `--accent` / `--emph`. Values live only in that file; the docs describe them in words.
+6. **Registry and index** `learning/assets/<series>.js`, like reflections.js: the one list, the
+   renderers beside it, relative paths, `LF.fixFileLinks` on every rendered list; and
+   `learning/<series>/index.html` rendered from it. URLs are slugs, never numbers.
+7. **Hub band** `learning/index.html`: a `<section class="hub-band" id="<slug>" hidden>` after the
+   Reflections band with a `.hub-col.series` h2, intro, `ol.module-list` and an "all" link; their
+   strings in `learning/strings.js` (EN and ES; titles stay in the series' language, marked
+   `lang`); in learning.css a token block for the band if its theme differs from the base (COPIES
+   of the series CSS with a keep-in-step comment, like `.ref-panel`); and in the hub's inline
+   script a loader like the Reflections one (append the registry script only when
+   `window.LEARN_OFFLINE` is unset, inject the series' fonts when the band is shown, set
+   `hidden = false` after the first render, re-render on `learnlangchange`). `.hub [hidden]` keeps
+   the band hidden until then, and the sticky bar's `scroll-margin-top` already covers the new id.
+8. **Link previews**: CARDS entries in `learning/workshop/tools/make-og-cards.py` for the series
+   index and each page (a `chart` function when there is no workshop figure), run for each name;
+   every page carries the full OG block with its absolute og:url.
+9. **Plumbing on every page**: noindex, the trailing-slash script, the viewing-settings snippet,
+   the favicon, relative links only, the series bar (gideonong.me / Learning / <Series> / …), the
+   footer with `.fb-slot` and `assets/feedback.js` last (strings-common.js before it on
+   English-only pages), a license line if the content needs one.
+10. **Docs**: a `learning/<series>/README.md` (the series' rules, its "Adding a <page>" steps and
+    checks); this file's "What's here" tree and hub bullet; CLAUDE.md → /learning (the intro's
+    list of sections, the file-structure lines, the Stack fonts line, a short invariants block for
+    the series, like the two existing ones); `learning/learning-plan.md` (a section with the
+    decisions and status); the root `README.md` (its one-line description). Dev-only folders of the
+    series go in `.vercelignore`.
+11. **Checks**: the list below for every new page, `check-es.js` if bilingual, the feedback tests,
+    `build.ps1 -StageOnly`, and on a preview deploy one feedback send from a page of the new series
+    (it must file an issue labelled `series:<slug>`).
+
 ## Feedback: how it works, how to read it (2026-10-16)
 
 Every /learning page lets a reader report a mistake, something confusing or a suggestion without

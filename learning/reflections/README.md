@@ -137,32 +137,96 @@ and links the all-books page.
 
 ## Adding a reflection
 
-1. Write it as a self-contained page in `staging/reflections/<book>/<slug>/` (gitignored), get the
-   content approved, then port: `learning/reflections/<book>/<slug>/index.html` with the head block
-   (copy from balanced-plant: noindex, OG tags, trailing-slash fix, viewing-settings snippet, fonts,
-   learning.css, katex.min.css if there is math, reflections.css), the series bar
-   (gideonong.me / Learning / Reflections / <book>), `<main class="essay">`, the "Take it with
-   you" row after the reading list, and the footer (built-with, "Found a mistake?" in a
-   `<span class="fb-slot">`, the license line), with the two script tags at the end
-   (`assets/strings-common.js` as plain data, then `assets/feedback.js`: the feedback widget,
-   see learning/README.md → Feedback). Charts: `main.js`, colors from `--s1..--s4`, a dash or
-   marker per line.
-2. Companion: `<slug>.py` with `# %%` markers, then from the repo root
-   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-ipynb.py reflections/<book>/<slug> --check`.
-3. Registry: add the entry under its book in `assets/reflections.js` (`ready: true` when it goes
-   live). If the book had no page yet, create `learning/reflections/<book>/index.html` from
-   `the-goal/index.html` (title, authors, year, edition, `data-book`, og tags).
-4. Link preview: a CARDS entry `"<book>-<slug>"` in `workshop/tools/make-og-cards.py` with a
-   `chart` function (reflections have no workshop figure), then
-   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-og-cards.py <book>-<slug>`;
-   the page's og:image points at
-   `learning/assets/og/<book>-<slug>.png`.
-5. Checks: the hub-wide list in `learning/README.md`, plus: no raw `\(` or `$$` in the rendered
-   text and no `.katex-error` spans; every control changes its chart or readout; the dash/marker
-   cues hold in dark mode and with colorblind on (and under deuteranopia / achromatopsia
-   emulation); at 375, 768 and 1280 px every chart's text renders at 12 to 13 px (CSS font-size
-   × the SVG's screen scale) and no two text boxes in a chart overlap; data lines at 2 px or
-   more, dashes at 10/6 and dots at 3.25 px every 6 px, and no equation scrolls sideways unless
-   it has to; body, muted, chart-label and brass
-   text at 4.5:1 or better on the rendered colors in both themes; `build.ps1 -StageOnly` stages
-   nothing from Reflections; the page opens from disk with the math rendered.
+`<book>` is the book's registry slug and `<slug>` the reflection's: lowercase, hyphenated, never a
+number. Write the reflection first as a self-contained page in the gitignored
+`staging/reflections/<book>/<slug>/` (recreate the folder if it is gone), get the content approved,
+then port it. Porting changes styling and plumbing only, never wording, equations or numbers. The
+reference for every copy below is `the-goal/balanced-plant/` (page, main.js, script) and
+`the-goal/index.html` (book page).
+
+1. **The page** `learning/reflections/<book>/<slug>/index.html`, copied from
+   `the-goal/balanced-plant/index.html` and edited top to bottom:
+   - `<html lang="en" data-series="reflections">`; the noindex meta stays; `<title>` =
+     "<Title> · Reflections · Gideon A. Ong"; `<meta name="description">` = the summary.
+   - The OG block: og:title "<Title> · Reflections", og:description = the same summary, og:url
+     `https://gideonong.me/learning/reflections/<book>/<slug>/`, og:image
+     `https://gideonong.me/learning/assets/og/<book>-<slug>.png`, og:image:alt describing the card.
+   - Keep as they are: the favicon link, the trailing-slash script (change the slug in its
+     comment), the viewing-settings snippet, the font preconnects and the Reflections Google Fonts
+     link, `../../../assets/learning.css`, then `../../reflections.css`; add
+     `../../../assets/vendor/katex/katex.min.css` between them only if the page has math.
+   - The series bar: gideonong.me (`../../../../`) / Learning (`../../../`) / Reflections
+     (`../../`) / <Book title> (`../`).
+   - `<div class="wrap essay-wrap"><main class="essay">`: `<header class="top">` with the `.sec`
+     eyebrow ("Reflections · <i>Book</i>, Authors (year)"), the h1 and the `.dek`; the `.answer`
+     box; `nav.toc`; then the sections as `<h2 id="sN"><span class="sec">§N</span>Heading</h2>` (the
+     ids are what the feedback widget reports as the section). Math in `\( \)` and `$$ $$` only;
+     a display equation that overflows at 375 px gets the `.eq-wide` / `.eq-narrow` twins (see
+     "Long equations on phones"). Every chart `<svg>` carries `role="img"` and an `aria-label`.
+   - The reading list (`ol.books`, papers linked by DOI), then the "Take it with you" row:
+     `<a href="<slug>.py" download>Python script</a>` and the Colab link
+     `https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/reflections/<book>/<slug>/<slug>.ipynb`
+     (`target="_blank" rel="noopener"`).
+   - The footer `p.foot`: the built-with line, `<span class="fb-slot">Found a mistake?
+     gao9819@utulsa.edu</span>` (the feedback widget replaces it with its button) and the license
+     line (R8).
+   - Scripts, in this order: if there is math, `../../../assets/vendor/katex/katex.min.js`,
+     `../../../assets/vendor/katex/auto-render.min.js` and the inline `renderMathInElement(...)`
+     call with exactly the two delimiter pairs (copy it); then `../../../assets/learning.js`,
+     `main.js`, `../../../assets/strings-common.js` and `../../../assets/feedback.js` last.
+2. **Charts and readouts** `main.js`: start from balanced-plant's `plot()` helper. Colors from
+   `--s1..--s4` only; each line told apart by `dash: "dashed" | "dotted"` or a marker; a fourth
+   series gets `label:`; every SVG keeps its authored viewBox in `data-vb`; every control redraws
+   on input and nothing animates on load. A readout that changes should sit in a container with
+   `aria-live="polite"`.
+3. **Companion** `<slug>.py` with `# %%` cell markers (module docstring first, written as
+   markdown; markdown cells as `# text`; a knobs cell per figure), then from the repo root
+   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-ipynb.py reflections/<book>/<slug> --check`,
+   which writes `<slug>.ipynb` beside it and fails if the notebook's cells print anything
+   different from the script. Never edit the .ipynb. A reflection with no code skips this step
+   and the "Take it with you" row.
+4. **Registry** `learning/assets/reflections.js`: in the book's entry add
+   `{ slug: "<slug>", title: "<Title>", date: "YYYY-MM-DD", ready: true, summary: "…" }`
+   (`ready: false` while drafting: it is then listed nowhere). The hub's Reflections block (the 3
+   newest by date), the all-books page (its count and link) and the book page all render from this
+   one entry; nothing else lists reflections.
+5. **Book page, only for a book's first reflection**: `learning/reflections/<book>/index.html`
+   copied from `the-goal/index.html` and edited: `<title>` and og:title ("<Book> · Reflections…"),
+   meta description and og:description ("Reflections on <Book> by <Authors> (<year>), one question
+   at a time."), og:url `https://gideonong.me/learning/reflections/<book>/` (og:image stays
+   `reflections.png`), the trailing-slash comment's slug, `<body data-book="<book>">` (must equal
+   the registry slug: `bookPage` looks the book up by it), the crumb text, the eyebrow "Reflections
+   · Book N of 11" (N = the book's position in the registry, typed by hand), the h1 (full title),
+   the lead ("Authors, year. The copy I read: <edition>.") and the list's
+   `aria-label="Reflections on <Book>"`. The rest is shared markup and stays.
+6. **Link preview**: a CARDS entry `"<book>-<slug>"` in `learning/workshop/tools/make-og-cards.py`
+   (`eyebrow` "Reflections · <Book>", `title`, `lead` = the summary, and `chart` naming a new
+   function in that file that draws a small figure in the S1..S4 colors: reflections have no
+   workshop figure), then
+   `& "$env:LOCALAPPDATA\Python\pythoncore-3.14-64\python.exe" learning\workshop\tools\make-og-cards.py <book>-<slug>`
+   (Pillow and matplotlib in that Python; on first run it fetches its fonts into the gitignored
+   `learning/workshop/tools/fonts/`). It writes `learning/assets/og/<book>-<slug>.png`, the file
+   og:image already names.
+7. **Plan**: `learning/learning-plan.md` → Reflections: the book's row in the table and a status
+   line. Nothing changes in CLAUDE.md, the hub's markup or strings, api/feedback.js (the series is
+   already allowed), check-es.js (English only) or the offline build (the whole series is in
+   `$Exclude`).
+8. **Checks**: the hub-wide list in `learning/README.md` → Checks (the no-slash redirect for the new
+   URL; 375 / 768 / 1280 × light / dark × readability / colorblind with no sideways scroll and a
+   clean console; opened from disk with the math rendered; `check-es.js`; the feedback tests;
+   `build.ps1 -StageOnly` staging nothing from Reflections), plus: no raw `\(` or `$$` in the
+   rendered text and no `.katex-error` spans; every control changes its chart or readout; the
+   dash / marker cues hold in dark mode and with colorblind on (and under deuteranopia /
+   achromatopsia emulation); at 375, 768 and 1280 px every chart's text renders at 12 to 13 px
+   and no two text boxes overlap; data lines ≥ 2 px, dashes 10/6, dots 3.25 px every 6 px; no
+   equation scrolls sideways unless it has to; body, muted, chart-label and brass text ≥ 4.5:1 on
+   the rendered colors in both themes; the new reflection shows on the hub, the all-books page
+   and the book page with the right date (America/Chicago included); the DOIs resolve; after the
+   push, the Colab link opens the notebook (the repo is public). Then the Fable review (prompt in
+   learning/README.md).
+
+**A twelfth book** is not a reflection: "11" is typed in `learning/strings.js` (refIntro, refAll,
+EN and ES), `learning/reflections/index.html` (title, description, og tags, h1, the intro, the
+all-books link text), every book page's eyebrow ("Book N of 11") and `ref-all` link, the
+`"reflections"` card lead in make-og-cards.py, and the book table in learning-plan.md. Change all
+of them together, then re-run the card.
