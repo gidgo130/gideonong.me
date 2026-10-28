@@ -598,6 +598,51 @@ in it was here or in learning/README.md.
   40% of the viewport, which at the bottom of a page is usually the last section; a selection-
   opened one is exact. Fine for now.
 
+## Marginalia — a third section of /learning (2026-10-27)
+
+Side questions that come up while Gideon studies, one page each, usually with an interactive,
+practical answer first. Promote briefs from his private notes feed it; the briefs' "keep out"
+lists are binding. Series manual: `learning/marginalia/README.md`.
+
+URLs: `learning/marginalia/` (index, grouped by subject) → `learning/marginalia/<slug>/`.
+
+| # | slug | Title | Subject | Status |
+| --- | --- | --- | --- | --- |
+| 01 | markov-memory | Does a Markov chain forget where it started? | Probability & statistics | built 2026-10-27 |
+| 02 | clt-sample-size | How big does n have to be? Reading skewness from the CLT | Probability & statistics | built 2026-10-27 |
+
+Decisions (Gideon, 2026-10-27):
+- **M1 One standing series, not one per semester.** A series costs the 11-step "Adding a series"
+  checklist, and a semester label invites "which class?". Dates live on the entries instead.
+- **M2 Name: "Marginalia".** (Over "Worked Questions" and "Various Questions".)
+- **M3 Palette 1, "ink and red pencil"**, chosen over a rubric (iron-gall + red) variant for
+  readability; Newsreader + DM Mono. Values in marginalia.css; hub copy in `.marg-panel`.
+- **M4 Order = the order the questions were asked** (registry order, oldest first; the two-state
+  chain before the CLT). Numbers shown, never in URLs; entries only appended.
+- **M5 English first, toggle hidden** (no `data-es-ready`), like Reflections; noindex permanent.
+- **M6 Practical first, cite rather than derive** the less essential results; working links for
+  every source; interactives wherever they help.
+- **M7 The CLT page leads with Sugden, Smith & Jones's n > 28 + 25γ₁²** (eq. 4.3, for
+  x̄ ± 1.96·s/√n and ≥ 94% total coverage), not Cochran's 25G₁²; Cochran is cited as the origin.
+- **M8 Margin notes** carry the engineering readings (reliability, signals, decibels, design
+  allowables), in the right margin from 1180 px, inline below.
+- **M9 Online only**: excluded from the offline app like Reflections.
+- **M10 Post, then review**: the probability chat proposes changes to the two pages after they
+  are up.
+
+Built 2026-10-27: hub band, index, registry, theme, plot.js, both entries with Python/Colab
+companions, cards, feedback gate (`marginalia` in api/feedback.js SERIES, the label in
+scripts/feedback-labels.py), offline exclusion, make-ipynb.py targets, tokens drift test and
+`scripts/tests/marginalia-math.test.mjs`.
+
+Open:
+- [ ] Run `scripts/feedback-labels.py` once so `series:marginalia` exists, then one feedback send
+      from an entry on the preview.
+- [ ] Browser suites (`learning/workshop/tests/`) don't cover Marginalia pages yet; the hub suite
+      may need its band expectations widened (it was written for two series).
+- [ ] Probability chat's review of entries 01–02 (M10).
+- [ ] LinkedIn Post Inspector on the three new cards after deploy.
+
 ## Optional later
 - [X] marimo "Play with the code" notebooks per module (served from the site over HTTP).
   Pilot for residual-plots 2026-09-28 (decision 16: cost numbers, Colab comparison); the

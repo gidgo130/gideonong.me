@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" data-series="marginalia">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
+  <meta name="robots" content="noindex">
+  <title>How big does n have to be? · Marginalia · Gideon A. Ong</title>
+  <meta name="description" content="The practical rule n > 28 + 25γ₁² for a 95% interval on a mean, what to do when you can't reach it, and why the skewness of your data sets it.">
+  <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gideon A. Ong">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="How big does n have to be? Reading skewness from the CLT · Marginalia">
+  <meta property="og:description" content="The practical rule n > 28 + 25γ₁² for a 95% interval on a mean, what to do when you can't reach it, and why the skewness of your data sets it.">
+  <meta property="og:url" content="https://gideonong.me/learning/marginalia/clt-sample-size/">
+  <meta property="og:image" content="https://gideonong.me/learning/assets/og/marginalia-clt-sample-size.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="How big does n have to be? The error of the normal approximation for an exponential parent, an even bump that matches the one-term Edgeworth prediction, beside the title, on lab-notebook paper.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/clt-sample-size/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Viewing settings: follow the main site's saved choices (About → Viewing settings) before first
+       paint. Same keys and <html> attributes as the main site's head snippet (see js/about.js §6). */
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
+        if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
+      } catch (e) { /* storage blocked: the OS theme and the default view */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Marginalia type (learning/marginalia/README.md → Design): Newsreader (text and headings), DM Mono (figures). -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=DM+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+  <!-- KaTeX 0.19.0, self-hosted (learning/assets/vendor/katex/, MIT): no CDN, works from disk. -->
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../marginalia.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="series-bar" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../">Learning</a><span aria-hidden="true">/</span>
+    <a href="../">Marginalia</a>
+  </div>
+</nav>
+
+<div class="wrap essay-wrap">
+<main class="essay" id="main">
+<header class="top">
+  <span class="sec">Marginalia 02 · Probability &amp; statistics</span>
+  <h1>How big does n have to be?</h1>
+  <p class="dek">Reading skewness from the central limit theorem: a sample-size rule you can use today, what to do when you can't meet it, and why the shape of your data sets it.</p>
+</header>
+
+<div class="answer">
+  <p><b>Short answer.</b> For the usual 95% interval on a mean, \(\bar x \pm 1.96\,s/\sqrt n\), Sugden, Smith &amp; Jones (2000) recommend</p>
+  $$n \;>\; 28 + 25\,\gamma_1^2,$$
+  <p>where \(\gamma_1\) is the skewness of the thing you're measuring. Symmetric data need about 30. Exponential-looking data (failure times, waiting times) need about 130. If you can't get that many, or you need a one-sided bound such as "mean life is at least…", use a bootstrap-t interval. The rule comes from the CLT's next term, which is the skewness divided by \(\sqrt n\).</p>
+  <p class="note">The first interactive below simulates in your browser with a fixed seed; the second uses exact distributions, with no simulation. The Python script at the end reproduces both.</p>
+</div>
+
+<nav class="toc" aria-label="Contents">
+<span class="sec">Contents</span>
+<ol>
+<li><a href="#s1">The rule, and how to use it</a></li>
+<li><a href="#s2">Check it: what really happens to coverage</a></li>
+<li><a href="#s3">Why: the CLT has a next term</a></li>
+<li><a href="#s4">Why two-sided intervals forgive skewness</a></li>
+<li><a href="#s5">What else the speed gives away</a></li>
+<li><a href="#s6">Sources</a></li>
+</ol>
+</nav>
+
+<!-- 1 -->
+<h2 id="s1"><span class="sec">§1</span> The rule, and how to use it</h2>
+<p>"\(n \ge 30\)" is the rule most of us were handed. It ignores the one property of the data that matters most here, the <b>skewness</b> \(\gamma_1 = \mathbb E[(X-\mu)^3]/\sigma^3\): zero for a symmetric spread, positive for a long right tail.</p>
+<aside class="mnote"><b class="lab">Where the 28 comes from</b>For perfectly normal data, \(\bar x \pm 1.96\,s/\sqrt n\) covers only 91.8% at \(n = 10\) and first reaches 94% at \(n = 29\). The 28 is the price of using 1.96 with an estimated \(s\). Use the t critical value (Excel's <code>CONFIDENCE.T</code>, MATLAB's <code>tinv</code>) and that part goes away (exactly, for normal data); the \(25\gamma_1^2\) does not.</aside>
+<div class="rulebox"><span class="lab">The rule (Sugden, Smith &amp; Jones 2000, eq. 4.3)</span>
+<p>Trust a two-sided 95% interval for a mean when \(n > 28 + 25\gamma_1^2\). "Trust" means the interval really covers the mean at least 94% of the time.</p></div>
+
+<div class="tbl"><table>
+<thead><tr><th scope="col">Kind of data</th><th scope="col" class="txt">Typical model</th><th scope="col">γ₁</th><th scope="col">Rule's n</th></tr></thead>
+<tbody>
+<tr><td>Dimensions, weights from a stable process</td><td class="txt">normal</td><td>0</td><td>28</td></tr>
+<tr><td>Counts per interval, mean 10</td><td class="txt">Poisson</td><td>0.32</td><td>31</td></tr>
+<tr><td>Time to finish 4 similar stages</td><td class="txt">gamma, shape 4</td><td>1.00</td><td>53</td></tr>
+<tr><td>Wear-out failure times</td><td class="txt">Weibull, shape 1.5</td><td>1.07</td><td>57</td></tr>
+<tr><td>Repair times, particle sizes</td><td class="txt">lognormal, σ = 0.5</td><td>1.75</td><td>105</td></tr>
+<tr><td>Random failures, waiting times</td><td class="txt">exponential</td><td>2.00</td><td>128</td></tr>
+<tr><td>Pollutant concentrations, strongly skewed loads</td><td class="txt">lognormal, σ = 1</td><td>6.18</td><td>984</td></tr>
+</tbody></table></div>
+
+<h3>How to use it</h3>
+<ol class="steps">
+<li><b>Estimate the skewness.</b> Excel: <code>=SKEW(A2:A41)</code>. MATLAB: <code>skewness(x, 0)</code> (the 0 asks for the bias-corrected version, the same number Excel gives). Treat the result as rough: at \(n = 30\) its standard error is about 0.4, and long tails make it read low. If the physics says the quantity is bounded at zero with a long right tail (times, sizes, concentrations), believe the physics.</li>
+<li><b>Compare with the rule.</b> \(n\) comfortably above \(28 + 25\gamma_1^2\): the usual interval is fine.</li>
+<li><b>If you're short</b>, use a <b>bootstrap-t interval</b>. In MATLAB, <code>bootci(2000, {@mean, x}, 'Type', 'student')</code>; MATLAB's default type, <code>'bca'</code>, is also good here. Excel has no built-in bootstrap; the Python script at the end has a short function. Taking logs first also helps, but then the interval is for the geometric mean (the median, for lognormal data), not the mean.</li>
+<li><b>One-sided statements need more care.</b> "Mean strength is at least…" or "mean life exceeds…" uses one tail of the interval, and §2 and §4 show that one tail goes wrong long before the two-sided coverage does.</li>
+</ol>
+
+<!-- 2 -->
+<h2 id="s2"><span class="sec">§2</span> Check it: what really happens to coverage</h2>
+<p>Pick a kind of data and simulate many samples of each size. For every sample, build the 95% interval and record whether the true mean fell <b>above</b> it (the interval came out too low) or <b>below</b> it. Each should happen 2.5% of the time.</p>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <label for="cP">Data
+    <select id="cP">
+      <option value="uni">uniform (γ₁ = 0)</option>
+      <option value="wb">Weibull, shape 1.5 (γ₁ = 1.07)</option>
+      <option value="ln05">lognormal, σ = 0.5 (γ₁ = 1.75)</option>
+      <option value="exp" selected>exponential (γ₁ = 2)</option>
+      <option value="ln1">lognormal, σ = 1 (γ₁ = 6.18)</option>
+    </select></label>
+  <fieldset class="seg"><legend>Critical value</legend><div class="opts">
+    <label><input type="radio" name="cC" value="t" checked><span>t (CONFIDENCE.T)</span></label>
+    <label><input type="radio" name="cC" value="z"><span>1.96 (the rule's setting)</span></label>
+  </div></fieldset>
+  <label for="cN">Your n <output id="cNo">30</output><input id="cN" type="range" min="0" max="17" step="1" value="6"></label>
+  <button type="button" id="cBoot">Run bootstrap-t at this n</button>
+</div>
+<svg id="cc" viewBox="0 0 640 360" role="img" aria-label="Percent of intervals that miss the true mean on each side, against sample size, with the 2.5% target"></svg>
+<div class="legend"><span style="--sw:var(--s1)">interval too low (true mean above it)</span><span style="--sw:var(--s2)" class="dash">interval too high (true mean below it)</span><span style="--sw:var(--muted)" class="dotted">2.5% target, each side</span><span style="--sw:var(--s1)" class="ring">bootstrap-t, each side</span></div>
+<div class="readout" id="cRead" aria-live="polite"></div>
+</div>
+<figcaption>4,000 simulated samples at each of 12 sample sizes (seeded, so the picture is the same on every visit); each point has a Monte Carlo error of about ±0.25 percentage points. The bootstrap-t run uses 2,000 samples with 399 resamples each (about ±0.35 points), for n up to 300; it takes a few seconds at the larger sizes. The dashed vertical line is the rule's \(n\) for the chosen data.</figcaption>
+</figure>
+<aside class="mnote"><b class="lab">Engineering reading</b>For right-skewed data the interval is too low more often than too high. If you are claiming a lower bound on mean life, you're probably fine; if you're claiming an upper bound on mean time to repair, you are the one being fooled.</aside>
+<p>Three things to try. With <b>exponential</b> data at the rule's \(n = 128\), total coverage is about 94%, as promised, but the two tails are lopsided: about 4% of intervals land too low and about 1.3% too high. With <b>uniform</b> data the t interval is on target almost immediately. And switching to <b>1.96</b> makes small samples worse for every kind of data: that's the 28.</p>
+<!-- 3 -->
+<h2 id="s3"><span class="sec">§3</span> Why: the CLT has a next term</h2>
+<p>Standardize the sample mean, \(Y_n = (\bar X_n - \mu)/(\sigma/\sqrt n)\). The CLT says its distribution approaches the standard normal. It says nothing about how fast, and the speed is where the skewness shows up.</p>
+<aside class="mnote"><b class="lab">Decibels for distributions</b>Moment generating functions of independent pieces multiply, the way transfer functions of cascaded stages do. Cumulants are their logarithms, so they add, the way gains in dB add.</aside>
+<p><b>Cumulants</b> are the bookkeeping tool. The third one is the skewness, the fourth is the excess kurtosis \(\gamma_2\). They add when you add independent variables and scale like \(\kappa_r(aX) = a^r\kappa_r(X)\), which gives the one fact this page rests on:</p>
+<span class="eq-wide">$$\text{skewness of } \bar X_n = \frac{\gamma_1}{\sqrt n},\qquad \text{excess kurtosis of } \bar X_n = \frac{\gamma_2}{n}.$$</span>
+<span class="eq-narrow">$$\begin{aligned}\text{skewness of } \bar X_n &= \frac{\gamma_1}{\sqrt n},\\ \text{excess kurtosis of } \bar X_n &= \frac{\gamma_2}{n}.\end{aligned}$$</span>
+<p>Each extra order fades half a power of \(n\) faster. Translating the cumulants back into a CDF gives the <b>Edgeworth expansion</b>; for a parent with a finite third moment that isn't confined to evenly spaced values (Feller 1971, §XVI.4; Hall 1992, Ch. 2),</p>
+<span class="eq-wide">$$F_n(x) = \Phi(x) \;-\; \frac{\gamma_1}{6\sqrt n}\,(x^2-1)\,\varphi(x) \;+\; O\!\left(\frac1n\right),$$</span>
+<span class="eq-narrow">$$\begin{aligned}F_n(x) &= \Phi(x) - \frac{\gamma_1}{6\sqrt n}(x^2-1)\varphi(x)\\&\quad+ O(1/n),\end{aligned}$$</span>
+<p>where \(F_n\) is the CDF of \(Y_n\) and \(\varphi\), \(\Phi\) are the normal density and CDF. The \(1/n\) term, which brings in \(\gamma_2\) and \(\gamma_1^2\), is in the same references. Read the first correction three ways:</p>
+<ul>
+<li><b>Size.</b> Its largest value is \(0.0665\,|\gamma_1|/\sqrt n\) (at \(x = 0\)). Quadrupling \(n\) only halves it.</li>
+<li><b>Shape.</b> \((x^2-1)\varphi(x)\) is an even bump. For a right-skewed parent the median of \(\bar X\) sits below its mean, so \(F_n(0) > \tfrac12\).</li>
+<li><b>Reading it backwards.</b> Measure the error and you have the skewness: \(\gamma_1 = 6\sqrt{2\pi}\,\lim_n \sqrt n\,\bigl(F_n(0)-\tfrac12\bigr)\). The speed of the CLT is a fingerprint of the parent.</li>
+</ul>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <fieldset class="seg"><legend>Parent</legend><div class="opts">
+    <label><input type="radio" name="eP" value="exp" checked><span>exponential</span></label>
+    <label><input type="radio" name="eP" value="uni"><span>uniform</span></label>
+    <label><input type="radio" name="eP" value="coin"><span>fair coin</span></label>
+  </div></fieldset>
+  <label for="eN">n <output id="eNo">10</output><input id="eN" type="range" min="0" max="23" step="1" value="7"></label>
+</div>
+<div class="charts">
+  <div><p class="chart-title">The error F<sub>n</sub>(x) − Φ(x), × 1000</p>
+    <svg id="ec1" viewBox="0 0 640 360" role="img" aria-label="Exact error of the normal approximation against x, with the Edgeworth predictions"></svg>
+    <div class="legend" id="eLeg"><span style="--sw:var(--s1)">exact</span><span style="--sw:var(--s2)" class="dash">one-term Edgeworth</span><span style="--sw:var(--s3)" class="dotted" id="eLeg3">two-term Edgeworth</span></div></div>
+  <div><p class="chart-title">Largest error against n (log–log)</p>
+    <svg id="ec2" viewBox="0 0 640 360" role="img" aria-label="Largest error against n on log-log axes for the three parents"></svg>
+    <div class="legend"><span style="--sw:var(--s1)">exponential</span><span style="--sw:var(--s2)" class="dash">uniform</span><span style="--sw:var(--s3)" class="dotted">fair coin</span><span style="--sw:var(--ink)" class="ring">current</span></div></div>
+</div>
+<div class="readout" id="eRead" aria-live="polite"></div>
+</div>
+<figcaption>Computed exactly: the exponential's sum is a gamma variable, the uniform's is Irwin–Hall (inverted from its characteristic function above \(n = 16\), where the textbook formula loses every digit to rounding), and the coin's is binomial. On the right, a slope of −½ means the error halves when \(n\) quadruples; a slope of −1 means it quarters.</figcaption>
+</figure>
+<p>What to look for. The <b>exponential</b> error is the even bump, matched by the one-term line, with the two-term line closing the rest; its largest error times \(\sqrt n\) settles at 0.133, and \(0.133 \times 6/\varphi(0) = 2.00\), its skewness. The <b>uniform</b> has \(\gamma_1 = 0\), so the one-term line is flat and what's left is an odd wiggle, 15 times smaller at \(n = 10\), that shrinks like \(1/n\). The <b>coin</b> is symmetric too, yet its error never shrinks faster than \(1/\sqrt n\) (§5).</p>
+
+<!-- 4 -->
+<h2 id="s4"><span class="sec">§4</span> Why two-sided intervals forgive skewness</h2>
+<aside class="mnote"><b class="lab">The arithmetic in the paper</b>With \(\gamma_2 = 0\), an infinite population and 1.96 with \(s\), Sugden et al. get the \(1/n\) coefficient \(-2.3724 - 2.1170\gamma_1^2\) at 1.96; asking for less than 1% total error gives \(n > 27.73 + 24.74\gamma_1^2\), rounded to the rule.</aside>
+<p>A two-sided interval asks for \(P(|Y_n| \le z) = F_n(z) - F_n(-z)\). The one-term correction is even in \(x\), so it is the same at \(z\) and \(-z\) and cancels in the difference. What's left is order \(1/n\), with a coefficient that contains \(\gamma_1^2\). Ask for that error to be under 1% and you get \(n\) proportional to \(\gamma_1^2\). That is the shape of the rule.</p>
+<p>Each tail on its own gets no such cancellation. For the t-statistic the one-term polynomial changes from \(-(x^2-1)\) to \((2x^2+1)\) (Hall 1992, Ch. 2; Sugden et al., eq. 2.4), and at 1.96 it moves each tail by about</p>
+$$\pm\,0.085\,\frac{\gamma_1}{\sqrt n}.$$
+<p>For exponential data at \(n = 128\) that is about 1.5 percentage points, the lopsidedness you saw in §2. A one-sided bound feels all of it, which is why the rule is about two-sided intervals only.</p>
+<p><b>Why bootstrap-t fixes it.</b> Resampling your own data reproduces that \(1/\sqrt n\) term, estimated from your sample's skewness, so the bootstrap-t interval's one-sided error drops to order \(1/n\) (Hall 1992, Ch. 3). It uses the very correction the CLT throws away.</p>
+
+<!-- 5 -->
+<h2 id="s5"><span class="sec">§5</span> What else the speed gives away</h2>
+<aside class="mnote"><b class="lab">Allowable versus typical</b>Berry–Esseen is like a design allowable: guaranteed, and conservative by a factor of about 9 here. The Edgeworth term is the typical value. You need both, for different jobs.</aside>
+<ul>
+<li><b>Evenly spaced values never beat \(1/\sqrt n\).</b> A coin, counts, readings rounded to an instrument's resolution: the CDF of the mean is a staircase, and a staircase can't follow a smooth ramp better than half a step. For the fair coin the error stays near \(0.4/\sqrt n\) however symmetric it is (Esseen 1945; Feller 1971, §XVI.4). The continuity correction, adding half a step, is the fix.</li>
+<li><b>Heavy tails converge more slowly.</b> If the share of the variance coming from values beyond \(z\) shrinks only like \(z^{-\delta}\), with \(0 < \delta < 1\), the error shrinks like \(n^{-\delta/2}\), and the converse holds too (Ibragimov 1966). Fatigue lives, flood levels and network traffic can behave like this. A quick check: if two or three points contribute most of \(\sum (x_i-\bar x)^2\), distrust any CLT-based interval.</li>
+<li><b>Infinite variance: no normal limit at all.</b> The average of \(n\) Cauchy readings is Cauchy again, exactly as spread out as one reading (Durrett 2019, §3.8, on stable laws). A Lorentzian resonance line is a Cauchy density. If averaging more data doesn't narrow anything, suspect this.</li>
+<li><b>A guaranteed bound for every n.</b> The Berry–Esseen theorem: \(\sup_x |F_n(x)-\Phi(x)| \le 0.4748\,\rho/\sqrt n\), with \(\rho = \mathbb E|X-\mu|^3/\sigma^3\) (Berry 1941; Shevtsova 2011 for the constant). For exponential data that's \(1.15/\sqrt n\) against a true \(0.133/\sqrt n\).</li>
+</ul>
+<!-- 6 -->
+<h2 id="s6"><span class="sec">§6</span> Sources</h2>
+<ol class="sources">
+<li>R. A. Sugden, T. M. F. Smith and R. P. Jones, "<a href="https://doi.org/10.1111/1467-9868.00264">Cochran's rule for simple random sampling</a>," <i>J. Royal Statistical Society B</i> 62(4), 787–793 (2000). <span class="what">The rule (eq. 4.3), its derivation from the Edgeworth expansion, and the t-statistic's polynomial (eq. 2.4).</span></li>
+<li>W. G. Cochran, <a href="https://gov.wiley.com/WileyCDA/WileyTitle/productCd-047116240X.html"><i>Sampling Techniques</i></a>, 3rd ed. (Wiley, 1977), p. 42. <span class="what">The original \(n > 25G_1^2\) rule.</span></li>
+<li>W. Feller, <a href="https://www.wiley-vch.de/de/fachgebiete/mathematik-und-statistik/an-introduction-to-probability-theory-and-its-applications-volume-2-978-0-471-25709-7"><i>An Introduction to Probability Theory and Its Applications</i>, Vol. II</a>, 2nd ed. (Wiley, 1971). <span class="what">Ch. XVI: Edgeworth expansions (§2, §4, including the lattice case) and the Berry–Esseen theorem (§3–5).</span></li>
+<li>P. Hall, <a href="https://doi.org/10.1007/978-1-4612-4384-7"><i>The Bootstrap and Edgeworth Expansion</i></a> (Springer, 1992). <span class="what">Ch. 2: expansions for the mean and the t-statistic. Ch. 3: why bootstrap-t is second-order accurate.</span></li>
+<li>R. Durrett, <a href="https://doi.org/10.1017/9781108591034"><i>Probability: Theory and Examples</i></a>, 5th ed. (Cambridge University Press, 2019). <span class="what">§3.4.4 Berry–Esseen; §3.8 stable laws.</span></li>
+<li>I. Shevtsova, "<a href="https://arxiv.org/abs/1111.6554">On the absolute constants in the Berry–Esseen type inequalities for identically distributed summands</a>," arXiv:1111.6554 (2011). <span class="what">The constant 0.4748.</span></li>
+<li>A. C. Berry, "<a href="https://doi.org/10.1090/S0002-9947-1941-0003498-3">The accuracy of the Gaussian approximation to the sum of independent variates</a>," <i>Trans. AMS</i> 49, 122–136 (1941); C.-G. Esseen, "<a href="https://doi.org/10.1007/BF02392223">Fourier analysis of distribution functions</a>," <i>Acta Mathematica</i> 77, 1–125 (1945).</li>
+<li>I. A. Ibragimov, "<a href="https://doi.org/10.1137/1111061">On the accuracy of Gaussian approximation to the distribution functions of sums of independent variables</a>," <i>Theory Probab. Appl.</i> 11(4), 559–579 (1966). <span class="what">Heavy tails and slower rates.</span></li>
+<li>Software: Excel <a href="https://support.microsoft.com/office/bdf49d86-b1ef-4804-a046-28eaea69c9fa">SKEW</a> and <a href="https://support.microsoft.com/office/e8eca395-6c3a-4ba9-9003-79ccc61d3c53">CONFIDENCE.T</a>; MATLAB <a href="https://www.mathworks.com/help/stats/skewness.html">skewness</a> and <a href="https://www.mathworks.com/help/stats/bootci.html">bootci</a>.</li>
+</ol>
+
+<div class="takeaway-links">
+  <span>Take it with you:</span>
+  <a href="clt-sample-size.py" download>Python script</a>
+  <a class="take-colab" aria-describedby="new-tab-note" href="https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/marginalia/clt-sample-size/clt-sample-size.ipynb" target="_blank" rel="noopener">Open in Colab</a>
+</div>
+<span id="new-tab-note" hidden>Opens in a new tab</span>
+</main>
+
+<p class="foot">
+  <span>Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
+  <span class="fb-slot">Found a mistake? gao9819@utulsa.edu</span>
+  <span class="license">Text, figures and code here are CC BY-SA 4.0. Cited works remain their authors' and publishers'.</span>
+</p>
+</div>
+
+<script src="../../assets/vendor/katex/katex.min.js"></script>
+<script src="../../assets/vendor/katex/auto-render.min.js"></script>
+<script>
+  /* Exactly two delimiter pairs: \( \) inline and $$ $$ display. No single-$ pair. */
+  renderMathInElement(document.querySelector("main.essay"), {
+    delimiters: [{ left: "$$", right: "$$", display: true }, { left: "\\(", right: "\\)", display: false }],
+    throwOnError: false
+  });
+</script>
+<script src="../../assets/learning.js"></script>
+<script src="../plot.js"></script>
+<script src="clt-math.js"></script>
+<script src="main.js"></script>
+<!-- Feedback widget (F7): strings-common.js is loaded as plain data for its fb* strings; no i18n engine, English only. -->
+<script src="../../assets/strings-common.js"></script>
+<script src="../../assets/view-settings.js"></script>
+<script src="../../assets/feedback.js"></script>
+</body>
+</html>

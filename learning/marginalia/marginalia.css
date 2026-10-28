@@ -1,0 +1,213 @@
+/* marginalia.css — the Marginalia series on top of learning.css. The token VALUES in this file
+   are their single home: the docs describe the palette in words and point here (the hub's
+   .marg-panel in learning.css carries copies; keep them in step).
+   learning.css is the shared base (series bar, layout, spacing, footer, viewing settings and the
+   token NAMES every component uses). This file does three things, all under
+   <html data-series="marginalia">:
+     1. the series THEME, "ink and red pencil" (palette 1, chosen 2026-10-27): warm off-white
+        paper, graphite ink, an ink-blue accent for links and the first chart series, and a red
+        pencil for margin notes and the second series. Understated on purpose. Newsreader for
+        text and headings, DM Mono for figures.
+     2. the page pieces: §n headings, the short-answer box, the rule box, figures with controls,
+        tables, sources, and the entry list on the series index.
+     3. the margin notes (.mnote): in the right margin beside the text on wide screens, an inline
+        aside with a red-pencil rule below 1180 px.
+   Charts never use --fit / --fix (Reading Your Fits meanings): series tokens --s1..--s4, and
+   every line in a shared chart is told apart by shape (solid / dashed / dotted, at most three),
+   with legend swatches that repeat the chart's exact geometry (learning/README.md → Hub-wide
+   rules). */
+
+/* ---------- theme tokens (light) ---------- */
+:root[data-series="marginalia"] {
+  --paper: #f7f6f3;      /* warm off-white sheet */
+  --plot: #efede8;       /* surface: figure panels, answer and rule boxes */
+  --grid: #e2dfd8;       /* chart gridlines */
+  --rule: #d3cfc6;
+  --ink: #1f2226;        /* graphite */
+  --muted: #5b5e65;
+  --pt: #5b5e65;
+  --note-bg: #efede8;
+  --accent: #2f4a7a;     /* ink blue: links, focus, small labels */
+  --emph: #a83a2e;       /* red pencil: margin notes, "attention" */
+  --s1: #2f4a7a;         /* chart 1 ink blue */
+  --s2: #a83a2e;         /* chart 2 red pencil */
+  --s3: #7a5c1e;         /* chart 3 umber */
+  --s4: #3f6a45;         /* chart 4 green */
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-mono: "DM Mono", Consolas, "Courier New", monospace;
+}
+/* dark */
+@media (prefers-color-scheme: dark) {
+  :root[data-series="marginalia"]:not([data-theme="light"]) {
+    --paper: #17191c; --plot: #1e2125; --grid: #2b2f34; --rule: #383d44; --ink: #e7e5e0; --muted: #a9acb2; --pt: #a9acb2; --note-bg: #1e2125;
+    --accent: #93b2e6; --emph: #f0907f; --s1: #93b2e6; --s2: #f0907f; --s3: #d9b46a; --s4: #93c49c;
+  }
+}
+:root[data-series="marginalia"][data-theme="dark"] {
+  --paper: #17191c; --plot: #1e2125; --grid: #2b2f34; --rule: #383d44; --ink: #e7e5e0; --muted: #a9acb2; --pt: #a9acb2; --note-bg: #1e2125;
+  --accent: #93b2e6; --emph: #f0907f; --s1: #93b2e6; --s2: #f0907f; --s3: #d9b46a; --s4: #93c49c;
+}
+/* readability: the darker muted text, in this palette */
+:root[data-series="marginalia"][data-readability] { --muted: #474a50; --pt: #474a50; }
+@media (prefers-color-scheme: dark) {
+  :root[data-series="marginalia"][data-readability]:not([data-theme="light"]) { --muted: #c3c5ca; --pt: #c3c5ca; }
+}
+:root[data-series="marginalia"][data-readability][data-theme="dark"] { --muted: #c3c5ca; --pt: #c3c5ca; }
+/* colorblind: the Okabe–Ito set (shape and markers carry the rest) */
+:root[data-series="marginalia"][data-colorblind] { --s1: #0072b2; --s2: #d55e00; --s3: #b0569a; --s4: #009e73; }
+@media (prefers-color-scheme: dark) {
+  :root[data-series="marginalia"][data-colorblind]:not([data-theme="light"]) { --s1: #56b4e9; --s2: #e69f00; --s3: #f0a0cc; --s4: #4fd1a5; }
+}
+:root[data-series="marginalia"][data-colorblind][data-theme="dark"] { --s1: #56b4e9; --s2: #e69f00; --s3: #f0a0cc; --s4: #4fd1a5; }
+
+/* ---------- type ---------- */
+:root[data-series="marginalia"] body { font-size: 18px; }
+:root[data-series="marginalia"][data-readability] body { font-size: 20px; }
+:root[data-series="marginalia"] h1,
+:root[data-series="marginalia"] h2,
+:root[data-series="marginalia"] h3 { font-weight: 600; letter-spacing: -0.005em; }
+:root[data-series="marginalia"] input[type=range] { accent-color: var(--accent); }
+
+/* ---------- essay column ---------- */
+main.essay { max-width: 44rem; margin-inline: auto; min-width: 0; }
+.essay .wide { max-width: min(58rem, 100%); margin-inline: auto; }
+.essay h1 { font-size: clamp(34px, 6vw, 54px); line-height: 1.08; margin: 0; }
+.essay h2 { font-size: clamp(24px, 3.4vw, 31px); line-height: 1.2; margin: 3rem 0 .6rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); clear: both; }
+.essay h3 { font-size: 1.2em; margin: 1.8rem 0 .4rem; }
+.essay p { margin: .6em 0; max-width: 68ch; }
+.essay li { max-width: 68ch; margin: .25em 0; }
+.essay ul, .essay ol { padding-left: 1.3em; }
+.essay a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; }
+.essay a:hover { color: var(--accent); }
+.essay code { font-family: var(--font-mono); font-size: .86em; background: color-mix(in srgb, var(--ink) 6%, transparent); padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+.essay .sec { font-family: var(--font-mono); font-weight: 500; font-size: .74em; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: .5rem; }
+.essay h2 .sec { font-size: .5em; letter-spacing: .1em; }
+.essay header.top { padding-block: 2.4rem 1rem; border-bottom: 0; display: block; }
+.essay .dek { font-size: 1.2em; line-height: 1.4; color: var(--muted); margin: .8rem 0 0; }
+.essay .answer { background: var(--note-bg); border-radius: 4px; padding: 1rem 1.2rem; margin: 1.6rem 0; }
+.essay .answer p { margin: .4rem 0; }
+.essay nav.toc ol { columns: 2 14rem; padding-left: 1.2rem; margin: .5rem 0; font-size: .92em; }
+.essay nav.toc li { break-inside: avoid; margin: .15rem 0; }
+/* The rule box: the one formula a reader should leave with. Red pencil means "attention". */
+.essay .rulebox { border: 1.5px solid var(--emph); border-radius: 4px; padding: .8rem 1.1rem; margin: 1.2rem 0; background: var(--paper); }
+.essay .rulebox .lab { font-family: var(--font-mono); font-size: .72em; letter-spacing: .08em; text-transform: uppercase; color: var(--emph); display: block; }
+.essay .steps { counter-reset: st; list-style: none; padding-left: 0; }
+.essay .steps > li { counter-increment: st; position: relative; padding-left: 2.1em; margin: .7em 0; }
+.essay .steps > li::before { content: counter(st); position: absolute; left: 0; top: .05em; width: 1.5em; height: 1.5em; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: .8em; display: grid; place-items: center; }
+.essay .note { background: transparent; padding: 0; border-radius: 0; font-size: .9em; color: var(--muted); }
+.essay figure { margin: 1.6rem 0; min-width: 0; display: block; clear: both; }
+.essay figcaption { font-family: var(--font-body); font-size: .9rem; font-weight: 400; line-height: 1.5; color: var(--muted); margin-top: .5rem; max-width: 68ch; }
+.essay figcaption b { font-weight: 600; color: var(--ink); }
+.essay .fig { background-color: var(--plot); border: 1px solid var(--rule); border-radius: 4px; padding: 1rem; min-width: 0; }
+.essay .fig svg { display: block; width: 100%; height: auto; }
+.essay svg .plot-bg { fill: var(--paper); }
+.essay .controls { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: end; margin-bottom: .8rem; font-family: var(--font-mono); font-size: .8em; }
+.essay .controls label { display: flex; flex-direction: column; gap: .15rem; color: var(--muted); font-weight: 500; }
+.essay .controls output { font-family: var(--font-mono); font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+.essay .controls .presets { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.essay .controls .presets > span { color: var(--muted); }
+.essay input[type=range] { width: 10rem; height: 24px; }
+.essay select { font: inherit; font-size: .95em; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: .25rem .3rem; }
+.essay fieldset.seg { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .15rem; }
+.essay fieldset.seg legend { color: var(--muted); padding: 0; margin-bottom: .15rem; font-weight: 500; }
+.essay fieldset.seg .opts { display: inline-flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.essay fieldset.seg label { flex-direction: row; gap: 0; color: var(--ink); cursor: pointer; }
+.essay fieldset.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.essay fieldset.seg span { padding: .3rem .6rem; display: block; border-left: 1px solid var(--rule); }
+.essay fieldset.seg label:first-child span { border-left: 0; }
+.essay fieldset.seg input:checked + span { background: var(--ink); color: var(--paper); }
+.essay fieldset.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+.essay button {
+  font-family: var(--font-mono); font-weight: 500; font-size: .95em;
+  background: var(--paper); color: var(--ink); border: 1.5px solid var(--ink); border-radius: 4px;
+  padding: .35rem .7rem; cursor: pointer;
+}
+.essay button:hover { background: var(--note-bg); }
+.essay button:disabled { cursor: default; opacity: .6; }
+.essay button.ghost { border-color: var(--rule); color: var(--muted); }
+.essay button.ghost:hover { color: var(--ink); }
+.essay .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); gap: 1rem; }
+.essay .charts > div { min-width: 0; }
+.essay .chart-title { font-family: var(--font-mono); font-size: .78em; color: var(--muted); margin: 0 0 .3rem; }
+/* Legend swatches repeat the chart geometry exactly: solid 2.2 px; dashed 10 px / 6 px at 2 px;
+   dotted 3.25 px round dots every 6 px; markers as drawn (dot, hollow ring). */
+.essay .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; font-family: var(--font-mono); font-size: .76em; color: var(--muted); margin-top: .4rem; }
+.essay .legend span::before { content: ""; display: inline-block; width: 26px; height: 2.2px; margin-right: 6px; vertical-align: middle; background: var(--sw); }
+.essay .legend span.dash::before { height: 2px; background: repeating-linear-gradient(90deg, var(--sw) 0 10px, transparent 10px 16px); }
+.essay .legend span.dotted::before { height: 3.25px; background: radial-gradient(circle at 1.625px 50%, var(--sw) 1.5px, transparent 1.75px) 0 0 / 6px 3.25px repeat-x; }
+.essay .legend span.dot::before { width: 8px; height: 8px; border-radius: 50%; }
+.essay .legend span.ring::before { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); border: 2.5px solid var(--sw); box-sizing: border-box; }
+.essay .readout { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-family: var(--font-mono); font-size: .8em; margin-top: .6rem; border: 0; }
+.essay .readout b { font-family: var(--font-mono); font-weight: 500; color: var(--ink); }
+.essay .readout .flag { color: var(--emph); }
+.essay .tbl { overflow-x: auto; margin: 1rem 0; max-width: 100%; }
+.essay table { border-collapse: collapse; font-size: .9em; font-variant-numeric: tabular-nums; }
+.essay th, .essay td { padding: .4rem .7rem; border-bottom: 1px solid var(--rule); text-align: right; font-family: var(--font-mono); font-size: .92em; }
+.essay th:first-child, .essay td:first-child { text-align: left; font-family: var(--font-body); font-size: 1em; }
+.essay thead th { border-bottom: 2px solid var(--ink); color: var(--ink); font-weight: 500; vertical-align: bottom; }
+.essay td small { color: var(--muted); }
+@media (max-width: 520px) { .essay th, .essay td { padding: .35rem .3rem; font-size: .84em; } .essay th:first-child, .essay td:first-child { font-size: .92em; } }
+.essay td.txt, .essay th.txt { font-family: var(--font-body); font-size: 1em; text-align: left; }
+.essay .sources { padding-left: 1.3em; }
+.essay .sources li { margin: .5em 0; }
+.essay .sources .what { color: var(--muted); }
+.essay svg text { fill: var(--muted); font-family: var(--font-mono); font-size: 13px; }
+.essay svg .axis { stroke: var(--rule); stroke-width: 1; }
+.essay svg .gridl { stroke: var(--grid); stroke-width: 1; }
+.essay .takeaway-links { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; }
+.essay-wrap .foot { max-width: 44rem; margin-inline: auto; }
+.essay-wrap .foot span { max-width: 68ch; }
+.foot .license { flex-basis: 100%; }
+
+/* ---------- margin notes ---------- */
+/* Below 1180 px: an inline aside under the paragraph it annotates. */
+.essay .mnote {
+  display: block; margin: .8rem 0 1rem; padding: .1rem 0 .1rem .9rem; max-width: 64ch;
+  border-left: 2px solid var(--emph); font-size: .86em; line-height: 1.45; color: var(--ink);
+}
+.essay .mnote b.lab { display: block; font-family: var(--font-mono); font-weight: 500; font-size: .8em; letter-spacing: .06em; text-transform: uppercase; color: var(--emph); margin-bottom: .15rem; }
+.essay .mnote p { margin: .3em 0; }
+/* From 1180 px: the text column moves left and each note floats into a 15rem right margin,
+   next to the paragraph that follows it in the markup. Wide figures and headings clear them. */
+@media (min-width: 1180px) {
+  .essay-wrap main.essay { margin-left: max(0px, calc((100% - 61rem) / 2)); margin-right: auto; }
+  .essay-wrap .foot { margin-left: max(0px, calc((100% - 61rem) / 2)); }
+  .essay .mnote { float: right; clear: right; width: 15rem; margin: .3rem -17rem 1rem 0; }
+  .essay .wide { width: 61rem; max-width: none; margin-left: 0; }
+}
+
+/* ---------- math (self-hosted KaTeX, loaded only by pages that have it) ---------- */
+.katex { font-size: 1.04em; }
+.katex-display { overflow-x: auto; overflow-y: hidden; margin: 1em 0; padding: .15em 0; }
+.katex-display > .katex { white-space: nowrap; }
+.eq-wide, .eq-narrow { display: block; }
+.eq-narrow { display: none; }
+@media (max-width: 519px) {
+  .eq-wide { display: none; }
+  .eq-narrow { display: block; }
+}
+
+/* ---------- series index: the entry list ---------- */
+.marg-subject { padding-block: 28px 0; display: grid; gap: 14px; }
+.marg-subject h2 { font-size: 22px; margin: 0; }
+.entry-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.entry-list li { border-bottom: 1px solid var(--rule); }
+.entry-row { display: grid; grid-template-columns: 3em minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; padding: 16px 4px; text-decoration: none; color: inherit; }
+a.entry-row:hover { background: var(--note-bg); color: inherit; }
+a.entry-row:hover .e-title { color: var(--accent); }
+.e-num { font-family: var(--font-mono); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.e-title { font-family: var(--font-display); font-size: 23px; font-weight: 600; line-height: 1.15; }
+.e-sub { font-style: italic; font-weight: 400; color: var(--muted); }
+.e-desc { grid-column: 2 / 3; font-size: 16px; color: var(--muted); }
+.e-date { grid-row: 1; grid-column: 3; font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+@media (max-width: 520px) {
+  .entry-row { grid-template-columns: 2.4em minmax(0, 1fr); }
+  .e-date { grid-row: auto; grid-column: 2; }
+}
+.marg-head { padding-block: 36px 8px; border-bottom: 1px solid var(--rule); display: grid; gap: 10px; }
+.marg-head .lead { color: var(--muted); max-width: 62ch; }
+:root[data-readability] .e-desc { font-size: 18px; }
+:root[data-readability] .e-date { font-size: 14px; }
+/* Three charts side by side where the figure is wide enough (the Markov page's §2). */
+.essay .charts.three { grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); }

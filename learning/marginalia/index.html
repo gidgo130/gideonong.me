@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-series="marginalia">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
+  <meta name="robots" content="noindex">
+  <title>Marginalia · Gideon A. Ong</title>
+  <meta name="description" content="Questions that come up while I study, each answered on one page, usually with something to play with. The practical answer first, then why it works.">
+  <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gideon A. Ong">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Marginalia">
+  <meta property="og:description" content="Questions that come up while I study, each answered on one page, usually with something to play with. The practical answer first, then why it works.">
+  <meta property="og:url" content="https://gideonong.me/learning/marginalia/">
+  <meta property="og:image" content="https://gideonong.me/learning/assets/og/marginalia.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Marginalia: a probability that settles onto its long-run value, step by step, beside the title, on lab-notebook paper.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (/learning/marginalia/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Viewing settings: follow the main site's saved choices (About → Viewing settings) before first
+       paint. Same keys and <html> attributes as the main site's head snippet (see js/about.js §6);
+       learning.css styles data-theme, data-readability and data-colorblind. */
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
+        if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
+      } catch (e) { /* storage blocked: the OS theme and the default view */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Marginalia type (learning/marginalia/README.md → Design): Newsreader (text and headings), DM Mono (figures). -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=DM+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="../assets/learning.css">
+  <link rel="stylesheet" href="marginalia.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="series-bar" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../">Learning</a><span aria-hidden="true">/</span>
+    <span>Marginalia</span>
+  </div>
+</nav>
+
+<div class="wrap">
+<main id="main">
+  <header class="top marg-head">
+    <div class="eyebrow">Gideon A. Ong · Learning</div>
+    <h1>Marginalia</h1>
+    <p class="lead">Questions that come up while I study, each answered on one page, usually with something to play with. The practical answer comes first, then why it works. In English only.</p>
+  </header>
+
+  <div id="entries" aria-label="Marginalia entries"></div>
+  <noscript><p class="note">The list of entries needs JavaScript turned on.</p></noscript>
+</main>
+
+  <p class="foot">
+    <span>Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
+    <span class="fb-slot">Found a mistake? gao9819@utulsa.edu</span>
+    <span class="license">Text, figures and code here are CC BY-SA 4.0. Cited works remain their authors' and publishers'.</span>
+  </p>
+</div>
+
+<script src="../assets/learning.js"></script>
+<script src="../assets/marginalia.js"></script>
+<script>
+  LEARN_MARG.indexList(document.getElementById("entries"));
+</script>
+<!-- Feedback widget (F7): strings-common.js is loaded as plain data for its fb* strings; no i18n engine, English only. -->
+<script src="../assets/strings-common.js"></script>
+<script src="../assets/view-settings.js"></script>
+<script src="../assets/feedback.js"></script>
+</body>
+</html>

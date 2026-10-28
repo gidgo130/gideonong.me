@@ -1,4 +1,4 @@
-// Drift test for the two copied token blocks in learning/assets/learning.css. Node built-ins only:
+// Drift test for the three copied token blocks in learning/assets/learning.css. Node built-ins only:
 //   node --test "scripts/tests/*.test.mjs"
 //
 // The hub (learning/index.html) wraps its series bands in a main-site frame (.hub-frame) and
@@ -21,6 +21,9 @@
 //     light, OS dark, data-theme dark, readability light / dark; --paper, --plot, --rule, --ink,
 //     --muted, --accent and the three font stacks
 //     not compared                    --note-bg (the panel uses the paper color on purpose: row hover)
+//   .marg-panel                     ↔ learning/marginalia/marginalia.css `:root[data-series="marginalia"]`
+//     the same five rules; --paper, --plot, --rule, --ink, --muted, --accent, --emph and the three
+//     font stacks (--note-bg not compared, same reason)
 // Also: each copied block's OS-dark rule must equal its data-theme-dark rule (same values twice).
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -78,6 +81,7 @@ function same(label, a, aKey, b, bKey) {
 const L = parseCss(read("learning/assets/learning.css"));
 const S = parseCss(read("css/style.css"));
 const R = parseCss(read("learning/reflections/reflections.css"));
+const M = parseCss(read("learning/marginalia/marginalia.css"));
 const DARK_MEDIA = "(prefers-color-scheme: dark)";
 
 // ---------------------------------------------------------------- .hub-frame ↔ css/style.css
@@ -134,8 +138,32 @@ test("Reflections band, readability: muted mirrors reflections.css", () => {
   same("readability OS dark", decls(L, ':root[data-readability]:not([data-theme="light"]) .ref-panel', { media: DARK_MEDIA }), "--muted", srcDark, "--muted");
 });
 
+// ---------------------------------------------------------------- .marg-panel ↔ marginalia.css
+const MARG_KEYS = ["--paper", "--plot", "--rule", "--ink", "--muted", "--accent", "--emph"];
+
+test("Marginalia band, light: .marg-panel mirrors marginalia.css's series tokens and fonts", () => {
+  const panel = decls(L, ".marg-panel");
+  const src = decls(M, ':root[data-series="marginalia"]');
+  for (const k of [...MARG_KEYS, ...FONT_KEYS]) same("light", panel, k, src, k);
+});
+
+test("Marginalia band, dark: both dark rules mirror marginalia.css", () => {
+  const srcData = decls(M, ':root[data-series="marginalia"][data-theme="dark"]');
+  const srcOs = decls(M, ':root[data-series="marginalia"]:not([data-theme="light"])', { media: DARK_MEDIA });
+  const panelData = decls(L, ':root[data-theme="dark"] .marg-panel');
+  const panelOs = decls(L, ':root:not([data-theme="light"]) .marg-panel', { media: DARK_MEDIA });
+  for (const k of MARG_KEYS) { same("data-theme dark", panelData, k, srcData, k); same("OS dark", panelOs, k, srcOs, k); same("source self-consistency", srcData, k, srcOs, k); }
+});
+
+test("Marginalia band, readability: muted mirrors marginalia.css", () => {
+  same("readability light", decls(L, ":root[data-readability] .marg-panel"), "--muted", decls(M, ':root[data-series="marginalia"][data-readability]'), "--muted");
+  const srcDark = decls(M, ':root[data-series="marginalia"][data-readability][data-theme="dark"]');
+  same("readability dark", decls(L, ':root[data-readability][data-theme="dark"] .marg-panel'), "--muted", srcDark, "--muted");
+  same("readability OS dark", decls(L, ':root[data-readability]:not([data-theme="light"]) .marg-panel', { media: DARK_MEDIA }), "--muted", srcDark, "--muted");
+});
+
 test("each copied block says the same thing in its OS-dark and data-theme-dark rules", () => {
-  for (const [os, data] of [[':root:not([data-theme="light"]) .hub-frame', ':root[data-theme="dark"] .hub-frame'], [':root:not([data-theme="light"]) .ref-panel', ':root[data-theme="dark"] .ref-panel']]) {
+  for (const [os, data] of [[':root:not([data-theme="light"]) .hub-frame', ':root[data-theme="dark"] .hub-frame'], [':root:not([data-theme="light"]) .ref-panel', ':root[data-theme="dark"] .ref-panel'], [':root:not([data-theme="light"]) .marg-panel', ':root[data-theme="dark"] .marg-panel']]) {
     const a = decls(L, os, { media: DARK_MEDIA }), b = decls(L, data);
     assert.deepEqual(Object.fromEntries(Object.entries(a).map(([k, v]) => [k, norm(v)])), Object.fromEntries(Object.entries(b).map(([k, v]) => [k, norm(v)])), os + " vs " + data);
   }

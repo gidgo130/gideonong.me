@@ -104,6 +104,19 @@
   </div>
 </section>
 
+  <!-- Marginalia (learning/marginalia/). Rendered from assets/marginalia.js, loaded like the
+       Reflections registry (never in the installed offline copy); the band stays hidden until the
+       registry has loaded. English titles, lang="en". .marg-panel previews the Marginalia theme
+       (learning.css → "Hub: the Marginalia panel"). -->
+<section class="hub-band marg-panel" id="marginalia" hidden>
+  <div class="hub-col series">
+    <h2 data-i18n="margTitle">Marginalia</h2>
+    <p data-i18n="margIntro">Questions that come up while I study, each answered on one page, usually with something to play with. The practical answer comes first, then why it works. In English only.</p>
+    <ol class="module-list" id="marg-list" data-i18n-aria="margListAria" aria-label="Marginalia entries"></ol>
+    <p class="ref-all"><a href="marginalia/" data-i18n="margAll">All entries</a></p>
+  </div>
+</section>
+
 </main>
 
 <footer class="hub-frame hub-foot">
@@ -122,6 +135,7 @@
   (function () {
     var list = document.getElementById("module-list"), foot = document.querySelector(".foot");
     var refs = document.getElementById("reflections"), refList = document.getElementById("ref-list");
+    var marg = document.getElementById("marginalia"), margList = document.getElementById("marg-list");
     LF.moduleList(list);
     LF.offlineNote(foot);   // installed copy only
     // The panel previews the Reflections type: Archivo, IBM Plex Serif, IBM Plex Mono. They are
@@ -141,6 +155,20 @@
       refFonts();
       refs.hidden = false;
     }
+    // The Marginalia panel's faces (Newsreader, DM Mono), requested the same way as REF_FONTS.
+    var MARG_FONTS = "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=DM+Mono:wght@400;500&display=swap";
+    function margFonts() {
+      if (document.getElementById("marg-fonts")) return;
+      var l = document.createElement("link");
+      l.id = "marg-fonts"; l.rel = "stylesheet"; l.href = MARG_FONTS;
+      document.head.appendChild(l);
+    }
+    function marginalia() {
+      if (!window.LEARN_MARG) return;
+      LEARN_MARG.hubList(margList, LI18N.lang);
+      margFonts();
+      marg.hidden = false;
+    }
     // The Reflections registry is not in the offline app, so the installed copy never asks for
     // it (no failed request in its console); elsewhere a missing file just leaves the block hidden.
     if (!window.LEARN_OFFLINE) {
@@ -148,8 +176,12 @@
       s.src = "assets/reflections.js";
       s.onload = reflections;
       document.body.appendChild(s);
+      var m = document.createElement("script");   // Marginalia: online only, like Reflections
+      m.src = "assets/marginalia.js";
+      m.onload = marginalia;
+      document.body.appendChild(m);
     }
-    document.addEventListener("learnlangchange", function () { LF.moduleList(list); LF.offlineNote(foot); reflections(); });
+    document.addEventListener("learnlangchange", function () { LF.moduleList(list); LF.offlineNote(foot); reflections(); marginalia(); });
   }());
 </script>
 <script src="assets/view-settings.js"></script>

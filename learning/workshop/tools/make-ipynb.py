@@ -2,6 +2,7 @@
 
     python learning/workshop/tools/make-ipynb.py <slug> [--check]                       a module
     python learning/workshop/tools/make-ipynb.py reflections/<book>/<slug> [--check]    a reflection
+    python learning/workshop/tools/make-ipynb.py marginalia/<slug> [--check]            a Marginalia entry
     python learning/workshop/tools/make-ipynb.py all [--check]                          every module
                                                                       and every ready reflection
 
@@ -9,7 +10,9 @@ Reads   learning/fits/<slug>/<slug>.py      (the script, with "percent" cell mar
 Writes  learning/fits/<slug>/<slug>.ipynb   (tracked; the module page's "Open in Colab" link
                                              opens it from GitHub, so the repo must be public)
 A reflection reads learning/reflections/<book>/<slug>/<slug>.py and writes <slug>.ipynb beside
-it; "all" takes the ready reflections from learning/assets/reflections.js (R10).
+it; "all" takes the ready reflections from learning/assets/reflections.js (R10). A Marginalia
+entry reads learning/marginalia/<slug>/<slug>.py; "all" takes the ready entries from
+learning/assets/marginalia.js.
 
 The script stays an ordinary Python file that runs top to bottom. The markers are comments:
     # %% [markdown]      a markdown cell: every following line is "# text" (or a bare "#")
@@ -55,6 +58,16 @@ def reflection_targets():
     return out
 
 
+def marginalia_targets():
+    """marginalia/<slug> for every ready entry in learning/assets/marginalia.js."""
+    text = (ROOT / "learning" / "assets" / "marginalia.js").read_text(encoding="utf-8")
+    out = []
+    for ent in re.finditer(r'\{[^{}]*?slug:\s*"([a-z0-9-]+)"[^{}]*?\}', text, re.S):
+        if re.search(r'ready:\s*true', ent.group(0)):
+            out.append(f"marginalia/{ent.group(1)}")
+    return out
+
+
 def locate(target):
     """(script path, notebook path, slug) for a module slug or reflections/<book>/<slug>."""
     parts = target.strip("/").split("/")
@@ -62,10 +75,14 @@ def locate(target):
         if len(parts) != 3:
             raise SystemExit(f"{target}: expected reflections/<book>/<slug>")
         folder, slug = ROOT / "learning" / "reflections" / parts[1] / parts[2], parts[2]
+    elif parts[0] == "marginalia":
+        if len(parts) != 2:
+            raise SystemExit(f"{target}: expected marginalia/<slug>")
+        folder, slug = ROOT / "learning" / "marginalia" / parts[1], parts[1]
     elif len(parts) == 1:
         folder, slug = FITS / parts[0], parts[0]
     else:
-        raise SystemExit(f"{target}: expected <slug> or reflections/<book>/<slug>")
+        raise SystemExit(f"{target}: expected <slug>, reflections/<book>/<slug> or marginalia/<slug>")
     return folder / f"{slug}.py", folder / f"{slug}.ipynb", slug
 
 
@@ -191,5 +208,5 @@ if __name__ == "__main__":
     if len(args) != 1:
         print(__doc__)
         sys.exit(2)
-    for s in (slugs() + reflection_targets() if args[0] == "all" else [args[0]]):
+    for s in (slugs() + reflection_targets() + marginalia_targets() if args[0] == "all" else [args[0]]):
         build(s, do_check)

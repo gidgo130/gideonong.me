@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-series="marginalia">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- /learning stays out of search engines on purpose (learning-plan.md, Phase C). Keep this line. -->
+  <meta name="robots" content="noindex">
+  <title>Does a Markov chain forget where it started? · Marginalia · Gideon A. Ong</title>
+  <meta name="description" content="For a two-state chain the whole answer is one number, λ = 1 − a − b. It sets how fast the start is forgotten, and whether it ever is.">
+  <!-- Link preview (Open Graph / Twitter). Static, since scrapers don't run JS. Card image: learning/workshop/tools/make-og-cards.py -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gideon A. Ong">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Does a Markov chain forget where it started? · Marginalia">
+  <meta property="og:description" content="For a two-state chain the whole answer is one number, λ = 1 − a − b. It sets how fast the start is forgotten, and whether it ever is.">
+  <meta property="og:url" content="https://gideonong.me/learning/marginalia/markov-memory/">
+  <meta property="og:image" content="https://gideonong.me/learning/assets/og/marginalia-markov-memory.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Does a Markov chain forget where it started? Two probability curves, one starting at 1 and one at 0, closing in on the same long-run value, beside the title, on lab-notebook paper.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../../assets/glogo.ico" type="image/x-icon">
+  <script>
+    /* Relative links need a trailing slash on folder URLs (…/markov-memory/). Add it if missing. */
+    (function () {
+      var p = location.pathname;
+      if (/^https?:$/.test(location.protocol) && !/\/$/.test(p) && !/\.[a-z0-9]+$/i.test(p)) {
+        location.replace(p + "/" + location.search + location.hash);
+      }
+    })();
+    /* Viewing settings: follow the main site's saved choices (About → Viewing settings) before first
+       paint. Same keys and <html> attributes as the main site's head snippet (see js/about.js §6). */
+    (function () {
+      try {
+        var el = document.documentElement, ls = localStorage, t = ls.getItem("viewTheme");
+        if (t === "dark" || t === "light") el.setAttribute("data-theme", t);
+        if (ls.getItem("viewReadability") === "1") el.setAttribute("data-readability", "1");
+        var cb = ls.getItem("viewColorblind");
+        if (cb === "1" || (cb === null && matchMedia("(prefers-contrast: more)").matches)) el.setAttribute("data-colorblind", "1");
+      } catch (e) { /* storage blocked: the OS theme and the default view */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Marginalia type (learning/marginalia/README.md → Design): Newsreader (text and headings), DM Mono (figures). -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=DM+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="../../assets/learning.css">
+  <!-- KaTeX 0.19.0, self-hosted (learning/assets/vendor/katex/, MIT): no CDN, works from disk. -->
+  <link rel="stylesheet" href="../../assets/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../marginalia.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="series-bar" aria-label="Series">
+  <div class="crumbs">
+    <a href="../../../">gideonong.me</a><span aria-hidden="true">/</span>
+    <a href="../../">Learning</a><span aria-hidden="true">/</span>
+    <a href="../">Marginalia</a>
+  </div>
+</nav>
+
+<div class="wrap essay-wrap">
+<main class="essay" id="main">
+<header class="top">
+  <span class="sec">Marginalia 01 · Probability &amp; statistics</span>
+  <h1>Does a Markov chain forget where it started?</h1>
+  <p class="dek">For a two-state chain the whole answer is one number, λ = 1 − a − b. It sets how fast the start is forgotten, and whether it ever is.</p>
+</header>
+
+<div class="answer">
+  <p><b>Short answer.</b> Yes, at a fixed rate: every step multiplies the starting state's leftover influence by \(|\lambda|\), where \(\lambda = 1-a-b\). There are two exceptions. With \(\lambda = 1\) the chain never moves, so it remembers its start forever. With \(\lambda = -1\) it flips every step and remembers whether the step number is even or odd, again forever. That second chain still spends exactly half its time in each state, which is why "the long-run fraction of time" and "the probability at step n" are different questions.</p>
+  <p class="note">Everything below is computed exactly in your browser; there is no simulated data on this page. The Python script at the end does the same calculations.</p>
+</div>
+
+<nav class="toc" aria-label="Contents">
+<span class="sec">Contents</span>
+<ol>
+<li><a href="#s1">A machine that is either up or down</a></li>
+<li><a href="#s2">Try it</a></li>
+<li><a href="#s3">Why it works: a first-order system</a></li>
+<li><a href="#s4">When it never forgets</a></li>
+<li><a href="#s5">Bigger chains</a></li>
+<li><a href="#s6">Sources</a></li>
+</ol>
+</nav>
+
+<!-- 1 -->
+<h2 id="s1"><span class="sec">§1</span> A machine that is either up or down</h2>
+<p>Check a machine once per shift. If it is up, it breaks down during the shift with probability \(a\). If it is down, it gets repaired during the shift with probability \(b\). Tomorrow depends only on today, so this is a two-state Markov chain with transition matrix</p>
+$$P=\begin{bmatrix}1-a & a\\ b & 1-b\end{bmatrix}\qquad(\text{rows: from up, from down}).$$
+<aside class="mnote"><b class="lab">Reliability check</b>Up-times here are geometric with mean \(1/a\) shifts and down-times have mean \(1/b\) shifts. So \(b/(a+b) = \tfrac{1/a}{1/a+1/b}\) is exactly MTBF / (MTBF + MTTR), the steady-state availability from reliability engineering.</aside>
+<p>Two numbers describe everything that follows:</p>
+<ul>
+<li>the <b>long-run fraction of time up</b>, \(\pi_{\text{up}} = \dfrac{b}{a+b}\), which is the machine's availability;</li>
+<li>the <b>memory factor</b> \(\lambda = 1-a-b\). The gap between "probability it's up at shift \(n\)" and \(\pi_{\text{up}}\) shrinks by a factor \(|\lambda|\) every shift.</li>
+</ul>
+<div class="rulebox"><span class="lab">The settling rule</span>
+$$\bigl|P(\text{up at shift } n) - \pi_{\text{up}}\bigr| = |\lambda|^n\,\bigl|P(\text{up at shift } 0) - \pi_{\text{up}}\bigr|,$$
+so you are within \(\varepsilon\) of the long-run value after \(n \ge \dfrac{\ln(\varepsilon/\text{gap}_0)}{\ln|\lambda|}\) shifts.</div>
+<aside class="mnote"><b class="lab">Time constant</b>\(|\lambda|^n = e^{-n/\tau}\) with \(\tau = -1/\ln|\lambda|\). It is the same idea as a first-order system's time constant: about \(4.6\,\tau\) steps to get within 1% of the starting gap.</aside>
+<p><b>Example.</b> With \(a = 0.05\) (a breakdown about every 20 shifts) and \(b = 0.30\) (about 3.3 shifts to repair), \(\pi_{\text{up}} = 0.30/0.35 = 0.857\) and \(\lambda = 0.65\). From the worst start (down, a gap of 0.857), the probability is within 0.01 of 0.857 after \(\ln(0.01/0.857)/\ln 0.65 = 10.3\), so 11 shifts. After that, which state you started in no longer matters for planning.</p>
+
+<!-- 2 -->
+<h2 id="s2"><span class="sec">§2</span> Try it</h2>
+<p>Move \(a\) and \(b\), or pick a preset. "P(up at step n)" follows the probability of being up from each of the two possible starts. "Distance from the long-run value" shows the gap on a log scale: a straight line there means geometric decay, and its slope is \(\ln|\lambda|\), the way you'd read a decay rate off a semilog plot in the lab.</p>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <label for="mA">a = P(up → down) <output id="mAo">0.05</output><input id="mA" type="range" min="0" max="1" step="0.01" value="0.05"></label>
+  <label for="mB">b = P(down → up) <output id="mBo">0.30</output><input id="mB" type="range" min="0" max="1" step="0.01" value="0.30"></label>
+  <div class="presets"><span>Presets:</span>
+    <button type="button" class="ghost" data-a="0.05" data-b="0.30">Machine</button>
+    <button type="button" class="ghost" data-a="0.4" data-b="0.6">Forgets in one step</button>
+    <button type="button" class="ghost" data-a="0.9" data-b="0.8">Rings</button>
+    <button type="button" class="ghost" data-a="1" data-b="1">Flips every step</button>
+    <button type="button" class="ghost" data-a="0" data-b="0">Never moves</button>
+  </div>
+</div>
+<div class="charts three">
+  <div><p class="chart-title">The chain</p>
+    <svg id="mg" viewBox="0 0 420 220" role="img" aria-label="Two-state diagram: up and down, with the transition probabilities on the arrows"></svg>
+    <div class="lambda-line"><svg id="ml" viewBox="0 0 420 80" role="img" aria-label="Where lambda sits on the interval from minus 1 to 1"></svg></div>
+  </div>
+  <div><p class="chart-title">P(up at step n)</p>
+    <svg id="mc1" viewBox="0 0 640 360" role="img" aria-label="Probability of being up at each step, starting up and starting down, with the long-run value"></svg>
+    <div class="legend"><span style="--sw:var(--s1)">start up</span><span style="--sw:var(--s2)" class="dash">start down</span><span style="--sw:var(--muted)" class="dotted">long-run value π<sub>up</sub></span></div>
+  </div>
+  <div><p class="chart-title">Distance from the long-run value (log scale)</p>
+    <svg id="mc2" viewBox="0 0 640 360" role="img" aria-label="The gap from the long-run value on a log scale, with the line lambda to the n"></svg>
+    <div class="legend"><span style="--sw:var(--s2)" class="dot">exact gap, start down</span><span style="--sw:var(--s1)" class="dash">|λ|ⁿ × starting gap</span></div>
+  </div>
+</div>
+<div class="readout" id="mRead" aria-live="polite"></div>
+</div>
+<figcaption>Exact values from \(P^n\). "Rings" has \(\lambda = -0.7\): the probability overshoots and alternates sides as it settles, which the log chart shows as the same straight line. "Forgets in one step" has \(a + b = 1\), so \(\lambda = 0\) and the gap is zero from step 1 on (nothing left to draw on the log chart).</figcaption>
+</figure>
+
+<!-- 3 -->
+<h2 id="s3"><span class="sec">§3</span> Why it works: a first-order system</h2>
+<p>Write \(p_n = P(\text{up at step } n)\). To be up at step \(n+1\), the machine was either up and didn't fail, or down and got repaired:</p>
+$$p_{n+1} = (1-a)\,p_n + b\,(1-p_n) = \lambda\,p_n + b.$$
+<p>That is a first-order linear difference equation. Its fixed point solves \(\pi = \lambda\pi + b\), so \(\pi = b/(1-\lambda) = b/(a+b)\). Subtract the two equations and the constant drops out:</p>
+$$p_{n+1}-\pi = \lambda\,(p_n-\pi)\quad\Longrightarrow\quad p_n-\pi = \lambda^n\,(p_0-\pi).$$
+<aside class="mnote"><b class="lab">In signals terms</b>\(\lambda\) is the discrete-time pole. A pole on the positive real axis decays smoothly, one on the negative axis alternates (the "Rings" preset), and a pole on the unit circle at \(\pm 1\) never decays.</aside>
+<p>That's the settling rule from §1. The same fact in matrix form, which is how it generalizes: let \(\Pi\) be the matrix whose two rows are both \(\pi = (\pi_{\text{up}}, \pi_{\text{down}})\). One line of algebra checks that \(P = \Pi + \lambda\,(I-\Pi)\), that \(\Pi^2 = \Pi\), and that \(\Pi(I-\Pi) = 0\). Since \(\Pi\) and \(I - \Pi\) are complementary projections, powers of \(P\) only power the scalar in front:</p>
+$$P^n = \Pi + \lambda^n\,(I-\Pi).$$
+<p>Row "up" of \(P^n\) is the distribution at step \(n\) starting up, row "down" is the one starting down, and the term \(\lambda^n(I-\Pi)\) is the whole of the memory. Levin and Peres work exactly this two-state example in their first section; the general statement is in Norris (references below).</p>
+
+<!-- 4 -->
+<h2 id="s4"><span class="sec">§4</span> When it never forgets</h2>
+<p>\(|\lambda| = 1\) happens in only two ways, and they fail differently.</p>
+<ul>
+<li><b>\(\lambda = 1\) (\(a = b = 0\)): the chain never moves.</b> Every distribution is stationary, and the chain stays in whatever state it started in. The long-run fraction of time up is 1 or 0 depending on the start.</li>
+<li><b>\(\lambda = -1\) (\(a = b = 1\)): the chain flips every step.</b> \(\pi = (\tfrac12,\tfrac12)\) is stationary and the chain spends exactly half its time in each state, yet \(P(\text{up at step } n)\) alternates 1, 0, 1, 0 forever. It has a perfect memory of parity.</li>
+</ul>
+<aside class="mnote"><b class="lab">Engineering analogy</b>A square wave has a perfectly good DC average, ½ of its peak, but no limit. The time average and the limit are different operations.</aside>
+<p>So "the fraction of time spent up converges" and "the probability of being up converges" are separate claims. The first holds for any chain that can get from every state to every other (the ergodic theorem). The second also needs the chain to be <b>aperiodic</b>, which the flip chain is not. Below, the running fraction of time up settles to ½ for the flip chain while the step-by-step probability never does.</p>
+
+<figure class="wide"><div class="fig">
+<div class="controls">
+  <div class="presets"><span>Chain:</span>
+    <button type="button" class="ghost" data-a="1" data-b="1">Flip chain</button>
+    <button type="button" class="ghost" data-a="0.9" data-b="0.8">Rings</button>
+    <button type="button" class="ghost" data-a="0.05" data-b="0.30">Machine</button>
+    <span id="m4now"></span>
+  </div>
+</div>
+<svg id="mc3" viewBox="0 0 640 320" role="img" aria-label="Probability of being up at step n versus the running fraction of time up, starting up"></svg>
+<div class="legend"><span style="--sw:var(--s1)">P(up at step n), start up</span><span style="--sw:var(--s2)" class="dash">fraction of steps 0…n spent up (expected)</span><span style="--sw:var(--muted)" class="dotted">π<sub>up</sub></span></div>
+</div>
+<figcaption>Starting up. The dashed line averages the solid one over steps 0 to n. These presets also move the sliders in §2, so all the charts show the same chain.</figcaption>
+</figure>
+
+<!-- 5 -->
+<h2 id="s5"><span class="sec">§5</span> Bigger chains</h2>
+<aside class="mnote"><b class="lab">Practical use</b>For a bigger chain, the settling rule still works with \(|\lambda_2|\), the second-largest eigenvalue modulus: in MATLAB, sort <code>abs(eig(P))</code> and take the second entry.</aside>
+<p>The two-state result is the simplest case of a general fact. Every transition matrix has 1 as an eigenvalue, and every other eigenvalue has modulus at most 1. For a chain that is irreducible and aperiodic, the others are strictly inside the unit circle, and the one with the largest modulus sets how fast \(P^n\) approaches \(\Pi\), the way \(\lambda\) does here. For two states the second eigenvalue is just \(1-a-b\). Levin and Peres build mixing times on this idea (their Chapter 12 is on eigenvalues; "relaxation time" is their name for \(1/(1-|\lambda|)\)).</p>
+<p>In practice this tells you how long a simulation's warm-up has to be before its starting state stops mattering, and how far apart two observations must be before they are nearly independent.</p>
+
+<!-- 6 -->
+<h2 id="s6"><span class="sec">§6</span> Sources</h2>
+<ol class="sources">
+<li>D. A. Levin and Y. Peres, <a href="https://pages.uoregon.edu/dlevin/MARKOV/mcmt2e.pdf"><i>Markov Chains and Mixing Times</i></a>, 2nd ed. (American Mathematical Society, 2017), free from the authors. <span class="what">§1.1: the two-state chain and its \(|1-p-q|^t\) decay. Ch. 12: eigenvalues and relaxation time.</span></li>
+<li>J. R. Norris, <a href="https://doi.org/10.1017/CBO9780511810633"><i>Markov Chains</i></a> (Cambridge University Press, 1997). <span class="what">§1.7 invariant distributions, §1.8 convergence to equilibrium (needs aperiodicity), §1.10 the ergodic theorem (time averages, no aperiodicity needed).</span></li>
+<li>S. M. Ross, <i>Introduction to Probability Models</i>, 11th ed. (Academic Press, 2014). <span class="what">Ch. 4, the section on long-run proportions and limiting probabilities, for the same distinction at textbook level.</span></li>
+</ol>
+
+<div class="takeaway-links">
+  <span>Take it with you:</span>
+  <a href="markov-memory.py" download>Python script</a>
+  <a class="take-colab" aria-describedby="new-tab-note" href="https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/marginalia/markov-memory/markov-memory.ipynb" target="_blank" rel="noopener">Open in Colab</a>
+</div>
+<span id="new-tab-note" hidden>Opens in a new tab</span>
+</main>
+
+<p class="foot">
+  <span>Built with Claude by Gideon A. Ong, mechanical engineering student at the University of Tulsa.</span>
+  <span class="fb-slot">Found a mistake? gao9819@utulsa.edu</span>
+  <span class="license">Text, figures and code here are CC BY-SA 4.0. Cited works remain their authors' and publishers'.</span>
+</p>
+</div>
+
+<script src="../../assets/vendor/katex/katex.min.js"></script>
+<script src="../../assets/vendor/katex/auto-render.min.js"></script>
+<script>
+  /* Exactly two delimiter pairs: \( \) inline and $$ $$ display. No single-$ pair. */
+  renderMathInElement(document.querySelector("main.essay"), {
+    delimiters: [{ left: "$$", right: "$$", display: true }, { left: "\\(", right: "\\)", display: false }],
+    throwOnError: false
+  });
+</script>
+<script src="../../assets/learning.js"></script>
+<script src="../plot.js"></script>
+<script src="main.js"></script>
+<!-- Feedback widget (F7): strings-common.js is loaded as plain data for its fb* strings; no i18n engine, English only. -->
+<script src="../../assets/strings-common.js"></script>
+<script src="../../assets/view-settings.js"></script>
+<script src="../../assets/feedback.js"></script>
+</body>
+</html>

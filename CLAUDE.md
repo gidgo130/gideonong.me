@@ -15,9 +15,10 @@ analytics (see Analytics below).
 api/ holds Vercel serverless functions (since 2026-10-13): Node built-ins + fetch only, no
 package.json, no npm, no build step. Vercel compiles their `export` syntax to CommonJS.
 /learning is the one exception: Reading Your Fits loads Barlow Semi Condensed, Source Serif 4 and
-JetBrains Mono; Reflections loads Archivo, IBM Plex Serif and IBM Plex Mono; the hub loads what
-its bands need (Lora + DM Sans for the frame). Reflections pages render math with a self-hosted,
-pinned KaTeX (learning/assets/vendor/katex/, no CDN; see /learning below).
+JetBrains Mono; Reflections loads Archivo, IBM Plex Serif and IBM Plex Mono; Marginalia loads
+Newsreader and DM Mono; the hub loads what its bands need (Lora + DM Sans for the frame).
+Reflections and Marginalia pages render math with a self-hosted, pinned KaTeX
+(learning/assets/vendor/katex/, no CDN; see /learning below).
 
 ## File structure
 index.html          Home page
@@ -112,7 +113,7 @@ learning/           UNLISTED Learning section (own design, noindex) — see /lea
                     learning/README.md. No link from the site since 2026-09-29 (its About →
                     Interesting sites entry was replaced); reached by URL and shared cards.
 learning/assets/    Shared CSS/JS for /learning (learning.css, learning.js, learning-i18n.js,
-                    strings-common.js, modules.js, reflections.js, feedback.js, view-settings.js), vendor/katex/ (self-hosted
+                    strings-common.js, modules.js, reflections.js, marginalia.js, feedback.js, view-settings.js), vendor/katex/ (self-hosted
                     KaTeX, pinned, with its LICENSE) and og/ (link-preview cards, generated)
 learning/learning-plan.md  Roadmap, status and decisions for /learning (dev-only, not deployed)
 learning/fits/<slug>/  One "Reading Your Fits" module: index.html, strings.js, main.js,
@@ -124,6 +125,10 @@ learning/reflections/  The Reflections series (English-only essays on the 11 boo
                     Donnell recommends): index.html (all books), reflections.css, README.md
                     (series manual), <book>/index.html, and <book>/<slug>/ (index.html,
                     main.js, <slug>.py, GENERATED <slug>.ipynb). Registry: assets/reflections.js
+learning/marginalia/  The Marginalia series (English-only one-page answers to side questions):
+                    index.html, marginalia.css, plot.js (the series' plotter), README.md
+                    (series manual) and <slug>/ (index.html, main.js, optional helpers,
+                    <slug>.py, GENERATED <slug>.ipynb). Registry: assets/marginalia.js
 CLAUDE.md           This file
 plan.md             Development roadmap
 README.md           Public front page of the repo (what it is, layout, licensing)
@@ -692,24 +697,28 @@ helpers in js/data-helpers.js. Array order never matters — everything sorts by
 - IEL chip: uses rgba(0,0,0,0.06) in light mode; rgba(255,255,255,0.10) in dark.
 
 ## /learning — Learning section (rules only; the manuals live in learning/)
-gideonong.me/learning/ is a hub with two sections: "Reading Your Fits" (six bilingual interactive
-modules on checking a line fit against lab data, learning/fits/<slug>/) and "Reflections"
+gideonong.me/learning/ is a hub with three sections: "Reading Your Fits" (six bilingual interactive
+modules on checking a line fit against lab data, learning/fits/<slug>/), "Reflections"
 (English-only essays on the 11 books Professor Donnell recommends to industrial engineers,
-learning/reflections/). This section holds only the invariants a session must obey and where the
+learning/reflections/) and "Marginalia" (English-only one-page answers to side questions,
+learning/marginalia/). This section holds only the invariants a session must obey and where the
 rest lives. One home per rule; don't restate a manual's content here.
 - learning/learning-plan.md: build plan, status, open items and the decisions log (history, with
   the values each decision fixed at the time). plan.md only points there.
 - learning/README.md: the hub-wide manual and the NORMATIVE home for hub-wide numbers (dash and
   dot geometry, cards, the push checklist), the feedback mechanics and setup, the Fable review
   prompt.
-- learning/fits/README.md and learning/reflections/README.md: each series' own rules, strings,
-  its "Adding a module" / "Adding a reflection" steps and checks.
+- learning/fits/README.md, learning/reflections/README.md and learning/marginalia/README.md: each
+  series' own rules, strings, its "Adding a module" / "Adding a reflection" / "Adding an entry"
+  steps and checks.
 - learning/workshop/README.md (Quarto decks, Spanish figures, marimo, Colab, check-es) and
   learning/workshop/offline/README.md (the Windows app: build, what ships, release).
 - Token VALUES live only in CSS. learning/assets/learning.css is the base (its tokens ARE the
   Reading Your Fits look) and carries, at the hub section, COPIES of css/style.css (the frame)
-  and learning/reflections/reflections.css (the hub's Reflections band) with the keep-in-step
-  note beside them; learning/reflections/reflections.css is the Reflections theme. Docs describe
+  and learning/reflections/reflections.css (the hub's Reflections band) and
+  learning/marginalia/marginalia.css (the hub's Marginalia band) with the keep-in-step note beside
+  them (scripts/tests/tokens.test.mjs checks them); reflections.css and marginalia.css are those
+  series' themes. Docs describe
   a palette in words and point at the file.
 - learning/workshop/ is tracked and never deployed (.vercelignore); the site loads only the
   rendered slides.html copied into learning/fits/<slug>/.
@@ -829,6 +838,25 @@ rest lives. One home per rule; don't restate a manual's content here.
   companions: <slug>.py plus a GENERATED <slug>.ipynb; no marimo play/.
 - Content is ported from approved explainers: change styling and plumbing, never wording,
   equations or numbers.
+
+### Marginalia (learning/marginalia/; manual: learning/marginalia/README.md; decisions M1–M10: learning-plan.md)
+- URLs: marginalia/ → marginalia/<slug>/. Slugs, never numbers; the entry number on the page is
+  its registry position (the order the questions were asked), so entries are only appended.
+- Content comes from promote briefs in Gideon's private notes. The brief's "keep out" list is
+  binding: no professor names, course numbers or classroom context, no lecture examples, no
+  homework, no textbook wording, no numbers copied from a private write-up (recompute them).
+  Sources are cited on the page with working links; never name or link the private notes.
+- English only, same arrangement as Reflections (text in the HTML, no toggle, no
+  `data-es-ready`); only the hub's Marginalia band is bilingual.
+- One registry: learning/assets/marginalia.js (`window.LEARN_MARGINALIA` plus two renderers).
+- Look: "ink and red pencil" (`<html data-series="marginalia">`; tokens, page pieces and margin
+  notes in marginalia.css). Charts through learning/marginalia/plot.js with --s1..--s4, never
+  --fit / --fix, hub-wide line forms. Red pencil (--emph) only for margin notes, the rule box and
+  "attention".
+- Math: the same pinned KaTeX and the same two delimiter pairs as Reflections.
+- Excluded from the offline app (build.ps1 $Exclude); the hub hides the band whenever
+  marginalia.js is absent. Footer license line: CC BY-SA 4.0; cited works remain their authors'
+  and publishers'. Python companions: <slug>.py plus a GENERATED <slug>.ipynb.
 
 ## What NOT to do
 (Main site. /learning follows its own rules in the section above.)

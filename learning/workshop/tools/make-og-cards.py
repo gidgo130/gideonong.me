@@ -8,7 +8,9 @@ chart with the series' fixed colors (dashed ink = truth, red = ordinary fit, blu
 Reflections (learning/reflections/): reflections.png for the all-books and book pages, and
 <book>-<reflection>.png per reflection. They have no workshop figure, so each entry names a
 `chart` function below that draws its own, in the reflection series colors (reflections.css
---s1..--s4, light values), never the fit/fix pair.
+--s1..--s4, light values), never the fit/fix pair. Marginalia (learning/marginalia/): marginalia.png
+for the series index and marginalia-<slug>.png per entry, drawn the same way in the Marginalia
+series colors (marginalia.css --s1..--s3, light values).
 
 Run from anywhere:   python learning/workshop/tools/make-og-cards.py [slug ...]
 Needs Pillow and matplotlib. Fonts: the script fetches Barlow Semi Condensed, Source Serif 4
@@ -41,6 +43,7 @@ FRAME = (PAD + COL_W + 40, PAD, W - PAD, H - PAD)   # figure frame (x0, y0, x1, 
 PAPER, PLOT, GRID, RULE = "#f2f5f0", "#fbfcfa", "#dde5da", "#c5d0c3"
 INK, MUTED, PT, FIT, FIX = "#1c2420", "#56645b", "#6b7b70", "#c93a22", "#1d5ea6"
 S1, S2, S3, S4 = "#7e5b17", "#2c6390", "#ad4414", "#3a6d32"     # reflections.css series tokens (light)
+M1, M2, M3 = "#2f4a7a", "#a83a2e", "#7a5c1e"                     # marginalia.css series tokens (light)
 
 SITE = "gideonong.me/learning"
 
@@ -110,6 +113,28 @@ CARDS = {
         "lead": "Jonah says a mathematical proof shows that trimming capacity to match demand cuts "
                 "throughput and sends inventory through the roof. Here is that proof, from queueing theory.",
         "chart": "buffers_chart",
+    },
+    # Marginalia. No course or professor on a card.
+    "marginalia": {
+        "eyebrow": "Gideon A. Ong · Learning",
+        "title": "Marginalia",
+        "lead": "Questions that come up while I study, each answered on one page, usually with "
+                "something to play with. The practical answer first, then why it works.",
+        "chart": "markov_chart",
+    },
+    "marginalia-markov-memory": {
+        "eyebrow": "Marginalia · Probability",
+        "title": "Does a Markov chain forget where it started?",
+        "lead": "For a two-state chain the whole answer is one number, λ = 1 − a − b. It sets how "
+                "fast the start is forgotten, and whether it ever is.",
+        "chart": "markov_chart",
+    },
+    "marginalia-clt-sample-size": {
+        "eyebrow": "Marginalia · Probability",
+        "title": "How big does n have to be?",
+        "lead": "The practical rule n > 28 + 25γ₁² for a 95% interval on a mean, and why the "
+                "skewness of your data sets it.",
+        "chart": "edgeworth_chart",
     },
 }
 
@@ -262,6 +287,56 @@ def buffers_chart(size: tuple[int, int]) -> Image.Image:
     ax.set_xlabel("buffer slots between stations", color=MUTED, fontsize=12)
     ax.set_ylabel("throughput ÷ demand", color=MUTED, fontsize=12)
     ax.legend(loc="lower right", frameon=False, fontsize=11, labelcolor=INK)
+    return _render(plt, fig, dpi)
+
+
+def markov_chart(size: tuple[int, int]) -> Image.Image:
+    """Marginalia cards: P(up at step n) from both starts settling onto pi_up (a = 0.05, b = 0.30),
+    exactly as the Markov page draws it, in the Marginalia colors."""
+    import numpy as np
+
+    plt, fig, ax, dpi = _axes(size)
+    a, b, N = 0.05, 0.30, 30
+    lam, pi_up = 1 - a - b, b / (a + b)
+    n = np.arange(N + 1)
+    up = pi_up + lam ** n * (1 - pi_up)
+    dn = pi_up + lam ** n * (0 - pi_up)
+    ax.axhline(pi_up, color=MUTED, lw=2.4, ls=(0, (0.01, 1.85)), dash_capstyle="round", label="long-run value")
+    ax.plot(n, up, color=M1, lw=2.6, label="start up")
+    ax.plot(n, dn, color=M2, lw=2.4, ls=(0, (4, 2.4)), label="start down")
+    ax.set_xlim(0, N)
+    ax.set_ylim(0, 1.02)
+    ax.set_xlabel("step n", color=MUTED, fontsize=12)
+    ax.set_ylabel("P(up at step n)", color=MUTED, fontsize=12)
+    ax.legend(loc="lower right", frameon=False, fontsize=11, labelcolor=INK)
+    return _render(plt, fig, dpi)
+
+
+def edgeworth_chart(size: tuple[int, int]) -> Image.Image:
+    """CLT card: the exact error F_n − Φ for an exponential parent at n = 10 (Gamma CDF) against the
+    one-term Edgeworth prediction, as on the page."""
+    import numpy as np
+    from math import erf, exp, lgamma, log, sqrt, pi
+
+    def gamma_cdf_int(k: int, s: float) -> float:          # 1 − Σ_{j<k} e^{−s} s^j / j!
+        if s <= 0:
+            return 0.0
+        return 1 - sum(exp(-s + j * log(s) - lgamma(j + 1)) for j in range(k))
+
+    plt, fig, ax, dpi = _axes(size)
+    n = 10
+    x = np.linspace(-4, 4, 321)
+    Phi = np.array([0.5 * (1 + erf(v / sqrt(2))) for v in x])
+    phi = np.exp(-x * x / 2) / sqrt(2 * pi)
+    exact = np.array([gamma_cdf_int(n, n + v * sqrt(n)) for v in x]) - Phi
+    one = -phi * 2 * (x * x - 1) / (6 * sqrt(n))
+    ax.axhline(0, color=RULE, lw=1)
+    ax.plot(x, 1000 * exact, color=M1, lw=2.6, label="exact error")
+    ax.plot(x, 1000 * one, color=M2, lw=2.4, ls=(0, (4, 2.4)), label="one-term Edgeworth")
+    ax.set_xlim(-4, 4)
+    ax.set_xlabel("x (standardized mean), exponential data, n = 10", color=MUTED, fontsize=12)
+    ax.set_ylabel("error × 1000", color=MUTED, fontsize=12)
+    ax.legend(loc="upper left", frameon=False, fontsize=11, labelcolor=INK)
     return _render(plt, fig, dpi)
 
 

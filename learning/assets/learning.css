@@ -285,6 +285,35 @@ a.module-row:hover .m-title { color: var(--accent); }
 .ref-panel .ref-book { font-family: var(--font-body); }
 .ref-panel .ref-date { font-family: var(--font-mono); }
 .ref-all { font-family: var(--font-display); font-size: 16px; }
+/* ---------- Hub: the Marginalia panel (.marg-panel) ----------
+   A preview of the Marginalia theme, built like .ref-panel: the token VALUES below are COPIES of
+   learning/marginalia/marginalia.css (keep the two in step), with --note-bg set to the paper
+   color for the row hover on the surface. Its faces are requested by learning/index.html's
+   script only when the panel is shown. Rows reuse .module-row: number, title (with an italic
+   subtitle when the entry has one), summary. */
+.marg-panel {
+  --paper: #f7f6f3; --plot: #efede8; --rule: #d3cfc6; --ink: #1f2226; --muted: #5b5e65;
+  --accent: #2f4a7a; --emph: #a83a2e; --note-bg: #f7f6f3;
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-mono: "DM Mono", Consolas, "Courier New", monospace;
+  background: var(--plot); color: var(--ink); font-family: var(--font-body);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .marg-panel { --paper: #17191c; --plot: #1e2125; --rule: #383d44; --ink: #e7e5e0; --muted: #a9acb2; --accent: #93b2e6; --emph: #f0907f; --note-bg: #17191c; }
+}
+:root[data-theme="dark"] .marg-panel { --paper: #17191c; --plot: #1e2125; --rule: #383d44; --ink: #e7e5e0; --muted: #a9acb2; --accent: #93b2e6; --emph: #f0907f; --note-bg: #17191c; }
+:root[data-readability] .marg-panel { --muted: #474a50; }
+@media (prefers-color-scheme: dark) {
+  :root[data-readability]:not([data-theme="light"]) .marg-panel { --muted: #c3c5ca; }
+}
+:root[data-readability][data-theme="dark"] .marg-panel { --muted: #c3c5ca; }
+.marg-panel h2 { font-weight: 600; }
+.marg-panel h2::after { content: ""; display: block; width: 56px; height: 2px; margin-top: 10px; background: var(--emph); }
+.marg-panel .m-title { font-weight: 600; }
+.marg-row { grid-template-columns: 3.2em minmax(0, 1fr); }
+.marg-row .e-sub { font-style: italic; font-weight: 400; color: var(--muted); }
+@media (max-width: 520px) { .marg-row { grid-template-columns: 2.4em minmax(0, 1fr); } }
 
 /* ---------- Hub: main-site frame and series bands (2026-10-15) ----------
    The hub (body.hub, learning/index.html only) is a main-site frame (.hub-frame: series bar,

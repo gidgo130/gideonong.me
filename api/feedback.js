@@ -56,7 +56,7 @@ const PER_INSTANCE = 40;
 const MAX_TRACKED = 500;          // senders remembered at once
 
 const KINDS = ["mistake", "confusing", "suggestion", "other"];
-const SERIES = ["fits", "reflections", "hub"];
+const SERIES = ["fits", "reflections", "marginalia", "hub"];
 const VW_BUCKETS = ["<480", "<1024", "≥1024"];
 
 const env = process.env;

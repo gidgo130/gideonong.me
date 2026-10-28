@@ -2,8 +2,9 @@
 
 Personal site of Gideon A. Ong, a Mechanical Engineering student at the University of
 Tulsa: projects, experience, an About page, and an unlisted teaching section (`learning/`)
-with two series: **Reading Your Fits**, on checking a line fit against lab data, and
-**Reflections**, essays on eleven industrial-engineering books.
+with three series: **Reading Your Fits**, on checking a line fit against lab data,
+**Reflections**, essays on eleven industrial-engineering books, and **Marginalia**, one-page
+answers to side questions.
 
 Plain HTML, CSS and vanilla JavaScript. No framework, no build step, no npm: the
 repository is exactly what Vercel serves. English and Spanish throughout.
@@ -15,7 +16,7 @@ repository is exactly what Vercel serves. English and Spanish throughout.
 | `index.html`, `about.html`, `experience.html`, `projects.html`, `projects/` | The site's pages |
 | `css/`, `js/` | Styles and scripts; the data files under `js/` feed every list on the site |
 | `assets/` | Images, videos, and the resume / CV / transcript PDFs |
-| `learning/` | The teaching section: the Reading Your Fits modules, the Reflections essays, shared assets, and their editable notebooks |
+| `learning/` | The teaching section: the Reading Your Fits modules, the Reflections essays, the Marginalia pages, shared assets, and their editable notebooks |
 | `learning/workshop/`, `scripts/` | Dev-side tooling: slide sources, exporters, the content editor. Never deployed |
 | `CLAUDE.md` | The working manual for the site (structure, conventions, rules) |
 
@@ -34,7 +35,8 @@ parts of the repository each one covers.
 - **Teaching content** under `learning/` (module text, strings, slides, figures, the
   companion scripts and notebooks): [CC BY-SA 4.0](LICENSE-CONTENT). Share and adapt it
   with credit to "Gideon A. Ong, gideonong.me/learning", and keep adaptations under the
-  same license. Quoted passages in the Reflections remain their authors' and publishers'.
+  same license. Quoted passages in the Reflections, and works cited in Marginalia, remain their
+  authors' and publishers'.
 - **Not licensed, all rights reserved:** Gideon A. Ong's name and likeness; the headshot
   and other personal photos; everything under `assets/pdfs/` (resume, CV, transcript,
   project reports); the project and experience photos and videos under `assets/images/`

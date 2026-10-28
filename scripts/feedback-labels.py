@@ -28,6 +28,7 @@ LABELS = [
     ("kind:other", "bfbfbf", "Anything else"),
     ("series:fits", "1d5ea6", "Reading Your Fits (learning/fits/)"),
     ("series:reflections", "7e5b17", "Reflections (learning/reflections/)"),
+    ("series:marginalia", "a83a2e", "Marginalia (learning/marginalia/)"),
     ("series:hub", "5319e7", "The /learning hub page"),
     ("source:visitor", "ededed", "Sent by a visitor"),
     ("source:gideon", "6f42c1", "Sent by Gideon with the owner key (F5)"),

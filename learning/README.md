@@ -8,14 +8,18 @@ is the hub-wide manual; each series has its own:
 - `learning/fits/README.md` — Reading Your Fits (modules, strings, slides, marimo, adding a module)
 - `learning/reflections/README.md` — Reflections (English-only essays, KaTeX, series colors,
   adding a reflection)
+- `learning/marginalia/README.md` — Marginalia (English-only side questions, margin notes, the
+  shared plot.js, adding an entry)
 
 ## What's here
 
 ```
 learning/
-  index.html                  Hub: "Learning" home, the Reading Your Fits module list and the
-                              Reflections block (hidden in the offline copy)
-  strings.js                  Hub text (EN/ES), including the Reflections block's four strings
+  index.html                  Hub: "Learning" home, the Reading Your Fits module list, the
+                              Reflections block and the Marginalia block (both hidden in the
+                              offline copy)
+  strings.js                  Hub text (EN/ES), including the Reflections and Marginalia blocks'
+                              four strings each
   learning-plan.md            Roadmap, status, decisions (dev-only, not deployed)
   README.md                   This manual (dev-only, not deployed)
   assets/
@@ -26,17 +30,21 @@ learning/
     strings-common.js         Text shared by the module pages (series name, module titles, nav words)
     modules.js                The ONE module registry (Reading Your Fits): order, slug, ready flag
     reflections.js            The ONE book/reflection registry (Reflections) + its renderers
+    marginalia.js             The ONE entry registry (Marginalia) + its renderers
     feedback.js               The feedback widget: footer button, "Comment on this", the panel,
                               owner mode, dry-run (see "Feedback" below)
     view-settings.js          The "View" button and popover in every series bar (theme, colorblind
                               charts, easier reading; the same keys as About) and the colorblind
                               hint under the first chart legend
-    vendor/katex/             Self-hosted KaTeX, one pinned version, with its LICENSE (Reflections)
+    vendor/katex/             Self-hosted KaTeX, one pinned version, with its LICENSE (Reflections,
+                              Marginalia)
     og/                       Link-preview cards, 1200×630 PNG: learning.png (hub), <slug>.png per
-                              module, reflections.png and <book>-<slug>.png for Reflections.
+                              module, reflections.png and <book>-<slug>.png for Reflections,
+                              marginalia.png and marginalia-<slug>.png for Marginalia.
                               Made by learning/workshop/tools/make-og-cards.py; never edit by hand
   fits/<slug>/                One Reading Your Fits module (see fits/README.md)
   reflections/                The Reflections series (see reflections/README.md)
+  marginalia/                 The Marginalia series (see marginalia/README.md)
   workshop/                   Slide sources, figures, dev tools, the offline installer build
                               (tracked, never deployed: .vercelignore)
   workshop/tests/             The browser suites (Playwright, installed outside the repo): run.js,
@@ -53,7 +61,8 @@ only).
 extensions; the hub-wide rules below apply to all of them. The Reading Your Fits block renders
 from `assets/modules.js` through `LF.moduleList`; the Reflections block renders from
 `assets/reflections.js`, which the hub loads only when `window.LEARN_OFFLINE` is unset (the
-installed copy never asks for it) and whose block stays hidden until the file has loaded.
+installed copy never asks for it) and whose block stays hidden until the file has loaded; the
+Marginalia block does the same with `assets/marginalia.js`.
 
 ## Hub-wide rules
 
@@ -122,9 +131,10 @@ installed copy never asks for it) and whose block stays hidden until the file ha
   bar, dark footer). Each series is a full-bleed `.hub-band` (1px rule along the top edge,
   4.5rem padding) whose content sits in `.hub-col`, the frame's centered column. The Reading
   Your Fits band sets no tokens and inherits the base lab look; the Reflections band is the
-  `.ref-panel`. The frame's and the panel's token values are COPIES (of css/style.css and of
-  reflections.css: the offline copy ships neither); the comments beside those two blocks in
-  learning.css say what to keep in step, and that is the only place the copies are documented.
+  `.ref-panel` and the Marginalia band the `.marg-panel`. The frame's and the panels' token
+  values are COPIES (of css/style.css, reflections.css and marginalia.css: the offline copy ships
+  none of them); the comments beside those blocks in learning.css say what to keep in step, and
+  scripts/tests/tokens.test.mjs fails on drift.
   The hub renders the Reading Your Fits block from assets/modules.js (LF.moduleList) and the
   Reflections block from assets/reflections.js, which it loads only when `window.LEARN_OFFLINE`
   is unset and keeps hidden until the file has loaded; the band's three faces are requested by
@@ -148,7 +158,9 @@ installed copy never asks for it) and whose block stays hidden until the file ha
 
 A series is a folder `learning/<series>/` with its own registry, theme and manual, plus a band on
 the hub. Nothing is generic yet: learning.js's `moduleList`, `seriesNav` and `offlineLinks` assume
-`fits/`, and three tools gate on the series name. `<slug>` is the `data-series` value, the folder
+`fits/`, and three tools gate on the series name. Marginalia (2026-10-27) is the latest worked
+example of these steps; make-ipynb.py also needs a target for the new folder if the series has
+companion scripts. `<slug>` is the `data-series` value, the folder
 name and the feedback label. In this order:
 
 1. **Decide** the slug, the language (bilingual like Reading Your Fits: strings files,
@@ -336,9 +348,9 @@ get nothing.
   shows "Thanks. Sent."; from disk the footer shows the email line and no button; at 375 px the
   dialog fits the viewport in both themes with readability on. The `feedback-widget` suite
   above does all of this; the handler and parser tests are in scripts/tests/.
-- `build.ps1 -StageOnly` stages nothing from Reflections or `assets/vendor/`.
+- `build.ps1 -StageOnly` stages nothing from Reflections, Marginalia or `assets/vendor/`.
 - On the Vercel preview: repeat the no-slash checks, and view source for `noindex`.
-- Then the series' own checks (fits/README.md, reflections/README.md).
+- Then the series' own checks (fits/README.md, reflections/README.md, marginalia/README.md).
 
 ## Fable review prompt (Claude Code, in this repo)
 
@@ -348,7 +360,7 @@ Paste this into Claude Code with the Fable model, on the branch you're about to 
 Review the /learning section of this repo before I merge. First read CLAUDE.md (the
 "/learning" section and the main-site rules it overrides), learning/learning-plan.md (plan,
 status, decisions), learning/README.md (hub-wide structure and conventions) and the series
-manuals learning/fits/README.md and learning/reflections/README.md. The root plan.md is the
+manuals learning/fits/README.md, learning/reflections/README.md and learning/marginalia/README.md. The root plan.md is the
 main site's roadmap; it should contain only a short pointer section about /learning.
 
 Then check, and report findings ranked by severity with file and line:

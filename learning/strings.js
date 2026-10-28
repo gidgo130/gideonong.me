@@ -26,7 +26,11 @@ window.LEARN_STRINGS = {
     refTitle: "Reflections",
     refIntro: "Notes on the 11 industrial engineering and management books Professor Donnell recommends, written as I read them and as questions come up. Some are short essays; others work through the math with interactive charts. In English only.",
     refAll: "All 11 books",
-    refListAria: "Reflections so far"
+    refListAria: "Reflections so far",
+    margTitle: "Marginalia",
+    margIntro: "Questions that come up while I study, each answered on one page, usually with something to play with. The practical answer comes first, then why it works. In English only.",
+    margAll: "All entries",
+    margListAria: "Marginalia entries"
   },
   es: {
     pageTitle: "Aprendizaje · Gideon A. Ong",
@@ -53,6 +57,10 @@ window.LEARN_STRINGS = {
     refTitle: "Reflexiones",
     refIntro: "Notas sobre los 11 libros de ingeniería industrial y gestión que recomienda el profesor Donnell, escritas a medida que los leo y que me surgen preguntas. Algunas son ensayos cortos; otras desarrollan las matemáticas con gráficas interactivas. Solo en inglés.",
     refAll: "Los 11 libros",
-    refListAria: "Reflexiones hasta ahora"
+    refListAria: "Reflexiones hasta ahora",
+    margTitle: "Marginalia",
+    margIntro: "Preguntas que me surgen mientras estudio, cada una respondida en una sola página, casi siempre con algo interactivo. Primero va la respuesta práctica y después por qué funciona. Solo en inglés.",
+    margAll: "Todas las entradas",
+    margListAria: "Entradas de Marginalia"
   }
 };

@@ -60,6 +60,15 @@ test("stores a well-formed submission: 200, no CORS, no-store, noindex", async (
   assert.deepEqual(issueSent().labels, ["feedback", "kind:mistake", "series:fits", "source:visitor"]);
 });
 
+test("series: every series in SERIES is accepted and labelled (fits, reflections, marginalia, hub)", async () => {
+  for (const series of ["reflections", "marginalia", "hub"]) {
+    calls = [];
+    const r = await call({ ...base, series, path: "/learning/" + (series === "hub" ? "" : series + "/x/") });
+    assert.equal(r.status, 200, series);
+    assert.ok(issueSent().labels.includes("series:" + series), series);
+  }
+});
+
 test("origin: exact list only", async () => {
   for (const origin of ["", "null", "http://gideonong.me", "https://proj-abc.vercel.app", "https://gideonong.me.evil.com"]) {
     assert.equal((await call(base, { origin })).status, 403, origin || "(missing)");
