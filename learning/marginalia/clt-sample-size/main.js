@@ -84,7 +84,7 @@
     if (at) {
       txt += `<span>At n = ${n}: too low <b class="${at.lo > 0.035 ? "flag" : ""}">${pct(at.lo)}</b>, too high <b class="${at.hi > 0.035 ? "flag" : ""}">${pct(at.hi)}</b> (target 2.5% each)</span>` +
         `<span>Total coverage <b>${pct(1 - at.lo - at.hi)}</b>${1 - at.lo - at.hi < 0.94 ? ' <span class="flag">below 94%</span>' : ""}</span>` +
-        `<span>${n > rule ? "Meets the rule" : `Short of the rule by <b>${Math.ceil(rule - n)}</b>`}</span>`;
+        `<span>${n >= Math.floor(rule + 1e-9) + 1 ? "Meets the rule" : `Short of the rule by <b>${Math.floor(rule + 1e-9) + 1 - n}</b>`}</span>`;
     } else txt += `<span>Simulating…</span>`;
     if (bk && bk.done >= BOOT_REPS) txt += `<span>Bootstrap-t at n = ${n}: too low <b>${pct(bk.lo / BOOT_REPS)}</b>, too high <b>${pct(bk.hi / BOOT_REPS)}</b></span>`;
     else if (bk) txt += `<span>Bootstrap-t: ${Math.round(100 * bk.done / BOOT_REPS)}%…</span>`;
@@ -189,6 +189,46 @@
   }
   document.querySelectorAll('input[name="eP"]').forEach((el) => el.addEventListener("change", drawFinger));
   $("eN").addEventListener("input", drawFinger);
+
+  /* ================================================================ §1 check your data */
+  // Rule verdict and the one-term prediction of each tail's miss rate for the t interval:
+  // 2.5% ± 8.5·γ₁/√n percentage points (§4; Hall 1992, Ch. 2). For γ₁ > 0 the "too low" side
+  // (true mean above the interval: an upper bound fails) gets the plus sign.
+  function sampleSkew(x) {                 // Excel SKEW / MATLAB skewness(x, 0): adjusted G1
+    const n = x.length, m = x.reduce((a, b) => a + b, 0) / n;
+    let s2 = 0, s3 = 0; x.forEach((v) => { const d = v - m; s2 += d * d; s3 += d * d * d; });
+    const s = Math.sqrt(s2 / (n - 1));
+    return s > 0 ? n / ((n - 1) * (n - 2)) * s3 / (s * s * s) : NaN;
+  }
+  function yourData(n, g) {
+    const rule = M.sugdenN(g), sh = 8.5 * g / Math.sqrt(n);
+    const lo = Math.max(0, 2.5 + sh), hi = Math.max(0, 2.5 - sh);
+    const risky = Math.abs(g) < 0.25 ? "Close to symmetric: neither side is much worse than the other."
+      : g > 0 ? "Right-skewed: an <b>upper</b> bound on the mean (\"at most…\") is the risky claim; a lower bound is conservative."
+      : "Left-skewed: a <b>lower</b> bound on the mean (\"at least…\") is the risky claim; an upper bound is conservative.";
+    const need = Math.floor(rule + 1e-9) + 1;   // the smallest whole n that is > rule
+    $("ydOut").innerHTML = `<span>Rule: n &gt; <b>${Math.round(rule)}</b> → ${n >= need ? "<b>meets it</b>" : `<b class="flag">short by ${need - n}</b>`}</span>` +
+      `<span>Predicted: too low <b class="${lo > 3.5 ? "flag" : ""}">${lo.toFixed(1)}%</b>, too high <b class="${hi > 3.5 ? "flag" : ""}">${hi.toFixed(1)}%</b> (target 2.5% each)</span>` +
+      `<span>${risky}</span>` + (n < 20 ? `<span>With n under about 20 the prediction is rough.</span>` : "");
+  }
+  function ydErr(msg) { $("ydErr").textContent = msg; }
+  $("yd").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const n = Number($("ydN").value), g = Number($("ydG").value);
+    if (!Number.isInteger(n) || n < 3) { ydErr("Enter a whole-number sample size of 3 or more."); return; }
+    if ($("ydG").value.trim() === "" || !isFinite(g)) { ydErr("Enter a skewness, for example 1 or −0.5."); return; }
+    ydErr(""); yourData(n, g);
+  });
+  $("ydUse").addEventListener("click", () => {
+    const x = $("ydX").value.split(/[\s,;]+/).filter(Boolean).map(Number);
+    if (x.some((v) => !isFinite(v))) { ydErr("Only numbers, separated by spaces, commas or new lines."); return; }
+    if (x.length < 3) { ydErr("Paste at least 3 numbers."); return; }
+    const g = sampleSkew(x);
+    if (!isFinite(g)) { ydErr("All the values are the same, so the skewness is undefined."); return; }
+    $("ydN").value = x.length; $("ydG").value = g.toFixed(2); ydErr(""); yourData(x.length, g);
+  });
+  ["ydN", "ydG", "ydX"].forEach((id) => $(id).addEventListener("input", () => ydErr("")));
+  yourData(40, 1);
 
   drawFinger();
   runCover();

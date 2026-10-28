@@ -44,8 +44,10 @@ Entries so far: 01 `markov-memory` (two-state Markov chain), 02 `clt-sample-size
   professor names, no course numbers or classroom context ("someone asked in class"), no lecture
   examples or their numbers, no homework, no textbook wording. Re-derive from public sources,
   cite them on the page with working links (DOI, arXiv, publisher, author's free PDF), and
-  recompute every number independently; never copy from a private write-up. Less essential
-  results may be cited instead of derived (Gideon's call, 2026-10-27).
+  recompute every number independently: never copy a number from a private write-up. Phrasing
+  and analogies from Gideon's own private write-ups MAY be reused (they are his words), as long
+  as they carry nothing from the keep-out list (Gideon's call, 2026-10-27). Less essential
+  results may be cited instead of derived (also 2026-10-27).
 - **Practical first.** Each page opens with the short answer and the rule or recipe an engineer
   can use (Excel / MATLAB names where they exist), then the why. Interactives go wherever they
   help, not only at the end.

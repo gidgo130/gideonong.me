@@ -89,7 +89,7 @@
 <h2 id="s1"><span class="sec">§1</span> A machine that is either up or down</h2>
 <p>Check a machine once per shift. If it is up, it breaks down during the shift with probability \(a\). If it is down, it gets repaired during the shift with probability \(b\). Tomorrow depends only on today, so this is a two-state Markov chain with transition matrix</p>
 $$P=\begin{bmatrix}1-a & a\\ b & 1-b\end{bmatrix}\qquad(\text{rows: from up, from down}).$$
-<aside class="mnote"><b class="lab">Reliability check</b>Up-times here are geometric with mean \(1/a\) shifts and down-times have mean \(1/b\) shifts. So \(b/(a+b) = \tfrac{1/a}{1/a+1/b}\) is exactly MTBF / (MTBF + MTTR), the steady-state availability from reliability engineering.</aside>
+<aside class="mnote"><b class="lab">Reliability check</b>Up-times here are geometric with mean \(1/a\) shifts and down-times have mean \(1/b\) shifts. So \(b/(a+b) = \tfrac{1/a}{1/a+1/b}\) is exactly MTTF / (MTTF + MTTR), the steady-state availability. MTTF, the mean up-time, is what many shops call MTBF; strictly, MTBF = MTTF + MTTR for a repaired machine.</aside>
 <p>Two numbers describe everything that follows:</p>
 <ul>
 <li>the <b>long-run fraction of time up</b>, \(\pi_{\text{up}} = \dfrac{b}{a+b}\), which is the machine's availability;</li>
@@ -97,7 +97,7 @@ $$P=\begin{bmatrix}1-a & a\\ b & 1-b\end{bmatrix}\qquad(\text{rows: from up, fro
 </ul>
 <div class="rulebox"><span class="lab">The settling rule</span>
 $$\bigl|P(\text{up at shift } n) - \pi_{\text{up}}\bigr| = |\lambda|^n\,\bigl|P(\text{up at shift } 0) - \pi_{\text{up}}\bigr|,$$
-so you are within \(\varepsilon\) of the long-run value after \(n \ge \dfrac{\ln(\varepsilon/\text{gap}_0)}{\ln|\lambda|}\) shifts.</div>
+so you are within \(\varepsilon\) of the long-run value after \(n \ge \dfrac{\ln(\varepsilon/\text{gap}_0)}{\ln|\lambda|}\) shifts (for \(0 < |\lambda| < 1\) and \(\varepsilon < \text{gap}_0\); if \(\lambda = 0\) it takes one step).</div>
 <aside class="mnote"><b class="lab">Time constant</b>\(|\lambda|^n = e^{-n/\tau}\) with \(\tau = -1/\ln|\lambda|\). It is the same idea as a first-order system's time constant: about \(4.6\,\tau\) steps to get within 1% of the starting gap.</aside>
 <p><b>Example.</b> With \(a = 0.05\) (a breakdown about every 20 shifts) and \(b = 0.30\) (about 3.3 shifts to repair), \(\pi_{\text{up}} = 0.30/0.35 = 0.857\) and \(\lambda = 0.65\). From the worst start (down, a gap of 0.857), the probability is within 0.01 of 0.857 after \(\ln(0.01/0.857)/\ln 0.65 = 10.3\), so 11 shifts. After that, which state you started in no longer matters for planning.</p>
 
@@ -175,7 +175,7 @@ $$P^n = \Pi + \lambda^n\,(I-\Pi).$$
 <!-- 5 -->
 <h2 id="s5"><span class="sec">§5</span> Bigger chains</h2>
 <aside class="mnote"><b class="lab">Practical use</b>For a bigger chain, the settling rule still works with \(|\lambda_2|\), the second-largest eigenvalue modulus: in MATLAB, sort <code>abs(eig(P))</code> and take the second entry.</aside>
-<p>The two-state result is the simplest case of a general fact. Every transition matrix has 1 as an eigenvalue, and every other eigenvalue has modulus at most 1. For a chain that is irreducible and aperiodic, the others are strictly inside the unit circle, and the one with the largest modulus sets how fast \(P^n\) approaches \(\Pi\), the way \(\lambda\) does here. For two states the second eigenvalue is just \(1-a-b\). Levin and Peres build mixing times on this idea (their Chapter 12 is on eigenvalues; "relaxation time" is their name for \(1/(1-|\lambda|)\)).</p>
+<p>The two-state result is the simplest case of a general fact. Every transition matrix has 1 as an eigenvalue, and every other eigenvalue has modulus at most 1. For a chain that is irreducible and aperiodic, the others are strictly inside the unit circle, and the one with the largest modulus sets the eventual rate at which \(P^n\) approaches \(\Pi\) (exactly, if \(P\) is diagonalizable; otherwise up to a polynomial factor), the way \(\lambda\) does here. For two states the second eigenvalue is just \(1-a-b\). Levin and Peres build mixing times on this idea: their Chapter 12 is on eigenvalues, and for reversible chains they define the relaxation time as \(1/(1-|\lambda_2|)\). Every two-state chain is reversible, so here it is \(1/(1-|\lambda|)\).</p>
 <p>In practice this tells you how long a simulation's warm-up has to be before its starting state stops mattering, and how far apart two observations must be before they are nearly independent.</p>
 
 <!-- 6 -->
@@ -183,7 +183,7 @@ $$P^n = \Pi + \lambda^n\,(I-\Pi).$$
 <ol class="sources">
 <li>D. A. Levin and Y. Peres, <a href="https://pages.uoregon.edu/dlevin/MARKOV/mcmt2e.pdf"><i>Markov Chains and Mixing Times</i></a>, 2nd ed. (American Mathematical Society, 2017), free from the authors. <span class="what">§1.1: the two-state chain and its \(|1-p-q|^t\) decay. Ch. 12: eigenvalues and relaxation time.</span></li>
 <li>J. R. Norris, <a href="https://doi.org/10.1017/CBO9780511810633"><i>Markov Chains</i></a> (Cambridge University Press, 1997). <span class="what">§1.7 invariant distributions, §1.8 convergence to equilibrium (needs aperiodicity), §1.10 the ergodic theorem (time averages, no aperiodicity needed).</span></li>
-<li>S. M. Ross, <i>Introduction to Probability Models</i>, 11th ed. (Academic Press, 2014). <span class="what">Ch. 4, the section on long-run proportions and limiting probabilities, for the same distinction at textbook level.</span></li>
+<li>S. M. Ross, <a href="https://shop.elsevier.com/books/introduction-to-probability-models/ross/978-0-12-407948-9"><i>Introduction to Probability Models</i></a>, 11th ed. (Academic Press, 2014). <span class="what">§4.4, Long-Run Proportions and Limiting Probabilities, for the same distinction at textbook level.</span></li>
 </ol>
 
 <div class="takeaway-links">

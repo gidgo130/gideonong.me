@@ -78,7 +78,7 @@
       const steps = al < 1e-12 ? 1 : al >= 1 - 1e-12 ? Infinity : Math.max(0, Math.ceil(Math.log(0.01 / gw) / Math.log(al)));
       const tau = al < 1e-12 ? 0 : al >= 1 - 1e-12 ? Infinity : -1 / Math.log(al);
       out = `<span>Availability π<sub>up</sub> = b/(a+b) = <b>${f3(pi)}</b></span><span>λ = 1 − a − b = <b>${f2(lam)}</b></span>` +
-        `<span>MTBF = 1/a = <b>${a > 0 ? (1 / a).toFixed(1) : "∞"}</b> shifts, MTTR = 1/b = <b>${b > 0 ? (1 / b).toFixed(1) : "∞"}</b> shifts</span>` +
+        `<span>Mean up-time (MTTF) = 1/a = <b>${a > 0 ? (1 / a).toFixed(1) : "∞"}</b> shifts, MTTR = 1/b = <b>${b > 0 ? (1 / b).toFixed(1) : "∞"}</b> shifts</span>` +
         (isFinite(steps) ? `<span>Within 0.01 of π<sub>up</sub> from either start after <b>${steps}</b> step${steps === 1 ? "" : "s"}</span>` : `<span class="flag">Never settles: |λ| = 1</span>`) +
         (isFinite(tau) && tau > 0 ? `<span>Time constant τ = <b>${tau.toFixed(2)}</b> steps</span>` : "") +
         (lam < 0 && al < 1 ? `<span>λ &lt; 0: overshoots and alternates as it settles</span>` : "");

@@ -110,7 +110,7 @@ for i in range(1000):
     L, U = bootstrap_t(r.exponential(size=30), B=399, seed=i)
     lo += 1.0 > U
     hi += 1.0 < L
-print(f"bootstrap-t, exponential, n = 30: too low {lo / 10:.1f}%, too high {hi / 10:.1f}%  (t interval: about 6.6% and 0.9%)")
+print(f"bootstrap-t, exponential, n = 30: too low {lo / 10:.1f}%, too high {hi / 10:.1f}%  (t interval: about 6.6% and 0.7%)")
 
 # %% [markdown]
 # ## 4. The exact error F_n − Φ and the Edgeworth expansion

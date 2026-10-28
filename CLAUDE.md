@@ -845,6 +845,7 @@ rest lives. One home per rule; don't restate a manual's content here.
 - Content comes from promote briefs in Gideon's private notes. The brief's "keep out" list is
   binding: no professor names, course numbers or classroom context, no lecture examples, no
   homework, no textbook wording, no numbers copied from a private write-up (recompute them).
+  Phrasing and analogies from Gideon's own write-ups may be reused.
   Sources are cited on the page with working links; never name or link the private notes.
 - English only, same arrangement as Reflections (text in the HTML, no toggle, no
   `data-es-ready`); only the hub's Marginalia band is bilingual.

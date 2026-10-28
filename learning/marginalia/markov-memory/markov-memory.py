@@ -26,8 +26,8 @@ def chain(a, b):
 a, b = 0.05, 0.30
 P, pi_up, lam = chain(a, b)
 print(f"a = {a}, b = {b}: availability pi_up = {pi_up:.4f}, lambda = {lam:.2f}")
-print(f"MTBF = 1/a = {1 / a:.1f} shifts, MTTR = 1/b = {1 / b:.2f} shifts, "
-      f"MTBF/(MTBF+MTTR) = {(1 / a) / (1 / a + 1 / b):.4f}")
+print(f"mean up-time MTTF = 1/a = {1 / a:.1f} shifts, MTTR = 1/b = {1 / b:.2f} shifts, "
+      f"MTTF/(MTTF+MTTR) = {(1 / a) / (1 / a + 1 / b):.4f}")
 
 # %% [markdown]
 # ## 2. The settling rule

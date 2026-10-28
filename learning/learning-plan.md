@@ -629,6 +629,14 @@ Decisions (Gideon, 2026-10-27):
 - **M9 Online only**: excluded from the offline app like Reflections.
 - **M10 Post, then review**: the probability chat proposes changes to the two pages after they
   are up.
+- **M11 Own phrasing may be reused** (2026-10-27): phrasing and analogies from Gideon's private
+  write-ups can go on the pages; numbers are still recomputed and the keep-out list still holds.
+
+Review applied 2026-10-27 (independent recomputation, 200k–10⁶ simulations): one-sided example
+flipped to upper bounds on right-skewed data, Edgeworth remainder o(1/√n), the n = 29 coverage
+wording, sample-skewness scatter, Sugden arithmetic step, Esseen 1942 cited, Shevtsova's sharper
+bound, Poisson footnote, MTTF wording, settling-rule conditions, eigenvalue-rate caveat, Ross
+§4.4 link; added the "Check your data" box and the faster bootci call.
 
 Built 2026-10-27: hub band, index, registry, theme, plot.js, both entries with Python/Colab
 companions, cards, feedback gate (`marginalia` in api/feedback.js SERIES, the label in
@@ -640,7 +648,7 @@ Open:
       from an entry on the preview.
 - [ ] Browser suites (`learning/workshop/tests/`) don't cover Marginalia pages yet; the hub suite
       may need its band expectations widened (it was written for two series).
-- [ ] Probability chat's review of entries 01–02 (M10).
+- [x] Probability chat's review of entries 01–02 (M10), applied 2026-10-27.
 - [ ] LinkedIn Post Inspector on the three new cards after deploy.
 
 ## Optional later

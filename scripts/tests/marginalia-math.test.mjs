@@ -50,7 +50,8 @@ test("normal and Student t helpers", () => {
   near(M.Phi(-3), 0.0013498980316301, 1e-15, "Φ(−3)");
   near(M.tQuantile(0.975, 9), 2.2621571627409915, 1e-9, "t(0.975, 9)");
   near(2 * M.tCdf(1.96, 9) - 1, 0.9184, 1e-4, "normal data, n = 10, 1.96·s coverage (the page's 91.8%)");
-  near(2 * M.tCdf(1.96, 28) - 1, 0.9400, 1e-4, "n = 29 reaches 94% (the page's claim)");
+  near(2 * M.tCdf(1.96, 28) - 1, 0.93998, 1e-5, "n = 29: still just under 94% (the page's claim)");
+  near(2 * M.tCdf(1.96, 29) - 1, 0.94033, 1e-5, "n = 30: just over 94%");
   assert.equal(M.sugdenN(2), 128);
 });
 

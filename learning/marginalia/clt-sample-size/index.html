@@ -71,7 +71,7 @@
 <div class="answer">
   <p><b>Short answer.</b> For the usual 95% interval on a mean, \(\bar x \pm 1.96\,s/\sqrt n\), Sugden, Smith &amp; Jones (2000) recommend</p>
   $$n \;>\; 28 + 25\,\gamma_1^2,$$
-  <p>where \(\gamma_1\) is the skewness of the thing you're measuring. Symmetric data need about 30. Exponential-looking data (failure times, waiting times) need about 130. If you can't get that many, or you need a one-sided bound such as "mean life is at least…", use a bootstrap-t interval. The rule comes from the CLT's next term, which is the skewness divided by \(\sqrt n\).</p>
+  <p>where \(\gamma_1\) is the skewness of the thing you're measuring. Symmetric data need about 30. Exponential-looking data (failure times, waiting times) need about 130. If you can't get that many, or you need a one-sided bound, above all an upper bound on right-skewed data ("mean repair time is at most…"), use a bootstrap-t interval. The rule comes from the CLT's correction terms. Skewness enters at order \(1/\sqrt n\) and shifts each tail. In a two-sided interval those shifts cancel, and what's left at order \(1/n\) involves the skewness squared, which is why the rule grows like \(\gamma_1^2\).</p>
   <p class="note">The first interactive below simulates in your browser with a fixed seed; the second uses exact distributions, with no simulation. The Python script at the end reproduces both.</p>
 </div>
 
@@ -90,28 +90,46 @@
 <!-- 1 -->
 <h2 id="s1"><span class="sec">§1</span> The rule, and how to use it</h2>
 <p>"\(n \ge 30\)" is the rule most of us were handed. It ignores the one property of the data that matters most here, the <b>skewness</b> \(\gamma_1 = \mathbb E[(X-\mu)^3]/\sigma^3\): zero for a symmetric spread, positive for a long right tail.</p>
-<aside class="mnote"><b class="lab">Where the 28 comes from</b>For perfectly normal data, \(\bar x \pm 1.96\,s/\sqrt n\) covers only 91.8% at \(n = 10\) and first reaches 94% at \(n = 29\). The 28 is the price of using 1.96 with an estimated \(s\). Use the t critical value (Excel's <code>CONFIDENCE.T</code>, MATLAB's <code>tinv</code>) and that part goes away (exactly, for normal data); the \(25\gamma_1^2\) does not.</aside>
+<aside class="mnote"><b class="lab">Where the 28 comes from</b>For perfectly normal data, \(\bar x \pm 1.96\,s/\sqrt n\) covers only 91.8% at \(n = 10\) and is still just under 94% at \(n = 29\). The 28 is the price of using 1.96 with an estimated \(s\). Use the t critical value (Excel's <code>CONFIDENCE.T</code>, MATLAB's <code>tinv</code>) and that part goes away (exactly, for normal data); the \(25\gamma_1^2\) does not.</aside>
 <div class="rulebox"><span class="lab">The rule (Sugden, Smith &amp; Jones 2000, eq. 4.3)</span>
 <p>Trust a two-sided 95% interval for a mean when \(n > 28 + 25\gamma_1^2\). "Trust" means the interval really covers the mean at least 94% of the time.</p></div>
+
+<form class="yourdata" id="yd" novalidate aria-labelledby="yd-h">
+  <p class="yd-h" id="yd-h">Check your data</p>
+  <div class="yd-row">
+    <label for="ydN">Sample size n <input id="ydN" type="number" inputmode="numeric" min="3" step="1" value="40"></label>
+    <label for="ydG">Skewness γ₁ <input id="ydG" type="number" inputmode="decimal" step="0.01" value="1"></label>
+    <button type="submit">Check</button>
+  </div>
+  <details><summary>Or paste your data</summary>
+    <label for="ydX" class="vh">Your data, one number per line or separated by commas</label>
+    <textarea id="ydX" rows="4" placeholder="12.1, 9.8, 15.0, 11.4, …"></textarea>
+    <button type="button" id="ydUse">Compute n and skewness</button>
+  </details>
+  <p class="yd-err" id="ydErr" role="alert"></p>
+  <div class="readout" id="ydOut" aria-live="polite"></div>
+  <p class="note">The predicted misses use the one-term correction for the t interval, 2.5% ± \(8.5\,\gamma_1/\sqrt n\) percentage points (§4). They're a first-order guide; §2 simulates the real values for a few kinds of data.</p>
+</form>
 
 <div class="tbl"><table>
 <thead><tr><th scope="col">Kind of data</th><th scope="col" class="txt">Typical model</th><th scope="col">γ₁</th><th scope="col">Rule's n</th></tr></thead>
 <tbody>
 <tr><td>Dimensions, weights from a stable process</td><td class="txt">normal</td><td>0</td><td>28</td></tr>
-<tr><td>Counts per interval, mean 10</td><td class="txt">Poisson</td><td>0.32</td><td>31</td></tr>
+<tr><td>Counts per interval, mean 10<sup><a href="#fn-pois" id="fnr-pois">*</a></sup></td><td class="txt">Poisson</td><td>0.32</td><td>31</td></tr>
 <tr><td>Time to finish 4 similar stages</td><td class="txt">gamma, shape 4</td><td>1.00</td><td>53</td></tr>
 <tr><td>Wear-out failure times</td><td class="txt">Weibull, shape 1.5</td><td>1.07</td><td>57</td></tr>
 <tr><td>Repair times, particle sizes</td><td class="txt">lognormal, σ = 0.5</td><td>1.75</td><td>105</td></tr>
 <tr><td>Random failures, waiting times</td><td class="txt">exponential</td><td>2.00</td><td>128</td></tr>
 <tr><td>Pollutant concentrations, strongly skewed loads</td><td class="txt">lognormal, σ = 1</td><td>6.18</td><td>984</td></tr>
 </tbody></table></div>
+<p class="note tfoot" id="fn-pois"><a href="#fnr-pois">*</a> Counts are evenly spaced (§5). For a mean of 10 or more the rule still works (simulated: 94.0% at \(n = 31\) with 1.96). For small means, check by simulation.</p>
 
 <h3>How to use it</h3>
 <ol class="steps">
-<li><b>Estimate the skewness.</b> Excel: <code>=SKEW(A2:A41)</code>. MATLAB: <code>skewness(x, 0)</code> (the 0 asks for the bias-corrected version, the same number Excel gives). Treat the result as rough: at \(n = 30\) its standard error is about 0.4, and long tails make it read low. If the physics says the quantity is bounded at zero with a long right tail (times, sizes, concentrations), believe the physics.</li>
+<li><b>Estimate the skewness.</b> Excel: <code>=SKEW(A2:A41)</code>. MATLAB: <code>skewness(x, 0)</code> (the 0 asks for the bias-corrected version, the same number Excel gives). Treat the result as rough: at \(n = 30\) it scatters by about ±0.4 even for symmetric data, and by about ±0.7 for exponential data, where it also averages about 1.6 instead of 2. If the physics says the quantity is bounded at zero with a long right tail (times, sizes, concentrations), believe the physics.</li>
 <li><b>Compare with the rule.</b> \(n\) comfortably above \(28 + 25\gamma_1^2\): the usual interval is fine.</li>
-<li><b>If you're short</b>, use a <b>bootstrap-t interval</b>. In MATLAB, <code>bootci(2000, {@mean, x}, 'Type', 'student')</code>; MATLAB's default type, <code>'bca'</code>, is also good here. Excel has no built-in bootstrap; the Python script at the end has a short function. Taking logs first also helps, but then the interval is for the geometric mean (the median, for lognormal data), not the mean.</li>
-<li><b>One-sided statements need more care.</b> "Mean strength is at least…" or "mean life exceeds…" uses one tail of the interval, and §2 and §4 show that one tail goes wrong long before the two-sided coverage does.</li>
+<li><b>If you're short</b>, use a <b>bootstrap-t interval</b>. In MATLAB, <code>bootci(2000, {@mean, x}, 'Type', 'student')</code>. That runs a second, nested bootstrap (100 resamples each) to estimate the standard error; this faster call gives it the formula directly and matches this page's method: <code>bootci(2000, {@mean, x}, 'Type', 'student', 'StdErr', @(x) std(x)/sqrt(numel(x)))</code>. MATLAB's default type, <code>'bca'</code>, is also good here. Excel has no built-in bootstrap; the Python script at the end has a short function. Taking logs first also helps, but then the interval is for the geometric mean (the median, for lognormal data), not the mean.</li>
+<li><b>One-sided statements need more care, and which side depends on the skew.</b> For right-skewed data (times, sizes, concentrations) the interval sits too low, so an upper bound ("mean repair time is at most…") is the one that fails, while a lower bound is conservative. For left-skewed data, such as the strength of a mature process (Weibull with shape above about 3.6), it is the reverse. §2 and §4 show that one tail goes wrong long before the two-sided coverage does.</li>
 </ol>
 
 <!-- 2 -->
@@ -142,7 +160,7 @@
 <figcaption>4,000 simulated samples at each of 12 sample sizes (seeded, so the picture is the same on every visit); each point has a Monte Carlo error of about ±0.25 percentage points. The bootstrap-t run uses 2,000 samples with 399 resamples each (about ±0.35 points), for n up to 300; it takes a few seconds at the larger sizes. The dashed vertical line is the rule's \(n\) for the chosen data.</figcaption>
 </figure>
 <aside class="mnote"><b class="lab">Engineering reading</b>For right-skewed data the interval is too low more often than too high. If you are claiming a lower bound on mean life, you're probably fine; if you're claiming an upper bound on mean time to repair, you are the one being fooled.</aside>
-<p>Three things to try. With <b>exponential</b> data at the rule's \(n = 128\), total coverage is about 94%, as promised, but the two tails are lopsided: about 4% of intervals land too low and about 1.3% too high. With <b>uniform</b> data the t interval is on target almost immediately. And switching to <b>1.96</b> makes small samples worse for every kind of data: that's the 28.</p>
+<p>Three things to try. With <b>exponential</b> data at the rule's \(n = 128\), total coverage is about 94%, as promised, but the two tails are lopsided: about 4.3% of intervals land too low and about 1.35% too high. With <b>uniform</b> data the t interval is on target almost immediately. And switching to <b>1.96</b> makes small samples worse for every kind of data: that's the 28.</p>
 <!-- 3 -->
 <h2 id="s3"><span class="sec">§3</span> Why: the CLT has a next term</h2>
 <p>Standardize the sample mean, \(Y_n = (\bar X_n - \mu)/(\sigma/\sqrt n)\). The CLT says its distribution approaches the standard normal. It says nothing about how fast, and the speed is where the skewness shows up.</p>
@@ -151,9 +169,9 @@
 <span class="eq-wide">$$\text{skewness of } \bar X_n = \frac{\gamma_1}{\sqrt n},\qquad \text{excess kurtosis of } \bar X_n = \frac{\gamma_2}{n}.$$</span>
 <span class="eq-narrow">$$\begin{aligned}\text{skewness of } \bar X_n &= \frac{\gamma_1}{\sqrt n},\\ \text{excess kurtosis of } \bar X_n &= \frac{\gamma_2}{n}.\end{aligned}$$</span>
 <p>Each extra order fades half a power of \(n\) faster. Translating the cumulants back into a CDF gives the <b>Edgeworth expansion</b>; for a parent with a finite third moment that isn't confined to evenly spaced values (Feller 1971, §XVI.4; Hall 1992, Ch. 2),</p>
-<span class="eq-wide">$$F_n(x) = \Phi(x) \;-\; \frac{\gamma_1}{6\sqrt n}\,(x^2-1)\,\varphi(x) \;+\; O\!\left(\frac1n\right),$$</span>
-<span class="eq-narrow">$$\begin{aligned}F_n(x) &= \Phi(x) - \frac{\gamma_1}{6\sqrt n}(x^2-1)\varphi(x)\\&\quad+ O(1/n),\end{aligned}$$</span>
-<p>where \(F_n\) is the CDF of \(Y_n\) and \(\varphi\), \(\Phi\) are the normal density and CDF. The \(1/n\) term, which brings in \(\gamma_2\) and \(\gamma_1^2\), is in the same references. Read the first correction three ways:</p>
+<span class="eq-wide">$$F_n(x) = \Phi(x) \;-\; \frac{\gamma_1}{6\sqrt n}\,(x^2-1)\,\varphi(x) \;+\; o\!\left(\frac{1}{\sqrt n}\right),$$</span>
+<span class="eq-narrow">$$\begin{aligned}F_n(x) &= \Phi(x) - \frac{\gamma_1}{6\sqrt n}(x^2-1)\varphi(x)\\&\quad+ o(1/\sqrt n),\end{aligned}$$</span>
+<p>where \(F_n\) is the CDF of \(Y_n\) and \(\varphi\), \(\Phi\) are the normal density and CDF. With a finite fourth moment and a parent smooth enough to have a density (Cramér's condition), the next term is of order \(1/n\); it brings in \(\gamma_2\) and \(\gamma_1^2\) and is in the same references. Read the first correction three ways:</p>
 <ul>
 <li><b>Size.</b> Its largest value is \(0.0665\,|\gamma_1|/\sqrt n\) (at \(x = 0\)). Quadrupling \(n\) only halves it.</li>
 <li><b>Shape.</b> \((x^2-1)\varphi(x)\) is an even bump. For a right-skewed parent the median of \(\bar X\) sits below its mean, so \(F_n(0) > \tfrac12\).</li>
@@ -185,7 +203,7 @@
 
 <!-- 4 -->
 <h2 id="s4"><span class="sec">§4</span> Why two-sided intervals forgive skewness</h2>
-<aside class="mnote"><b class="lab">The arithmetic in the paper</b>With \(\gamma_2 = 0\), an infinite population and 1.96 with \(s\), Sugden et al. get the \(1/n\) coefficient \(-2.3724 - 2.1170\gamma_1^2\) at 1.96; asking for less than 1% total error gives \(n > 27.73 + 24.74\gamma_1^2\), rounded to the rule.</aside>
+<aside class="mnote"><b class="lab">The arithmetic in the paper</b>With \(\gamma_2 = 0\), an infinite population and 1.96 with \(s\), Sugden et al. get the \(1/n\) coefficient \(-2.3724 - 2.1170\gamma_1^2\) at 1.96. Each tail of the interval is off by about \(\varphi(1.96)(2.3724 + 2.1170\gamma_1^2)/n\), so the total coverage error is \((0.2773 + 0.2474\gamma_1^2)/n\). Asking for less than 1% gives \(n > 27.73 + 24.74\gamma_1^2\), rounded to the rule.</aside>
 <p>A two-sided interval asks for \(P(|Y_n| \le z) = F_n(z) - F_n(-z)\). The one-term correction is even in \(x\), so it is the same at \(z\) and \(-z\) and cancels in the difference. What's left is order \(1/n\), with a coefficient that contains \(\gamma_1^2\). Ask for that error to be under 1% and you get \(n\) proportional to \(\gamma_1^2\). That is the shape of the rule.</p>
 <p>Each tail on its own gets no such cancellation. For the t-statistic the one-term polynomial changes from \(-(x^2-1)\) to \((2x^2+1)\) (Hall 1992, Ch. 2; Sugden et al., eq. 2.4), and at 1.96 it moves each tail by about</p>
 $$\pm\,0.085\,\frac{\gamma_1}{\sqrt n}.$$
@@ -194,23 +212,23 @@ $$\pm\,0.085\,\frac{\gamma_1}{\sqrt n}.$$
 
 <!-- 5 -->
 <h2 id="s5"><span class="sec">§5</span> What else the speed gives away</h2>
-<aside class="mnote"><b class="lab">Allowable versus typical</b>Berry–Esseen is like a design allowable: guaranteed, and conservative by a factor of about 9 here. The Edgeworth term is the typical value. You need both, for different jobs.</aside>
+<aside class="mnote"><b class="lab">Allowable versus typical</b>Berry–Esseen is like a design allowable: guaranteed, and conservative by a factor of about 9 here (7 with Shevtsova's sharper form). The Edgeworth term is the typical value. You need both, for different jobs.</aside>
 <ul>
 <li><b>Evenly spaced values never beat \(1/\sqrt n\).</b> A coin, counts, readings rounded to an instrument's resolution: the CDF of the mean is a staircase, and a staircase can't follow a smooth ramp better than half a step. For the fair coin the error stays near \(0.4/\sqrt n\) however symmetric it is (Esseen 1945; Feller 1971, §XVI.4). The continuity correction, adding half a step, is the fix.</li>
 <li><b>Heavy tails converge more slowly.</b> If the share of the variance coming from values beyond \(z\) shrinks only like \(z^{-\delta}\), with \(0 < \delta < 1\), the error shrinks like \(n^{-\delta/2}\), and the converse holds too (Ibragimov 1966). Fatigue lives, flood levels and network traffic can behave like this. A quick check: if two or three points contribute most of \(\sum (x_i-\bar x)^2\), distrust any CLT-based interval.</li>
 <li><b>Infinite variance: no normal limit at all.</b> The average of \(n\) Cauchy readings is Cauchy again, exactly as spread out as one reading (Durrett 2019, §3.8, on stable laws). A Lorentzian resonance line is a Cauchy density. If averaging more data doesn't narrow anything, suspect this.</li>
-<li><b>A guaranteed bound for every n.</b> The Berry–Esseen theorem: \(\sup_x |F_n(x)-\Phi(x)| \le 0.4748\,\rho/\sqrt n\), with \(\rho = \mathbb E|X-\mu|^3/\sigma^3\) (Berry 1941; Shevtsova 2011 for the constant). For exponential data that's \(1.15/\sqrt n\) against a true \(0.133/\sqrt n\).</li>
+<li><b>A guaranteed bound for every n.</b> The Berry–Esseen theorem: \(\sup_x |F_n(x)-\Phi(x)| \le 0.4748\,\rho/\sqrt n\), with \(\rho = \mathbb E|X-\mu|^3/\sigma^3\) (Berry 1941; Esseen 1942; Shevtsova 2011 for the constant). For exponential data that's \(1.15/\sqrt n\) against a true \(0.133/\sqrt n\). Shevtsova also gives a sharper form, \(0.33554(\rho + 0.415)/\sqrt n\): \(0.95/\sqrt n\) for exponential data, about 7 times the true error.</li>
 </ul>
 <!-- 6 -->
 <h2 id="s6"><span class="sec">§6</span> Sources</h2>
 <ol class="sources">
 <li>R. A. Sugden, T. M. F. Smith and R. P. Jones, "<a href="https://doi.org/10.1111/1467-9868.00264">Cochran's rule for simple random sampling</a>," <i>J. Royal Statistical Society B</i> 62(4), 787–793 (2000). <span class="what">The rule (eq. 4.3), its derivation from the Edgeworth expansion, and the t-statistic's polynomial (eq. 2.4).</span></li>
-<li>W. G. Cochran, <a href="https://gov.wiley.com/WileyCDA/WileyTitle/productCd-047116240X.html"><i>Sampling Techniques</i></a>, 3rd ed. (Wiley, 1977), p. 42. <span class="what">The original \(n > 25G_1^2\) rule.</span></li>
+<li>W. G. Cochran, <a href="https://gov.wiley.com/WileyCDA/WileyTitle/productCd-047116240X.html"><i>Sampling Techniques</i></a>, 3rd ed. (Wiley, 1977), p. 42 (the page Sugden et al. cite). <span class="what">The original \(n > 25G_1^2\) rule.</span></li>
 <li>W. Feller, <a href="https://www.wiley-vch.de/de/fachgebiete/mathematik-und-statistik/an-introduction-to-probability-theory-and-its-applications-volume-2-978-0-471-25709-7"><i>An Introduction to Probability Theory and Its Applications</i>, Vol. II</a>, 2nd ed. (Wiley, 1971). <span class="what">Ch. XVI: Edgeworth expansions (§2, §4, including the lattice case) and the Berry–Esseen theorem (§3–5).</span></li>
 <li>P. Hall, <a href="https://doi.org/10.1007/978-1-4612-4384-7"><i>The Bootstrap and Edgeworth Expansion</i></a> (Springer, 1992). <span class="what">Ch. 2: expansions for the mean and the t-statistic. Ch. 3: why bootstrap-t is second-order accurate.</span></li>
 <li>R. Durrett, <a href="https://doi.org/10.1017/9781108591034"><i>Probability: Theory and Examples</i></a>, 5th ed. (Cambridge University Press, 2019). <span class="what">§3.4.4 Berry–Esseen; §3.8 stable laws.</span></li>
-<li>I. Shevtsova, "<a href="https://arxiv.org/abs/1111.6554">On the absolute constants in the Berry–Esseen type inequalities for identically distributed summands</a>," arXiv:1111.6554 (2011). <span class="what">The constant 0.4748.</span></li>
-<li>A. C. Berry, "<a href="https://doi.org/10.1090/S0002-9947-1941-0003498-3">The accuracy of the Gaussian approximation to the sum of independent variates</a>," <i>Trans. AMS</i> 49, 122–136 (1941); C.-G. Esseen, "<a href="https://doi.org/10.1007/BF02392223">Fourier analysis of distribution functions</a>," <i>Acta Mathematica</i> 77, 1–125 (1945).</li>
+<li>I. Shevtsova, "<a href="https://arxiv.org/abs/1111.6554">On the absolute constants in the Berry–Esseen type inequalities for identically distributed summands</a>," arXiv:1111.6554 (2011). <span class="what">The constant 0.4748 and the sharper form 0.33554(ρ + 0.415).</span></li>
+<li>A. C. Berry, "<a href="https://doi.org/10.1090/S0002-9947-1941-0003498-3">The accuracy of the Gaussian approximation to the sum of independent variates</a>," <i>Trans. AMS</i> 49, 122–136 (1941); C.-G. Esseen, "On the Liapounoff limit of error in the theory of probability," <i>Arkiv för Matematik, Astronomi och Fysik</i> 28A, 1–19 (1942); C.-G. Esseen, "<a href="https://doi.org/10.1007/BF02392223">Fourier analysis of distribution functions</a>," <i>Acta Mathematica</i> 77, 1–125 (1945).</li>
 <li>I. A. Ibragimov, "<a href="https://doi.org/10.1137/1111061">On the accuracy of Gaussian approximation to the distribution functions of sums of independent variables</a>," <i>Theory Probab. Appl.</i> 11(4), 559–579 (1966). <span class="what">Heavy tails and slower rates.</span></li>
 <li>Software: Excel <a href="https://support.microsoft.com/office/bdf49d86-b1ef-4804-a046-28eaea69c9fa">SKEW</a> and <a href="https://support.microsoft.com/office/e8eca395-6c3a-4ba9-9003-79ccc61d3c53">CONFIDENCE.T</a>; MATLAB <a href="https://www.mathworks.com/help/stats/skewness.html">skewness</a> and <a href="https://www.mathworks.com/help/stats/bootci.html">bootci</a>.</li>
 </ol>

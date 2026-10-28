@@ -211,3 +211,18 @@ a.entry-row:hover .e-title { color: var(--accent); }
 :root[data-readability] .e-date { font-size: 14px; }
 /* Three charts side by side where the figure is wide enough (the Markov page's §2). */
 .essay .charts.three { grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); }
+/* "Check your data" box on the CLT page (§1). */
+.essay .yourdata { background: var(--plot); border: 1px solid var(--rule); border-radius: 4px; padding: .8rem 1rem; margin: 1.2rem 0; max-width: 44rem; }
+.essay .yourdata .yd-h { font-family: var(--font-mono); font-size: .74em; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 .5rem; }
+.essay .yd-row { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: end; font-family: var(--font-mono); font-size: .8em; }
+.essay .yd-row label { display: flex; flex-direction: column; gap: .15rem; color: var(--muted); }
+.essay .yourdata input[type=number], .essay .yourdata textarea { font-family: var(--font-mono); font-size: 1em; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: .3rem .45rem; }
+.essay .yourdata input[type=number] { width: 8rem; }
+.essay .yourdata textarea { display: block; width: 100%; margin: .4rem 0; font-size: .82em; }
+.essay .yourdata details { margin-top: .6rem; font-size: .9em; }
+.essay .yourdata summary { cursor: pointer; color: var(--accent); }
+.essay .yd-err { color: var(--emph); font-family: var(--font-mono); font-size: .8em; margin: .4rem 0 0; min-height: 0; }
+.essay .yd-err:empty { display: none; }
+.essay .yourdata .note { margin: .6rem 0 0; font-size: .82em; }
+.essay .tfoot { font-size: .82em; margin-top: -.4rem; }
+.essay sup a { text-decoration: none; color: var(--accent); }
