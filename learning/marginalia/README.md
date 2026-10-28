@@ -135,7 +135,8 @@ Entries so far: 01 `markov-memory` (two-state Markov chain), 02 `clt-sample-size
   in learning-plan.md). Until they do, check by hand at 375 / 768 / 1280 px, light and dark:
   no console errors, no raw `\(` in the text, chart text readable, no label overlaps, every
   control changes its chart or readout, margin notes beside their paragraphs at 1280 px.
-  Code chips: hover previews and locks after 1 s, click/tap opens locked, tabs switch and the
+  Code chips: hover previews and locks after 1 s (a locked tip stays when the mouse leaves),
+  click/tap opens locked, tabs switch and the
   choice carries to the next chip, Copy works, Esc and a click outside close it, the × stays
   visible at 375 px.
 - `make-ipynb.py marginalia/<slug> --check` for each companion.

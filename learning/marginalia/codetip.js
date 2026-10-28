@@ -4,10 +4,11 @@
 //
 // Behaviour (like a strategy-game tooltip that locks):
 //   mouse hover   shows a preview at once; a thin bar fills for 1 s, then the tip LOCKS and you can
-//                 move into it, switch tabs, select and copy. Leaving before it locks closes it;
-//                 leaving a locked tip closes it after a short grace period.
+//                 stays put when the mouse leaves: move into it, switch tabs, select and copy.
+//                 Leaving before it locks closes it.
 //   click / tap / Enter / Space   opens it locked straight away (the only way on touch screens).
 //   Esc, the × button or a click outside   closes it; focus returns to the chip.
+//   While a tip is locked, hovering another chip does nothing; clicking one switches to it.
 // The chosen language is shared by every tip on every Marginalia page (localStorage
 // "margCodeLang", wrapped in try/catch: a blocked store just means MATLAB first each time).
 //
@@ -15,7 +16,7 @@
 // </code></pre><p class="ct-note">optional note</p></div> … one div per language …</template>
 (function () {
   "use strict";
-  const LOCK_MS = 1000, GRACE_MS = 280, KEY = "margCodeLang";
+  const LOCK_MS = 1000, KEY = "margCodeLang";
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
   let open = null;            // { chip, pop, locked, timers }
   let uid = 0;
@@ -85,7 +86,6 @@
       else if (e.key === "Home") j = 0; else if (e.key === "End") j = tabs.length - 1;
       if (j !== null) { e.preventDefault(); select(pop, tabs[j].dataset.lang, true); }
     });
-    pop.addEventListener("pointerenter", () => { if (open && open.pop === pop) clearTimeout(open.leave); });
     pop.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") scheduleClose(); });
   }
   function fallback(cp, done) {
@@ -110,7 +110,7 @@
     close(false);
     const pop = chip._pop || (chip._pop = build(chip));
     if (!pop) return;
-    open = { chip, pop, locked: false, lockT: null, leave: null };
+    open = { chip, pop, locked: false, lockT: null };
     pop.classList.add("is-open"); pop.classList.remove("is-locked", "is-filling");
     chip.setAttribute("aria-expanded", "true"); chip.setAttribute("aria-controls", pop.id);
     place();
@@ -129,14 +129,12 @@
   }
   function scheduleClose() {
     if (!open) return;
-    clearTimeout(open.leave);
-    if (!open.locked) { close(false); return; }
-    open.leave = setTimeout(() => close(false), GRACE_MS);
+    if (!open.locked) close(false);       // a locked tip stays until Esc, × or a click outside
   }
   function close(refocus) {
     if (!open) return;
     const { chip, pop } = open;
-    clearTimeout(open.lockT); clearTimeout(open.leave);
+    clearTimeout(open.lockT);
     pop.classList.remove("is-open", "is-locked", "is-filling");
     pop.querySelector(".ct-state").textContent = "";
     chip.setAttribute("aria-expanded", "false");
@@ -148,7 +146,7 @@
   document.querySelectorAll("button.codetip").forEach((chip) => {
     chip.setAttribute("aria-expanded", "false");
     chip.setAttribute("aria-haspopup", "dialog");
-    chip.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") { if (open && open.chip === chip) clearTimeout(open.leave); else show(chip, false); } });
+    chip.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse" && !(open && (open.chip === chip || open.locked))) show(chip, false); });
     chip.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && open && open.chip === chip) scheduleClose(); });
     chip.addEventListener("click", () => {
       if (open && open.chip === chip && open.locked) { close(true); return; }
