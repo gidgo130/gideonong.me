@@ -631,6 +631,10 @@ Decisions (Gideon, 2026-10-27):
   are up.
 - **M11 Own phrasing may be reused** (2026-10-27): phrasing and analogies from Gideon's private
   write-ups can go on the pages; numbers are still recomputed and the keep-out list still holds.
+- **M12 Other code in tooltips** (2026-10-27): Excel stays in the text; MATLAB, Python, R and
+  Julia sit behind an "other code" chip (codetip.js: hover preview that locks after 1 s, tabs,
+  copy, language choice remembered). Every snippet is run on fixed data before it goes up; when
+  a language can't run in the session, Gideon runs it (Julia, 2026-10-27).
 
 Review applied 2026-10-27 (independent recomputation, 200k–10⁶ simulations): one-sided example
 flipped to upper bounds on right-skewed data, Edgeworth remainder o(1/√n), the n = 29 coverage

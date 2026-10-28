@@ -226,3 +226,58 @@ a.entry-row:hover .e-title { color: var(--accent); }
 .essay .yourdata .note { margin: .6rem 0 0; font-size: .82em; }
 .essay .tfoot { font-size: .82em; margin-top: -.4rem; }
 .essay sup a { text-decoration: none; color: var(--accent); }
+
+/* ---------- "other code" tooltips (codetip.js) ----------
+   The chip sits inline after an Excel name; the popup is appended to <body> and positioned by
+   codetip.js. A 2 px bar fills over 1 s while the mouse rests on the chip, then the popup locks
+   (accent border, × button, "locked · Esc to close"). Under prefers-reduced-motion the bar does
+   not animate; it simply shows full once locked. */
+.essay .codetip {
+  font-family: var(--font-mono); font-size: .72em; font-weight: 500; line-height: 1.4;
+  color: var(--accent); background: transparent; border: 1px solid var(--rule); border-radius: 999px;
+  padding: 0 .55em; margin: 0 .15em; cursor: pointer; vertical-align: .1em; white-space: nowrap;
+}
+.essay .codetip::before { content: "</> "; opacity: .75; }
+.essay .codetip:hover, .essay .codetip[aria-expanded="true"] { border-color: var(--accent); background: var(--note-bg); }
+.codetip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctip {
+  position: absolute; z-index: 30; display: none; width: max-content; min-width: min(20rem, calc(100vw - 32px));
+  background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 6px;
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--ink) 18%, transparent);
+  font-family: var(--font-body); font-size: 15px; overflow: hidden;
+}
+.ctip.is-open { display: block; }
+.ctip.is-locked { border-color: var(--accent); }
+.ct-bar { height: 2px; background: transparent; }
+.ct-bar span { display: block; height: 100%; width: 0; background: var(--accent); }
+.ctip.is-filling .ct-bar span { width: 100%; transition: width 1s linear; }
+.ctip.is-locked .ct-bar span { width: 100%; }
+.ct-head { display: flex; align-items: center; gap: .5rem; padding: .35rem .5rem 0; border-bottom: 1px solid var(--rule); }
+.ct-tabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; }
+.ct-tabs button {
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); background: transparent;
+  border: 0; border-bottom: 2px solid transparent; padding: .35rem .55rem; cursor: pointer;
+}
+.ct-tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ct-tabs button:focus-visible, .ct-x:focus-visible, .ct-copy:focus-visible, .ct-pane:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ct-state { margin-left: auto; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.ct-x { display: none; margin-left: auto; flex: none; font-size: 18px; line-height: 1; color: var(--muted); background: transparent; border: 0; padding: .1rem .35rem; cursor: pointer; }
+.ctip.is-locked .ct-x { display: block; }
+.ct-state + .ct-x { margin-left: 0; }
+@media (max-width: 520px) { .ct-state { display: none; } .ct-state + .ct-x { margin-left: auto; } .ct-tabs button { padding: .35rem .45rem; } }
+.ct-pane { padding: .55rem .7rem .7rem; position: relative; }
+.ct-pane pre {
+  margin: 0; padding: .55rem .65rem; background: var(--plot); border-radius: 4px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55; color: var(--ink);
+}
+.ct-pane code { font-family: inherit; background: none; padding: 0; }
+.ct-copy {
+  margin-top: .45rem; font-family: var(--font-mono); font-size: 12px; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 4px; padding: .15rem .55rem; cursor: pointer;
+}
+.ct-copy:hover { border-color: var(--accent); }
+.ct-note { margin: .45rem 0 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 52ch; }
+.ct-note code { font-family: var(--font-mono); font-size: .9em; }
+:root[data-readability] .ctip { font-size: 17px; }
+:root[data-readability] .ct-pane pre, :root[data-readability] .ct-tabs button { font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .ctip.is-filling .ct-bar span { transition: none; width: 0; } }

@@ -90,7 +90,7 @@
 <!-- 1 -->
 <h2 id="s1"><span class="sec">§1</span> The rule, and how to use it</h2>
 <p>"\(n \ge 30\)" is the rule most of us were handed. It ignores the one property of the data that matters most here, the <b>skewness</b> \(\gamma_1 = \mathbb E[(X-\mu)^3]/\sigma^3\): zero for a symmetric spread, positive for a long right tail.</p>
-<aside class="mnote"><b class="lab">Where the 28 comes from</b>For perfectly normal data, \(\bar x \pm 1.96\,s/\sqrt n\) covers only 91.8% at \(n = 10\) and is still just under 94% at \(n = 29\). The 28 is the price of using 1.96 with an estimated \(s\). Use the t critical value (Excel's <code>CONFIDENCE.T</code>, MATLAB's <code>tinv</code>) and that part goes away (exactly, for normal data); the \(25\gamma_1^2\) does not.</aside>
+<aside class="mnote"><b class="lab">Where the 28 comes from</b>For perfectly normal data, \(\bar x \pm 1.96\,s/\sqrt n\) covers only 91.8% at \(n = 10\) and is still just under 94% at \(n = 29\). The 28 is the price of using 1.96 with an estimated \(s\). Use the t critical value (Excel's <code>CONFIDENCE.T</code> <button type="button" class="codetip" data-tip="tip-tcrit" aria-label="The t critical value and interval in MATLAB, Python, R and Julia">other code</button>) and that part goes away (exactly, for normal data); the \(25\gamma_1^2\) does not.</aside>
 <div class="rulebox"><span class="lab">The rule (Sugden, Smith &amp; Jones 2000, eq. 4.3)</span>
 <p>Trust a two-sided 95% interval for a mean when \(n > 28 + 25\gamma_1^2\). "Trust" means the interval really covers the mean at least 94% of the time.</p></div>
 
@@ -126,9 +126,9 @@
 
 <h3>How to use it</h3>
 <ol class="steps">
-<li><b>Estimate the skewness.</b> Excel: <code>=SKEW(A2:A41)</code>. MATLAB: <code>skewness(x, 0)</code> (the 0 asks for the bias-corrected version, the same number Excel gives). Treat the result as rough: at \(n = 30\) it scatters by about ±0.4 even for symmetric data, and by about ±0.7 for exponential data, where it also averages about 1.6 instead of 2. If the physics says the quantity is bounded at zero with a long right tail (times, sizes, concentrations), believe the physics.</li>
+<li><b>Estimate the skewness.</b> Excel: <code>=SKEW(A2:A41)</code> <button type="button" class="codetip" data-tip="tip-skew" aria-label="Skewness in MATLAB, Python, R and Julia">other code</button>. Treat the result as rough: at \(n = 30\) it scatters by about ±0.4 even for symmetric data, and by about ±0.7 for exponential data, where it also averages about 1.6 instead of 2. If the physics says the quantity is bounded at zero with a long right tail (times, sizes, concentrations), believe the physics.</li>
 <li><b>Compare with the rule.</b> \(n\) comfortably above \(28 + 25\gamma_1^2\): the usual interval is fine.</li>
-<li><b>If you're short</b>, use a <b>bootstrap-t interval</b>. In MATLAB, <code>bootci(2000, {@mean, x}, 'Type', 'student')</code>. That runs a second, nested bootstrap (100 resamples each) to estimate the standard error; this faster call gives it the formula directly and matches this page's method: <code>bootci(2000, {@mean, x}, 'Type', 'student', 'StdErr', @(x) std(x)/sqrt(numel(x)))</code>. MATLAB's default type, <code>'bca'</code>, is also good here. Excel has no built-in bootstrap; the Python script at the end has a short function. Taking logs first also helps, but then the interval is for the geometric mean (the median, for lognormal data), not the mean.</li>
+<li><b>If you're short</b>, use a <b>bootstrap-t interval</b> <button type="button" class="codetip" data-tip="tip-boot" aria-label="Bootstrap-t in MATLAB, Python, R and Julia">other code</button>. Excel has no built-in bootstrap. Taking logs first also helps, but then the interval is for the geometric mean (the median, for lognormal data), not the mean.</li>
 <li><b>One-sided statements need more care, and which side depends on the skew.</b> For right-skewed data (times, sizes, concentrations) the interval sits too low, so an upper bound ("mean repair time is at most…") is the one that fails, while a lower bound is conservative. For left-skewed data, such as the strength of a mature process (Weibull with shape above about 3.6), it is the reverse. §2 and §4 show that one tail goes wrong long before the two-sided coverage does.</li>
 </ol>
 
@@ -239,6 +239,62 @@ $$\pm\,0.085\,\frac{\gamma_1}{\sqrt n}.$$
   <a class="take-colab" aria-describedby="new-tab-note" href="https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/marginalia/clt-sample-size/clt-sample-size.ipynb" target="_blank" rel="noopener">Open in Colab</a>
 </div>
 <span id="new-tab-note" hidden>Opens in a new tab</span>
+<template id="tip-skew">
+<div data-lang="matlab" data-label="MATLAB"><pre><code>g1 = skewness(x, 0);   % 0 = bias-corrected, same as Excel SKEW</code></pre></div>
+<div data-lang="python" data-label="Python"><pre><code>from scipy import stats
+g1 = stats.skew(x, bias=False)   # same as Excel SKEW</code></pre></div>
+<div data-lang="r" data-label="R"><pre><code>library(e1071)   # install.packages("e1071") once
+g1 &lt;- skewness(x, type = 2)   # same as Excel SKEW</code></pre></div>
+<div data-lang="julia" data-label="Julia"><pre><code>using StatsBase   # ] add StatsBase once
+n = length(x)
+g1 = skewness(x) * sqrt(n * (n - 1)) / (n - 2)   # same as Excel SKEW</code></pre><p class="ct-note">StatsBase's <code>skewness</code> is the uncorrected version; the factor turns it into Excel's.</p></div>
+</template>
+<template id="tip-tcrit">
+<div data-lang="matlab" data-label="MATLAB"><pre><code>n  = numel(x);
+tc = tinv(0.975, n - 1);
+ci = mean(x) + [-1 1] * tc * std(x) / sqrt(n);</code></pre></div>
+<div data-lang="python" data-label="Python"><pre><code>from scipy import stats
+n  = len(x)
+tc = stats.t.ppf(0.975, n - 1)
+ci = stats.t.interval(0.95, n - 1, loc=x.mean(), scale=stats.sem(x))</code></pre></div>
+<div data-lang="r" data-label="R"><pre><code>tc &lt;- qt(0.975, length(x) - 1)
+ci &lt;- t.test(x)$conf.int</code></pre></div>
+<div data-lang="julia" data-label="Julia"><pre><code>using Distributions, Statistics   # ] add Distributions once
+n  = length(x)
+tc = quantile(TDist(n - 1), 0.975)
+ci = mean(x) .+ [-1, 1] .* tc * std(x) / sqrt(n)</code></pre></div>
+</template>
+<template id="tip-boot">
+<div data-lang="matlab" data-label="MATLAB"><pre><code>% bootstrap-t, giving it the standard error directly (fast, matches this page)
+ci = bootci(2000, {@mean, x}, 'Type', 'student', ...
+            'StdErr', @(x) std(x) / sqrt(numel(x)));
+% MATLAB's default type, 'bca', is also second-order accurate:
+ci_bca = bootci(2000, @mean, x);</code></pre><p class="ct-note">Without <code>'StdErr'</code>, the <code>'student'</code> type runs a nested bootstrap (100 resamples each) to estimate it.</p></div>
+<div data-lang="python" data-label="Python"><pre><code>import numpy as np
+
+def bootstrap_t(x, B=1999, level=0.95, seed=None):
+    x = np.asarray(x, float); n = len(x)
+    r = np.random.default_rng(seed)
+    m, s = x.mean(), x.std(ddof=1)
+    xb = x[r.integers(0, n, size=(B, n))]
+    t = np.sort((xb.mean(1) - m) / (xb.std(1, ddof=1) / np.sqrt(n)))
+    a = (1 - level) / 2
+    lo, hi = t[round((B + 1) * a) - 1], t[round((B + 1) * (1 - a)) - 1]
+    return m - hi * s / np.sqrt(n), m - lo * s / np.sqrt(n)</code></pre><p class="ct-note">SciPy's built-in has no bootstrap-t; its default, <code>stats.bootstrap((x,), np.mean, method='BCa')</code>, is also second-order accurate.</p></div>
+<div data-lang="r" data-label="R"><pre><code>library(boot)   # ships with R
+f &lt;- function(d, i) { y &lt;- d[i]; c(mean(y), var(y) / length(y)) }
+b &lt;- boot(x, f, R = 1999)
+boot.ci(b, type = "stud")</code></pre><p class="ct-note">The second value <code>f</code> returns is the variance of the mean, which <code>type = "stud"</code> needs.</p></div>
+<div data-lang="julia" data-label="Julia"><pre><code>using Statistics
+
+function bootstrap_t(x; B = 1999, level = 0.95)
+    n, m, s = length(x), mean(x), std(x)
+    t = sort([(mean(y) - m) / (std(y) / sqrt(n)) for y in (rand(x, n) for _ in 1:B)])
+    a = (1 - level) / 2
+    lo, hi = t[round(Int, (B + 1) * a)], t[round(Int, (B + 1) * (1 - a))]
+    return (m - hi * s / sqrt(n), m - lo * s / sqrt(n))
+end</code></pre></div>
+</template>
 </main>
 
 <p class="foot">
@@ -261,6 +317,7 @@ $$\pm\,0.085\,\frac{\gamma_1}{\sqrt n}.$$
 <script src="../plot.js"></script>
 <script src="clt-math.js"></script>
 <script src="main.js"></script>
+<script src="../codetip.js"></script>
 <!-- Feedback widget (F7): strings-common.js is loaded as plain data for its fb* strings; no i18n engine, English only. -->
 <script src="../../assets/strings-common.js"></script>
 <script src="../../assets/view-settings.js"></script>

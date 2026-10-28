@@ -174,7 +174,7 @@ $$P^n = \Pi + \lambda^n\,(I-\Pi).$$
 
 <!-- 5 -->
 <h2 id="s5"><span class="sec">§5</span> Bigger chains</h2>
-<aside class="mnote"><b class="lab">Practical use</b>For a bigger chain, the settling rule still works with \(|\lambda_2|\), the second-largest eigenvalue modulus: in MATLAB, sort <code>abs(eig(P))</code> and take the second entry.</aside>
+<aside class="mnote"><b class="lab">Practical use</b>For a bigger chain, the settling rule still works with \(|\lambda_2|\), the second-largest eigenvalue modulus <button type="button" class="codetip" data-tip="tip-eig" aria-label="The second-largest eigenvalue modulus in MATLAB, Python, R and Julia">other code</button>.</aside>
 <p>The two-state result is the simplest case of a general fact. Every transition matrix has 1 as an eigenvalue, and every other eigenvalue has modulus at most 1. For a chain that is irreducible and aperiodic, the others are strictly inside the unit circle, and the one with the largest modulus sets the eventual rate at which \(P^n\) approaches \(\Pi\) (exactly, if \(P\) is diagonalizable; otherwise up to a polynomial factor), the way \(\lambda\) does here. For two states the second eigenvalue is just \(1-a-b\). Levin and Peres build mixing times on this idea: their Chapter 12 is on eigenvalues, and for reversible chains they define the relaxation time as \(1/(1-|\lambda_2|)\). Every two-state chain is reversible, so here it is \(1/(1-|\lambda|)\).</p>
 <p>In practice this tells you how long a simulation's warm-up has to be before its starting state stops mattering, and how far apart two observations must be before they are nearly independent.</p>
 
@@ -192,6 +192,15 @@ $$P^n = \Pi + \lambda^n\,(I-\Pi).$$
   <a class="take-colab" aria-describedby="new-tab-note" href="https://colab.research.google.com/github/gidgo130/gideonong.me/blob/main/learning/marginalia/markov-memory/markov-memory.ipynb" target="_blank" rel="noopener">Open in Colab</a>
 </div>
 <span id="new-tab-note" hidden>Opens in a new tab</span>
+<template id="tip-eig">
+<div data-lang="matlab" data-label="MATLAB"><pre><code>m = sort(abs(eig(P)), 'descend');
+lam2 = m(2);</code></pre></div>
+<div data-lang="python" data-label="Python"><pre><code>import numpy as np
+lam2 = np.sort(np.abs(np.linalg.eigvals(P)))[::-1][1]</code></pre></div>
+<div data-lang="r" data-label="R"><pre><code>lam2 &lt;- sort(Mod(eigen(P)$values), decreasing = TRUE)[2]</code></pre></div>
+<div data-lang="julia" data-label="Julia"><pre><code>using LinearAlgebra
+lam2 = sort(abs.(eigvals(P)), rev = true)[2]</code></pre></div>
+</template>
 </main>
 
 <p class="foot">
@@ -213,6 +222,7 @@ $$P^n = \Pi + \lambda^n\,(I-\Pi).$$
 <script src="../../assets/learning.js"></script>
 <script src="../plot.js"></script>
 <script src="main.js"></script>
+<script src="../codetip.js"></script>
 <!-- Feedback widget (F7): strings-common.js is loaded as plain data for its fb* strings; no i18n engine, English only. -->
 <script src="../../assets/strings-common.js"></script>
 <script src="../../assets/view-settings.js"></script>

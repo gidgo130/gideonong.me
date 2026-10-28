@@ -20,6 +20,7 @@ learning/
     index.html                The series index, grouped by subject, rendered from the registry
     marginalia.css            Theme + page pieces + margin notes (see "Design")
     plot.js                   The series' SVG plotter (window.MP), shared by every entry
+    codetip.js                The "other code" tooltips (MATLAB · Python · R · Julia), shared
     README.md                 This manual
     <slug>/
       index.html              The entry: static English text, math in \( \) and $$ $$
@@ -49,8 +50,15 @@ Entries so far: 01 `markov-memory` (two-state Markov chain), 02 `clt-sample-size
   as they carry nothing from the keep-out list (Gideon's call, 2026-10-27). Less essential
   results may be cited instead of derived (also 2026-10-27).
 - **Practical first.** Each page opens with the short answer and the rule or recipe an engineer
-  can use (Excel / MATLAB names where they exist), then the why. Interactives go wherever they
-  help, not only at the end.
+  can use, then the why. Interactives go wherever they help, not only at the end.
+- **Code: Excel in the text, everything else in an "other code" tip** (2026-10-27). The Excel
+  function stays inline; MATLAB, Python, R and Julia go in a `<button class="codetip"
+  data-tip="ID">other code</button>` chip right after it, with tabs in that order. Every snippet
+  is RUN before it goes up (one fixed dataset, all four languages agreeing to the printed
+  digits); if a language can't be run here, stop and ask Gideon to run it (Julia was checked on
+  his PC; MATLAB-only functions Octave lacks, such as `bootci`, are checked against the
+  MathWorks docs and say so in the commit). Name the package and the one-time install in a
+  comment (`# pip install scipy`, `install.packages("e1071")`, `] add Distributions`).
 - **English only.** Text in the HTML (and in main.js for redrawn readouts), no strings files, no
   learning-i18n.js, no `data-es-ready`, no toggle; strings-common.js loads only as data for the
   feedback widget. Only the hub's Marginalia band is bilingual (hub strings.js: `margTitle`,
@@ -103,10 +111,14 @@ Entries so far: 01 `markov-memory` (two-state Markov chain), 02 `clt-sample-size
    plumbing (noindex, trailing-slash script, viewing-settings snippet, fonts, learning.css,
    KaTeX css if math, `../marginalia.css`, series bar with three crumbs, footer with `.fb-slot`
    and license, scripts in the order: KaTeX + render call, learning.js, `../plot.js`, helpers,
-   main.js, strings-common.js, view-settings.js, feedback.js). Eyebrow
+   main.js, `../codetip.js` if the page has code chips, strings-common.js, view-settings.js,
+   feedback.js). Eyebrow
    "Marginalia NN · <subject>".
 3. **Page**: short answer box, contents, numbered sections, margin notes, sources section with
-   working links, "Take it with you" (script + Colab link).
+   working links, "Take it with you" (script + Colab link). Code chips: one `<template id="ID">`
+   per chip just before `</main>`, holding `<div data-lang="matlab" data-label="MATLAB"><pre><code>…
+   </code></pre><p class="ct-note">optional note</p></div>`, then python / Python, r / R,
+   julia / Julia. Escape `<`, `>` and `&` inside the code.
 4. **Companion**: `<slug>.py` with `# %%` cells, then
    `python learning/workshop/tools/make-ipynb.py marginalia/<slug> --check`.
 5. **Card**: a CARDS entry `marginalia-<slug>` in `learning/workshop/tools/make-og-cards.py`
@@ -123,6 +135,9 @@ Entries so far: 01 `markov-memory` (two-state Markov chain), 02 `clt-sample-size
   in learning-plan.md). Until they do, check by hand at 375 / 768 / 1280 px, light and dark:
   no console errors, no raw `\(` in the text, chart text readable, no label overlaps, every
   control changes its chart or readout, margin notes beside their paragraphs at 1280 px.
+  Code chips: hover previews and locks after 1 s, click/tap opens locked, tabs switch and the
+  choice carries to the next chip, Copy works, Esc and a click outside close it, the × stays
+  visible at 375 px.
 - `make-ipynb.py marginalia/<slug> --check` for each companion.
 - After deploy: one feedback send from an entry (it must file an issue labelled
   `series:marginalia`; run `scripts/feedback-labels.py` once first so the label exists), and the

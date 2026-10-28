@@ -126,7 +126,8 @@ learning/reflections/  The Reflections series (English-only essays on the 11 boo
                     (series manual), <book>/index.html, and <book>/<slug>/ (index.html,
                     main.js, <slug>.py, GENERATED <slug>.ipynb). Registry: assets/reflections.js
 learning/marginalia/  The Marginalia series (English-only one-page answers to side questions):
-                    index.html, marginalia.css, plot.js (the series' plotter), README.md
+                    index.html, marginalia.css, plot.js (the series' plotter), codetip.js
+                    ("other code" tooltips), README.md
                     (series manual) and <slug>/ (index.html, main.js, optional helpers,
                     <slug>.py, GENERATED <slug>.ipynb). Registry: assets/marginalia.js
 CLAUDE.md           This file
@@ -839,7 +840,7 @@ rest lives. One home per rule; don't restate a manual's content here.
 - Content is ported from approved explainers: change styling and plumbing, never wording,
   equations or numbers.
 
-### Marginalia (learning/marginalia/; manual: learning/marginalia/README.md; decisions M1–M10: learning-plan.md)
+### Marginalia (learning/marginalia/; manual: learning/marginalia/README.md; decisions M1–M12: learning-plan.md)
 - URLs: marginalia/ → marginalia/<slug>/. Slugs, never numbers; the entry number on the page is
   its registry position (the order the questions were asked), so entries are only appended.
 - Content comes from promote briefs in Gideon's private notes. The brief's "keep out" list is
@@ -858,6 +859,9 @@ rest lives. One home per rule; don't restate a manual's content here.
 - Excluded from the offline app (build.ps1 $Exclude); the hub hides the band whenever
   marginalia.js is absent. Footer license line: CC BY-SA 4.0; cited works remain their authors'
   and publishers'. Python companions: <slug>.py plus a GENERATED <slug>.ipynb.
+- Code on pages: Excel inline; MATLAB, Python, R and Julia in "other code" tips
+  (learning/marginalia/codetip.js + a <template> per chip). Run every snippet before it goes up;
+  if a language can't run in the session, stop and ask Gideon to run it.
 
 ## What NOT to do
 (Main site. /learning follows its own rules in the section above.)
