@@ -135,10 +135,11 @@ Entries so far: 01 `markov-memory` (two-state Markov chain), 02 `clt-sample-size
   in learning-plan.md). Until they do, check by hand at 375 / 768 / 1280 px, light and dark:
   no console errors, no raw `\(` in the text, chart text readable, no label overlaps, every
   control changes its chart or readout, margin notes beside their paragraphs at 1280 px.
-  Code chips: hover previews and locks after 1 s (a locked tip stays when the mouse leaves),
-  click/tap opens locked, tabs switch and the
-  choice carries to the next chip, Copy works, Esc and a click outside close it, the × stays
-  visible at 375 px.
+  Code chips: hover previews and locks after 1 s (a locked tip stays when the mouse leaves;
+  moving into a preview locks it), click/tap opens locked, tabs switch and the choice carries to
+  the next chip, Copy works, Esc and a click or tap outside close it, scrolling on a phone does
+  NOT close it, the × stays visible at 375 px. Several tips can be open at once (a locked tip
+  never blocks hovering another chip); the newest is on top and Esc closes only the top one.
 - `make-ipynb.py marginalia/<slug> --check` for each companion.
 - After deploy: one feedback send from an entry (it must file an issue labelled
   `series:marginalia`; run `scripts/feedback-labels.py` once first so the label exists), and the
