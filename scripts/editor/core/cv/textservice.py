@@ -35,6 +35,8 @@ from ..jsonfile import JsonFile, changes, delete_path, set_path
 from ..transcript import paths as tpaths
 from . import content as C
 from . import cvcheck, docxread, fit, importer, masters, renderer, scans, wordroute
+from .designed import model as dmodel
+from .designed import schema as dschema
 
 log = logging.getLogger("editor.cvtext")
 
@@ -52,8 +54,12 @@ def _dump(obj) -> bytes:
 
 
 class CvTextService:
-    def __init__(self, repo_root: Path, backups: Backups, local_dir: Optional[Path] = None, gpa: Optional[Callable[[], Optional[str]]] = None):
+    def __init__(self, repo_root: Path, backups: Backups, local_dir: Optional[Path] = None, gpa: Optional[Callable[[], Optional[str]]] = None, migrate: bool = False):
         self.repo_root = Path(repo_root)
+        # Only the editor itself (app.EditorState) passes migrate=True. Anything else that opens
+        # the service — a test, a script — reads an older content.json as it is and never writes
+        # it: opening must not be a write.
+        self.migrate_on_load = bool(migrate)
         self.backups = backups
         self.local_dir = Path(local_dir) if local_dir else None
         self.gpa = gpa or (lambda: None)
@@ -67,6 +73,7 @@ class CvTextService:
         self.autosave_path = (self.local_dir / "drafts" / "cvtext.json") if self.local_dir else None
         self.last_apply_path = (self.local_dir / "cvtext-last-apply.json") if self.local_dir else None
         self.pending_autosave: Optional[dict] = self._read_autosave()
+        self.migrated: Optional[dict] = None  # set when this launch moved content.json to a new version
         self.load()
 
     # ------------------------------------------------------------- last apply record
@@ -98,6 +105,7 @@ class CvTextService:
         try:
             self.doc = JsonFile(self.repo_root, CONTENT_FILE) if self.content_path().is_file() else None
             self.load_error = None
+            self._migrate_file()
         except (OSError, ValueError) as e:
             self.doc = None
             self.load_error = f"{CONTENT_FILE}: {e}"
@@ -127,6 +135,22 @@ class CvTextService:
             if self.draft is not None and self.draft == self.doc.obj:
                 self.draft = None
         self._write_autosave()
+
+    def _migrate_file(self) -> None:
+        """content.json version 1 → 2, once: back the file up, write the migrated copy, read it
+        again. The migration only adds (designed/schema.py), so the masters and their slot maps
+        are not involved. A file in another layout (read-only here) is left alone."""
+        if not self.migrate_on_load or self.doc is None or self.doc.read_only or not isinstance(self.doc.obj, dict):
+            return
+        was = dschema.version_of(self.doc.obj)
+        if was >= dschema.VERSION:
+            return
+        new = dschema.migrate(self.doc.obj)
+        bset = self.backups.create([CONTENT_FILE], f"before migrating the CV content set to version {dschema.VERSION}")
+        atomic_write(self.doc.path, self.doc.render(new))
+        self.doc = JsonFile(self.repo_root, CONTENT_FILE)
+        self.migrated = {"from": was, "to": dschema.VERSION, "backup": bset.id, "when": datetime.now().isoformat(timespec="seconds")}
+        log.info("migrated %s from version %s to %s (backup %s)", CONTENT_FILE, was, dschema.VERSION, bset.id)
 
     def load_content(self) -> Optional[dict]:
         return self.doc.obj if self.doc else None
@@ -207,7 +231,8 @@ class CvTextService:
 
     def move(self, id: str, variant: str, delta: int) -> None:
         d = self._working()
-        C.move(d, id, variant, delta)
+        # this is the CV text tab's move: its Designed list shows ticked items only
+        C.move(d, id, variant, delta, visible_only=(variant == C.DESIGNED))
         self._commit(d)
 
     def add_item(self, section_id: str, kind: str, en_text: str, variant: str) -> str:
@@ -282,7 +307,9 @@ class CvTextService:
             self._write_autosave()
             return {"applied": 0, "fileChanged": False}
         draft = pend.get("draft")
-        changed = pend.get("baseSha256") not in (None, self.doc.sha256)
+        if isinstance(draft, dict):
+            draft = dschema.migrate(draft)  # a draft autosaved before the file was migrated
+        changed = pend.get("baseSha256") not in (None, self.doc.sha256) and not self.migrated
         applied = 0
         if isinstance(draft, dict) and draft.get("version") == self.doc.obj.get("version") and draft != self.doc.obj:
             self.draft = draft
@@ -559,7 +586,8 @@ class CvTextService:
             reasons.append(f"{CONTENT_FILE} changed on disk since it was loaded — reload first")
         # every error counts here, pre-existing ones too: an empty, TODO or overflowing paragraph
         # must never reach a master (saving content.json is gated more leniently)
-        errors = [i for i in self._issues(content) if i.level == "error"]
+        # (errors on text only the Designed CV uses never reach a master, so they do not count)
+        errors = [i for i in self._issues(content) if i.level == "error" and not cvcheck.designed_only_key(content, i.key)]
         if errors:
             first = errors[0]
             reasons.append(f"{len(errors)} error(s) in the content — fix them first (e.g. {C.label_of(content, first.key)}: {first.message})")
@@ -756,14 +784,15 @@ class CvTextService:
             "readOnly": self.doc.read_only if self.doc else (self.load_error or "no content set"),
             "diskChanged": self.doc.disk_changed() if self.doc else False,
             "data": content,
-            "listing": {v: C.listing(content, v) for v in importer.VARIANTS} if content else None,
+            "listing": {v: C.listing(content, v) for v in C.ALL_VARIANTS} if content else None,
             "issues": [self._issue_json(content, i) for i in issues],
             "gate": self._gate_json(content, gate) if gate else None,
             "draftCount": self.draft_count(),
             "touched": sorted(self.touched()),
             "fits": fits,
             "fitWarning": self.fit_warning(content),
-            "variants": [{"id": v, "label": C.VARIANT_LABELS[v]} for v in importer.VARIANTS],
+            "variants": [{"id": v, "label": C.VARIANT_LABELS[v]} for v in C.ALL_VARIANTS],
+            "migrated": self.migrated,
             "profileLoaded": self.profile() is not None,
             "gpa": self.gpa(),
             "autosave": {"saved": self.pending_autosave.get("saved")} if self.pending_autosave else None,
@@ -790,6 +819,12 @@ class CvTextService:
         except importer.ImportError_ as e:
             return {"ok": False, "error": "unsupported", "message": str(e)}
         content, slots, report = importer.merge(docs)
+        # the masters know nothing of the Designed variant: bring the file to the current version
+        # and put the Designed checklist, copies and design block of the previous set back on it
+        content = dschema.migrate(content)
+        previous = self.doc.obj if self.doc is not None else None
+        if previous is not None and previous.get("design"):
+            report["designed"] = dschema.carry_over(previous, content)
         proof = {}
         tmp = Path(tempfile.mkdtemp(prefix="cv-proof-"))
         try:
@@ -850,6 +885,8 @@ def _issue_key(base: dict, draft: dict, path: list) -> str:
         if len(path) > 3 and path[2] == "children":
             return str(path[3])
         return str(path[1])
+    if path[0] == "design":
+        return dmodel.issue_key(base, draft, path)
     return ""
 
 
@@ -880,11 +917,12 @@ def change_lines(base: dict, draft: dict) -> list[dict]:
     def duplicated_from(container_base: dict, container_draft: dict, new_id: str) -> Optional[tuple[str, str]]:
         """(original id, variant) when `new_id` is a copy made by duplicate(): named <orig>-<variant>[-n],
         the original exists and has left that variant in the draft."""
-        for v in C.VARIANTS:
+        for v in C.ALL_VARIANTS:
             for suffix in (f"-{v}",) + tuple(f"-{v}-{n}" for n in range(2, 10)):
                 if new_id.endswith(suffix):
                     orig = new_id[: -len(suffix)]
-                    if orig in container_base and orig in container_draft and container_base[orig]["include"].get(v) and not container_draft[orig]["include"].get(v):
+                    was_in = container_base.get(orig, {}).get("include", {}).get(v) or (v == C.DESIGNED and orig in container_base)
+                    if orig in container_base and orig in container_draft and was_in and not container_draft[orig]["include"].get(v):
                         return orig, v
         return None
 
@@ -923,6 +961,7 @@ def change_lines(base: dict, draft: dict) -> list[dict]:
                 seen_ids.add(cid)
                 out.append({"path": ["items", iid, "children", cid], "kind": "removed", "text": f"{where(base, iid)}{C.label_of(base, iid)} › deleted {child_label(item, cid)} {_q(C.label_of(base, cid))}"})
     orders_done: set = set()
+    design_seen: set = set()
 
     def pure_reorder(a: Optional[list], b: Optional[list]) -> bool:
         """An order list whose membership is unchanged — only then is "order changed" worth a line
@@ -934,7 +973,11 @@ def change_lines(base: dict, draft: dict) -> list[dict]:
         if p[0] == "items" and len(p) > 1 and (p[1] in seen_ids or (len(p) > 3 and p[2] == "children" and p[3] in seen_ids)):
             continue
         text = None
-        if p[0] == "header":
+        if p[0] == "design":
+            text = dmodel.change_line(base, draft, c, _q, design_seen)
+            if text is None:
+                continue
+        elif p[0] == "header":
             part = p[1]
             if part == "title":
                 text = f"Header › title ({C.VARIANT_LABELS.get(p[2], p[2])}, {str(p[3]).upper()}): {_q(c['old'])} → {_q(c['new'])}"

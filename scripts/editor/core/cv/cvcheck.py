@@ -69,6 +69,25 @@ def texts(content: dict) -> Iterable[tuple[str, str, str, str, bool, Optional[di
         shown = any(sec["order"].values())
         for lang in C.LANGS:
             yield f"section.{sec['id']}", lang, "heading", sec["heading"][lang], shown, None
+    design = content.get("design") or {}
+    for single in ("profile", "gpa"):
+        node = design.get(single)
+        if node:
+            for lang in C.LANGS:
+                yield f"design.{single}", lang, single, node["text"].get(lang, ""), bool(node.get("include")), None
+    for hkey, h in (design.get("headings") or {}).items():
+        for lang in C.LANGS:
+            yield f"design.heading.{hkey}", lang, "heading", h.get(lang, ""), True, None
+    for m in design.get("main") or []:
+        if m.get("heading"):
+            for lang in C.LANGS:
+                yield "design.main", lang, "heading", m["heading"].get(lang, ""), True, None
+    for group in ("languages", "skills", "certs", "honors"):
+        for row in design.get(group) or []:
+            fields = [k for k, v in row.items() if isinstance(v, dict) and k != "base"]
+            for n, f in enumerate(fields):  # the first field names the row and is required; the second may be empty
+                for lang in C.LANGS:
+                    yield f"design.{group}.{row.get('id')}", lang, f, row[f].get(lang, ""), bool(row.get("include")) and n == 0, None
     for iid, item in content["items"].items():
         inc = _included(item)
         if item["kind"] == "entry":
@@ -85,7 +104,21 @@ def texts(content: dict) -> Iterable[tuple[str, str, str, str, bool, Optional[di
                 yield iid, lang, "line", item["text"][lang], inc, item
 
 
-_PART_LABEL = {"name": "Name", "contact": "Contact line", "title": "Title line", "heading": "Heading", "role": "Role", "org": "Organization", "date": "Date", "bullet": "Bullet", "line": "Line"}
+_PART_LABEL = {"name": "Name", "contact": "Contact line", "title": "Title line", "heading": "Heading", "role": "Role", "org": "Organization", "date": "Date", "bullet": "Bullet", "line": "Line",
+               "profile": "Profile", "gpa": "GPA line", "level": "Level", "label": "Label", "list": "List", "issuer": "Issuer", "years": "Years"}
+
+
+def designed_only_key(content: dict, key: str) -> bool:
+    """True when an issue key belongs to text only the Designed CV uses: the design block, its
+    title line, or an item / bullet that is in no Word document. Such text never reaches a
+    master, so its errors do not block an Apply."""
+    if key.startswith("design.") or key == f"header.title.{C.DESIGNED}":
+        return True
+    try:
+        node = C.find(content, key)[-1]
+    except KeyError:
+        return False
+    return not C.in_masters(node) and (C.DESIGNED in node.get("include", {}) or C.on_shelf(content, key))
 
 
 def _spinelli(text: str, entry: Optional[dict]) -> bool:
@@ -193,6 +226,14 @@ def check(
                 g = gpa_issue(text, lang, gpa, key)
                 if g:
                     issues.append(g)
+        # the Designed CV writes the degrees on the Education entry's own line and keeps its GPA
+        # line in the design block: the same two rules read them there
+        if part == "role" and key in edu_items and entry is not None and not C.in_masters(entry):
+            issues += degree_issues(text, lang, profile, key)
+        if key == "design.gpa":
+            g = gpa_issue(text, lang, gpa, key)
+            if g:
+                issues.append(g)
     for iid, per_variant in (fits or {}).items():
         for variant, langs in per_variant.items():
             for lang, line in (langs or {}).items():

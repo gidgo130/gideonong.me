@@ -576,7 +576,7 @@
       { label: "Restore drafts", primary: true, onclick: async () => { const r = await api("/api/cvtext/autosave/restore", { method: "POST", body: {} }); clearBanner("autosave"); toast(r.applied ? "Drafts restored" + (r.fileChanged ? " (content.json changed on disk since — check the review)" : "") : "Nothing to restore — the file already matched"); await loadState(); } },
       { label: "Discard", onclick: async () => { await api("/api/cvtext/autosave/discard", { method: "POST", body: {} }); clearBanner("autosave"); } }]);
     else clearBanner("autosave");
-    const m = location.hash.replace(/^#/, "").match(/^(full|professional|resume)(?:\/(.+))?$/);
+    const m = location.hash.replace(/^#/, "").match(/^(full|professional|resume|designed)(?:\/(.+))?$/);
     if (m) { state.variant = m[1]; if (m[2]) state.selected = decodeURIComponent(m[2]); }
     if (!(state.selected === "header" || state.selected.startsWith("section.") || findNode(state.selected))) state.selected = "header";
     renderAll(true);
@@ -606,7 +606,7 @@
     $("#addDlg").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); doAdd(); } });
     document.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (state.data && state.data.data && !$("#reviewDlg").open) openReview(); } });
     window.addEventListener("beforeunload", (e) => { if (state.unsaved && !window.__navigating) { e.preventDefault(); e.returnValue = ""; } });
-    window.addEventListener("hashchange", () => { const m = location.hash.replace(/^#/, "").match(/^(full|professional|resume)(?:\/(.+))?$/); if (m && state.data) { state.variant = m[1]; if (m[2]) state.selected = decodeURIComponent(m[2]); renderAll(true); } });
+    window.addEventListener("hashchange", () => { const m = location.hash.replace(/^#/, "").match(/^(full|professional|resume|designed)(?:\/(.+))?$/); if (m && state.data) { state.variant = m[1]; if (m[2]) state.selected = decodeURIComponent(m[2]); renderAll(true); } });
     loadState().catch((e) => setBanner("load", "err", "Could not load: " + e.message));
     heartbeat();
     setInterval(heartbeat, 5000);
