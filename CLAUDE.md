@@ -117,7 +117,8 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      staging/editor-private/personal.json and the birth date never prints.
                      Template: static/designed/ (page.html, parts.html, designed.css — palettes
                      as custom properties, fonts/ vendored under the OFL with their licenses,
-                     icons/ = LinkedIn's logo files, gitignored). There is no publish path (see
+                     icons/ = LinkedIn's [in] logo files, © LinkedIn, tracked but not covered by
+                     the repo's licenses — LICENSE says so). There is no publish path (see
                      Documents). Its .local/ (backups, logs, drafts, settings, WebView2
                      storage, the export job's temp folder) is gitignored. It never runs git
                      write commands.

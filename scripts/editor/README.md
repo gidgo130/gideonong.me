@@ -444,9 +444,9 @@ import report lists anything that could not be re-attached exactly.
 color and font is a custom property, one block per palette; the TU hex values come from a
 third-party listing — correct them there), `fonts/` (Figtree, Archivo, Archivo Narrow, Lora,
 DM Sans as Latin woff2, all SIL OFL 1.1 with their license files) and `icons/` (LinkedIn's [in]
-files, copied unchanged from `staging/cv-design/icons/` and **gitignored**; the page masks
-`InBug-White-noR.png` in CSS so the glyph takes the sidebar color, and falls back to a generic
-link icon when the file is absent). The photo is the site headshot
+files, copied unchanged from `staging/cv-design/icons/`; they are © LinkedIn and not covered by
+the repository's licenses, as LICENSE says; the page masks `InBug-White-noR.png` in CSS so the
+glyph takes the sidebar color, and falls back to a generic link icon if the file is absent). The photo is the site headshot
 (`assets/images/about/headshot.jpg`), cropped to a circle in CSS and never modified. No personal
 text is in the template: a fresh clone renders nothing until a content set exists.
 `staging/cv-design/seed.json` (private) holds the first selection; the tab offers **Seed it**
@@ -643,6 +643,6 @@ exactly what it would do without the Designed variant.
 | `core/transcript/profile.py` | Validation for profile.json and adjustments.json |
 | `core/transcript/service.py` | Drafts / review / save of the inputs, parse and build jobs, publish — what the Transcript page talks to |
 | `static/` | The pages: index.html + app.js (site text), content.html + content.js, cv.html + cv.js, cvtext.html + cvtext.js, designed.html + designed.js, transcript.html + transcript.js, common.js, app.css |
-| `static/designed/` | The Designed CV template: page.html, parts.html, designed.css, fonts/ (OFL, with licenses), icons/ (LinkedIn's files, gitignored) |
+| `static/designed/` | The Designed CV template: page.html, parts.html, designed.css, fonts/ (OFL, with licenses), icons/ (LinkedIn's [in] files, © LinkedIn) |
 | `tests/` | unittest suite |
 | `make-shortcut.ps1` | Desktop shortcut with the full pythonw.exe path |
