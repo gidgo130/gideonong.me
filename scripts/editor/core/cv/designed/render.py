@@ -175,6 +175,8 @@ def main_html(content: dict, lang: str) -> str:
             if not item or not item["include"].get(D):
                 continue
             if item["kind"] == "entry":
+                if not norm(item["role"][lang]):
+                    continue  # no role in this language: the entry is not on this language's page
                 body.append(_entry(content, iid, item, lang, gpa))
                 gpa = ""  # under the first entry of the education section only
             elif norm(item["text"][lang]):

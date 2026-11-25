@@ -178,9 +178,21 @@ def slot_spans(content: dict, slot: dict, variant: str, lang: str) -> Optional[l
     return text_spans(slot, target[1])
 
 
-def wanted_ids(content: dict, variant: str) -> list[str]:
+def present(node: dict, lang: Optional[str]) -> bool:
+    """Whether an item or bullet exists in `lang`: it has text there (an entry: a role). Text
+    left empty in one language means "not in that language's documents" — which is also how an
+    import records a paragraph that one language's master does not have."""
+    if lang is None:
+        return True
+    part = node["role"] if node.get("kind") == "entry" and "role" in node else node.get("text", {})
+    return bool(norm(part.get(lang, "")))
+
+
+def wanted_ids(content: dict, variant: str, lang: Optional[str] = None) -> list[str]:
     """Slot ids a master of this variant holds, in document order: header, then per section
-    (only sections with items in this variant) its heading, items and their children."""
+    (only sections with items in this variant) its heading, items and their children. With
+    `lang`, items and bullets with no text in that language are left out (an entry with no
+    role there goes with its bullets; a section with nothing left loses its heading)."""
     if variant not in VARIANTS:  # the Designed CV has no master: nothing of it may reach a Word file
         raise RenderError(f"{variant!r} has no Word master")
     header = content["header"]
@@ -190,17 +202,18 @@ def wanted_ids(content: dict, variant: str) -> list[str]:
     out.append("header.contact")
     items = content["items"]
     for sec in content["sections"]:
-        order = sec["order"].get(variant) or []
-        if not order:
+        ids: list[str] = []
+        for iid in sec["order"].get(variant) or []:
+            item = items.get(iid)
+            if item is None or not present(item, lang):
+                continue
+            ids.append(iid)
+            if item["kind"] == "entry":
+                ids += [cid for cid in item.get("order", {}).get(variant, []) if cid in item.get("children", {}) and present(item["children"][cid], lang)]
+        if not ids:
             continue
         out.append(f"section.{sec['id']}")
-        for iid in order:
-            item = items.get(iid)
-            if item is None:
-                continue
-            out.append(iid)
-            if item["kind"] == "entry":
-                out += [cid for cid in item.get("order", {}).get(variant, []) if cid in item.get("children", {})]
+        out += ids
     return out
 
 
@@ -215,7 +228,7 @@ def plan_master(content: dict, slots: list[dict], master_file: str) -> dict:
                 variant, lang = v, lg
     if variant is None:
         raise KeyError(master_file)
-    wanted = wanted_ids(content, variant)
+    wanted = wanted_ids(content, variant, lang)
     wanted_set = set(wanted)
     by_id = {s["id"]: s for s in slots}
     changed, added, removed = [], [], []
@@ -368,7 +381,7 @@ def render_master(content: dict, slot_map: list[dict], master_path: Path) -> Ren
         else:
             prev = s["id"]
     body = doc.document.element.body
-    wanted = wanted_ids(content, variant)
+    wanted = wanted_ids(content, variant, lang)
     report = {"rewritten": [], "added": [], "removed": [], "moved": []}
     sequence: list = []
     for sid in wanted:
@@ -442,7 +455,7 @@ def self_check(content: dict, master_file: str, rendered: bytes, original_path: 
             doc = read_master(tmp)
         except Exception as e:
             return [f"{master_file}: the rendered file does not read back ({e})"]
-        wanted = wanted_ids(content, variant)
+        wanted = wanted_ids(content, variant, lang)
         paras = [p for p in doc.paragraphs if p.kind != "empty"]
         if len(paras) != len(wanted):
             problems.append(f"{master_file}: {len(paras)} paragraphs rendered, {len(wanted)} expected")
@@ -512,7 +525,7 @@ def rebuild_slots(content: dict, master_path: Path) -> tuple[list[dict], dict]:
     master_path = Path(master_path)
     doc = read_master(master_path)
     variant, lang = master_of(content, doc.path.name)
-    wanted = wanted_ids(content, variant)
+    wanted = wanted_ids(content, variant, lang)
     slots, hashes = [], {}
     k = 0
     for p in doc.paragraphs:

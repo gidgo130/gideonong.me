@@ -405,14 +405,29 @@ class CvCheckTests(unittest.TestCase):
         self.assertEqual(codes(base, level="warning"), [("voice", "job-1", "en")])
         self.assertIn("Basket Weaving", next(i.message for i in base if i.key == "uni-3" and i.lang == "en"))
         self.assertIn("Cestería", next(i.message for i in base if i.key == "uni-3" and i.lang == "es"))
-        # empty text: an error only where the node is included somewhere
+        # empty text on an item or bullet: it is left out of that language's documents — a
+        # warning, never an error, and only where the node is included somewhere
         c2 = copy.deepcopy(c)
         c2["items"]["job"]["role"]["es"] = ""
         c2["items"]["job"]["org"]["en"] = ""  # org may be empty
         c2["items"]["job"]["children"]["job-1"]["text"] = {"en": "", "es": ""}
         c2["items"]["job"]["children"]["job-1"]["include"] = {"full": False, "professional": False, "resume": False}
-        self.assertEqual(codes(cvcheck.check(c2, PROFILE, "4.00", []), key="job"), [("empty", "job", "es")])
-        self.assertEqual(codes(cvcheck.check(c2, PROFILE, "4.00", []), key="job-1"), [])
+        got = cvcheck.check(c2, PROFILE, "4.00", [])
+        self.assertEqual(codes(got, key="job"), [("left-out", "job", "es")])
+        self.assertEqual(codes(got, key="job", level="error"), [])
+        self.assertIn("left out of the Spanish documents", next(i.message for i in got if i.key == "job"))
+        self.assertEqual(codes(got, key="job-1"), [])
+        # an entry that IS in a language (it has a role there) still needs its date
+        c2b = copy.deepcopy(c)
+        c2b["items"]["job"]["date"]["es"] = ""
+        self.assertEqual(codes(cvcheck.check(c2b, PROFILE, "4.00", []), key="job", level="error"), [("empty", "job", "es")])
+        c2b["items"]["job"]["role"]["es"] = ""  # … and none once the whole entry is left out of Spanish
+        self.assertEqual(codes(cvcheck.check(c2b, PROFILE, "4.00", []), key="job"), [("left-out", "job", "es")])
+        # the name, the contact line and headings are never optional
+        c2c = copy.deepcopy(c)
+        c2c["header"]["contact"]["es"] = ""
+        c2c["sections"][1]["heading"]["en"] = ""
+        self.assertEqual(codes(cvcheck.check(c2c, PROFILE, "4.00", []), level="error")[-2:], [("empty", "header.contact", "es"), ("empty", "section.experience", "en")])
         # TODO / HTML
         c3 = copy.deepcopy(c)
         c3["items"]["job"]["role"]["en"] = "TODO engineer"
@@ -526,7 +541,8 @@ class ReviewSaveTests(unittest.TestCase):
             # structural edits show as one line each; a pure reorder shows as an order line
             svc.include("engineer-2", "resume", False)
             svc.move("engineer-1", "professional", 1)
-            svc.add_child("engineer", "line", "full")
+            new_line = svc.add_child("engineer", "line", "full")
+            svc.set_text(["items", "engineer", "children", new_line, "text", "en"], "A new line.")  # English only, so far
             texts = [c["text"] for c in svc.review()["changes"]]
             self.assertTrue(any("bullet 2: no longer in Résumé" in x for x in texts), texts)
             self.assertTrue(any("bullet order in Professional changed" in x for x in texts), texts)
@@ -535,12 +551,22 @@ class ReviewSaveTests(unittest.TestCase):
             plans = {m["file"]: m for m in svc.review()["masters"]}
             self.assertEqual(plans[masters.BY_ID["resume-en"].file]["removed"], ["engineer-2"])
             self.assertEqual(plans[masters.BY_ID["full-en"].file]["added"], ["engineer-3"])
+            self.assertEqual(plans[masters.BY_ID["full-es"].file]["added"], [])  # no Spanish text yet: not in the Spanish master
             svc.discard_drafts()
-            # blocked: an included item with empty text
-            svc.set_text(["items", "engineer", "role", "en"], "")
+            # blocked: an entry that is in a document with no date
+            svc.set_text(["items", "engineer", "date", "en"], "")
             s = svc.save()
             self.assertEqual((s["ok"], s["error"]), (False, "blocked"))
             self.assertEqual([i["code"] for i in s["gate"]["blocking"]], ["empty"])
+            svc.discard_drafts()
+            # not blocked: an item with no English text — it is left out of the English documents, and the review says so
+            svc.set_text(["items", "engineer", "role", "en"], "")
+            self.assertTrue(svc.gate().ok())
+            self.assertIn("left-out", [i["code"] for i in svc.review()["gate"]["warnings"]])
+            plans = {m["file"]: m for m in svc.review()["masters"]}
+            # (the section's only entry: its heading goes with it)
+            self.assertEqual(plans[masters.BY_ID["full-en"].file]["removed"], ["section.experience", "engineer", "engineer-1", "engineer-2"])
+            self.assertEqual(plans[masters.BY_ID["full-es"].file]["removed"], [])
             svc.discard_drafts()
             # changed on disk: refused until reload; the draft is re-applied over the new file
             svc.set_text(["items", "engineer", "org", "en"], "New Org")
@@ -592,12 +618,59 @@ class ReviewSaveTests(unittest.TestCase):
             self.assertEqual(c.post("/api/cvtext/import", headers=h, json={}).status_code, 409)
             rv = c.get("/api/cvtext/review", headers=h).get_json()
             self.assertEqual(len(rv["changes"]), 2)
-            self.assertFalse(rv["ok"])  # the new line has no Spanish text yet
+            self.assertTrue(rv["ok"])  # the new line has no Spanish text yet: it is left out of the Spanish résumé, and the review says so
+            self.assertEqual([(w["code"], w["lang"]) for w in rv["gate"]["warnings"] if w["key"] == "experience-a-line"], [("left-out", "es")])
             c.post("/api/cvtext/op", headers=h, json={"op": "delete", "id": "experience-a-line"})
             r = c.post("/api/cvtext/save", headers=h, json={})
             self.assertEqual(r.status_code, 200, r.get_json())
             self.assertEqual(state.draft_count(), 0)
             self.assertEqual(state.cvtext.obj()["items"]["engineer"]["role"]["es"], "Ingeniera")
+
+
+class OneLanguageOnlyTests(unittest.TestCase):
+    def test_text_missing_in_one_language_is_left_out_of_that_languages_masters(self):
+        """A bullet with no Spanish text: Apply takes its paragraph out of the three Spanish masters
+        and leaves the English ones alone; importing the masters again gives the same content back
+        (an import records a paragraph one language lacks as empty text there)."""
+        import hashlib
+
+        def hashes(root):
+            return {m.file: hashlib.sha256((root / masters.MASTERS_DIR / m.file).read_bytes()).hexdigest() for m in masters.MASTERS}
+
+        with TempRepo() as t:
+            svc = import_six(t)
+            before = hashes(t.root)
+            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "es"], "")
+            rv = svc.review()
+            self.assertTrue(rv["ok"], rv["gate"])
+            self.assertEqual(rv["applyBlocked"], [])
+            self.assertEqual([(w["code"], w["key"], w["lang"]) for w in rv["gate"]["warnings"]], [("left-out", "engineer-2", "es")])
+            r = svc.apply()
+            self.assertTrue(r["ok"], r)
+            es_files = sorted(m.file for m in masters.MASTERS if m.lang == "es")
+            self.assertEqual(sorted(r["written"]), es_files)
+            for m in r["masters"]:
+                self.assertEqual((m["removed"], m["rewritten"], m["added"]), (["engineer-2"], [], []) if m["file"] in es_files else ([], [], []), m["file"])
+            after = hashes(t.root)
+            self.assertEqual(sorted(f for f in before if before[f] != after[f]), es_files)
+            for f in es_files:
+                texts = [importer.norm(p.text) for p in importer.read_master(t.root / masters.MASTERS_DIR / f).paragraphs]
+                self.assertIn("Did a thing.", texts)
+                self.assertNotIn("Did another.", texts)
+                self.assertNotIn("engineer-2", [s["id"] for s in svc.slots[f]])
+            self.assertTrue(svc.apply()["noop"])
+            self.assertEqual(svc.drift()["blocked"], [])
+            applied = copy.deepcopy(svc.obj())
+            r2 = svc.run_import()
+            self.assertTrue(r2["ok"], r2)
+            self.assertEqual(svc.obj()["items"]["engineer"]["children"]["engineer-2"]["text"], {"en": "Did another.", "es": ""})
+            self.assertEqual(svc.obj()["items"], applied["items"])
+            self.assertEqual([p for p in svc.master_plans(svc.obj()) if p["changed"] or p["added"] or p["removed"]], [])
+            # typing the Spanish again puts the paragraph back, cloned from its neighbour
+            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "es"], "Hice otra cosa.")
+            r3 = svc.apply()
+            self.assertEqual(sorted(r3["written"]), es_files)
+            self.assertEqual({tuple(m["added"]) for m in r3["masters"] if m["written"]}, {("engineer-2",)})
 
 
 # ----------------------------------------------------------------- Phase 4c
@@ -707,11 +780,30 @@ class RenderTests(unittest.TestCase):
             names = [importer.norm(p.text) for p in importer.read_master(out).paragraphs]
             self.assertLess(names.index("Second Role · Org2 2024"), names.index("Engineer · Org, Town Summer 2026"))
             self.assertEqual(renderer.self_check(svc.obj(), full_en.file, r.data, path), [])
-            # an empty text never becomes a paragraph
+            # an empty text never becomes a paragraph: with no Spanish text the bullet leaves the Spanish
+            # masters (one paragraph removed, the file reads back as the content) and stays in the English ones
             svc.discard_drafts()
             svc.set_text(["items", "engineer", "children", "engineer-1", "text", "es"], "")
+            full_es = masters.BY_ID["full-es"]
+            es_path = t.root / masters.MASTERS_DIR / full_es.file
+            r = renderer.render_master(svc.obj(), svc.slots[full_es.file], es_path)
+            self.assertEqual((r.report["removed"], r.report["rewritten"], r.report["added"]), (["engineer-1"], [], []))
+            self.assertEqual(renderer.self_check(svc.obj(), full_es.file, r.data, es_path), [])
+            self.assertNotIn("engineer-1", renderer.wanted_ids(svc.obj(), "full", "es"))
+            self.assertIn("engineer-1", renderer.wanted_ids(svc.obj(), "full", "en"))
+            self.assertFalse(renderer.render_master(svc.obj(), svc.slots[full_en.file], path).changed)
+            # the last item of a section gone from a language takes the heading with it
+            svc.discard_drafts()
+            svc.set_text(["items", "test-university", "role", "es"], "")
+            ids = renderer.wanted_ids(svc.obj(), "full", "es")
+            self.assertNotIn("section.education", ids)
+            self.assertNotIn("test-university-1", ids)  # an entry goes with its lines
+            self.assertIn("section.education", renderer.wanted_ids(svc.obj(), "full", "en"))
+            # a heading or the contact line with no text is still refused
+            svc.discard_drafts()
+            svc.set_text(["header", "contact", "es"], "")
             with self.assertRaises(renderer.RenderError):
-                renderer.render_master(svc.obj(), svc.slots[masters.BY_ID["full-es"].file], t.root / masters.MASTERS_DIR / masters.BY_ID["full-es"].file)
+                renderer.render_master(svc.obj(), svc.slots[full_es.file], es_path)
 
 
 class DriftAndApplyTests(unittest.TestCase):
@@ -795,12 +887,13 @@ class DriftAndApplyTests(unittest.TestCase):
             self.assertTrue(any("open in Word" in b for b in r["blockers"]), r["blockers"])
             lock.unlink()
             # a pre-existing error blocks apply (not only touched ones)
-            svc.set_text(["items", "engineer", "children", "engineer-2", "text", "es"], "")
+            svc.set_text(["items", "engineer", "date", "es"], "")  # an entry line with no date
             svc.save()
             svc.set_text(["items", "engineer", "role", "es"], "Ingeniero jefe")
             r = svc.apply()
             self.assertEqual(r["error"], "blocked")
             self.assertTrue(any("error(s) in the content" in b for b in r["blockers"]), r["blockers"])
+            svc.set_text(["items", "engineer", "date", "es"], "Summer 2026")
             svc.set_text(["items", "engineer", "children", "engineer-2", "text", "es"], "Hice otra cosa.")
             # a failed self-check stops before any write and makes no backup
             import core.cv.textservice as ts
@@ -911,9 +1004,15 @@ class WordRoutePlanTests(unittest.TestCase):
             self.assertEqual(([s.kind for s in plan.steps].count("move"), plan.rewrites, len(plan.report["moved"])), (1, [], 1))
             self.assertIn(plan.report["moved"][0], ("engineer-1", "engineer-2"))  # a swap: either id describes it
             self.assertEqual(wordroute.simulate(plan, before), before[:8] + [before[9], before[8]])
-            # an empty text is refused before Word is ever involved
+            # a bullet with no English text leaves the English master: the Word route plans the same removal
             svc.discard_drafts()
             svc.set_text(["items", "engineer", "children", "engineer-1", "text", "en"], "")
+            plan = wordroute.plan_ops(svc.obj(), svc.slots[full_en.file], path)
+            self.assertEqual((plan.report["removed"], plan.report["rewritten"], plan.report["added"]), (["engineer-1"], [], []))
+            self.assertEqual(plan.report, renderer.render_master(svc.obj(), svc.slots[full_en.file], path).report)
+            # an empty contact line is refused before Word is ever involved
+            svc.discard_drafts()
+            svc.set_text(["header", "contact", "en"], "")
             with self.assertRaises(renderer.RenderError):
                 wordroute.plan_ops(svc.obj(), svc.slots[full_en.file], path)
 

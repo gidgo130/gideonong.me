@@ -92,7 +92,11 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      paragraphs, clones of the nearest sibling for new items, re-import
                      self-check before any write, Word edits since the last apply pulled or
                      discarded per paragraph, a master open in Word blocks, all six masters
-                     backed up first. Phase 4d (core/cv/wordroute.py): the same edits through
+                     backed up first. Since 2026-11-25 an item or bullet with NO text in one
+                     language (an entry: no role) is left out of that language's masters — a
+                     warning, not an error (renderer.present / wanted_ids(…, lang)); that is how
+                     the EN résumé keeps its IEL line while the ES résumé, short on room, has
+                     none. Don't "fix" that empty Spanish text. Phase 4d (core/cv/wordroute.py): the same edits through
                      a private Word instance as a second standing route, a cross-check that
                      reruns the last apply through the other route and compares, and Export &
                      check from the tab (publish stays on the CV & résumé tab). Phase 4 is
