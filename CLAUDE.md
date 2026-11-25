@@ -101,8 +101,26 @@ scripts/editor/      Dev-side local content editor (Python/Flask + vanilla-JS pa
                      the slug-rename wizard (core/site/service.py rename_entry: keys renamed in
                      place in translations.js, paths, references, shell and image folder moved
                      on save); backup sets can be kept (never pruned) and staging/ + kept sets
-                     copied to a folder outside the repo. Its .local/ (backups, logs, drafts,
-                     settings, WebView2 storage) is gitignored. It never runs git write commands.
+                     copied to a folder outside the repo. The Designed CV (2026-11-25;
+                     core/cv/designed/, static/designed/, static/designed.html + designed.js,
+                     the "Designed CV" tab; spec D1–D18 in staging/cv-design/SPEC.md): a fourth
+                     document of the CV content set with NO Word master — a one-page HTML/CSS
+                     page with a photo and age for Latin American employers (Spanish first),
+                     printed to a PRIVATE PDF in staging/cv-design-out/ by headless Edge
+                     (Chrome as fallback; a throwaway profile per run). content.json is
+                     version 2: include / order "designed" (the order is the checklist, ticked
+                     or not), header.title.designed and a `design` block (profile, GPA line,
+                     sidebar rows, per-output copy records); only the editor migrates the
+                     file, once, with a backup. Every master path skips the variant and
+                     "Import masters" carries it over. The phone and email are read from
+                     header.contact (decision 9); the age is computed from
+                     staging/editor-private/personal.json and the birth date never prints.
+                     Template: static/designed/ (page.html, parts.html, designed.css — palettes
+                     as custom properties, fonts/ vendored under the OFL with their licenses,
+                     icons/ = LinkedIn's logo files, gitignored). There is no publish path (see
+                     Documents). Its .local/ (backups, logs, drafts, settings, WebView2
+                     storage, the export job's temp folder) is gitignored. It never runs git
+                     write commands.
 .githooks/pre-commit  Runs the data/secret guard (blocks on a hit), then the generator, and
                      stages the manifest on every commit
 assets/images/      Project photos and diagrams
@@ -271,6 +289,15 @@ Contents: resume download button (bronze/accent border), contact links, copyrigh
   opposed to the one-page resume. The real Full CV is never published on the site; Gideon
   chooses who gets it and shares it himself. Don't rename the button to "Professional CV",
   and never put a Full CV PDF in assets/pdfs/ or anywhere else that deploys.
+- The Designed CV is private and never published (Gideon's decision, 2026-11-25). It is the
+  one-page CV with a photo and age that the local editor renders for Latin American employers
+  (scripts/editor/README.md → "Designed CV tab"). Its PDFs live only in the gitignored
+  staging/cv-design-out/ (`<es|en> Gideon Ong CV <Diseño|Designed> <C|E> <YYYYMMDD>.pdf`);
+  Gideon sends them himself. The editor has no publish button or code for it, the docs manifest
+  ignores the name, and `designedPublish` in scripts/editor/.local/settings.json — off, and not
+  settable from any page — is the only switch a future publish path may read. Never copy one
+  into assets/ or anywhere else that deploys, never add a "Designed CV" button to the site, and
+  never put the birth date (staging/editor-private/personal.json) in a tracked file.
 
 ### Link previews (2026-09-29)
 Every main page (index, about, experience, projects) and every project sub-page carries a

@@ -4,7 +4,8 @@ Edits the site's content files in place from a local web page shown in its own w
 edits the EN/ES strings in `js/translations.js` (**Site text** tab); Phase 2 edits projects,
 experience and tags as entries (**Content** tab); Phase 1b checks and publishes the CV /
 résumé PDFs (**CV & résumé** tab); Phase 3 runs the transcript scripts and edits their inputs
-(**Transcript** tab); images come later (see `staging/editor-plan.md`). `scripts/` is in
+(**Transcript** tab); the **Designed CV** tab renders a private, one-page photo CV from the
+same content set (below). `scripts/` is in
 `.vercelignore`, so nothing here is published. The tool never runs a git write command — you
 commit.
 
@@ -344,6 +345,113 @@ pre-existing error until you type it or untick Résumé on it):
 The Word-route tests run only with `EDITOR_WORD_TESTS=1` (a private Word for about a
 minute); the plan of operations and the pure simulation are tested without Word.
 
+## Designed CV tab (a fourth CV output: one page, photo and age — private, never published)
+A designed, one-page CV for Mexico and other Latin American employers, Spanish first, English
+supported. It is a **fourth document of the CV content set** ("Designed", mark `D`) with **no
+Word master**: the page is HTML/CSS (`static/designed/`), filled from `content.json` and printed
+to PDF by a headless browser. Word is never involved, and nothing here publishes anything.
+
+**What is stored where.** `content.json` is version 2 (the editor migrates a version-1 file once
+when it starts, backing it up first; nothing but the editor itself migrates — a test or script
+that opens the file reads it as it is). Version 2 only adds:
+- `include.designed` / `order.designed` on items, bullets and sections. A missing flag means
+  "not in it". Unlike the other three documents, the Designed order is the **checklist**: it holds
+  every item on the list, ticked or not, and the flag alone decides what prints — so unticking
+  keeps the place, and an unticked entry keeps its bullets' ticks.
+- `header.title.designed` (the title line) and a `design` block: Profile and the GPA line
+  (`{include, text}`), the main column's sections in order with optional headings of their own,
+  the headings of the fixed blocks, the sidebar rows (languages: name + level; skills: label +
+  list; certifications: name + issuer; honors: name + years — each `{id, include, …, from?}`),
+  and `copies` (below).
+- **Not** the phone or email: the page reads them, the site and LinkedIn from the shared contact
+  line (CV text › Header), the one place the phone is kept (decision 9). No location line prints.
+- The age comes from `staging/editor-private/personal.json` (`{"birth_date": "YYYY-MM-DD"}`,
+  gitignored) and the local date when the page is drawn: "Edad: 20 años" / "Age: 20". The birth
+  date itself never prints.
+
+**The tab.** Left: the checklist — Title line, Profile, GPA line, then each main section
+(entries with their bullets nested), then the sidebar groups. Right: the real page at true
+size, scaled to fit, redrawn on every tick, with **layout** (C · experience first, a solid
+sidebar on the left | E · light right rail, the print-friendly one), **palette** (TU blue |
+gideonong.me bronze), **language** (ES | EN), a **greyscale preview** (a CSS filter on the
+preview only), the **website icon** (the angular G, or globe / browser / compass / code) and a
+**space-left meter per column**: the column's inner height minus the bottom of its last block,
+measured in the rendered page — px and cm left, or "over by", naming the column.
+- **Ticks** are the same include flags as the CV text tab's "Designed" checkbox; the two tabs
+  share one draft, so they always agree. ↗ on a row opens it in the CV text tab. ✕ takes a row
+  off the checklist (something written for this output only is deleted). To put another item
+  on the list, tick Designed on it in the CV text tab.
+- **Text for this output only.** Open a row (click its text) and type, EN | ES. The first edit
+  of shared text makes the copy "Duplicate into" makes — the other three documents and the
+  masters keep the shared wording — and `design.copies` records what was copied and the shared
+  text at that moment. The row is marked **edited for Diseño**; **Reset to shared text** puts
+  the shared wording back and folds the copy into the shared item again; when the shared text
+  changes later, the row says so with the shared text beside it (**Reset** or **Keep mine**).
+  Editing an entry's line copies the entry with its bullets, each with its own record, so
+  bullets reset one by one; resetting the entry line leaves an edited bullet as it is. Layouts
+  C and E and both languages print the same copy (the record's scope is the whole output; a
+  narrower scope can be added without another migration).
+- **Section for this output only**: the section picker on an open row moves an item to another
+  section of the page (the Eagle project under Experiencia, say). It is the same mechanism the
+  résumé uses to list that project under Projects; Full, Professional and Résumé do not move.
+- **Sort newest first** (per section; honors too) orders by the dates: a term is its last month
+  (Spring → May, Summer → August, Fall → December), a plain year its December, "present" today;
+  ties keep their order, ↑ ↓ still work, and rows whose date cannot be read stay where they are
+  and are named.
+- **Review & save** (Ctrl+S) is the CV text service's: the change list in words, the gate, the
+  `content.json` diff; Save writes `content.json` only. Validation is the CV text tab's (both
+  languages, no TODO or HTML, blocklist, voice words, the degree rule on the Education line, the
+  GPA line against the transcript). Errors on Designed-only text block a save here but never an
+  Apply to the masters.
+
+**Export PDF…** prints the saved content (drafts must be saved or discarded first) as a
+background job with the log streamed, one PDF per layout × language picked:
+1. the page is written to `.local/designed/job-…/` (deleted afterwards) with its fonts,
+   stylesheet and photo read from disk — no network;
+2. `msedge --headless --dump-dom` (Chrome when Edge is missing; **Browser** in the dialog puts
+   Chrome first — the choice is kept per machine in `.local/settings.json`, and a full path to
+   another Chromium works there too; pick Chrome if a blocker such as Cold Turkey reacts to
+   headless Edge). Each run uses a throwaway profile folder of its own, so your Edge windows
+   and profile are never touched, and a run that fails to start is retried once. The page measures its columns once its fonts
+   are in; a column over its height **blocks the export, naming the column**; fonts that did not
+   load block it too;
+3. `--print-to-pdf --no-pdf-header-footer` (the page's CSS sets Letter with no margins);
+4. checks on the PDF, each an error that keeps the file out of the folder: exactly one page;
+   the blocklist; **the birth date in none of its usual forms** (ISO, d/m/y and m/d/y with and
+   without leading zeros, "3 de febrero [de 2001]", "February 3[, 2001]" for a made-up date —
+   derived from personal.json); every ticked text present (nothing clipped). Warnings: voice words, Spanish
+   identical to English, a photo under 300 dpi at its printed size.
+Passing PDFs go to `staging/cv-design-out/` as `es Gideon Ong CV Diseño C YYYYMMDD.pdf` /
+`en Gideon Ong CV Designed E YYYYMMDD.pdf` (the palette is added when it is not TU blue). The tab
+shows the age the next PDF will carry and flags every PDF rendered before a birthday that has
+since passed ("rendered at 20, you're now 21: re-render").
+
+**Private by default.** There is no Publish button and no publish code for this output: the
+service writes into `staging/cv-design-out/` and nowhere else, and the CV / transcript publish
+code never looks there. `designedPublish` in `.local/settings.json` is the one switch a future
+publish path would have to read; it is off, no page or endpoint can set it, and nothing copies a
+Designed PDF whatever its value.
+
+**Import masters and the Designed variant.** The masters know nothing of it, so every master
+path skips it: the master table and `content["masters"]` have no Designed entry, and the
+function that lists a master's paragraphs refuses a variant without one. "Import masters"
+rebuilds the content set from Word and then puts the Designed variant back on it — the `design`
+block, the title line, the checklist with its ticks and order, the copies with their records.
+Shared items are found by their id, bullets by their text (a bullet's id is its position); the
+import report lists anything that could not be re-attached exactly.
+
+**Template.** `static/designed/page.html` + `parts.html` (the pieces), `designed.css` (every
+color and font is a custom property, one block per palette; the TU hex values come from a
+third-party listing — correct them there), `fonts/` (Figtree, Archivo, Archivo Narrow, Lora,
+DM Sans as Latin woff2, all SIL OFL 1.1 with their license files) and `icons/` (LinkedIn's [in]
+files, copied unchanged from `staging/cv-design/icons/` and **gitignored**; the page masks
+`InBug-White-noR.png` in CSS so the glyph takes the sidebar color, and falls back to a generic
+link icon when the file is absent). The photo is the site headshot
+(`assets/images/about/headshot.jpg`), cropped to a circle in CSS and never modified. No personal
+text is in the template: a fresh clone renders nothing until a content set exists.
+`staging/cv-design/seed.json` (private) holds the first selection; the tab offers **Seed it**
+while the Designed CV is empty.
+
 ## How it stays lossless
 `core/jsdata.py` tokenizes the file with exact character spans and re-emits it. On every
 load it checks that re-emitting with no edits reproduces the file byte for byte
@@ -467,6 +575,27 @@ cross-checks against python and a python apply cross-checks against Word. Duplic
 bullet and a shared entry (with its shown bullets) split into a copy for one document, the
 original keeps the others, the order position is kept, refusals, the render of that document
 adds one paragraph and removes one with the same text, and the change line names it.
+Designed CV (`test_designed.py`, synthetic masters and a made-up birth date): the migration
+adds only and stripping it gives the file back byte for byte; only the editor migrates, with
+a backup, and an autosaved version-1 draft comes along; ticks keep their place and the CV text
+tab lists the same flags; a per-output edit makes a recorded copy, leaves Full / Professional /
+Résumé and every master plan unchanged, and Reset restores the shared wording (bullet by
+bullet under a copied entry); a section move is for this output only; "Sort newest first" on
+the D16 shape, "present" as today, undated rows named; ages around a birthday; validation
+(empty / TODO / blocklist / voice / GPA) and that Designed-only errors do not block an Apply;
+no master path sees the variant (`wanted_ids` refuses it, a Designed-only apply rewrites no
+master); "Import masters" keeps flags, orders, copies and the design block and reports what
+it could not re-attach; the page holds exactly what is ticked, escaped, in both layouts and
+languages, with the contact rows read from the shared line and the LinkedIn fallback; the
+template holds no personal text and its fonts are local with their licenses; the birth-date
+forms; file names. With Edge or Chrome installed (skipped otherwise): both layouts × both
+languages export to one checked page each, an overflow blocks the export naming the column,
+a birth date or blocklist term in the PDF fails it, the stale-age flag around a birthday, and
+that the export never starts Word, writes nothing under `assets/` and leaves the masters
+byte-identical. Also: the export gates before any browser starts, a failed measure writes
+nothing, no code path names the served PDF folders, the `/api/designed/*` token checks, and —
+on a temp copy of the real masters when present — the import proof and that an Apply does
+exactly what it would do without the Designed variant.
 
 ## Files
 | File | What it is |
@@ -493,6 +622,12 @@ adds one paragraph and removes one with the same text, and the change line names
 | `core/cv/cvcheck.py` | Validation of the content set (empty / TODO / HTML / blocklist / voice / degree / GPA / fit) and the fit meter on synthetic paragraphs |
 | `core/cv/wordroute.py` | The Word route: the plan of paragraph operations (no Word), its plain-list simulation, and the private-Word execution on a temp copy |
 | `core/cv/textservice.py` | Import with the proof gate; the draft, autosave, review, save; drift (pull / discard), apply by either route, the last-apply record and the cross-check — what the CV text page talks to |
+| `core/cv/designed/schema.py` | content.json version 2: the `design` block, the one-time migration, what an import carries over |
+| `core/cv/designed/model.py` | Pure operations on the Designed variant: checklist, per-output text and reset, section placement, sort, sidebar rows, the seed |
+| `core/cv/designed/render.py` | Content set → the page's HTML (the preview and the PDF are the same string) |
+| `core/cv/designed/export.py` | Headless Edge / Chrome: `--dump-dom` for the column measure, `--print-to-pdf` |
+| `core/cv/designed/checks.py` | Checks on the printed PDF: one page, blocklist, birth-date forms, ticked text present, photo dpi |
+| `core/cv/designed/service.py` | What the Designed CV page talks to: ops on the CV text draft, the preview, the export job, the stale-age flag |
 | `core/spans.py` | Span edits on the token tree: replace any value, insert / delete properties and array items, re-parse check |
 | `core/emit.py` | JS values in the data files' own style (inline vs one-per-line by property name) |
 | `core/site/datafiles.py` | The three data files as entry dicts; minimal span edits on save |
@@ -507,6 +642,7 @@ adds one paragraph and removes one with the same text, and the change line names
 | `core/transcript/titles.py` | course-titles.json rows joined with transcript-data.json; edits; validation |
 | `core/transcript/profile.py` | Validation for profile.json and adjustments.json |
 | `core/transcript/service.py` | Drafts / review / save of the inputs, parse and build jobs, publish — what the Transcript page talks to |
-| `static/` | The pages: index.html + app.js (site text), content.html + content.js, cv.html + cv.js, cvtext.html + cvtext.js, transcript.html + transcript.js, common.js, app.css |
+| `static/` | The pages: index.html + app.js (site text), content.html + content.js, cv.html + cv.js, cvtext.html + cvtext.js, designed.html + designed.js, transcript.html + transcript.js, common.js, app.css |
+| `static/designed/` | The Designed CV template: page.html, parts.html, designed.css, fonts/ (OFL, with licenses), icons/ (LinkedIn's files, gitignored) |
 | `tests/` | unittest suite |
 | `make-shortcut.ps1` | Desktop shortcut with the full pythonw.exe path |
