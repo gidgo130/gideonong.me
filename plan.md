@@ -847,6 +847,8 @@ gideonong.me/learning/ (Reading Your Fits, and since 2026-10-15 the Reflections 
 in `learning/README.md`.
 Feedback widget (2026-10-16): api/feedback.js files /learning feedback as issues in a private GitHub repo; decisions F1–F10 and the deferred persistent rate limit are in learning/learning-plan.md.
 
+Designed CV (2026-11-25, local editor, not part of the site): a private one-page photo-and-age CV for Latin American employers, built in the editor's "Designed CV" tab and never published; decisions D1–D18 are in staging/cv-design/SPEC.md, the manual in scripts/editor/README.md → "Designed CV tab", the rules in CLAUDE.md → Documents.
+
 ---
 
 ## Decisions log

@@ -197,6 +197,8 @@ class AboutTests(unittest.TestCase):
             self.assertIsNone(svc.read_only)
             before_data = (t.root / "js/about-data.js").read_bytes()
             before_page = (t.root / "about.html").read_bytes()
+            # the wording on the site today (this test runs on a copy of the real data file, and that text is Gideon's to change)
+            original_desc = next(e for e in svc.live_entries("about") if e["id"] == "atomic-rockets")["descEN"]
             svc.set_field("about", "atomic-rockets", ["descEN"], "Edited.")
             st = svc.state_json()
             self.assertEqual(st["about"]["lists"]["sites"][0]["descEN"], "Edited.")
@@ -243,7 +245,7 @@ class AboutTests(unittest.TestCase):
             self.assertLess(data.index('"book-2"'), data.index('"book-1"'))
             # delete, then everything back: the data file is byte-identical again
             svc.delete_entry("about", "new-site")
-            svc.set_field("about", "atomic-rockets", ["descEN"], "Winchell Chung's encyclopedic guide to the physics and engineering of spaceflight, written for science-fiction authors who want to get it right.")
+            svc.set_field("about", "atomic-rockets", ["descEN"], original_desc)
             svc.set_about_order("books", ["book-1", "book-2", "book-3", "book-4", "book-5"])
             svc.set_about_shown("about-faq", False)
             self.assertTrue(svc.save()["ok"])

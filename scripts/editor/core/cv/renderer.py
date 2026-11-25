@@ -31,7 +31,7 @@ from typing import Optional
 from lxml import etree
 
 from . import content as C
-from .importer import SEP, W_NS, XML_NS, MasterDoc, Span, hash_text, norm, read_master, role_length, spans_of, split_entry, structure, text_string, w
+from .importer import SEP, VARIANTS, W_NS, XML_NS, MasterDoc, Span, hash_text, norm, read_master, role_length, spans_of, split_entry, structure, text_string, w
 from .importer import other_parts as _other_parts
 
 
@@ -181,6 +181,8 @@ def slot_spans(content: dict, slot: dict, variant: str, lang: str) -> Optional[l
 def wanted_ids(content: dict, variant: str) -> list[str]:
     """Slot ids a master of this variant holds, in document order: header, then per section
     (only sections with items in this variant) its heading, items and their children."""
+    if variant not in VARIANTS:  # the Designed CV has no master: nothing of it may reach a Word file
+        raise RenderError(f"{variant!r} has no Word master")
     header = content["header"]
     out = ["header.name"]
     if header["title"].get(variant):
@@ -307,7 +309,7 @@ def template_for(content: dict, sid: str, variant: str, slots: list[dict]) -> Op
     node = rest[-1]
     cands = dict(by_kind.get(node["kind"], {}))
     if kind == "item":
-        sec = C.section_of(content, sid)
+        sec = C.section_of(content, sid, variant)
         if sec is not None:
             cands = {k: v for k, v in cands.items() if k in content["items"]}
             order = sec["order"].get(variant) or []

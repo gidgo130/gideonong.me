@@ -1,0 +1,96 @@
+<!-- The pieces of the Designed CV page. Each piece starts at a "part:" comment and runs to the
+     next one; core/cv/designed/render.py fills the {{tokens}} (text is escaped there).
+     Markup follows staging/cv-design/mockup.html; sizes and colors are in designed.css. -->
+
+<!-- part: columns-c -->
+<aside class="side">{{photo}}{{side}}</aside><main class="main"><div class="nameband"><h1 class="name">{{name}}</h1>{{title}}</div>{{main}}</main>
+
+<!-- part: columns-e -->
+<main class="main"><div class="hdr"><div><h1 class="name">{{name}}</h1>{{title}}</div>{{photo}}</div>{{main}}</main><aside class="side">{{side}}</aside>
+
+<!-- part: title -->
+<div class="title">{{text}}</div>
+
+<!-- part: photo -->
+<img class="photo" alt="{{alt}}" src="{{src}}">
+
+<!-- part: sec -->
+<section class="sec" data-sec="{{key}}"><h2 class="sh">{{heading}}</h2><div class="rule"></div>{{body}}</section>
+
+<!-- part: profile -->
+<div class="profile">{{text}}</div>
+
+<!-- part: entry -->
+<div class="en" data-id="{{id}}"><div class="en-h"><span class="role">{{role}}</span><span class="dt">{{date}}</span></div>{{lines}}</div>
+
+<!-- part: org -->
+<div class="org"{{attrs}}>{{text}}</div>
+
+<!-- part: bullets -->
+<ul>{{items}}</ul>
+
+<!-- part: bullet -->
+<li data-id="{{id}}">{{text}}</li>
+
+<!-- part: contact -->
+<div class="ct">{{rows}}</div>
+
+<!-- part: contact-row -->
+<div data-row="{{key}}">{{icon}}<span>{{text}}</span></div>
+
+<!-- part: icon -->
+<span class="ic" data-ic="{{key}}"><svg viewBox="0 0 24 24"{{cls}} aria-hidden="true">{{paths}}</svg></span>
+
+<!-- part: icon-linkedin -->
+<span class="ic" data-ic="linkedin" role="img" aria-label="LinkedIn"><i class="li-mask" style="--li:url({{mask}})"></i></span>
+
+<!-- part: langs -->
+<div class="langs">{{cells}}</div>
+
+<!-- part: lang -->
+<div data-id="{{id}}"><b>{{a}}</b>{{b}}</div>
+
+<!-- part: mini -->
+<div class="mini">{{rows}}</div>
+
+<!-- part: mini-row -->
+<div data-id="{{id}}"><b>{{a}}</b>{{b}}</div>
+
+<!-- part: mini-b -->
+<span>{{text}}</span>
+
+<!-- part: skl -->
+<div class="skl">{{rows}}</div>
+
+<!-- part: skl-row -->
+<div data-id="{{id}}"><b>{{a}}</b>{{b}}</div>
+
+<!-- The icon glyphs (24 × 24, stroked; "mono" is filled). "mono" is the angular G monogram:
+     use this path exactly. It draws at 16 px in its 22 px circle, the others at 12 px. -->
+
+<!-- part: glyph-cake -->
+<path d="M3 21h18"/><path d="M5 21v-8h14v8"/><path d="M5 16.5c1.2 1 2.3 1 3.5 0s2.3-1 3.5 0 2.3 1 3.5 0 2.3-1 3.5 0"/><path d="M12 13V9.5"/><path d="M12 7.5c1-.8 1-1.8 0-3-1 1.2-1 2.2 0 3z"/>
+
+<!-- part: glyph-tel -->
+<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>
+
+<!-- part: glyph-mail -->
+<path d="M3 6h18v12H3z"/><path d="M3 7l9 6 9-6"/>
+
+<!-- part: glyph-link -->
+<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>
+
+<!-- part: glyph-mono -->
+<path d="M19 9L12 2 2 12 12 22 20.8 13.2V10.8H13V13.2H17.41L12 18.61 5.39 12 12 5.39 15.61 9Z" fill="currentColor" stroke="none"/>
+
+<!-- part: glyph-web -->
+<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>
+
+<!-- part: glyph-browser -->
+<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M6 7h.01M8.5 7h.01"/>
+
+<!-- part: glyph-compass -->
+<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>
+
+<!-- part: glyph-code -->
+<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 6l-3 12"/>

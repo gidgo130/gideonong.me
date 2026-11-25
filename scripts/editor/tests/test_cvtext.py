@@ -1150,7 +1150,8 @@ class RealMastersTests(unittest.TestCase):
         self.assertGreater(len(content["items"]), 30)
         self.assertEqual(report["unpaired"]["full"], [])
         self.assertEqual(report["unpaired"]["professional"], [])
-        self.assertEqual(len(report["unpaired"]["resume"]), 1)  # the ES résumé lacks the IEL line
+        # none since the IEL line was applied to the ES résumé (2026-11-25); one if it is taken out again
+        self.assertLessEqual(len(report["unpaired"]["resume"]), 1)
         tmp = Path(tempfile.mkdtemp())
         for langs in docs.values():
             for doc in langs.values():
