@@ -108,6 +108,9 @@ _PART_LABEL = {"name": "Name", "contact": "Contact line", "title": "Title line",
                "profile": "Profile", "gpa": "GPA line", "level": "Level", "label": "Label", "list": "List", "issuer": "Issuer", "years": "Years"}
 
 
+_LANG_NAMES = {"en": "English", "es": "Spanish"}
+
+
 def designed_only_key(content: dict, key: str) -> bool:
     """True when an issue key belongs to text only the Designed CV uses: the design block, its
     title line, or an item / bullet that is in no Word document. Such text never reaches a
@@ -205,7 +208,15 @@ def check(
     for key, lang, part, text, required, entry in texts(content):
         label = _PART_LABEL.get(part, part)
         if not norm(text):
-            if required:
+            if not required:
+                continue
+            if part in ("role", "bullet", "line"):
+                # an item or bullet with no text in a language is simply not in that language's
+                # documents (renderer.present); it is worth saying, it is never an error
+                issues.append(Issue("warning", "left-out", key, lang, f"{label} has no {lang.upper()} text: it is left out of the {_LANG_NAMES[lang]} documents"))
+            elif part == "date" and entry is not None and not norm(entry["role"].get(lang, "")):
+                pass  # the whole entry is left out of this language
+            else:
                 issues.append(Issue("error", "empty", key, lang, f"{label} is empty ({lang.upper()})" if lang else f"{label} is empty"))
             continue
         if validate.is_todo(text):
@@ -311,7 +322,7 @@ def fits_for_item(content: dict, item_id: str, slots_by_master: dict, docs_by_ma
             master = content["masters"].get(variant, {}).get(lang)
             slots = slots_by_master.get(master) or []
             info = docs_by_master.get(master)
-            if info is None or not slots:
+            if info is None or not slots or not norm(item["role"].get(lang, "")):  # no role there: not in that language's master
                 out[variant][lang] = None
                 continue
             slot = next((s for s in slots if s["id"] == item_id and s["kind"] == "entry"), None) or template_slot(content, item_id, variant, slots)

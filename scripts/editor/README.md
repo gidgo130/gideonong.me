@@ -262,8 +262,10 @@ original out of it; edit the copy afterwards. An entry's copy takes the bullets 
 that document. ↑ ↓ on an item moves it within its section in the current document only; ticking a document puts the
 item after its nearest neighbour from the current view (taking an entry out of a document
 takes its bullets out too). **+ Add item…** under a section asks for the kind (entry or line)
-and the English text, which names the item; the item starts in the current document only. A
-new bullet or line needs both languages before saving. **+ Add section…** (bottom of the
+and the English text, which names the item; the item starts in the current document only. An
+item or bullet with **no text in one language is left out of that language's documents** (it
+stays in the other language's; the review shows the paragraph as removed there and warns) —
+that is also how an import records a paragraph only one language's master has. **+ Add section…** (bottom of the
 list) takes a heading in both languages; an empty section can be deleted from its form.
 **Delete…** is confirmed and lists the documents the item leaves. Nothing touches disk until
 **Review & save** (Ctrl+S): the change list in words, a table of what Apply would do to each
@@ -286,8 +288,9 @@ and every other package part (styles, numbering, settings) is untouched — one 
 nothing is written (the Word route comes with 4d). Then content.json, the six masters and the
 six slot maps go to a backup set, the changed masters are written atomically, the slot maps
 and the text hashes are rebuilt from the files as written, and content.json is saved. Apply
-needs the whole content set error-free (a pre-existing empty or overflowing paragraph must
-never reach a master — the résumé's IEL line blocks it until it has Spanish), and refuses
+needs the whole content set error-free (an overflowing line or an entry with no date must
+never reach a master; an item with no text in one language is not an error — it is simply not
+written into that language's masters), and refuses
 while a master to be written is open in Word (`~$` owner file: "close it in Word first"). Your
 own check afterwards: Word › Review › Compare the master against its copy in the backup set.
 
@@ -331,16 +334,15 @@ entry's sub-line on the next import, so section-level lines belong in sections w
 entries (Skills, Honors) or before the first entry.
 
 Validation (errors block a save, warnings do not; only errors the draft introduces or on
-items it touches block — the résumé's IEL line, imported with no Spanish, stays a
-pre-existing error until you type it or untick Résumé on it):
+items it touches block):
 
 | Errors | Warnings |
 |---|---|
-| Empty EN or ES on an item that is in any document (entries: role and date; the organization may be empty) | Voice words (same list as the site text; "leveraged" is allowed in the Spinelli item) |
+| An empty name, contact line, title line or heading; an entry that has a role in a language but no date there | Voice words (same list as the site text; "leveraged" is allowed in the Spinelli item) |
 | `TODO` or HTML in a text | A GPA line that disagrees with the transcript's cumulative GPA (Transcript tab) |
 | A blocklist term (`staging/editor-private/blocklist.txt`; the (918) phone is allowed — this text only becomes the CV / résumé PDFs) | An entry line within 3 % of its width in a document it is in |
 | A degree line (under the Education entry) naming a degree or minor that `scripts/transcript/profile.json` does not list in that language (decision 4) | Degree lines unchecked because profile.json is not readable |
-| An entry line that overflows its width in a document it is in (that document only) | |
+| An entry line that overflows its width in a document it is in (that document only) | An item or bullet with no text in one language (an entry: no role): it is left out of that language's documents |
 
 The Word-route tests run only with `EDITOR_WORD_TESTS=1` (a private Word for about a
 minute); the plan of operations and the pure simulation are tested without Word.

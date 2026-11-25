@@ -297,7 +297,7 @@
     $("#addKind").value = "entry";
     $("#addEn").value = "";
     $("#addEnLabel").textContent = "Role (EN)";
-    $("#addNote").textContent = "The new item goes to the end of the section in " + vlabel(state.variant) + " only; tick the other documents in its form. Its Spanish text is required before saving.";
+    $("#addNote").textContent = "The new item goes to the end of the section in " + vlabel(state.variant) + " only; tick the other documents in its form. Until it has Spanish text it is left out of the Spanish documents.";
     $("#addDlg").showModal();
     $("#addEn").focus();
   }

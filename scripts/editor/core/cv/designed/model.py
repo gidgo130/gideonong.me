@@ -514,6 +514,8 @@ def ticked_texts(content: dict, lang: str) -> list[tuple[str, str]]:
             item = content["items"].get(iid)
             if not item or not item["include"].get(D):
                 continue
+            if item["kind"] == "entry" and not norm(item["role"][lang]):
+                continue  # not on this language's page (render.main_html)
             shown = True
             label = C.label_of(content, iid, lang)
             if item["kind"] == "entry":

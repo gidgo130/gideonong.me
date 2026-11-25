@@ -102,7 +102,7 @@ def plan_ops(content: dict, slot_map: list[dict], master_path: Path) -> Plan:
     live = live_slots(doc, slot_map)
     plan = Plan(doc.path.name)
     by_id = {s["id"]: s for s in live if s["kind"] != "empty"}
-    wanted = wanted_ids(content, variant)
+    wanted = wanted_ids(content, variant, lang)
     wanted_set = set(wanted)
     for sid in wanted:
         if not norm((_expected_text(content, sid, variant, lang) or "").replace("\t", " ")):

@@ -380,7 +380,9 @@ class OperationTests(unittest.TestCase):
             own = ds.op({"op": "add-bullet", "id": "engineer"})["id"]  # empty in both languages
             ds.op({"op": "single-text", "key": "gpa", "lang": "en", "value": "TODO"})
             codes = {(i["code"], i["key"], i["lang"]) for i in ds.state()["issues"] if i["level"] == "error"}
-            self.assertEqual(codes, {("empty", "design.profile", "es"), ("empty", own, "en"), ("empty", own, "es"), ("todo", "design.gpa", "en")})
+            self.assertEqual(codes, {("empty", "design.profile", "es"), ("todo", "design.gpa", "en")})
+            # the new bullet has no text yet: it is left out of both pages, which is a warning
+            self.assertEqual({(i["code"], i["lang"]) for i in ds.state()["issues"] if i["key"] == own}, {("left-out", "en"), ("left-out", "es")})
             self.assertFalse(svc.gate().ok())  # the same save gate as the CV text tab
             self.assertEqual(svc.save()["error"], "blocked")
             # … but none of it can reach a master, so it does not block an Apply
