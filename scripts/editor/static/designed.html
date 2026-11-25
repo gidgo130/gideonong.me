@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Designed CV — Site editor</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="designed-body">
+<header class="topbar">
+  <div class="brand">Site editor</div>
+  <nav class="tabs" aria-label="Tools"><a href="/">Site text</a><a href="/content">Content</a><a href="/cv">CV &amp; résumé</a><a href="/cvtext">CV text</a><a href="/designed">Designed CV</a><a href="/transcript">Transcript</a></nav>
+  <span class="file" title="A private output: it is never published">private · staging/cv-design-out/</span>
+  <span class="spacer"></span>
+  <button id="exportBtn" class="ghost" type="button" title="Print the page to a PDF with headless Edge and run the checks">Export PDF…</button>
+  <button id="reviewBtn" class="primary" type="button">Review &amp; save <span class="badge" id="draftCount" hidden>0</span></button>
+</header>
+
+<div id="banners"></div>
+
+<div class="designed-layout" id="editor" hidden>
+  <aside id="picker" aria-label="What goes on the Designed CV"></aside>
+  <main id="stage">
+    <div class="dz-controls" id="controls"></div>
+    <div class="dz-meters" id="meters" aria-live="polite"></div>
+    <div class="dz-sheet" id="sheet"><div class="dz-scaler" id="scaler">
+      <iframe class="dz-frame" id="frameA" title="Designed CV preview" tabindex="-1"></iframe>
+      <iframe class="dz-frame" id="frameB" title="Designed CV preview (buffer)" tabindex="-1" aria-hidden="true"></iframe>
+    </div></div>
+    <div class="dz-facts" id="facts"></div>
+  </main>
+</div>
+
+<main class="cvpage" id="noContent" hidden>
+  <p class="muted intro" id="noContentText">No content set yet. The Designed CV is a fourth document of the CV content set: import the masters on the <a href="/cvtext">CV text</a> tab first.</p>
+</main>
+
+<dialog id="reviewDlg" class="dlg">
+  <form method="dialog">
+    <h2>Review &amp; save <span class="muted">CV content</span></h2>
+    <div id="reviewBody"></div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost danger" id="discardBtn">Discard all drafts</button>
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Back</button>
+      <button type="button" class="primary" id="saveBtn" title="Write staging/cv-content/content.json only — the Word masters are not touched">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="exportDlg" class="dlg">
+  <form method="dialog">
+    <h2>Export PDF <span class="muted">private — never published</span></h2>
+    <div id="exportBody"></div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost" id="openOutBtn">Open folder</button>
+      <span class="spacer"></span>
+      <button type="submit" class="ghost">Close</button>
+      <button type="button" class="primary" id="exportGo">Export</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/static/common.js"></script>
+<script src="/static/designed.js"></script>
+</body>
+</html>

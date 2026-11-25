@@ -38,6 +38,7 @@ from core import review as review_mod  # noqa: E402
 from core import validate as validate_mod  # noqa: E402
 from core.backups import Backups, atomic_write  # noqa: E402
 from core.cv.service import CvService  # noqa: E402
+from core.cv.designed.service import DesignedService  # noqa: E402
 from core.cv.textservice import CvTextService  # noqa: E402
 from core.jobs import JobRunner  # noqa: E402
 from core.jsdata import JsDataError, sha256_bytes  # noqa: E402
@@ -88,7 +89,10 @@ class EditorState:
         # Phase 2: projects / experience / tags (needs self.site loaded first)
         self.content = ContentService(self)
         # Phase 4: CV text (import of the masters into staging/cv-content/, then the editor over it)
-        self.cvtext = CvTextService(self.repo_root, self.backups, self.local_dir, gpa=self.transcript.computed_gpa)
+        self.cvtext = CvTextService(self.repo_root, self.backups, self.local_dir, gpa=self.transcript.computed_gpa, migrate=True)
+        # The Designed CV: the Designed variant of that content set, rendered as HTML and printed
+        # to a private PDF by headless Edge (never published; see core/cv/designed/)
+        self.designed = DesignedService(self.repo_root, self.cvtext, self.jobs, self.local_dir, settings=self.settings, update_settings=self.update_settings)
 
     def busy(self) -> bool:
         """True while a background job (a Word export, a transcript parse or build) is running."""
@@ -773,6 +777,87 @@ def create_app(state: EditorState) -> Flask:
         with state.lock:
             state.cvtext.discard_autosave()
         return jsonify(ok=True)
+
+    # ---------------------------------------------------------- Designed CV (private; no publish route exists)
+    @app.get("/designed")
+    def designed_page():
+        return send_from_directory(HERE / "static", "designed.html")
+
+    @app.get("/designed/photo")
+    def designed_photo():
+        # the site's own headshot (a published file), for the preview's <img>
+        p = state.designed.photo_path()
+        if not p.is_file():
+            return deny(404, "no photo")
+        return send_from_directory(p.parent, p.name)
+
+    @app.get("/api/designed/state")
+    def designed_state():
+        with state.lock:
+            return jsonify(state.designed.state())
+
+    @app.post("/api/designed/op")
+    def designed_op():
+        b = request.get_json(silent=True) or {}
+        try:
+            with state.lock:
+                result = state.designed.op(b)
+                return jsonify(ok=True, result=result, **state.designed.state())
+        except KeyError as e:
+            return deny(404, f"unknown id {e}")
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+
+    @app.get("/api/designed/page")
+    def designed_page_html():
+        try:
+            with state.lock:
+                opts = state.designed.options(request.args.get("layout") or None, request.args.get("palette") or None, request.args.get("lang") or None)
+                return jsonify(ok=True, html=state.designed.page_html(opts, request.args.get("key") or ""))
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+
+    @app.post("/api/designed/view")
+    def designed_view():
+        b = request.get_json(silent=True) or {}
+        try:
+            with state.lock:
+                view = state.designed.set_view(**{k: v for k, v in b.items() if isinstance(k, str)})
+                return jsonify(ok=True, view=view, browser=state.designed.state()["browser"])
+        except ValueError as e:
+            return deny(400, str(e))
+
+    @app.post("/api/designed/export")
+    def designed_export():
+        b = request.get_json(silent=True) or {}
+        for key in ("layouts", "langs"):
+            v = b.get(key)
+            if v is not None and not (isinstance(v, list) and all(isinstance(i, str) for i in v)):
+                return deny(400, f"{key} must be a list of strings")
+        try:
+            with state.lock:
+                job = state.designed.start_export(b.get("layouts"), b.get("langs"), b.get("palette") if isinstance(b.get("palette"), str) else None)
+        except ValueError as e:
+            return deny(400, str(e))
+        except RuntimeError as e:
+            return deny(409, str(e))
+        return jsonify(ok=True, job=job)
+
+    @app.get("/api/designed/job")
+    def designed_job():
+        return jsonify(job=state.designed.job_json(), exports=state.designed.exports())
+
+    @app.post("/api/designed/open-out")
+    def designed_open_out():
+        try:
+            path = state.designed.open_out()
+        except OSError as e:  # pragma: no cover
+            return deny(500, f"could not open the folder: {e}")
+        return jsonify(ok=True, path=path)
 
     # ---------------------------------------------------------- transcript
     @app.get("/transcript")
