@@ -1,0 +1,106 @@
+/* The Designed CV page: one US Letter sheet, 816 × 1056 CSS px (96 px = 1 in). The preview
+   in the Designed CV tab and the PDF are this same page. Colors and fonts are custom
+   properties on .pg, one block per palette — change a palette here and nowhere else.
+
+   The TU hex values (TU Blue #003595 / Pantone 661 C, TU Gold #D0B787) come from a
+   third-party listing (brandcolorcode.com), not from TU's brand guide: correct them HERE. */
+
+@page { size: Letter; margin: 0; }
+html, body { margin: 0; padding: 0; background: #fff; }
+* { box-sizing: border-box; }
+body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* ---------------------------------------------------------------- palettes */
+.pal-blue .pg {
+  --c-side: #003595;   /* sidebar, icon glyphs */
+  --c-dark: #00256b;   /* name band (C), name and header rule (E) */
+  --c-ink: #1c2a44;
+  --c-head: #003595;   /* section headings, roles, bullet markers */
+  --c-rule: #D0B787;   /* rules under headings */
+  --c-tint: #eef2fa;   /* E's right rail */
+  --f-body: "Figtree", Arial, sans-serif;
+  --f-head: "Archivo", Arial, sans-serif;
+  --f-name: "Archivo Narrow", "Arial Narrow", sans-serif;
+  --head-tr: .06em; --head-case: uppercase;
+  --name-w: 700; --name-s: 48px; --sh-s: 17px; --sh-w: 700;
+}
+.pal-bronze .pg {
+  --c-side: #6B4F1A;
+  --c-dark: #1C1510;
+  --c-ink: #2a221b;
+  --c-head: #6B4F1A;
+  --c-rule: #c9b896;
+  --c-tint: #f5f0e6;
+  --f-body: "DM Sans", Arial, sans-serif;
+  --f-head: "Lora", Georgia, serif;
+  --f-name: "Lora", Georgia, serif;
+  --head-tr: .01em; --head-case: none;
+  --name-w: 600; --name-s: 44px; --sh-s: 17.5px; --sh-w: 600;
+}
+
+/* ---------------------------------------------------------------- the sheet (paper is always white) */
+.pg { width: 816px; height: 1056px; background: #fff; color: var(--c-ink); font-family: var(--f-body); font-size: 12px; line-height: 1.33; overflow: hidden; display: grid; grid-template-rows: 1056px; }
+.pg > * { overflow: hidden; min-height: 0; position: relative; }
+.pg ul { margin: 3px 0 0; padding-left: 14px; }
+.pg li { margin: 1px 0; }
+.pg li::marker { color: var(--c-head); }
+.pg .sec { display: grid; gap: 5px; }
+.pg .sh { font-family: var(--f-head); font-weight: var(--sh-w); font-size: var(--sh-s); letter-spacing: var(--head-tr); text-transform: var(--head-case); color: var(--c-head); margin: 0; line-height: 1.1; }
+.pg .rule { height: 1.5px; background: var(--c-rule); margin: 2px 0 0; }
+.pg .en { display: grid; }
+.pg .en-h { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.pg .role { font-weight: 700; color: var(--c-head); font-size: 12.8px; }
+.pal-bronze .pg .role { color: var(--c-ink); }
+.pg .dt { white-space: nowrap; font-size: 11.6px; opacity: .85; font-style: italic; }
+.pg .org { font-size: 11.8px; opacity: .9; }
+
+/* sidebar (C: solid color on the left) */
+.pg .side { background: var(--c-side); color: #fff; padding: 22px 20px; display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+.pg .side .sh { color: #fff; font-size: 16px; }
+.pg .side .rule { background: rgba(255, 255, 255, .75); }
+.pg .side li::marker { color: #fff; }
+/* The photo: the site headshot, cropped to a circle here (the file is never modified).
+   The picture itself is the box minus the border: 140 px in C, 86 px in E —
+   core/cv/designed/render.py PHOTO_PX holds the same two numbers for the dpi check. */
+.pg .photo { width: 150px; height: 150px; border-radius: 50%; border: 5px solid #fff; object-fit: cover; display: block; align-self: center; background: #ccd; }
+.pg .ct { display: grid; gap: 6px; font-size: 11.8px; }
+.pg .ct div { display: grid; grid-template-columns: 22px 1fr; gap: 7px; align-items: center; word-break: break-word; }
+/* icons: a 22 px circle, the glyph in the sidebar color (white circle in C, colored circle in E) */
+.pg .ic { width: 22px; height: 22px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.pg .ic svg { width: 12px; height: 12px; color: var(--c-side); stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pg .ic svg.big { width: 16px; height: 16px; }
+/* LinkedIn's [in] shape (the ® trimmed) used as a mask, so it takes the color of the other glyphs */
+.pg .ic .li-mask { display: block; width: 11px; height: 11px; color: var(--c-side); background: currentColor;
+  -webkit-mask: var(--li) center / contain no-repeat; mask: var(--li) center / contain no-repeat; }
+.pg .langs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; font-size: 11.8px; }
+.pg .langs b { display: block; font-size: 12.4px; }
+.pg .mini { display: grid; gap: 5px; font-size: 11.6px; }
+.pg .mini b { font-weight: 600; font-size: 11.9px; }
+.pg .mini span { font-style: italic; opacity: .92; }
+.pg .mini span::before { content: ' · '; font-style: normal; }
+.pg .skl { display: grid; gap: 5px; font-size: 11.6px; }
+.pg .skl b { display: block; font-weight: 600; font-size: 11.9px; }
+
+/* main column */
+.pg .main { padding: 0 30px 14px 26px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.pg .nameband { background: var(--c-dark); color: #fff; margin: 0 -30px 4px -26px; padding: 18px 30px 14px 26px; }
+.pg .name { font-family: var(--f-name); font-weight: var(--name-w); font-size: var(--name-s); line-height: 1; margin: 0; }
+.pg .title { font-size: 13px; margin-top: 6px; opacity: .92; letter-spacing: .02em; }
+
+/* ---------------------------------------------------------------- layout C: experience first */
+.pg.l-c { grid-template-columns: 31% 1fr; }
+
+/* ---------------------------------------------------------------- layout E: light right rail (the print-friendly one) */
+.pg.l-e { grid-template-columns: 1fr 30%; }
+.pg.l-e .side { background: var(--c-tint); color: var(--c-ink); padding-top: 16px; }
+.pg.l-e .side .sh { color: var(--c-head); }
+.pg.l-e .side .rule { background: var(--c-rule); }
+.pg.l-e .side li::marker { color: var(--c-head); }
+.pg.l-e .ic { background: var(--c-side); }
+.pg.l-e .ic svg { color: #fff; }
+.pg.l-e .ic .li-mask { color: #fff; }
+.pg.l-e .main { padding: 10px 24px 14px 32px; }
+.pg.l-e .hdr { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; border-bottom: 3px solid var(--c-dark); padding-bottom: 8px; }
+.pg.l-e .hdr .name { color: var(--c-dark); font-size: calc(var(--name-s) - 2px); }
+.pg.l-e .hdr .title { color: var(--c-ink); }
+.pg.l-e .photo { width: 92px; height: 92px; border: 3px solid var(--c-side); }

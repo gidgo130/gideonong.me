@@ -1,0 +1,60 @@
+<!doctype html>
+<!-- The Designed CV page. core/cv/designed/render.py fills the double-brace tokens; the pieces come from
+     parts.html. No personal text lives in these files: everything printed comes from the content
+     set (staging/cv-content/content.json) and staging/editor-private/personal.json. -->
+<html lang="{{lang}}" data-layout="{{layout}}" data-palette="{{palette}}">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>{{doc_title}}</title>
+
+<link rel="stylesheet" href="{{base_href}}fonts/fonts.css">
+<link rel="stylesheet" href="{{base_href}}designed.css">
+</head>
+<body class="pal-{{palette}}">
+<div class="pg l-{{layout}}" id="pg">{{columns}}</div>
+<script>
+/* Space left per column = its inner height minus the bottom of its last block (layout px;
+   96 px = 1 in). Written onto <html data-meter> once the fonts are in, read from there by the
+   export job (headless --dump-dom) and posted to the Designed CV tab for the preview. A
+   negative number is an overflow. data-fonts names any family of this palette that did not load. */
+(function () {
+  function measure() {
+    var pg = document.getElementById("pg"), out = {};
+    Array.prototype.forEach.call(pg.children, function (col) {
+      var last = col.lastElementChild;
+      if (!last) return;
+      var pb = parseFloat(getComputedStyle(col).paddingBottom) || 0;
+      out[col.classList.contains("side") ? "side" : "main"] = Math.round(col.clientHeight - pb - (last.offsetTop + last.offsetHeight));
+    });
+    var missing = [];
+    families().forEach(function (fam) {
+      if (document.fonts && !document.fonts.check('12px "' + fam + '"')) missing.push(fam);
+    });
+    var root = document.documentElement;
+    root.setAttribute("data-fonts", missing.length ? "missing: " + missing.join(", ") : "ok");
+    root.setAttribute("data-meter", JSON.stringify(out));
+    if (window.parent !== window) { try { window.parent.postMessage({ designedMeter: out, fonts: root.getAttribute("data-fonts"), key: "{{key}}" }, "*"); } catch (e) { /* preview only */ } }
+  }
+  /* the three font families this palette names (the first of each stack) */
+  function families() {
+    var cs = getComputedStyle(document.getElementById("pg")), out = [];
+    ["--f-body", "--f-head", "--f-name"].forEach(function (v) {
+      var fam = (cs.getPropertyValue(v).split(",")[0] || "").trim().replace(/^["']|["']$/g, "");
+      if (fam && out.indexOf(fam) < 0) out.push(fam);
+    });
+    return out;
+  }
+  function ready() {
+    var f = document.fonts;
+    if (!f) { measure(); return; }
+    var wanted = families();
+    var loads = Array.prototype.filter.call(f, function (face) { return wanted.indexOf(face.family.replace(/^["']|["']$/g, "")) >= 0; })
+      .map(function (face) { return face.load().catch(function () {}); });
+    Promise.all(loads).then(function () { return f.ready; }).then(measure, measure);
+  }
+  if (document.readyState === "complete") ready(); else window.addEventListener("load", ready);
+})();
+</script>
+</body>
+</html>

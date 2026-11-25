@@ -5,6 +5,10 @@ staging/
 scripts/transcript/output/
 scripts/editor/.local/
 __pycache__/
+# LinkedIn's logo files for the Designed CV template (copied on this machine from
+# staging/cv-design/icons/). They are LinkedIn's, not ours to redistribute; without them the
+# page falls back to a generic link icon.
+scripts/editor/static/designed/icons/*.png
 # Cited papers stay local (gitignored references/ holds the sources); the site links DOIs.
 learning/fits/*/*.pdf
 # Fonts that scripts/make-og-cards.py fetches on first run (link-preview cards).
